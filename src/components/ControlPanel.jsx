@@ -5,7 +5,7 @@ import { formatNumber } from '../engines/mathUtils'
 import { GEOMETRY_NAMES, FORMULAS, GEOMETRIES } from '../constants'
 import './ControlPanel.css'
 
-export default function ControlPanel({ geometry, setGeometry, showWireframe, setShowWireframe, showLabels, setShowLabels }) {
+export default function ControlPanel({ geometry, setGeometry, showFaces, setShowFaces, showLabels, setShowLabels }) {
   const [showAnswer, setShowAnswer] = useState(false)
 
   const handleGeometryChange = (type, params) => {
@@ -51,11 +51,11 @@ export default function ControlPanel({ geometry, setGeometry, showWireframe, set
 
       <div className="panel-section">
         <h2>显示</h2>
-        <button 
-          className={`btn-toggle ${showWireframe ? 'active' : ''}`}
-          onClick={() => setShowWireframe(!showWireframe)}
+        <button
+          className={`btn-toggle ${showFaces ? 'active' : ''}`}
+          onClick={() => setShowFaces(!showFaces)}
         >
-          {showWireframe ? '✓ 线框' : '◯ 彩色'}
+          {showFaces ? '✓ 实体面' : '◯ 纯线框'}
         </button>
         <div style={{height: 8}} />
         <label className="checkbox-label"> 

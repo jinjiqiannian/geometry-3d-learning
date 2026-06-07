@@ -102,11 +102,11 @@ export function createGeometry(type, params) {
       return createFromArrays(verts, indices)
     }
     case 'sphere':
-      return new THREE.SphereGeometry(s, 8, 6)
+      return new THREE.SphereGeometry(s, 64, 32)
     case 'cylinder':
-      return new THREE.CylinderGeometry(s, s, size, 12)
+      return new THREE.CylinderGeometry(s, s, size, 64)
     case 'cone':
-      return new THREE.ConeGeometry(s, size, 12)
+      return new THREE.ConeGeometry(s, size, 64)
     default:
       return new THREE.BoxGeometry(size, size, size)
   }

@@ -9,7 +9,7 @@ export default function App() {
     type: 'cube', 
     params: { size: 2 } 
   })
-  const [showWireframe, setShowWireframe] = useState(false)
+  const [showFaces, setShowFaces] = useState(true)
   const [showLabels, setShowLabels] = useState(true)
 
   return (
@@ -18,14 +18,14 @@ export default function App() {
         <Canvas
           style={{ width: '100%', height: '100%' }}
         >
-          <Canvas3D geometry={geometry} showWireframe={showWireframe} showLabels={showLabels} />
+          <Canvas3D geometry={geometry} showFaces={showFaces} showLabels={showLabels} />
         </Canvas>
       </div>
       <ControlPanel 
         geometry={geometry} 
         setGeometry={setGeometry}
-        showWireframe={showWireframe}
-        setShowWireframe={setShowWireframe}
+        showFaces={showFaces}
+        setShowFaces={setShowFaces}
         showLabels={showLabels}
         setShowLabels={setShowLabels}
       />
