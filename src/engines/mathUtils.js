@@ -1,4 +1,5 @@
 ﻿export function formatNumber(num, decimals = 2) {
+  if (num == null || !isFinite(num)) return '—'
   return Math.round(num * Math.pow(10, decimals)) / Math.pow(10, decimals)
 }
 

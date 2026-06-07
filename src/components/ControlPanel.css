@@ -4,7 +4,7 @@
   padding: 30px;
   overflow-y: auto;
   box-shadow: -2px 0 16px rgba(0, 0, 0, 0.08);
-  border-right: 1px solid #e8e8e8;
+  border-left: 1px solid #e8e8e8;
 }
 
 .control-panel h1 {

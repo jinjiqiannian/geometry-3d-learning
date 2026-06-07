@@ -22,6 +22,8 @@ if not exist "node_modules\" (
 :: 启动开发服务器并自动打开浏览器
 echo [2/2] 启动3D几何建模平台...
 start "" http://localhost:5173
+echo.
+echo 等待服务器就绪后请手动刷新浏览器，或等待自动打开...
 call npm run dev
 
 pause

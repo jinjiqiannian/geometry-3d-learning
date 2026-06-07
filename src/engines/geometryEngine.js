@@ -1,6 +1,6 @@
-﻿import * as THREE from 'three'
+import * as THREE from 'three'
 
-// 获取几何体的顶点坐标、棱边、标签（所有几何体统一由此提供）
+// 为各几何体提供精确的顶点和边信息
 export function getVertexAndEdgeInfo(type, params) {
   const { size = 2 } = params
   const s = size / 2
@@ -15,18 +15,18 @@ export function getVertexAndEdgeInfo(type, params) {
       return { vertices: v, edges: e, labels: ['A','B','C','D','E','F','G','H'] }
     },
     prism: () => {
-      const h = s * 1.5
+      // 标准直角三棱柱：底面为等腰直角三角形(直角边=size)，高=size
       const v = [
-        [-s,-h,-s],[ s,-h,-s],[ 0,-h, s],
-        [-s, h,-s],[ s, h,-s],[ 0, h, s]
+        [-s,-s,-s],[ s,-s,-s],[-s,-s, s],
+        [-s, s,-s],[ s, s,-s],[-s, s, s]
       ]
       const e = [[0,1],[1,2],[2,0],[3,4],[4,5],[5,3],[0,3],[1,4],[2,5]]
-      return { vertices: v, edges: e, labels: ['A','B','C','D','E','F'] }
+      return { vertices: v, edges: e, labels: ['A','B','C','A\'','B\'','C\''] }
     },
     pyramid: () => {
-      const r = s * 1.2
+      // 标准正四棱锥：底面边长=size，高=size
       const v = [
-        [-r,-s,-r],[ r,-s,-r],[ r,-s, r],[-r,-s, r],
+        [-s,-s,-s],[ s,-s,-s],[ s,-s, s],[-s,-s, s],
         [ 0, s, 0]
       ]
       const e = [[0,1],[1,2],[2,3],[3,0],[0,4],[1,4],[2,4],[3,4]]
@@ -42,14 +42,14 @@ export function getVertexAndEdgeInfo(type, params) {
         [ s,-s,0],[-s,-s,0],[0,-s, s],[0,-s,-s],
         [ s, s,0],[-s, s,0],[0, s, s],[0, s,-s]
       ]
-      return { vertices: v, edges: [], labels: ['B','T','E','W','S','N','e','w','s','n'] }
+      return { vertices: v, edges: [], labels: ['O','O\'','A','B','C','D','A\'','B\'','C\'','D\''] }
     },
     cone: () => {
       const v = [
         [0,-s,0],[0,s,0],
         [ s,-s,0],[-s,-s,0],[0,-s, s],[0,-s,-s]
       ]
-      return { vertices: v, edges: [], labels: ['O','P','E','W','S','N'] }
+      return { vertices: v, edges: [], labels: ['O','P','A','B','C','D'] }
     }
   }
 
@@ -76,10 +76,10 @@ export function createGeometry(type, params) {
       return createFromArrays(verts, indices)
     }
     case 'prism': {
-      const h = s * 1.5
+      // 标准直角三棱柱：底面为等腰直角三角形(直角边=size)，高=size
       const verts = [
-        -s,-h,-s,  s,-h,-s,  0,-h, s,
-        -s, h,-s,  s, h,-s,  0, h, s
+        -s,-s,-s,  s,-s,-s, -s,-s, s,
+        -s, s,-s,  s, s,-s, -s, s, s
       ]
       const indices = [
         0,1,2, 3,5,4,
@@ -90,9 +90,9 @@ export function createGeometry(type, params) {
       return createFromArrays(verts, indices)
     }
     case 'pyramid': {
-      const r = s * 1.2
+      // 标准正四棱锥：底面边长=size，高=size
       const verts = [
-        -r,-s,-r,  r,-s,-r,  r,-s, r, -r,-s, r,
+        -s,-s,-s,  s,-s,-s,  s,-s, s, -s,-s, s,
          0, s, 0
       ]
       const indices = [
@@ -102,7 +102,7 @@ export function createGeometry(type, params) {
       return createFromArrays(verts, indices)
     }
     case 'sphere':
-      return new THREE.SphereGeometry(s, 12, 8)
+      return new THREE.SphereGeometry(s, 8, 6)
     case 'cylinder':
       return new THREE.CylinderGeometry(s, s, size, 12)
     case 'cone':
@@ -132,8 +132,8 @@ export function calculateVolume(type, params) {
     sphere:   () => (4/3) * Math.PI * Math.pow(size/2, 3),
     cylinder: () => Math.PI * Math.pow(size/2, 2) * size,
     cone:     () => (1/3) * Math.PI * Math.pow(size/2, 2) * size,
-    pyramid:  () => (1/3) * Math.pow(size, 2) * size,
-    prism:    () => Math.pow(size, 2) * (size * 1.5)
+    pyramid:  () => (1/3) * Math.pow(size, 3),
+    prism:    () => 0.5 * Math.pow(size, 3)
   }
   return formulas[type]?.() || 0
 }
@@ -145,8 +145,8 @@ export function calculateSurfaceArea(type, params) {
     sphere:   () => 4 * Math.PI * Math.pow(size/2, 2),
     cylinder: () => 2 * Math.PI * (size/2) * (size + size/2),
     cone:     () => Math.PI * (size/2) * (size/2 + Math.sqrt(Math.pow(size/2, 2) + Math.pow(size, 2))),
-    pyramid:  () => Math.pow(size, 2) + 2 * size * Math.sqrt(Math.pow(size, 2) + Math.pow(size, 2)),
-    prism:    () => 2 * Math.pow(size, 2) + 4 * size * (size * 1.5)
+    pyramid:  () => Math.pow(size, 2) * (1 + Math.sqrt(5)),
+    prism:    () => Math.pow(size, 2) * (3 + Math.sqrt(2))
   }
   return formulas[type]?.() || 0
 }

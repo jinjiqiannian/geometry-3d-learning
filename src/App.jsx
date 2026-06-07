@@ -15,8 +15,7 @@ export default function App() {
   return (
     <div className="app">
       <div className="canvas-section">
-        <Canvas 
-          camera={{ position: [5, 5, 5], fov: 75 }}
+        <Canvas
           style={{ width: '100%', height: '100%' }}
         >
           <Canvas3D geometry={geometry} showWireframe={showWireframe} showLabels={showLabels} />

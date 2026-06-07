@@ -2,43 +2,8 @@ import { useState } from 'react'
 import GeometrySelector from './GeometrySelector'
 import { calculateVolume, calculateSurfaceArea } from '../engines/geometryEngine'
 import { formatNumber } from '../engines/mathUtils'
+import { GEOMETRY_NAMES, FORMULAS, GEOMETRIES } from '../constants'
 import './ControlPanel.css'
-
-const GEOMETRY_NAMES = {
-  cube: '正方体',
-  sphere: '球体',
-  cylinder: '圆柱',
-  cone: '圆锥',
-  pyramid: '棱锥',
-  prism: '棱柱'
-}
-
-const FORMULAS = {
-  cube: {
-    volume: 'V = a³',
-    surface: 'S = 6a²'
-  },
-  sphere: {
-    volume: 'V = (4/3)πr³',
-    surface: 'S = 4πr²'
-  },
-  cylinder: {
-    volume: 'V = πr²h',
-    surface: 'S = 2πr(r+h)'
-  },
-  cone: {
-    volume: 'V = (1/3)πr²h',
-    surface: 'S = πr(r+l)'
-  },
-  pyramid: {
-    volume: 'V = (1/3)Sh',
-    surface: 'S = 底面积 + 侧面积'
-  },
-  prism: {
-    volume: 'V = Sh',
-    surface: 'S = 2×底面积 + 侧面积'
-  }
-}
 
 export default function ControlPanel({ geometry, setGeometry, showWireframe, setShowWireframe, showLabels, setShowLabels }) {
   const [showAnswer, setShowAnswer] = useState(false)
@@ -48,8 +13,7 @@ export default function ControlPanel({ geometry, setGeometry, showWireframe, set
   }
 
   const generateProblem = () => {
-    const geometries = ['cube', 'sphere', 'cylinder', 'cone', 'pyramid', 'prism']
-    const randomType = geometries[Math.floor(Math.random() * geometries.length)]
+    const randomType = GEOMETRIES[Math.floor(Math.random() * GEOMETRIES.length)].id
     setGeometry({ type: randomType, params: { size: Math.random() * 3 + 1 } })
     setShowAnswer(false)
   }
@@ -78,7 +42,7 @@ export default function ControlPanel({ geometry, setGeometry, showWireframe, set
             min="0.5" 
             max="5" 
             step="0.1"
-            defaultValue={geometry.params.size}
+            value={geometry.params.size}
             onChange={(e) => handleGeometryChange(geometry.type, { size: parseFloat(e.target.value) })}
             className="slider"
           />
