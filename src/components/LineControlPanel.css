@@ -1,0 +1,137 @@
+.line-control-panel {
+  padding: 16px 0;
+}
+
+.line-control-panel h2 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  color: #2c3e50;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 一键操作按钮行 */
+.preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.preset-btn {
+  padding: 5px 10px;
+  border: 1px solid #d0d2d8;
+  border-radius: 4px;
+  background: #f8f9fb;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  color: #555;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.preset-btn:hover {
+  border-color: #4A90E2;
+  color: #4A90E2;
+  background: #f0f4fa;
+}
+
+/* 线段列表 */
+.line-list {
+  max-height: calc(100vh - 420px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* 分类标题 */
+.line-category {
+  margin-bottom: 10px;
+}
+
+.cat-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: #f5f7fa;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.cat-label:hover {
+  background: #eef1f6;
+}
+
+.cat-label.partial {
+  background: #fef9e7;
+}
+
+.cat-label input[type="checkbox"] {
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+  accent-color: #4A90E2;
+  flex-shrink: 0;
+}
+
+.cat-count {
+  margin-left: auto;
+  font-size: 10px;
+  color: #999;
+  font-weight: 400;
+}
+
+/* 单条线 */
+.line-items {
+  padding-left: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.line-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 7px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #555;
+  transition: all 0.12s;
+  user-select: none;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.line-item:hover,
+.line-item.hovered {
+  background: #e8f0fc;
+  border-color: #4A90E2;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.line-item input[type="checkbox"] {
+  cursor: pointer;
+  width: 12px;
+  height: 12px;
+  accent-color: #4A90E2;
+  flex-shrink: 0;
+}
+
+.dash-hint {
+  color: #bbb;
+  font-size: 10px;
+  margin-left: 2px;
+}

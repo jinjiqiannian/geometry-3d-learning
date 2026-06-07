@@ -1,11 +1,18 @@
 import { useState } from 'react'
 import GeometrySelector from './GeometrySelector'
+import LineControlPanel from './LineControlPanel'
 import { calculateVolume, calculateSurfaceArea } from '../engines/geometryEngine'
 import { formatNumber } from '../engines/mathUtils'
 import { GEOMETRY_NAMES, FORMULAS, GEOMETRIES } from '../constants'
 import './ControlPanel.css'
 
-export default function ControlPanel({ geometry, setGeometry, showFaces, setShowFaces, showLabels, setShowLabels }) {
+export default function ControlPanel({
+  geometry, setGeometry,
+  showFaces, setShowFaces,
+  showLabels, setShowLabels,
+  visibleLines, setVisibleLines,
+  hoveredLine, setHoveredLine,
+}) {
   const [showAnswer, setShowAnswer] = useState(false)
 
   const handleGeometryChange = (type, params) => {
@@ -24,10 +31,10 @@ export default function ControlPanel({ geometry, setGeometry, showFaces, setShow
   return (
     <div className="control-panel">
       <h1>📐 3D立体几何</h1>
-      
+
       <div className="panel-section">
         <h2>几何体</h2>
-        <GeometrySelector 
+        <GeometrySelector
           onSelect={handleGeometryChange}
           currentType={geometry.type}
         />
@@ -37,10 +44,10 @@ export default function ControlPanel({ geometry, setGeometry, showFaces, setShow
         <h2>参数</h2>
         <div className="param-group">
           <label>大小: {formatNumber(geometry.params.size)}</label>
-          <input 
-            type="range" 
-            min="0.5" 
-            max="5" 
+          <input
+            type="range"
+            min="0.5"
+            max="5"
             step="0.1"
             value={geometry.params.size}
             onChange={(e) => handleGeometryChange(geometry.type, { size: parseFloat(e.target.value) })}
@@ -58,9 +65,20 @@ export default function ControlPanel({ geometry, setGeometry, showFaces, setShow
           {showFaces ? '✓ 实体面' : '◯ 纯线框'}
         </button>
         <div style={{height: 8}} />
-        <label className="checkbox-label"> 
+        <label className="checkbox-label">
           <input type="checkbox" checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} /> 显示标签
         </label>
+      </div>
+
+      {/* ── 线条控制 ── */}
+      <div className="panel-section">
+        <LineControlPanel
+          geometry={geometry}
+          visibleLines={visibleLines}
+          setVisibleLines={setVisibleLines}
+          hoveredLine={hoveredLine}
+          setHoveredLine={setHoveredLine}
+        />
       </div>
 
       <div className="panel-section">
@@ -72,7 +90,7 @@ export default function ControlPanel({ geometry, setGeometry, showFaces, setShow
       <div className="panel-section answer-section">
         <h3>{GEOMETRY_NAMES[geometry.type]}</h3>
         <p className="size-info">大小 = {formatNumber(geometry.params.size)}</p>
-        <button 
+        <button
           className="btn-secondary"
           onClick={() => setShowAnswer(!showAnswer)}
         >

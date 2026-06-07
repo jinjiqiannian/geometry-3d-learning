@@ -12,7 +12,7 @@ export const GEOMETRY_NAMES = {
 export const GEOMETRIES = [
   { id: 'cube', name: '正方体', icon: '🟦' },
   { id: 'sphere', name: '球体', icon: '🔵' },
-  { id: 'cylinder', name: '圆柱', icon: '🫙' },
+  { id: 'cylinder', name: '圆柱', icon: '🔷' },
   { id: 'cone', name: '圆锥', icon: '🔺' },
   { id: 'pyramid', name: '棱锥', icon: '🔻' },
   { id: 'prism', name: '棱柱', icon: '📐' },
