@@ -135,3 +135,151 @@
   font-size: 10px;
   margin-left: 2px;
 }
+
+/* ── 子区域标题 ── */
+.panel-subsection {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.panel-subsection:last-child {
+  border-bottom: none;
+}
+
+.subsection-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* ── 快速工具按钮 ── */
+.tool-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tool-btn {
+  padding: 4px 8px;
+  border: 1px solid #d8dce3;
+  border-radius: 4px;
+  background: #fafbfc;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 500;
+  color: #555;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+
+.tool-btn:hover {
+  border-color: #4A90E2;
+  color: #4A90E2;
+  background: #f0f4fa;
+}
+
+/* ── 清除自定义 ── */
+.clear-custom-btn {
+  margin-top: 6px;
+  padding: 3px 8px;
+  border: 1px solid #e0d0d0;
+  border-radius: 3px;
+  background: #fff5f5;
+  cursor: pointer;
+  font-size: 10px;
+  color: #c0392b;
+  transition: all 0.12s;
+}
+
+.clear-custom-btn:hover {
+  background: #fde8e8;
+  border-color: #c0392b;
+}
+
+/* ── 搜索 ── */
+.search-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #d0d2d8;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #333;
+  background: #fafbfc;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  border-color: #4A90E2;
+  background: #fff;
+}
+
+.search-count {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 10px;
+  color: #4A90E2;
+  font-weight: 500;
+}
+
+/* ── 搜索高亮线段 ── */
+.line-item.searched {
+  background: #fffde7;
+  border-color: #f9a825;
+}
+
+/* ── 自定义分类 ── */
+.cat-label.custom-cat {
+  background: #f0f7ff;
+  border: 1px dashed #b0c8e0;
+}
+
+/* ── 长度标签切换按钮 ── */
+.len-toggle {
+  margin-left: auto;
+  padding: 0 3px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 10px;
+  opacity: 0.35;
+  transition: all 0.12s;
+  line-height: 1;
+  border-radius: 2px;
+}
+
+.len-toggle:hover,
+.len-toggle.active {
+  opacity: 1;
+  background: #fff9c4;
+}
+
+/* ── 删除自定义线段 ── */
+.line-remove {
+  padding: 0 3px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 10px;
+  color: #bbb;
+  transition: all 0.12s;
+  line-height: 1;
+  border-radius: 2px;
+}
+
+.line-remove:hover {
+  color: #e74c3c;
+  background: #fde8e8;
+}
+
+/* ── 线段ID文字 ── */
+.line-id {
+  font-family: 'Cambria Math', 'Segoe UI', serif;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}

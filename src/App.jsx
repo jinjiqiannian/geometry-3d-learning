@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
 import Canvas3D from './components/Canvas3D'
 import ControlPanel from './components/ControlPanel'
@@ -15,6 +15,11 @@ export default function App() {
   const [visibleLines, setVisibleLines] = useState(() => new Set())
   const [hoveredLine, setHoveredLine] = useState(null)
 
+  // ── 新增状态 ──
+  const [customLines, setCustomLines] = useState([])              // 用户自定义线段
+  const [shownLengthLabels, setShownLengthLabels] = useState(() => new Set())  // 长度标签
+  const [searchedLine, setSearchedLine] = useState('')            // 搜索文本
+
   // 切换几何体时，重置为教材模式默认可见线段
   useEffect(() => {
     const { lines } = getLineDefinitions(geometry.type, geometry.params)
@@ -25,7 +30,16 @@ export default function App() {
     )
     setVisibleLines(defaults)
     setHoveredLine(null)
+    setCustomLines([])
+    setShownLengthLabels(new Set())
+    setSearchedLine('')
   }, [geometry.type])
+
+  // 合并预定义线段 + 自定义线段
+  const mergedLines = useMemo(() => {
+    const { lines } = getLineDefinitions(geometry.type, geometry.params)
+    return [...lines, ...customLines]
+  }, [geometry.type, geometry.params.size, customLines])
 
   return (
     <div className="app">
@@ -40,6 +54,9 @@ export default function App() {
             visibleLines={visibleLines}
             hoveredLine={hoveredLine}
             setHoveredLine={setHoveredLine}
+            allLines={mergedLines}
+            shownLengthLabels={shownLengthLabels}
+            searchedLine={searchedLine}
           />
         </Canvas>
       </div>
@@ -54,6 +71,12 @@ export default function App() {
         setVisibleLines={setVisibleLines}
         hoveredLine={hoveredLine}
         setHoveredLine={setHoveredLine}
+        customLines={customLines}
+        setCustomLines={setCustomLines}
+        shownLengthLabels={shownLengthLabels}
+        setShownLengthLabels={setShownLengthLabels}
+        searchedLine={searchedLine}
+        setSearchedLine={setSearchedLine}
       />
     </div>
   )

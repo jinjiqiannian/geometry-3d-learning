@@ -12,6 +12,9 @@ export default function ControlPanel({
   showLabels, setShowLabels,
   visibleLines, setVisibleLines,
   hoveredLine, setHoveredLine,
+  customLines, setCustomLines,
+  shownLengthLabels, setShownLengthLabels,
+  searchedLine, setSearchedLine,
 }) {
   const [showAnswer, setShowAnswer] = useState(false)
 
@@ -78,6 +81,12 @@ export default function ControlPanel({
           setVisibleLines={setVisibleLines}
           hoveredLine={hoveredLine}
           setHoveredLine={setHoveredLine}
+          customLines={customLines}
+          setCustomLines={setCustomLines}
+          shownLengthLabels={shownLengthLabels}
+          setShownLengthLabels={setShownLengthLabels}
+          searchedLine={searchedLine}
+          setSearchedLine={setSearchedLine}
         />
       </div>
 

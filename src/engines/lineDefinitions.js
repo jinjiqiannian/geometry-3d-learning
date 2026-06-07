@@ -260,6 +260,8 @@ export function getLineDefinitions(type, params) {
 
 // ── 将点标签解析为坐标 ───────────────────────────────
 export function resolvePoint(label, points) {
+  // 如果已是坐标数组，直接返回
+  if (Array.isArray(label)) return label
   const { vertices, centers, labels } = points
   // 先查标签
   const idx = labels.indexOf(label)
@@ -303,6 +305,38 @@ export const CATEGORY_ORDER = [
   '空间对角线', '面对角线',
   '高线', '辅助构造线',
 ]
+
+// ── 线段样式映射 ────────────────────────────────────
+/** category → { color, dash, opacity }
+ *  WebGL lineWidth 在 Windows 上限 1px，通过颜色+透明度区分粗细感
+ */
+export const CATEGORY_STYLES = {
+  '棱':       { color: '#1a1a1a', dash: false, opacity: 1.0 },
+  '底面边':   { color: '#1a1a1a', dash: false, opacity: 1.0 },
+  '顶面边':   { color: '#1a1a1a', dash: false, opacity: 1.0 },
+  '侧棱':     { color: '#1a1a1a', dash: false, opacity: 1.0 },
+  '空间对角线': { color: '#888888', dash: true, opacity: 0.65 },
+  '面对角线': { color: '#888888', dash: true, opacity: 0.65 },
+  '高线':     { color: '#666666', dash: true, opacity: 0.55 },
+  '辅助构造线': { color: '#aaaaaa', dash: true, opacity: 0.45 },
+}
+
+/** 返回样式对象，未匹配的返回默认样式 */
+export function getLineStyle(category) {
+  return CATEGORY_STYLES[category] || { color: '#888888', dash: true, opacity: 0.5 }
+}
+
+// ── 获取所有可能的顶点对（用于自动补全）───────────────
+export function getAllVertexPairs(type) {
+  const { labels } = getPoints(type, { size: 2 })
+  const pairs = []
+  for (let i = 0; i < labels.length; i++) {
+    for (let j = i + 1; j < labels.length; j++) {
+      pairs.push({ label: labels[i] + labels[j], i, j })
+    }
+  }
+  return pairs
+}
 
 // ── 一键操作预设 ────────────────────────────────────
 export const PRESETS = {

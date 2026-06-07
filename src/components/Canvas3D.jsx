@@ -2,7 +2,8 @@ import { useMemo, useCallback } from 'react'
 import * as THREE from 'three'
 import { OrbitControls, Text, Line, Billboard } from '@react-three/drei'
 import { createGeometry, getVertexAndEdgeInfo } from '../engines/geometryEngine'
-import { getLineDefinitions, resolvePoint } from '../engines/lineDefinitions'
+import { getLineDefinitions, resolvePoint, getLineStyle } from '../engines/lineDefinitions'
+import { searchLines } from '../engines/lineConnector'
 
 // ── 圆采样 ──────────────────────────────────────────
 function ring(radius, plane, seg = 64) {
@@ -76,6 +77,7 @@ function useRightAngleData(type, s) {
 export default function Canvas3D({
   geometry, showFaces = true, showLabels = true,
   visibleLines, hoveredLine, setHoveredLine,
+  allLines, shownLengthLabels, searchedLine,
 }) {
   const { type, params } = geometry
   const size = params.size ?? 2
@@ -83,13 +85,23 @@ export default function Canvas3D({
 
   const geoData = useMemo(() => createGeometry(type, params), [type, size])
   const edgeInfo = useMemo(() => getVertexAndEdgeInfo(type, params), [type, size])
-  const { points: pts, lines: allLines } = useMemo(() => getLineDefinitions(type, params), [type, size])
+
+  // 获取点数据（用于线段坐标解析）
+  const { points: pts } = useMemo(() => getLineDefinitions(type, params), [type, size])
+
   const curveLines = useCurveData(type, s)
   const raMarks = useRightAngleData(type, s)
   const isCurved = ['sphere', 'cylinder', 'cone'].includes(type)
 
-  // 解析线段坐标
-  const resolvedLines = useMemo(() => allLines.map(l => {
+  // ── 搜索匹配集 ──
+  const searchMatchSet = useMemo(() => {
+    if (!searchedLine || !allLines) return new Set()
+    const matches = searchLines(searchedLine, allLines)
+    return new Set(matches)
+  }, [searchedLine, allLines])
+
+  // ── 解析线段坐标 ──
+  const resolvedLines = useMemo(() => (allLines || []).map(l => {
     const from = resolvePoint(l.from, pts)
     const to = resolvePoint(l.to, pts)
     if (!from || !to) return null
@@ -100,13 +112,89 @@ export default function Canvas3D({
 
   const lineKey = (l) => `${l.id}|${l.category}`
 
-  // 处理 hover
+  // ── 处理 hover ──
   const handlePointerOver = useCallback((l) => {
     setHoveredLine?.(lineKey(l))
   }, [setHoveredLine])
   const handlePointerOut = useCallback(() => {
     setHoveredLine?.(null)
   }, [setHoveredLine])
+
+  // ── 渲染单条线段 ──
+  const renderLine = (l, key) => {
+    const visible = visibleLines.has(key)
+    const hovered = hoveredLine === key
+    const searched = searchMatchSet.has(key)
+    const showLen = shownLengthLabels?.has(key)
+
+    if (!visible && !hovered && !searched) return null
+
+    const style = getLineStyle(l.category)
+
+    // 颜色优先级：hover > searched > visible
+    let color, opacity
+    if (hovered) {
+      color = '#4A90E2'
+      opacity = 1
+    } else if (searched) {
+      color = '#2979ff'
+      opacity = 1
+    } else if (visible) {
+      color = style.color
+      opacity = style.opacity
+    } else {
+      color = '#cccccc'
+      opacity = 0.18
+    }
+
+    const geo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(l.from[0], l.from[1], l.from[2]),
+      new THREE.Vector3(l.to[0], l.to[1], l.to[2]),
+    ])
+
+    return (
+      <group key={key}>
+        <line
+          geometry={geo}
+          onPointerOver={(e) => { e.stopPropagation(); handlePointerOver(l) }}
+          onPointerOut={handlePointerOut}
+        >
+          <lineBasicMaterial
+            color={color}
+            transparent
+            opacity={opacity}
+            dashed={style.dash || l.dashed}
+          />
+        </line>
+
+        {/* Hover 标签：蓝色高亮 + 名称 + 长度 */}
+        {hovered && (
+          <Billboard position={l.mid} follow>
+            <Text
+              fontSize={0.18} color="#4A90E2"
+              anchorX="center" anchorY="bottom"
+              outlineWidth={0.02} outlineColor="white"
+            >
+              {l.id} = {l.length.toFixed(2)}
+            </Text>
+          </Billboard>
+        )}
+
+        {/* 持久长度标签：在线段中点，小号深灰 */}
+        {showLen && visible && !hovered && (
+          <Billboard position={l.mid} follow>
+            <Text
+              fontSize={0.14} color="#555555"
+              anchorX="center" anchorY="bottom"
+              outlineWidth={0.015} outlineColor="white"
+            >
+              {l.id} = {l.length.toFixed(2)}
+            </Text>
+          </Billboard>
+        )}
+      </group>
+    )
+  }
 
   return (
     <>
@@ -123,85 +211,19 @@ export default function Canvas3D({
 
       {/* ── 自定义线段（多面体）── */}
       {!isCurved && resolvedLines.map(l => {
-        const k = lineKey(l)
-        const visible = visibleLines.has(k)
-        const hovered = hoveredLine === k
-        if (!visible && !hovered) return null
-
-        const geo = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(l.from[0], l.from[1], l.from[2]),
-          new THREE.Vector3(l.to[0], l.to[1], l.to[2]),
-        ])
-
-        return (
-          <group key={k}>
-            <line
-              geometry={geo}
-              onPointerOver={(e) => { e.stopPropagation(); handlePointerOver(l) }}
-              onPointerOut={handlePointerOut}
-            >
-              <lineBasicMaterial
-                color={hovered ? '#4A90E2' : 'black'}
-                linewidth={hovered ? 2 : 1}
-                transparent={!visible}
-                opacity={visible ? 1 : 0.15}
-                dashed={l.dashed}
-              />
-            </line>
-            {/* hover 标签 */}
-            {hovered && (
-              <Billboard position={l.mid} follow>
-                <Text fontSize={0.18} color="#4A90E2" anchorX="center" anchorY="bottom"
-                  outlineWidth={0.02} outlineColor="white">
-                  {l.id} = {l.length.toFixed(2)}
-                </Text>
-              </Billboard>
-            )}
-          </group>
-        )
+        const key = lineKey(l)
+        return renderLine(l, key)
       })}
 
       {/* ── 曲面体基础线框 ── */}
       {isCurved && curveLines.map((pts, i) => (
-        <Line key={`curve-${i}`} points={pts} color="black" lineWidth={1} />
+        <Line key={`curve-${i}`} points={pts} color="#1a1a1a" lineWidth={1} />
       ))}
 
       {/* ── 曲面体自定义线段 ── */}
       {isCurved && resolvedLines.map(l => {
-        const k = lineKey(l)
-        const visible = visibleLines.has(k)
-        const hovered = hoveredLine === k
-        if (!visible && !hovered) return null
-
-        const geo = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(l.from[0], l.from[1], l.from[2]),
-          new THREE.Vector3(l.to[0], l.to[1], l.to[2]),
-        ])
-
-        return (
-          <group key={k}>
-            <line
-              geometry={geo}
-              onPointerOver={(e) => { e.stopPropagation(); handlePointerOver(l) }}
-              onPointerOut={handlePointerOut}
-            >
-              <lineBasicMaterial
-                color={hovered ? '#4A90E2' : 'black'}
-                transparent={!visible}
-                opacity={visible ? 1 : 0.15}
-                dashed={l.dashed}
-              />
-            </line>
-            {hovered && (
-              <Billboard position={l.mid} follow>
-                <Text fontSize={0.18} color="#4A90E2" anchorX="center" anchorY="bottom"
-                  outlineWidth={0.02} outlineColor="white">
-                  {l.id} = {l.length.toFixed(2)}
-                </Text>
-              </Billboard>
-            )}
-          </group>
-        )
+        const key = lineKey(l)
+        return renderLine(l, key)
       })}
 
       {/* ── 顶点标签 ── */}
