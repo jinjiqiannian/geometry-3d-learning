@@ -43,35 +43,6 @@ function useCurveData(type, s) {
   }, [type, s])
 }
 
-// ── 直角标记 ────────────────────────────────────────
-function useRightAngleData(type, s) {
-  return useMemo(() => {
-    const d = s * 0.24
-    const result = []
-    const L = (v, d1, d2) => {
-      const m = [v[0] + d1[0] * d, v[1] + d1[1] * d, v[2] + d1[2] * d]
-      const e = [m[0] + d2[0] * d, m[1] + d2[1] * d, m[2] + d2[2] * d]
-      result.push([v, m], [m, e])
-    }
-    if (type === 'cube') {
-      [ { v: [s, s, s], d1: [-1, 0, 0], d2: [0, -1, 0] },
-        { v: [-s, s, s], d1: [0, -1, 0], d2: [1, 0, 0] },
-        { v: [-s, -s, s], d1: [1, 0, 0], d2: [0, 1, 0] },
-        { v: [s, -s, s], d1: [0, 1, 0], d2: [-1, 0, 0] },
-      ].forEach(({ v, d1, d2 }) => L(v, d1, d2))
-    } else if (type === 'prism') {
-      L([-s, -s, -s], [1, 0, 0], [0, 0, 1])
-    } else if (type === 'pyramid') {
-      [ { v: [s, -s, s], d1: [-1, 0, 0], d2: [0, 0, -1] },
-        { v: [-s, -s, s], d1: [0, 0, -1], d2: [1, 0, 0] },
-        { v: [-s, -s, -s], d1: [1, 0, 0], d2: [0, 0, 1] },
-        { v: [s, -s, -s], d1: [0, 0, 1], d2: [-1, 0, 0] },
-      ].forEach(({ v, d1, d2 }) => L(v, d1, d2))
-    }
-    return result
-  }, [type, s])
-}
-
 // ══════════════════ 主组件 ═══════════════════════════
 
 export default function Canvas3D({
@@ -90,7 +61,6 @@ export default function Canvas3D({
   const { points: pts } = useMemo(() => getLineDefinitions(type, params), [type, size])
 
   const curveLines = useCurveData(type, s)
-  const raMarks = useRightAngleData(type, s)
   const isCurved = ['sphere', 'cylinder', 'cone'].includes(type)
 
   // ── 搜索匹配集 ──
@@ -167,21 +137,8 @@ export default function Canvas3D({
           />
         </line>
 
-        {/* Hover 标签：蓝色高亮 + 名称 + 长度 */}
-        {hovered && (
-          <Billboard position={l.mid} follow>
-            <Text
-              fontSize={0.18} color="#4A90E2"
-              anchorX="center" anchorY="bottom"
-              outlineWidth={0.02} outlineColor="white"
-            >
-              {l.id} = {l.length.toFixed(2)}
-            </Text>
-          </Billboard>
-        )}
-
         {/* 持久长度标签：在线段中点，小号深灰 */}
-        {showLen && visible && !hovered && (
+        {showLen && visible && (
           <Billboard position={l.mid} follow>
             <Text
               fontSize={0.14} color="#555555"
@@ -199,7 +156,6 @@ export default function Canvas3D({
   return (
     <>
       <perspectiveCamera makeDefault fov={50} position={[4, 4, 6]} />
-      <gridHelper args={[12, 12, '#e0e0e0', '#f0f0f0']} />
 
       {/* 半透明白色面 */}
       {showFaces && (
@@ -234,18 +190,6 @@ export default function Canvas3D({
           </Text>
         </Billboard>
       ))}
-
-      {/* ── 直角标记 ── */}
-      {raMarks.length > 0 && (() => {
-        const arr = new Float32Array(raMarks.flat(2))
-        const g = new THREE.BufferGeometry()
-        g.setAttribute('position', new THREE.BufferAttribute(arr, 3))
-        return (
-          <lineSegments geometry={g}>
-            <lineBasicMaterial color="black" />
-          </lineSegments>
-        )
-      })()}
 
       <OrbitControls enableZoom enablePan enableRotate />
     </>

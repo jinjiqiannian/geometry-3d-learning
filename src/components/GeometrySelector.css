@@ -1,39 +1,50 @@
-﻿.geometry-selector {
+.geometry-selector {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 .geo-btn {
-  padding: 12px;
-  border: 2px solid #ddd;
-  background: white;
-  border-radius: 6px;
+  padding: 8px 6px;
+  border: 1.5px solid #d0d2d8;
+  background: #fafbfc;
+  border-radius: 5px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.15s;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 500;
+  gap: 4px;
 }
 
 .geo-btn:hover {
-  border-color: #667eea;
-  background: #f5f5f5;
+  border-color: #4A90E2;
+  background: #f0f4fa;
 }
 
 .geo-btn.active {
-  border-color: #667eea;
-  background: #667eea;
-  color: white;
+  border-color: #4A90E2;
+  background: #e8f0fc;
 }
 
 .geo-btn .icon {
-  font-size: 24px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.geo-btn .icon svg {
+  display: block;
 }
 
 .geo-btn .label {
-  font-size: 12px;
+  font-size: 11px;
+  color: #444;
+  font-weight: 500;
+}
+
+.geo-btn.active .label {
+  color: #2c3e50;
 }

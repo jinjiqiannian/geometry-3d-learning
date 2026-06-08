@@ -1,5 +1,90 @@
-﻿import { GEOMETRIES } from '../constants'
+import { GEOMETRIES } from '../constants'
 import './GeometrySelector.css'
+
+// ── 教科书风格 SVG 几何图标（全实线，透明度区分前后）──
+function GeoIcon({ type }) {
+  const s = 28
+  const stroke = '#333'
+  const sw = 1.2
+
+  switch (type) {
+    // ── 正方体：正面微偏视角 ──
+    case 'cube':
+      return (
+        <svg width={s} height={s} viewBox="0 0 28 28">
+          <rect x="6" y="4" width="14" height="14" fill="none" stroke={stroke} strokeWidth={sw} opacity="0.35" />
+          <rect x="9" y="7" width="14" height="14" fill="none" stroke={stroke} strokeWidth={sw + 0.3} />
+          <line x1="6" y1="4" x2="9" y2="7" stroke={stroke} strokeWidth={sw} opacity="0.5" />
+          <line x1="20" y1="4" x2="23" y2="7" stroke={stroke} strokeWidth={sw} opacity="0.5" />
+          <line x1="6" y1="18" x2="9" y2="21" stroke={stroke} strokeWidth={sw} opacity="0.5" />
+          <line x1="20" y1="18" x2="23" y2="21" stroke={stroke} strokeWidth={sw} opacity="0.5" />
+        </svg>
+      )
+
+    // ── 球体：圆 + 赤道 + 经线 ──
+    case 'sphere':
+      return (
+        <svg width={s} height={s} viewBox="0 0 28 28">
+          <circle cx="14" cy="14" r="10" fill="none" stroke={stroke} strokeWidth={sw + 0.3} />
+          <ellipse cx="14" cy="14" rx="9.5" ry="4" fill="none" stroke={stroke} strokeWidth={sw} opacity="0.4" />
+          <ellipse cx="14" cy="14" rx="4" ry="9.5" fill="none" stroke={stroke} strokeWidth={sw} opacity="0.35" />
+        </svg>
+      )
+
+    // ── 圆柱：顶椭圆 + 底椭圆 + 侧边 ──
+    case 'cylinder':
+      return (
+        <svg width={s} height={s} viewBox="0 0 28 28">
+          <line x1="5" y1="9" x2="5" y2="21" stroke={stroke} strokeWidth={sw} />
+          <line x1="23" y1="9" x2="23" y2="21" stroke={stroke} strokeWidth={sw} />
+          <ellipse cx="14" cy="21" rx="9" ry="3" fill="none" stroke={stroke} strokeWidth={sw + 0.3} />
+          <ellipse cx="14" cy="9" rx="9" ry="3" fill="none" stroke={stroke} strokeWidth={sw + 0.3} />
+        </svg>
+      )
+
+    // ── 圆锥：底椭圆 + 顶点 + 母线 ──
+    case 'cone':
+      return (
+        <svg width={s} height={s} viewBox="0 0 28 28">
+          <ellipse cx="14" cy="21" rx="9" ry="3" fill="none" stroke={stroke} strokeWidth={sw + 0.3} />
+          <line x1="5" y1="21" x2="14" y2="4" stroke={stroke} strokeWidth={sw} />
+          <line x1="23" y1="21" x2="14" y2="4" stroke={stroke} strokeWidth={sw} />
+          <line x1="14" y1="8" x2="14" y2="21" stroke={stroke} strokeWidth={0.6} opacity="0.35" />
+        </svg>
+      )
+
+    // ── 正四棱锥：平行四边形底面 + 顶点 + 侧棱 ──
+    case 'pyramid':
+      return (
+        <svg width={s} height={s} viewBox="0 0 28 28">
+          <polygon points="8,22 16,24 22,18 14,16" fill="none" stroke={stroke} strokeWidth={sw} opacity="0.35" />
+          <line x1="8" y1="22" x2="15" y2="4" stroke={stroke} strokeWidth={sw} />
+          <line x1="16" y1="24" x2="15" y2="4" stroke={stroke} strokeWidth={sw} opacity="0.4" />
+          <line x1="22" y1="18" x2="15" y2="4" stroke={stroke} strokeWidth={sw} />
+          <line x1="14" y1="16" x2="15" y2="4" stroke={stroke} strokeWidth={sw} opacity="0.4" />
+          <circle cx="15" cy="4" r="1" fill={stroke} />
+        </svg>
+      )
+
+    // ── 直角三棱柱：立式，底面/顶面三角形 + 垂直侧棱 ──
+    case 'prism':
+      return (
+        <svg width={s} height={s} viewBox="0 0 28 28">
+          {/* 底面三角形（稍大） */}
+          <polygon points="14,23 22,26 6,26" fill="none" stroke={stroke} strokeWidth={sw + 0.3} />
+          {/* 顶面三角形（高21px） */}
+          <polygon points="14,2 22,5 6,5" fill="none" stroke={stroke} strokeWidth={sw} opacity="0.35" />
+          {/* 侧棱 严格垂直 */}
+          <line x1="14" y1="2" x2="14" y2="23" stroke={stroke} strokeWidth={sw} />
+          <line x1="22" y1="5" x2="22" y2="26" stroke={stroke} strokeWidth={sw} />
+          <line x1="6" y1="5" x2="6" y2="26" stroke={stroke} strokeWidth={sw} />
+        </svg>
+      )
+
+    default:
+      return <svg width={s} height={s} viewBox="0 0 28 28" />
+  }
+}
 
 export default function GeometrySelector({ onSelect, currentType }) {
   return (
@@ -11,7 +96,7 @@ export default function GeometrySelector({ onSelect, currentType }) {
           onClick={() => onSelect(geo.id, { size: 2 })}
           title={geo.name}
         >
-          <span className="icon">{geo.icon}</span>
+          <span className="icon"><GeoIcon type={geo.id} /></span>
           <span className="label">{geo.name}</span>
         </button>
       ))}

@@ -9,10 +9,10 @@ export function getFaces(type) {
   switch (type) {
     case 'cube':
       return [
-        [0, 1, 2, 3], // 后面 z=-s  (A,B,C,D)
-        [4, 5, 6, 7], // 前面 z=+s  (E,F,G,H)
-        [0, 1, 5, 4], // 下面 y=-s  (A,B,F,E)
-        [2, 3, 7, 6], // 上面 y=+s  (C,D,H,G)
+        [0, 1, 2, 3], // 底面 y=-s  (A,B,C,D)
+        [4, 5, 6, 7], // 顶面 y=+s  (E,F,G,H)
+        [2, 3, 7, 6], // 前面 z=+s  (C,D,H,G)
+        [0, 1, 5, 4], // 后面 z=-s  (A,B,F,E)
         [0, 3, 7, 4], // 左面 x=-s  (A,D,H,E)
         [1, 2, 6, 5], // 右面 x=+s  (B,C,G,F)
       ]
@@ -58,17 +58,15 @@ export function parseVertexPair(input, vertexLabels) {
   if (!input || input.length < 2) return null
 
   const cleaned = input.replace(/\s+/g, '')
-  // 收集所有有效标签（按长度降序，优先匹配长标签如 A' vs A）
   const sorted = [...vertexLabels].sort((a, b) => b.length - a.length)
 
-  // 尝试从开头匹配第一个标签
   const first = matchLabel(cleaned, 0, sorted)
   if (!first) return null
 
   const second = matchLabel(cleaned, first.len, sorted)
   if (!second) return null
 
-  // 确保解析完了整个字符串
+  // 确保解析完了整个字符串（仅2标签模式）
   if (first.len + second.len !== cleaned.length) return null
 
   const fromIdx = vertexLabels.indexOf(first.label)
@@ -77,6 +75,30 @@ export function parseVertexPair(input, vertexLabels) {
   if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return null
 
   return { fromLabel: first.label, toLabel: second.label, fromIdx, toIdx }
+}
+
+/** 将输入解析为顶点标签序列，支持顺序连线
+ *  输入 "ACBD" → [{label:"A",idx:0}, {label:"C",idx:2}, {label:"B",idx:1}, {label:"D",idx:3}]
+ *  返回标签序列或 null（无法完整解析时）
+ */
+export function parseVertexChain(input, vertexLabels) {
+  if (!input || input.length < 2) return null
+
+  const cleaned = input.replace(/\s+/g, '')
+  const sorted = [...vertexLabels].sort((a, b) => b.length - a.length)
+  const chain = []
+  let pos = 0
+
+  while (pos < cleaned.length) {
+    const m = matchLabel(cleaned, pos, sorted)
+    if (!m) return null // 无法匹配
+    const idx = vertexLabels.indexOf(m.label)
+    if (idx < 0) return null
+    chain.push({ label: m.label, idx })
+    pos += m.len
+  }
+
+  return chain.length >= 2 ? chain : null
 }
 
 function matchLabel(str, start, sortedLabels) {
@@ -243,7 +265,7 @@ export function generateOperationLines(type, operation, params) {
       } else if (type === 'pyramid') {
         lines.push({ id: 'PO', category: '高线', from: 4, to: 'base', dashed: true })
       } else if (type === 'prism') {
-        lines.push({ id: 'h1', category: '高线', from: 0, to: 'baseBottom', dashed: true })
+        lines.push({ id: 'h1', category: '高线', from: 'baseBottom', to: 'baseTop', dashed: true })
       } else if (type === 'sphere' || type === 'cylinder' || type === 'cone') {
         lines.push({ id: 'NS', category: '高线', from: 0, to: 1, dashed: true })
       }

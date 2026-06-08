@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { getVertexAndEdgeInfo } from '../engines/geometryEngine'
-import { getAutocompleteSuggestions } from '../engines/lineConnector'
+import { parseVertexChain, getAutocompleteSuggestions } from '../engines/lineConnector'
 import { getLineDefinitions } from '../engines/lineDefinitions'
 import './AutoConnect.css'
 
@@ -66,44 +66,49 @@ export default function AutoConnect({ geometry, existingKeys, onAddLine }) {
       return
     }
 
-    // 尝试手动解析
     if (trimmed.length < 2) {
       setMessage('请输入至少两个顶点标签，如 AC')
       return
     }
 
-    // 尝试逐字符匹配标签
-    const { lines: existingLines } = getLineDefinitions(type, params)
-    const allKeys = new Set([
-      ...existingLines.map(l => `${l.id}|${l.category}`),
-      ...existingKeys,
-    ])
+    // ── 顺序连线：尝试解析为顶点链 ──
+    const chain = parseVertexChain(trimmed, labels)
+    if (chain && chain.length >= 2) {
+      const { lines: existingLines } = getLineDefinitions(type, params)
+      const allKeys = new Set([
+        ...existingLines.map(l => `${l.id}|${l.category}`),
+        ...existingKeys,
+      ])
 
-    // 找到完全匹配输入的有效顶点对
-    let found = false
-    for (let i = 0; i < labels.length; i++) {
-      for (let j = i + 1; j < labels.length; j++) {
-        const pair = labels[i] + labels[j]
-        if (pair === trimmed) {
-          // 检查是否已存在
-          if ([...allKeys].some(k => k.startsWith(pair + '|'))) {
-            setMessage(`线段 ${pair} 已存在`)
-            return
-          }
-          onAddLine({ fromIdx: i, toIdx: j, id: pair })
-          setInput('')
-          setMessage(`已添加 ${pair}`)
-          setActiveIdx(-1)
-          found = true
-          break
+      const added = []
+      const skipped = []
+      for (let i = 0; i < chain.length - 1; i++) {
+        const a = chain[i]
+        const b = chain[i + 1]
+        const pairId = a.label + b.label
+        if ([...allKeys].some(k => k.startsWith(pairId + '|'))) {
+          skipped.push(pairId)
+          continue
         }
+        onAddLine({ fromIdx: a.idx, toIdx: b.idx, id: pairId })
+        added.push(pairId)
+        allKeys.add(pairId + '|') // 防止同次输入重复添加
       }
-      if (found) break
+
+      setInput('')
+      setActiveIdx(-1)
+      if (added.length > 0) {
+        setMessage(`已添加 ${added.join(' → ')}`)
+      } else if (skipped.length > 0) {
+        setMessage(`${skipped.join(', ')} 已存在`)
+      } else {
+        setMessage(`无法识别 "${trimmed}"`)
+      }
+      return
     }
 
-    if (!found) {
-      setMessage(`无法识别 "${trimmed}"，请使用有效顶点标签`)
-    }
+    // ── 回退：尝试识别为单个顶点对 ──
+    setMessage(`无法识别 "${trimmed}"，请输入有效顶点序列，如 AC 或 ACBD`)
   }, [input, suggestions, labels, existingKeys, onAddLine, type, params])
 
   const handleSelect = useCallback((suggestion) => {
@@ -134,11 +139,11 @@ export default function AutoConnect({ geometry, existingKeys, onAddLine }) {
           onFocus={() => setFocused(true)}
           onBlur={() => setTimeout(() => setFocused(false), 200)}
           onKeyDown={handleKeyDown}
-          placeholder="输入顶点对，如 AC"
+          placeholder="输入顶点序列，如 AC 或 ACBD"
           spellCheck={false}
           autoComplete="off"
         />
-        <button className="ac-btn" onClick={handleSubmit} title="添加连线">
+        <button className="ac-btn" onClick={handleSubmit} title="顺序连线">
           ＋
         </button>
       </div>

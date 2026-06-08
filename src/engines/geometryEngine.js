@@ -7,11 +7,16 @@ export function getVertexAndEdgeInfo(type, params) {
 
   const maps = {
     cube: () => {
+      // 底面→顶面，每面逆时针
       const v = [
-        [-s,-s,-s],[ s,-s,-s],[ s, s,-s],[-s, s,-s],
-        [-s,-s, s],[ s,-s, s],[ s, s, s],[-s, s, s]
+        [-s,-s,-s],[ s,-s,-s],[ s,-s, s],[-s,-s, s],  // 底面 ABCD
+        [-s, s,-s],[ s, s,-s],[ s, s, s],[-s, s, s],  // 顶面 EFGH
       ]
-      const e = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]]
+      const e = [
+        [0,1],[1,2],[2,3],[3,0],  // 底面边
+        [4,5],[5,6],[6,7],[7,4],  // 顶面边
+        [0,4],[1,5],[2,6],[3,7],  // 侧棱 AE,BF,CG,DH
+      ]
       return { vertices: v, edges: e, labels: ['A','B','C','D','E','F','G','H'] }
     },
     prism: () => {
