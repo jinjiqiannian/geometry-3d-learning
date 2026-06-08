@@ -1,0 +1,137 @@
+/* ═══════════════════════════════════════════════════════
+   WorkspaceToolbar — 工作区顶栏
+   ═══════════════════════════════════════════════════════ */
+
+.workspace-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border-light);
+  gap: 8px;
+  flex-shrink: 0;
+  z-index: 30;
+}
+
+.wt-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.wt-back {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.wt-back:hover {
+  background: var(--color-primary-light);
+}
+
+.wt-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wt-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.wt-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.wt-btn:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-primary);
+}
+
+.wt-btn.premium {
+  border-color: var(--color-teacher);
+  color: var(--color-teacher);
+  background: var(--color-teacher-light);
+}
+
+.wt-upgrade-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-pro-gradient);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.wt-upgrade-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35);
+}
+
+.wt-plan-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-pro);
+  background: var(--color-pro-light);
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .workspace-toolbar {
+    height: 44px;
+    padding: 0 8px;
+    gap: 4px;
+  }
+
+  .wt-title {
+    font-size: 12px;
+    max-width: 120px;
+  }
+
+  .wt-btn {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+
+  .wt-upgrade-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+}

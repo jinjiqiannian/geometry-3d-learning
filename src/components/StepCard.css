@@ -1,0 +1,125 @@
+/* ═══════════════════════════════════════════════════════
+   StepCard — 单个解题步骤卡片
+   ═══════════════════════════════════════════════════════ */
+
+.step-card {
+  display: flex;
+  gap: 12px;
+  padding: 14px 12px;
+  border-radius: var(--radius-md);
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: var(--color-bg);
+}
+
+.step-card:hover {
+  background: var(--color-bg-hover);
+}
+
+.step-card.current {
+  background: var(--color-primary-light);
+  border-left-color: var(--color-primary);
+}
+
+.step-card.locked {
+  opacity: 0.9;
+  cursor: default;
+}
+
+.step-indicator {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--step-bg, #e8f0fc);
+  color: var(--step-color, #4A90E2);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-card.current .step-number {
+  background: var(--color-primary);
+  color: white;
+}
+
+.step-lock {
+  font-size: 16px;
+}
+
+.step-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.step-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--step-bg, #e8f0fc);
+  color: var(--step-color, #4A90E2);
+  white-space: nowrap;
+}
+
+.step-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+.step-content {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.step-locked-content {
+  position: relative;
+}
+
+.step-content.blurred {
+  filter: blur(3px);
+  user-select: none;
+  pointer-events: none;
+}
+
+.step-upgrade-btn {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1.5px dashed var(--color-pro);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-pro);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.step-upgrade-btn:hover {
+  background: var(--color-pro-light);
+}

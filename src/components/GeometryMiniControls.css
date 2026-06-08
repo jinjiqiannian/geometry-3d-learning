@@ -1,0 +1,102 @@
+/* ═══════════════════════════════════════════════════════
+   GeometryMiniControls — Canvas 浮动控件
+   ═══════════════════════════════════════════════════════ */
+
+.geo-mini-controls {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gmc-bar {
+  display: flex;
+  gap: 6px;
+}
+
+.gmc-btn {
+  padding: 6px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.gmc-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: var(--color-primary);
+}
+
+.gmc-btn.active {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+}
+
+.gmc-dropdown {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  max-height: 300px;
+  overflow-y: auto;
+  min-width: 160px;
+}
+
+.gmc-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text);
+  transition: background var(--transition-fast);
+  text-align: left;
+  font-family: inherit;
+}
+
+.gmc-dropdown-item:hover {
+  background: var(--color-bg-hover);
+}
+
+.gmc-dropdown-item.active {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+.gmc-geo-icon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .geo-mini-controls {
+    top: 8px;
+    left: 8px;
+  }
+
+  .gmc-btn {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+}

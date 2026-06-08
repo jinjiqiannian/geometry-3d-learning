@@ -17,6 +17,25 @@
   --color-error: #e74c3c;
   --color-error-light: #fef0ef;
 
+  /* ── 商业色彩 ── */
+  --color-gold: #F5A623;
+  --color-gold-light: #FFF8E1;
+  --color-gold-dark: #D4891A;
+  --color-pro: #8B5CF6;
+  --color-pro-light: #F3F0FF;
+  --color-pro-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --color-teacher: #3B82F6;
+  --color-teacher-light: #EFF6FF;
+  --color-teacher-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --color-free: #6B7280;
+  --color-free-light: #F3F4F6;
+
+  /* ── 定价徽章 ── */
+  --badge-pro-bg: #8B5CF6;
+  --badge-pro-text: #FFFFFF;
+  --badge-teacher-bg: #3B82F6;
+  --badge-teacher-text: #FFFFFF;
+
   /* ── 中性色 ── */
   --color-text: #2c3e50;
   --color-text-secondary: #666666;

@@ -1,0 +1,103 @@
+/* ═══════════════════════════════════════════════════════
+   HeroInput — 核心输入组件（ChatGPT 风格）
+   ═══════════════════════════════════════════════════════ */
+
+.hero-input-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 24px;
+  width: 100%;
+}
+
+.hero-input-inner {
+  background: var(--color-bg);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 16px;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-normal);
+}
+
+.hero-input-wrap.focused .hero-input-inner {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--color-primary-glow), var(--shadow-lg);
+}
+
+.hero-input {
+  width: 100%;
+  border: none;
+  resize: none;
+  font-size: 16px;
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background: transparent;
+  line-height: 1.6;
+  outline: none;
+  min-height: 72px;
+}
+
+.hero-input::placeholder {
+  color: var(--color-text-muted);
+  font-size: 15px;
+}
+
+.hero-input-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.hero-input-hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.hero-input-btn {
+  padding: 10px 24px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.hero-input-btn:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--color-primary-glow);
+}
+
+.hero-input-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .hero-input-wrap {
+    padding: 0 16px;
+  }
+
+  .hero-input {
+    font-size: 15px;
+    min-height: 60px;
+  }
+
+  .hero-input-actions {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .hero-input-btn {
+    text-align: center;
+    padding: 12px;
+  }
+}
