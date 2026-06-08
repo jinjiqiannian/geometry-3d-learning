@@ -1,4 +1,4 @@
-import { GEOMETRIES } from '../constants'
+import { GEOMETRIES } from '../../constants'
 import './GeometrySelector.css'
 
 // ── 教科书风格 SVG 几何图标（全实线，透明度区分前后）──
@@ -102,6 +102,22 @@ function GeoIcon({ type }) {
           <ellipse cx="14" cy="8" rx="5" ry="2" fill="none" stroke={stroke} strokeWidth={sw + 0.3} />
           <line x1="4" y1="22" x2="9" y2="8" stroke={stroke} strokeWidth={sw} />
           <line x1="24" y1="22" x2="19" y2="8" stroke={stroke} strokeWidth={sw} />
+        </svg>
+      )
+
+    // ── 长方体：正面视角矩形 + 后移侧面 ──
+    case 'cuboid':
+      return (
+        <svg width={s} height={s} viewBox="0 0 28 28">
+          {/* 后面（虚线效果用低透明度） */}
+          <rect x="4" y="5" width="14" height="12" fill="none" stroke={stroke} strokeWidth={sw} opacity="0.3" />
+          {/* 前面（实线清晰） */}
+          <rect x="8" y="9" width="14" height="12" fill="none" stroke={stroke} strokeWidth={sw + 0.3} />
+          {/* 连接线（侧面） */}
+          <line x1="4" y1="5" x2="8" y2="9" stroke={stroke} strokeWidth={sw} opacity="0.45" />
+          <line x1="18" y1="5" x2="22" y2="9" stroke={stroke} strokeWidth={sw} opacity="0.45" />
+          <line x1="4" y1="17" x2="8" y2="21" stroke={stroke} strokeWidth={sw} opacity="0.45" />
+          <line x1="18" y1="17" x2="22" y2="21" stroke={stroke} strokeWidth={sw} opacity="0.45" />
         </svg>
       )
 

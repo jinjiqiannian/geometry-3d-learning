@@ -1,16 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import GeometrySelector from './GeometrySelector'
 import LineControlPanel from './LineControlPanel'
+import ParamEditor from './ParamEditor'
+import EdgePropertyPanel from './EdgePropertyPanel'
 import ProblemInput from './ProblemInput'
 import CameraCapture from './CameraCapture'
 import ApiKeySettings from './ApiKeySettings'
-import { calculateVolume, calculateSurfaceArea } from '../engines/geometryEngine'
-import { formatNumber } from '../engines/mathUtils'
-import { GEOMETRY_NAMES, FORMULAS, GEOMETRIES } from '../constants'
+import { calculateVolume, calculateSurfaceArea, isPolyhedral } from '../../engines/geometryEngine'
+import { getLineDefinitions } from '../../engines/lineDefinitions'
+import { formatNumber } from '../../engines/mathUtils'
+import { GEOMETRY_NAMES, FORMULAS, GEOMETRIES } from '../../constants'
 import './ControlPanel.css'
 
 export default function ControlPanel({
-  geometry, setGeometry,
+  geometry, setGeometry, updateGeometry,
   showFaces, setShowFaces,
   showLabels, setShowLabels,
   visibleLines, setVisibleLines,
@@ -18,32 +21,61 @@ export default function ControlPanel({
   customLines, setCustomLines,
   shownLengthLabels, setShownLengthLabels,
   searchedLine, setSearchedLine,
+  selectedEdge, onEdgeClick,
+  edgeColorOverrides, onEdgeColorChange,
+  onEdgeLengthChange, onConstraintModeChange, onQuickInput,
+  customVertices,
   apiKey, onApiKeyChange,
   onGeometryGenerated,
+  mobileTab,   // 手机端父级控制的 tab: 'params' | 'lines' | 'ai' | 'answer'
 }) {
   const [showAnswer, setShowAnswer] = useState(false)
-  const [activeTab, setActiveTab] = useState('geometry')  // 'geometry' | 'lines' | 'ai'
+  const [activeTab, setActiveTab] = useState('geometry')
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
 
-  // 监听窗口大小
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
+  const polyhedral = isPolyhedral(geometry.type)
+
   const handleGeometryChange = (type, params) => {
-    setGeometry({ type, params })
+    // 为新类型设置默认约束参数
+    const constraintDefaults = type === 'cuboid'
+      ? { constraintMode: 'cuboid', cubeSize: 2, cuboidA: 2, cuboidB: 1.2, cuboidC: 2, freeEdgeLengths: {} }
+      : { constraintMode: 'cube', cubeSize: 2, cuboidA: 2, cuboidB: 1.2, cuboidC: 2, freeEdgeLengths: {} }
+    setGeometry({
+      type,
+      params: { size: params.size ?? 2 },
+      ...constraintDefaults,
+    })
   }
 
   const generateProblem = () => {
     const randomType = GEOMETRIES[Math.floor(Math.random() * GEOMETRIES.length)].id
-    setGeometry({ type: randomType, params: { size: Math.random() * 3 + 1 } })
+    const constraintDefaults = randomType === 'cuboid'
+      ? { constraintMode: 'cuboid', cubeSize: 2, cuboidA: 2, cuboidB: 1.2, cuboidC: 2, freeEdgeLengths: {} }
+      : { constraintMode: 'cube', cubeSize: 2, cuboidA: 2, cuboidB: 1.2, cuboidC: 2, freeEdgeLengths: {} }
+    setGeometry({
+      type: randomType,
+      params: { size: Math.random() * 3 + 1 },
+      ...constraintDefaults,
+    })
     setShowAnswer(false)
   }
 
   const volume = calculateVolume(geometry.type, geometry.params)
   const surface = calculateSurfaceArea(geometry.type, geometry.params)
+
+  // ── 选中的边数据 ──
+  const selectedEdgeData = useMemo(() => {
+    if (!selectedEdge) return null
+    const { lines } = getLineDefinitions(geometry.type, geometry.params, customVertices)
+    const allLns = [...lines, ...customLines]
+    return allLns.find(l => `${l.id}|${l.category}` === selectedEdge) || null
+  }, [selectedEdge, geometry.type, geometry.params, customLines, customVertices])
 
   // ── 手机端 Tab 配置 ──
   const tabs = [
@@ -51,6 +83,16 @@ export default function ControlPanel({
     { key: 'lines', label: '📏 线段', icon: '📏' },
     { key: 'ai', label: '🤖 AI', icon: '🤖' },
   ]
+
+  // 父级控制 tab（手机端 BottomSheet）vs 内部状态（旧手机端兼容）
+  const effectiveTab = mobileTab
+    ? ({ params: 'geometry', lines: 'lines', ai: 'ai', answer: 'answer' }[mobileTab] || 'geometry')
+    : activeTab
+
+  const showGeometry = !isMobile || effectiveTab === 'geometry'
+  const showLines = !isMobile || effectiveTab === 'lines'
+  const showAI = !isMobile || effectiveTab === 'ai'
+  const showAnswerTab = !isMobile || effectiveTab === 'answer'
 
   return (
     <div className="control-panel">
@@ -61,8 +103,8 @@ export default function ControlPanel({
         <ApiKeySettings apiKey={apiKey} onApiKeyChange={onApiKeyChange} />
       </div>
 
-      {/* ── 手机端 Tab 导航 ── */}
-      {isMobile && (
+      {/* ── 手机端 Tab 导航（仅在无 mobileTab 时显示）── */}
+      {isMobile && !mobileTab && (
         <div className="mobile-tabs">
           {tabs.map(t => (
             <button
@@ -78,7 +120,7 @@ export default function ControlPanel({
       )}
 
       {/* ── 图形面板 ── */}
-      {(!isMobile || activeTab === 'geometry') && (
+      {showGeometry && (
         <>
           <div className="panel-section">
             <h2>几何体</h2>
@@ -88,20 +130,33 @@ export default function ControlPanel({
             />
           </div>
 
+          {/* ── 参数：多面体用 ParamEditor，曲面体用旧滑块 ── */}
           <div className="panel-section">
             <h2>参数</h2>
-            <div className="param-group">
-              <label>大小: {formatNumber(geometry.params.size)}</label>
-              <input
-                type="range"
-                min="0.5"
-                max="5"
-                step="0.1"
-                value={geometry.params.size}
-                onChange={(e) => handleGeometryChange(geometry.type, { size: parseFloat(e.target.value) })}
-                className="slider"
+            {polyhedral ? (
+              <ParamEditor
+                geometry={geometry}
+                onConstraintModeChange={onConstraintModeChange}
+                onEdgeLengthChange={onEdgeLengthChange}
+                onQuickInput={onQuickInput}
               />
-            </div>
+            ) : (
+              <div className="param-group">
+                <label>大小: {formatNumber(geometry.params.size)}</label>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="5"
+                  step="0.1"
+                  value={geometry.params.size}
+                  onChange={(e) => {
+                    const newSize = parseFloat(e.target.value)
+                    setGeometry(prev => ({ ...prev, params: { size: newSize } }))
+                  }}
+                  className="slider"
+                />
+              </div>
+            )}
           </div>
 
           <div className="panel-section">
@@ -117,11 +172,26 @@ export default function ControlPanel({
               <input type="checkbox" checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} /> 显示标签
             </label>
           </div>
+
+          {/* ── 边属性面板 ── */}
+          {selectedEdge && selectedEdgeData && polyhedral && (
+            <div className="panel-section">
+              <EdgePropertyPanel
+                edgeKey={selectedEdge}
+                edgeData={selectedEdgeData}
+                geometry={geometry}
+                edgeColorOverrides={edgeColorOverrides}
+                onEdgeLengthChange={onEdgeLengthChange}
+                onEdgeColorChange={onEdgeColorChange}
+                onClose={() => onEdgeClick?.(null)}
+              />
+            </div>
+          )}
         </>
       )}
 
       {/* ── 线段面板 ── */}
-      {(!isMobile || activeTab === 'lines') && (
+      {showLines && (
         <div className="panel-section">
           <LineControlPanel
             geometry={geometry}
@@ -135,12 +205,17 @@ export default function ControlPanel({
             setShownLengthLabels={setShownLengthLabels}
             searchedLine={searchedLine}
             setSearchedLine={setSearchedLine}
+            selectedEdge={selectedEdge}
+            onEdgeClick={onEdgeClick}
+            edgeColorOverrides={edgeColorOverrides}
+            onEdgeColorChange={onEdgeColorChange}
+            customVertices={customVertices}
           />
         </div>
       )}
 
       {/* ── AI 面板 ── */}
-      {(!isMobile || activeTab === 'ai') && (
+      {showAI && (
         <>
           <div className="panel-section">
             <ProblemInput
@@ -148,7 +223,6 @@ export default function ControlPanel({
               onGeometryGenerated={onGeometryGenerated}
             />
           </div>
-
           <div className="panel-section">
             <CameraCapture
               apiKey={apiKey}
@@ -158,7 +232,9 @@ export default function ControlPanel({
         </>
       )}
 
-      {/* ── 随机题目 + 答案（所有 tab 都显示）── */}
+      {/* ── 随机题目 + 答案 ── */}
+      {(!isMobile || effectiveTab === 'answer') && (
+      <>
       <div className="panel-section">
         <button className="btn-primary" onClick={generateProblem}>
           🎲 随机题目
@@ -189,6 +265,8 @@ export default function ControlPanel({
           </div>
         )}
       </div>
+      </>
+      )}
     </div>
   )
 }

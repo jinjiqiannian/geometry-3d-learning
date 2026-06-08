@@ -1,8 +1,16 @@
 import * as THREE from 'three'
 
 // 为各几何体提供精确的顶点和边信息
-export function getVertexAndEdgeInfo(type, params) {
+// customVertices: 自由模式下由约束求解器提供的顶点（覆盖默认计算）
+export function getVertexAndEdgeInfo(type, params, customVertices) {
   const { size = 2 } = params
+
+  // 自由模式：使用自定义顶点，保留原有的边拓扑和标签
+  if (customVertices && customVertices.length > 0 && isPolyhedral(type)) {
+    const info = getVertexAndEdgeInfo(type, params)  // 获取标签和边
+    return { vertices: customVertices, edges: info.edges, labels: info.labels }
+  }
+
   const s = size / 2
 
   const maps = {
@@ -80,13 +88,35 @@ export function getVertexAndEdgeInfo(type, params) {
       ]
       return { vertices: v, edges: [], labels: ['O','O\'','A','B','C','D','A\'','B\'','C\'','D\''] }
     },
+    cuboid: () => {
+      // 长方体：长(size)×宽(0.6size)×高(size)，底面→顶面，每面逆时针
+      const a = s          // 半长 (x)
+      const c = s          // 半高 (y)
+      const b = s * 0.6    // 半宽 (z)
+      const v = [
+        [-a, -c, -b], [ a, -c, -b], [ a, -c,  b], [-a, -c,  b],  // 底面 ABCD (0-3)
+        [-a,  c, -b], [ a,  c, -b], [ a,  c,  b], [-a,  c,  b],  // 顶面 EFGH (4-7)
+      ]
+      const e = [
+        [0,1],[1,2],[2,3],[3,0],  // 底面边
+        [4,5],[5,6],[6,7],[7,4],  // 顶面边
+        [0,4],[1,5],[2,6],[3,7],  // 侧棱
+      ]
+      return { vertices: v, edges: e, labels: ['A','B','C','D','E','F','G','H'] }
+    },
   }
 
   return maps[type]?.() || { vertices: [], edges: [], labels: [] }
 }
 
 // 创建 Three.js 几何体，顶点坐标与 getVertexAndEdgeInfo 严格一致
-export function createGeometry(type, params) {
+// customVertices: 自由模式下由约束求解器提供的顶点
+export function createGeometry(type, params, customVertices) {
+  // 自由模式：从自定义顶点构建几何体
+  if (customVertices && customVertices.length > 0 && isPolyhedral(type)) {
+    return buildGeometryFromVertices(customVertices, type)
+  }
+
   const { size = 2 } = params
   const s = size / 2
 
@@ -164,6 +194,9 @@ export function createGeometry(type, params) {
     case 'circularFrustum':
       // Three.js 原生圆台：半径下大上小
       return new THREE.CylinderGeometry(s / 2, s, size, 64)
+    case 'cuboid':
+      // 长(size) × 宽(0.6*size) × 高(size)
+      return new THREE.BoxGeometry(size, size, size * 0.6)
     default:
       return new THREE.BoxGeometry(size, size, size)
   }
@@ -177,9 +210,53 @@ function createFromArrays(flatVerts, indices) {
   return geo
 }
 
+// ── 从任意顶点数组构建三角面几何体 ────────────────────
+// 保持各类型的面拓扑（三角形索引）不变，仅替换顶点坐标
+function buildGeometryFromVertices(vertices, type) {
+  const flatVerts = vertices.flat()  // [[x,y,z],...] → [x,y,z,...]
+  const indices = getFaceIndices(type)
+  return createFromArrays(flatVerts, indices)
+}
+
+/** 返回各多面体类型的三角面索引 */
+function getFaceIndices(type) {
+  switch (type) {
+    case 'cube':
+    case 'cuboid':
+      return [
+        0,1,2, 0,2,3, 4,6,5, 4,7,6,       // 底面 + 顶面
+        0,4,5, 0,5,1, 1,5,6, 1,6,2,       // 侧面
+        2,6,7, 2,7,3, 3,7,4, 3,4,0,
+      ]
+    case 'pyramid':
+      return [
+        0,1,4, 1,2,4, 2,3,4, 3,0,4,       // 侧面
+        1,0,3, 1,3,2,                       // 底面
+      ]
+    case 'prism':
+      return [
+        0,1,2, 3,5,4,                       // 底面 + 顶面
+        0,3,4, 0,4,1,                       // 侧面
+        1,4,5, 1,5,2,
+        2,5,3, 2,3,0,
+      ]
+    case 'squareFrustum':
+      return [
+        0,2,1, 0,3,2,                       // 底面
+        4,5,6, 4,6,7,                       // 顶面
+        2,3,7, 2,7,6,                       // 前面
+        0,5,1, 0,4,5,                       // 后面
+        1,6,2, 1,5,6,                       // 右面
+        0,7,3, 0,4,7,                       // 左面
+      ]
+    default:
+      return []
+  }
+}
+
 // 判断是否为棱柱形几何体（可以单独画棱边）
 export function isPolyhedral(type) {
-  return ['cube', 'prism', 'pyramid', 'squareFrustum'].includes(type)
+  return ['cube', 'prism', 'pyramid', 'squareFrustum', 'cuboid'].includes(type)
 }
 
 export function calculateVolume(type, params) {
@@ -200,6 +277,7 @@ export function calculateVolume(type, params) {
       const R = size / 2, r = size / 4, h = size
       return (Math.PI * h / 3) * (R * R + r * r + R * r)
     },
+    cuboid: () => size * size * (size * 0.6),  // V = a·b·c
   }
   return formulas[type]?.() || 0
 }
@@ -223,6 +301,10 @@ export function calculateSurfaceArea(type, params) {
       const R = size / 2, r = size / 4, h = size
       const l = Math.sqrt(h * h + Math.pow(R - r, 2))
       return Math.PI * (R + r) * l + Math.PI * (R * R + r * r)
+    },
+    cuboid: () => {
+      const a = size, b = size * 0.6, c = size
+      return 2 * (a * b + b * c + a * c)  // S = 2(ab+bc+ac)
     },
   }
   return formulas[type]?.() || 0

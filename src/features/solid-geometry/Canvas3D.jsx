@@ -1,9 +1,9 @@
-import { useMemo, useCallback } from 'react'
+import { useMemo, useCallback, useRef } from 'react'
 import * as THREE from 'three'
 import { OrbitControls, Text, Line, Billboard } from '@react-three/drei'
-import { createGeometry, getVertexAndEdgeInfo } from '../engines/geometryEngine'
-import { getLineDefinitions, resolvePoint, getLineStyle } from '../engines/lineDefinitions'
-import { searchLines } from '../engines/lineConnector'
+import { createGeometry, getVertexAndEdgeInfo } from '../../engines/geometryEngine'
+import { getLineDefinitions, resolvePoint, getLineStyle } from '../../engines/lineDefinitions'
+import { searchLines } from '../../engines/lineConnector'
 
 // ── 圆采样 ──────────────────────────────────────────
 function ring(radius, plane, seg = 64) {
@@ -38,9 +38,67 @@ function useCurveData(type, s) {
       lines.push([[-s, -s, 0], [0, s, 0]])
       lines.push([[0, -s, s], [0, s, 0]])
       lines.push([[0, -s, -s], [0, s, 0]])
+    } else if (type === 'circularFrustum') {
+      lines.push(ring(s, 'xz').map(p => [p[0], -s, p[2]]))
+      lines.push(ring(s / 2, 'xz').map(p => [p[0], s, p[2]]))
+      lines.push([[s, -s, 0], [s / 2, s, 0]])
+      lines.push([[-s, -s, 0], [-s / 2, s, 0]])
     }
     return lines
   }, [type, s])
+}
+
+// ── 棱边隐形碰撞体 ──────────────────────────────────
+/** 为一条线段生成沿其方向的细圆柱体（作点击检测） */
+function EdgeHitbox({ from, to, lineData, lineKey, visible, selected, hovered,
+  onPointerOver, onPointerOut, onSelect }) {
+  const fromVec = useMemo(() => new THREE.Vector3(...from), [from])
+  const toVec = useMemo(() => new THREE.Vector3(...to), [to])
+
+  const { mid, length, quaternion } = useMemo(() => {
+    const mid = new THREE.Vector3().addVectors(fromVec, toVec).multiplyScalar(0.5)
+    const len = fromVec.distanceTo(toVec)
+    const dir = new THREE.Vector3().subVectors(toVec, fromVec).normalize()
+    const quat = new THREE.Quaternion().setFromUnitVectors(
+      new THREE.Vector3(0, 1, 0), dir
+    )
+    return { mid: mid.toArray(), length: len, quaternion: quat.toArray() }
+  }, [fromVec, toVec])
+
+  const pointerDownPos = useRef(null)
+
+  return (
+    <mesh
+      position={mid}
+      quaternion={quaternion}
+      onPointerOver={(e) => { e.stopPropagation(); onPointerOver(lineData) }}
+      onPointerOut={onPointerOut}
+      onPointerDown={(e) => {
+        e.stopPropagation()
+        pointerDownPos.current = [e.clientX, e.clientY]
+      }}
+      onPointerUp={(e) => {
+        e.stopPropagation()
+        if (pointerDownPos.current) {
+          const dx = e.clientX - pointerDownPos.current[0]
+          const dy = e.clientY - pointerDownPos.current[1]
+          // 移动距离 < 3px 视为点击（非拖拽旋转）
+          if (Math.abs(dx) < 3 && Math.abs(dy) < 3) {
+            onSelect(lineData)
+          }
+          pointerDownPos.current = null
+        }
+      }}
+    >
+      <cylinderGeometry args={[0.06, 0.06, length, 6]} />
+      <meshBasicMaterial
+        color={selected ? '#FF8C00' : hovered ? '#4A90E2' : '#000000'}
+        transparent
+        opacity={0}           // 完全透明，仅作碰撞体
+        depthWrite={false}
+      />
+    </mesh>
+  )
 }
 
 // ══════════════════ 主组件 ═══════════════════════════
@@ -49,19 +107,29 @@ export default function Canvas3D({
   geometry, showFaces = true, showLabels = true,
   visibleLines, hoveredLine, setHoveredLine,
   allLines, shownLengthLabels, searchedLine,
+  selectedEdge, onEdgeClick, edgeColorOverrides,
+  customVertices,
 }) {
   const { type, params } = geometry
   const size = params.size ?? 2
   const s = size / 2
 
-  const geoData = useMemo(() => createGeometry(type, params), [type, size])
-  const edgeInfo = useMemo(() => getVertexAndEdgeInfo(type, params), [type, size])
+  const geoData = useMemo(
+    () => createGeometry(type, params, customVertices),
+    [type, size, customVertices]
+  )
+  const edgeInfo = useMemo(
+    () => getVertexAndEdgeInfo(type, params, customVertices),
+    [type, size, customVertices]
+  )
 
-  // 获取点数据（用于线段坐标解析）
-  const { points: pts } = useMemo(() => getLineDefinitions(type, params), [type, size])
+  const { points: pts } = useMemo(
+    () => getLineDefinitions(type, params, customVertices),
+    [type, size, customVertices]
+  )
 
   const curveLines = useCurveData(type, s)
-  const isCurved = ['sphere', 'cylinder', 'cone'].includes(type)
+  const isCurved = ['sphere', 'cylinder', 'cone', 'circularFrustum'].includes(type)
 
   // ── 搜索匹配集 ──
   const searchMatchSet = useMemo(() => {
@@ -82,7 +150,7 @@ export default function Canvas3D({
 
   const lineKey = (l) => `${l.id}|${l.category}`
 
-  // ── 处理 hover ──
+  // ── hover 处理 ──
   const handlePointerOver = useCallback((l) => {
     setHoveredLine?.(lineKey(l))
   }, [setHoveredLine])
@@ -90,30 +158,37 @@ export default function Canvas3D({
     setHoveredLine?.(null)
   }, [setHoveredLine])
 
+  // ── 选中处理 ──
+  const handleSelect = useCallback((l) => {
+    const key = lineKey(l)
+    onEdgeClick?.(key === selectedEdge ? null : key)
+  }, [onEdgeClick, selectedEdge])
+
   // ── 渲染单条线段 ──
   const renderLine = (l, key) => {
     const visible = visibleLines.has(key)
     const hovered = hoveredLine === key
     const searched = searchMatchSet.has(key)
+    const selected = selectedEdge === key
     const showLen = shownLengthLabels?.has(key) && visible
 
     const style = getLineStyle(l.category)
 
-    // 颜色优先级：hover > searched > visible
-    // 始终渲染（不 return null），通过 opacity=0 隐藏，避免 R3F 卸载问题
     let color, opacity
-    if (hovered) {
-      color = '#4A90E2'
-      opacity = 1
+    if (selected) {
+      color = '#FF8C00'; opacity = 1
+    } else if (hovered) {
+      color = '#4A90E2'; opacity = 1
     } else if (searched) {
-      color = '#2979ff'
-      opacity = 1
+      color = '#2979ff'; opacity = 1
+    } else if (l.colorOverride) {
+      color = l.colorOverride; opacity = style.opacity
+    } else if (edgeColorOverrides?.[key]) {
+      color = edgeColorOverrides[key]; opacity = style.opacity
     } else if (visible) {
-      color = style.color
-      opacity = style.opacity
+      color = style.color; opacity = style.opacity
     } else {
-      color = style.color
-      opacity = 0
+      color = style.color; opacity = 0
     }
 
     const geo = new THREE.BufferGeometry().setFromPoints([
@@ -121,14 +196,13 @@ export default function Canvas3D({
       new THREE.Vector3(l.to[0], l.to[1], l.to[2]),
     ])
 
+    // 仅棱和自定义边有碰撞体（对角线和辅助线太细不需要）
+    const isEdge = ['棱', '底面边', '顶面边', '侧棱'].includes(l.category) || l.custom
+
     return (
       <group key={key}>
-        <line
-          geometry={geo}
-          onPointerOver={(e) => { e.stopPropagation(); handlePointerOver(l) }}
-          onPointerOut={handlePointerOut}
-          visible={opacity > 0}
-        >
+        {/* 可见线段 */}
+        <line geometry={geo} visible={opacity > 0} raycast={() => {}}>
           <lineBasicMaterial
             color={color}
             transparent
@@ -137,7 +211,19 @@ export default function Canvas3D({
           />
         </line>
 
-        {/* 持久长度标签：在线段中点，小号深灰 */}
+        {/* 隐形碰撞体（仅棱边） */}
+        {isEdge && (
+          <EdgeHitbox
+            from={l.from} to={l.to}
+            lineData={l} lineKey={key}
+            visible={visible} selected={selected} hovered={hovered}
+            onPointerOver={handlePointerOver}
+            onPointerOut={handlePointerOut}
+            onSelect={handleSelect}
+          />
+        )}
+
+        {/* 长度标签 */}
         {showLen && visible && (
           <Billboard position={l.mid} follow>
             <Text
@@ -165,22 +251,16 @@ export default function Canvas3D({
         </mesh>
       )}
 
-      {/* ── 自定义线段（多面体）── */}
-      {!isCurved && resolvedLines.map(l => {
-        const key = lineKey(l)
-        return renderLine(l, key)
-      })}
+      {/* ── 多面体线段 ── */}
+      {!isCurved && resolvedLines.map(l => renderLine(l, lineKey(l)))}
 
-      {/* ── 曲面体基础线框 ── */}
+      {/* ── 曲面体线框 ── */}
       {isCurved && curveLines.map((pts, i) => (
         <Line key={`curve-${i}`} points={pts} color="#1a1a1a" lineWidth={1} />
       ))}
 
-      {/* ── 曲面体自定义线段 ── */}
-      {isCurved && resolvedLines.map(l => {
-        const key = lineKey(l)
-        return renderLine(l, key)
-      })}
+      {/* ── 曲面体线段 ── */}
+      {isCurved && resolvedLines.map(l => renderLine(l, lineKey(l)))}
 
       {/* ── 顶点标签 ── */}
       {showLabels && edgeInfo.vertices.map((v, i) => (

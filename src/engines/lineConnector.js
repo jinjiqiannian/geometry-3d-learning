@@ -45,6 +45,16 @@ export function getFaces(type) {
         [3, 0, 4, 7],        // 侧面 DAEH
       ]
 
+    case 'cuboid':
+      return [
+        [0, 1, 2, 3], // 底面 ABCD
+        [4, 5, 6, 7], // 顶面 EFGH
+        [2, 3, 7, 6], // 前面 CDHG (z+)
+        [0, 1, 5, 4], // 后面 ABFE (z-)
+        [0, 3, 7, 4], // 左面 ADHE (x-)
+        [1, 2, 6, 5], // 右面 BCGF (x+)
+      ]
+
     default:
       return []
   }
@@ -52,7 +62,7 @@ export function getFaces(type) {
 
 // ── 空间对角线对（正方体专用）─────────────────────────
 function getSpaceDiagonals(type) {
-  if (type === 'cube') return [
+  if (type === 'cube' || type === 'cuboid') return [
     [0, 6], [1, 7], [2, 4], [3, 5],
   ]
   return []
@@ -264,11 +274,8 @@ export function generateOperationLines(type, operation, params) {
     }
 
     case 'height': {
-      if (type === 'cube') {
-        // 正方体：两个对面的中心连线（3条）
-        // 简化：体心到各面中心
-        const faceCenters = getFaces(type)
-        // 使用面对面的中心
+      if (type === 'cube' || type === 'cuboid') {
+        // 正方体/长方体：对面前中心连线（3条）
         lines.push({ id: 'h_x', category: '高线', from: 'left', to: 'right', dashed: true })
         lines.push({ id: 'h_y', category: '高线', from: 'bottom', to: 'top', dashed: true })
         lines.push({ id: 'h_z', category: '高线', from: 'front', to: 'back', dashed: true })
@@ -325,6 +332,24 @@ export function generateOperationLines(type, operation, params) {
         // 顶面正方形中位线
         lines.push({ id: 'mid_EF_GH', category: '辅助构造线', from: mid(4, 5), to: mid(6, 7), dashed: true })
         lines.push({ id: 'mid_FG_HE', category: '辅助构造线', from: mid(5, 6), to: mid(7, 4), dashed: true })
+      } else if (type === 'cuboid' && info.vertices) {
+        const v = info.vertices
+        const mid = (a, b) => [
+          (v[a][0] + v[b][0]) / 2,
+          (v[a][1] + v[b][1]) / 2,
+          (v[a][2] + v[b][2]) / 2,
+        ]
+        // 底面中位线（矩形）
+        lines.push({ id: 'mid_AB_CD', category: '辅助构造线', from: mid(0, 1), to: mid(2, 3), dashed: true })
+        lines.push({ id: 'mid_BC_DA', category: '辅助构造线', from: mid(1, 2), to: mid(3, 0), dashed: true })
+        // 顶面中位线（矩形）
+        lines.push({ id: 'mid_EF_GH', category: '辅助构造线', from: mid(4, 5), to: mid(6, 7), dashed: true })
+        lines.push({ id: 'mid_FG_HE', category: '辅助构造线', from: mid(5, 6), to: mid(7, 4), dashed: true })
+        // 侧面中位线（4条竖线连接各侧面上下边中点）
+        lines.push({ id: 'mid_front', category: '辅助构造线', from: mid(2, 3), to: mid(6, 7), dashed: true })
+        lines.push({ id: 'mid_back', category: '辅助构造线', from: mid(0, 1), to: mid(4, 5), dashed: true })
+        lines.push({ id: 'mid_left', category: '辅助构造线', from: mid(3, 0), to: mid(7, 4), dashed: true })
+        lines.push({ id: 'mid_right', category: '辅助构造线', from: mid(1, 2), to: mid(5, 6), dashed: true })
       }
       break
     }

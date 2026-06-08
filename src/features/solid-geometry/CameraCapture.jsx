@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { parseImageToGeometry } from '../engines/problemParser'
+import { parseImageToGeometry } from '../../engines/problemParser'
 import './CameraCapture.css'
 
 export default function CameraCapture({ apiKey, onGeometryGenerated }) {

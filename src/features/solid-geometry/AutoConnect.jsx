@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
-import { getVertexAndEdgeInfo } from '../engines/geometryEngine'
-import { parseVertexChain, getAutocompleteSuggestions } from '../engines/lineConnector'
-import { getLineDefinitions } from '../engines/lineDefinitions'
+import { getVertexAndEdgeInfo } from '../../engines/geometryEngine'
+import { parseVertexChain, getAutocompleteSuggestions } from '../../engines/lineConnector'
+import { getLineDefinitions } from '../../engines/lineDefinitions'
 import './AutoConnect.css'
 
 export default function AutoConnect({ geometry, existingKeys, onAddLine }) {

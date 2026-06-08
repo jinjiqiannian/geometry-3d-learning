@@ -1,0 +1,161 @@
+/* ═══════════════════════════════════════════════════════
+   HomePage — 首页
+   ═══════════════════════════════════════════════════════ */
+
+.home-page {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ── Hero ───────────────────────────────────────────── */
+.hero {
+  position: relative;
+  background: linear-gradient(135deg, #4A90E2 0%, #5B9EF5 30%, #7B68EE 100%);
+  padding: 60px 32px 64px;
+  text-align: center;
+  overflow: hidden;
+  color: white;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.hero-icon {
+  display: block;
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.hero-title {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.hero-subtitle {
+  font-size: 16px;
+  font-weight: 500;
+  opacity: 0.95;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.hero-desc {
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+/* Decorative shapes */
+.hero-shapes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hero-shape {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.shape-1 {
+  width: 200px;
+  height: 200px;
+  top: -40px;
+  right: -40px;
+}
+
+.shape-2 {
+  width: 120px;
+  height: 120px;
+  bottom: 20px;
+  left: 10%;
+}
+
+.shape-3 {
+  width: 80px;
+  height: 80px;
+  top: 30%;
+  left: 5%;
+}
+
+/* ── Modules Section ────────────────────────────────── */
+.modules-section {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 24px 32px;
+}
+
+.modules-heading {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+/* ── Footer ─────────────────────────────────────────── */
+.home-footer {
+  text-align: center;
+  padding: 32px 24px 48px;
+}
+
+.home-footer p {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+/* ── 手机端 ─────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .hero {
+    padding: 48px 20px 52px;
+  }
+
+  .hero-icon {
+    font-size: 40px;
+  }
+
+  .hero-title {
+    font-size: 24px;
+  }
+
+  .hero-subtitle {
+    font-size: 14px;
+  }
+
+  .hero-desc {
+    font-size: 12px;
+  }
+
+  .modules-section {
+    padding: 28px 16px 16px;
+  }
+
+  .modules-heading {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+
+  .modules-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .home-footer {
+    padding: 24px 16px 72px; /* extra bottom for BottomNav */
+  }
+}

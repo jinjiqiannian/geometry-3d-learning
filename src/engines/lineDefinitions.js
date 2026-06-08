@@ -3,9 +3,66 @@
 //  id 格式: "顶点标签-顶点标签" 或 "名称"
 // ═══════════════════════════════════════════════════════
 
+// ── 从自定义顶点重新计算中心点 ────────────────────────
+function computeCentersFromVertices(type, vertices, defaultPts) {
+  const c = { ...defaultPts.centers }  // 先拷贝默认值作为回退
+  const v = vertices
+
+  const avg = (indices) => {
+    const sum = [0, 0, 0]
+    indices.forEach(i => {
+      if (i < v.length) { sum[0] += v[i][0]; sum[1] += v[i][1]; sum[2] += v[i][2] }
+    })
+    const n = indices.length
+    return [sum[0] / n, sum[1] / n, sum[2] / n]
+  }
+
+  switch (type) {
+    case 'cube':
+    case 'cuboid':
+      c.body = avg([0, 1, 2, 3, 4, 5, 6, 7])
+      c.bottom = avg([0, 1, 2, 3])
+      c.top = avg([4, 5, 6, 7])
+      c.front = avg([2, 3, 6, 7])
+      c.back = avg([0, 1, 4, 5])
+      c.left = avg([0, 3, 4, 7])
+      c.right = avg([1, 2, 5, 6])
+      break
+    case 'pyramid':
+      c.body = avg([0, 1, 2, 3, 4])
+      c.base = avg([0, 1, 2, 3])
+      c.apex = v[4]
+      break
+    case 'prism':
+      c.body = avg([0, 1, 2, 3, 4, 5])
+      c.baseBottom = avg([0, 1, 2])
+      c.baseTop = avg([3, 4, 5])
+      break
+    case 'squareFrustum':
+      c.body = avg([0, 1, 2, 3, 4, 5, 6, 7])
+      c.bottom = avg([0, 1, 2, 3])
+      c.top = avg([4, 5, 6, 7])
+      break
+    default:
+      break
+  }
+
+  return c
+}
+
 /** 根据 size 参数计算所有顶点和参考点 */
-function getPoints(type, params) {
+// customVertices: 自由模式下由约束求解器提供的顶点（覆盖模板计算）
+function getPoints(type, params, customVertices) {
   const { size = 2 } = params
+
+  // 自由模式：用自定义顶点覆盖模板顶点，中心点从实际顶点计算
+  if (customVertices && customVertices.length > 0) {
+    const defaultPts = getPoints(type, params)
+    // 从自定义顶点重新计算中心点
+    const centers = computeCentersFromVertices(type, customVertices, defaultPts)
+    return { vertices: customVertices, centers, labels: defaultPts.labels }
+  }
+
   const s = size / 2
 
   switch (type) {
@@ -99,6 +156,24 @@ function getPoints(type, params) {
         labels: "OO'ABCDA'B'C'D'".match(/[A-O]'?/g) }
     }
 
+    case 'cuboid': {
+      // 长(size)×宽(0.6size)×高(size)，底面→顶面
+      const a = s          // 半长 (x)
+      const c = s          // 半高 (y)
+      const b = s * 0.6    // 半宽 (z)
+      const v = [
+        [-a, -c, -b], [ a, -c, -b], [ a, -c,  b], [-a, -c,  b],  // 底面 ABCD (0-3)
+        [-a,  c, -b], [ a,  c, -b], [ a,  c,  b], [-a,  c,  b],  // 顶面 EFGH (4-7)
+      ]
+      const centers = {
+        body: [0, 0, 0],
+        front: [0, 0, b], back: [0, 0, -b],
+        left: [-a, 0, 0], right: [a, 0, 0],
+        top: [0, c, 0], bottom: [0, -c, 0],
+      }
+      return { vertices: v, centers, labels: 'ABCDEFGH'.split('') }
+    }
+
     default:
       return { vertices: [], centers: {}, labels: [] }
   }
@@ -113,10 +188,10 @@ function getPoints(type, params) {
  *   lines: [{ id, category, from, to, dashed?, label? }]
  * }
  */
-export function getLineDefinitions(type, params) {
+export function getLineDefinitions(type, params, customVertices) {
   const { size = 2 } = params
   const s = size / 2
-  const pts = getPoints(type, params)
+  const pts = getPoints(type, params, customVertices)
   const v = pts.vertices
   const L = pts.labels
   const lines = []
@@ -279,6 +354,39 @@ export function getLineDefinitions(type, params) {
       break
     }
 
+    // ─── 长方体（底面 ABCD → 顶面 EFGH，长宽高不同）───
+    case 'cuboid': {
+      // 12 棱：底面边+顶面边+侧棱
+      def('AB', '底面边', 0, 1); def('BC', '底面边', 1, 2)
+      def('CD', '底面边', 2, 3); def('DA', '底面边', 3, 0)
+      def('EF', '顶面边', 4, 5); def('FG', '顶面边', 5, 6)
+      def('GH', '顶面边', 6, 7); def('HE', '顶面边', 7, 4)
+      def('AE', '侧棱', 0, 4); def('BF', '侧棱', 1, 5)
+      def('CG', '侧棱', 2, 6); def('DH', '侧棱', 3, 7)
+      // 棱（全部）
+      def('AB', '棱', 0, 1); def('BC', '棱', 1, 2)
+      def('CD', '棱', 2, 3); def('DA', '棱', 3, 0)
+      def('EF', '棱', 4, 5); def('FG', '棱', 5, 6)
+      def('GH', '棱', 6, 7); def('HE', '棱', 7, 4)
+      def('AE', '棱', 0, 4); def('BF', '棱', 1, 5)
+      def('CG', '棱', 2, 6); def('DH', '棱', 3, 7)
+      // 面对角线（6面 × 2 = 12条）
+      def('AC', '面对角线', 0, 2, true); def('BD', '面对角线', 1, 3, true)  // 底面
+      def('EG', '面对角线', 4, 6, true); def('FH', '面对角线', 5, 7, true)  // 顶面
+      def('AF', '面对角线', 0, 5, true); def('BE', '面对角线', 1, 4, true)  // 后面
+      def('DG', '面对角线', 3, 6, true); def('CH', '面对角线', 2, 7, true)  // 前面
+      def('AH', '面对角线', 0, 7, true); def('DE', '面对角线', 3, 4, true)  // 左面
+      def('BG', '面对角线', 1, 6, true); def('CF', '面对角线', 2, 5, true)  // 右面
+      // 空间对角线（4条）
+      def('AG', '空间对角线', 0, 6, true); def('BH', '空间对角线', 1, 7, true)
+      def('CE', '空间对角线', 2, 4, true); def('DF', '空间对角线', 3, 5, true)
+      // 高线（3条：x轴、y轴、z轴方向）
+      def('h_x', '高线', 'left', 'right', true)
+      def('h_y', '高线', 'bottom', 'top', true)
+      def('h_z', '高线', 'back', 'front', true)
+      break
+    }
+
     // ─── 圆台（类似圆柱）───
     case 'circularFrustum': {
       def("OO'", '高线', 0, 1, true)     // 中心轴
@@ -324,11 +432,14 @@ export function resolvePoint(label, points) {
 export function textbookDefaults(type) {
   const defaults = {
     cube: ['棱'],
+    cuboid: ['棱'],
     pyramid: ['棱'],
     prism: ['棱'],
+    squareFrustum: ['棱'],
     sphere: ['高线'],
     cylinder: [],
     cone: [],
+    circularFrustum: [],
   }
   return new Set(defaults[type] || [])
 }

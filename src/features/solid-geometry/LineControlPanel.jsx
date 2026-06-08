@@ -1,7 +1,7 @@
 import { useMemo, useCallback } from 'react'
 import AutoConnect from './AutoConnect'
-import { getLineDefinitions, CATEGORY_NAMES, CATEGORY_ORDER, PRESETS } from '../engines/lineDefinitions'
-import { detectLineType, generateOperationLines, searchLines } from '../engines/lineConnector'
+import { getLineDefinitions, CATEGORY_NAMES, CATEGORY_ORDER, PRESETS } from '../../engines/lineDefinitions'
+import { detectLineType, generateOperationLines, searchLines } from '../../engines/lineConnector'
 import './LineControlPanel.css'
 import './AutoConnect.css'
 
@@ -10,12 +10,18 @@ export default function LineControlPanel({
   customLines, setCustomLines,
   shownLengthLabels, setShownLengthLabels,
   searchedLine, setSearchedLine,
+  selectedEdge, onEdgeClick,
+  edgeColorOverrides, onEdgeColorChange,
+  customVertices,
 }) {
   const { type, params } = geometry
   const size = params.size ?? 2
 
   // 获取当前几何体的所有预定义线段
-  const { lines: predefinedLines } = useMemo(() => getLineDefinitions(type, params), [type, size])
+  const { lines: predefinedLines } = useMemo(
+    () => getLineDefinitions(type, params, customVertices),
+    [type, size, customVertices]
+  )
 
   // 合并所有线段（预定义 + 自定义）
   const allLines = useMemo(() => [...predefinedLines, ...customLines], [predefinedLines, customLines])
@@ -93,7 +99,7 @@ export default function LineControlPanel({
     const fn = PRESETS[name]
     if (fn) {
       const result = fn(type)
-      const { lines: currentLines } = getLineDefinitions(type, params)
+      const { lines: currentLines } = getLineDefinitions(type, params, customVertices)
       const allCurrent = [...currentLines, ...customLines]
       const keys = allCurrent.map(l => lineKey(l))
       const filtered = new Set()
@@ -186,7 +192,7 @@ export default function LineControlPanel({
     setCustomLines([])
     setShownLengthLabels(new Set())
     // 恢复默认可见线段（教材模式）
-    const { lines } = getLineDefinitions(type, params)
+    const { lines } = getLineDefinitions(type, params, customVertices)
     const defaults = new Set(
       lines
         .filter(l => ['棱', '底面边', '顶面边', '侧棱'].includes(l.category) && !l.dashed)
@@ -298,10 +304,14 @@ export default function LineControlPanel({
                   const hovered = hoveredLine === k
                   const searched = searchMatches.has(k)
 
+                  const isSelected = selectedEdge === k
+                  const colorOverride = edgeColorOverrides?.[k]
+                  // 是棱边（可编辑属性）
+                  const isEditable = ['棱', '底面边', '顶面边', '侧棱'].includes(l.category) || l.custom
                   return (
                     <label
                       key={k}
-                      className={`line-item ${hovered ? 'hovered' : ''} ${searched ? 'searched' : ''}`}
+                      className={`line-item ${hovered ? 'hovered' : ''} ${searched ? 'searched' : ''} ${isSelected ? 'selected' : ''}`}
                       onMouseEnter={() => setHoveredLine(k)}
                       onMouseLeave={() => setHoveredLine(null)}
                     >
@@ -310,8 +320,31 @@ export default function LineControlPanel({
                         checked={on}
                         onChange={() => toggleLine(l)}
                       />
-                      <span className="line-id">{l.id}</span>
+                      {/* 颜色指示器 — 点击可选中编辑 */}
+                      <span
+                        className={`color-dot ${isSelected ? 'active' : ''}`}
+                        style={{ backgroundColor: colorOverride || (isEditable ? '#ccc' : 'transparent'), border: colorOverride ? '1px solid rgba(0,0,0,0.2)' : '1px solid transparent' }}
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdgeClick?.(isSelected ? null : k) }}
+                        title={isEditable ? '点击编辑属性' : ''}
+                      />
+                      <span
+                        className="line-id"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdgeClick?.(isSelected ? null : k) }}
+                        title={isEditable ? '点击编辑棱边属性' : ''}
+                      >
+                        {l.id}
+                      </span>
                       {l.dashed && <span className="dash-hint">┅</span>}
+                      {/* 编辑按钮 — 直接打开属性面板 */}
+                      {isEditable && (
+                        <button
+                          className={`edge-edit-btn ${isSelected ? 'active' : ''}`}
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdgeClick?.(isSelected ? null : k) }}
+                          title="编辑棱边属性"
+                        >
+                          ✎
+                        </button>
+                      )}
                       {/* 长度标签开关 */}
                       <button
                         className={`len-toggle ${showLen ? 'active' : ''}`}

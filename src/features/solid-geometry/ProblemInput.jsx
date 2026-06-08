@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { parseProblem, EXAMPLE_PROBLEMS } from '../engines/problemParser'
+import { parseProblem, EXAMPLE_PROBLEMS } from '../../engines/problemParser'
 import './ProblemInput.css'
 
 export default function ProblemInput({ apiKey, onGeometryGenerated }) {

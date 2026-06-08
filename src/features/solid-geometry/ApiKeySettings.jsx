@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { validateApiKey } from '../engines/problemParser'
+import { validateApiKey } from '../../engines/problemParser'
 
 export default function ApiKeySettings({ apiKey, onApiKeyChange }) {
   const [open, setOpen] = useState(false)
