@@ -1,18 +1,70 @@
-﻿* {
+/* ═══════════════════════════════════════════════════════
+   CSS 变量体系 & 全局样式
+   ═══════════════════════════════════════════════════════ */
+
+:root {
+  /* ── 主色调 ── */
+  --color-primary: #4A90E2;
+  --color-primary-dark: #357ABD;
+  --color-primary-light: #e8f0fc;
+  --color-primary-glow: rgba(74, 144, 226, 0.15);
+
+  /* ── 语义色 ── */
+  --color-success: #4caf50;
+  --color-success-light: #e8f5e9;
+  --color-warning: #ff9800;
+  --color-warning-light: #fff8e1;
+  --color-error: #e74c3c;
+  --color-error-light: #fef0ef;
+
+  /* ── 中性色 ── */
+  --color-text: #2c3e50;
+  --color-text-secondary: #666666;
+  --color-text-muted: #999999;
+  --color-border: #e0e3e8;
+  --color-border-light: #f0f0f0;
+  --color-bg: #ffffff;
+  --color-bg-alt: #f8f9fb;
+  --color-bg-hover: #f0f4fa;
+
+  /* ── 阴影 ── */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-panel: -2px 0 16px rgba(0, 0, 0, 0.06);
+
+  /* ── 圆角 ── */
+  --radius-sm: 4px;
+  --radius-md: 7px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+
+  /* ── 间距 ── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+
+  /* ── 过渡 ── */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+  --transition-slow: 0.35s ease;
+
+  /* ── 字体 ── */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-math: 'Cambria Math', 'Georgia', 'Times New Roman', serif;
+  --font-mono: 'SF Mono', 'Consolas', 'Courier New', monospace;
+}
+
+/* ── Reset ─────────────────────────────────────────── */
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: #ffffff;
-  color: #2c3e50;
-  overflow: hidden;
 }
 
 html, body, #root {
@@ -22,27 +74,74 @@ html, body, #root {
   padding: 0;
 }
 
-/* Custom scrollbar */
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--color-bg);
+  color: var(--color-text);
+  overflow: hidden;
+  touch-action: manipulation;
+  line-height: 1.5;
+}
+
+/* ── 选中文字颜色 ── */
+::selection {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+/* ── 焦点样式 ── */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── 链接 ── */
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* ── 滚动条 ────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(74, 144, 226, 0.4);
-  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(74, 144, 226, 0.6);
+  background: rgba(0, 0, 0, 0.22);
 }
 
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(74, 144, 226, 0.4) rgba(0, 0, 0, 0.05);
+  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
 }
 
+/* ── 手机端：允许 body 滚动 ────────────────────────── */
+@media (max-width: 767px) {
+  body {
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  html, body, #root {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}

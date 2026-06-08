@@ -95,13 +95,12 @@ export default function Canvas3D({
     const visible = visibleLines.has(key)
     const hovered = hoveredLine === key
     const searched = searchMatchSet.has(key)
-    const showLen = shownLengthLabels?.has(key)
-
-    if (!visible && !hovered && !searched) return null
+    const showLen = shownLengthLabels?.has(key) && visible
 
     const style = getLineStyle(l.category)
 
     // 颜色优先级：hover > searched > visible
+    // 始终渲染（不 return null），通过 opacity=0 隐藏，避免 R3F 卸载问题
     let color, opacity
     if (hovered) {
       color = '#4A90E2'
@@ -113,8 +112,8 @@ export default function Canvas3D({
       color = style.color
       opacity = style.opacity
     } else {
-      color = '#cccccc'
-      opacity = 0.18
+      color = style.color
+      opacity = 0
     }
 
     const geo = new THREE.BufferGeometry().setFromPoints([
@@ -128,6 +127,7 @@ export default function Canvas3D({
           geometry={geo}
           onPointerOver={(e) => { e.stopPropagation(); handlePointerOver(l) }}
           onPointerOut={handlePointerOut}
+          visible={opacity > 0}
         >
           <lineBasicMaterial
             color={color}

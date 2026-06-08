@@ -154,15 +154,22 @@ export default function LineControlPanel({
   // ── 一键生成辅助线 ──
   const handleOperation = (operation) => {
     const generated = generateOperationLines(type, operation, params)
+    if (generated.length === 0) return
+
+    // 只检查已有自定义（不去重预定义，否则正方体对角线全部被过滤）
+    const customKeys = new Set(customLines.map(l => lineKey(l)))
     const newLines = []
     const newKeys = []
+
     generated.forEach(gl => {
-      const alreadyExists = customLines.some(l => l.id === gl.id && l.category === gl.category)
-      if (!alreadyExists) {
+      const key = `${gl.id}|${gl.category}`
+      if (!customKeys.has(key)) {
         newLines.push({ ...gl, custom: true })
-        newKeys.push(`${gl.id}|${gl.category}`)
+        newKeys.push(key)
+        customKeys.add(key)
       }
     })
+
     if (newLines.length > 0) {
       setCustomLines(prev => [...prev, ...newLines])
       setVisibleLines(prev => {
@@ -175,18 +182,17 @@ export default function LineControlPanel({
 
   // ── 删除所有自定义线段 ──
   const clearCustomLines = () => {
-    const keys = customLines.map(l => lineKey(l))
+    if (customLines.length === 0) return
     setCustomLines([])
-    setVisibleLines(prev => {
-      const next = new Set(prev)
-      keys.forEach(k => next.delete(k))
-      return next
-    })
-    setShownLengthLabels(prev => {
-      const next = new Set(prev)
-      keys.forEach(k => next.delete(k))
-      return next
-    })
+    setShownLengthLabels(new Set())
+    // 恢复默认可见线段（教材模式）
+    const { lines } = getLineDefinitions(type, params)
+    const defaults = new Set(
+      lines
+        .filter(l => ['棱', '底面边', '顶面边', '侧棱'].includes(l.category) && !l.dashed)
+        .map(l => `${l.id}|${l.category}`)
+    )
+    setVisibleLines(defaults)
   }
 
   // ── 分类部分选中状态 ──
@@ -228,6 +234,11 @@ export default function LineControlPanel({
           <button className="tool-btn" onClick={() => handleOperation('height')}>📐 作高</button>
           <button className="tool-btn" onClick={() => handleOperation('median')}>📏 作中线</button>
         </div>
+        {customLines.length > 0 && (
+          <button className="clear-custom-btn" onClick={clearCustomLines}>
+            ✕ 清除自定义线段 ({customLines.length})
+          </button>
+        )}
       </div>
 
       {/* ── 搜索 ── */}
