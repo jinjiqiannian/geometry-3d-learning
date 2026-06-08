@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { SupabaseProvider } from './contexts/SupabaseContext'
 import { SubscriptionProvider } from './contexts/SubscriptionContext'
 import { AppProvider } from './contexts/AppContext'
+import { TeacherProvider } from './contexts/TeacherContext'
 import PageLayout from './layouts/PageLayout'
 import LandingPage from './pages/LandingPage'
 import WorkspacePage from './pages/WorkspacePage'
@@ -27,7 +28,9 @@ export default function App() {
     <SupabaseProvider>
       <SubscriptionProvider>
         <AppProvider>
-          <RouterProvider router={router} />
+          <TeacherProvider>
+            <RouterProvider router={router} />
+          </TeacherProvider>
         </AppProvider>
       </SubscriptionProvider>
     </SupabaseProvider>
