@@ -55,7 +55,31 @@ export function getVertexAndEdgeInfo(type, params) {
         [ s,-s,0],[-s,-s,0],[0,-s, s],[0,-s,-s]
       ]
       return { vertices: v, edges: [], labels: ['O','P','A','B','C','D'] }
-    }
+    },
+    squareFrustum: () => {
+      // 底面正方形 (size) → 顶面正方形 (size/2)，高=size
+      const h = s
+      const topS = s / 2
+      const v = [
+        [-s, -h, -s], [ s, -h, -s], [ s, -h,  s], [-s, -h,  s],  // 底面 ABCD (0-3)
+        [-topS, h, -topS], [ topS, h, -topS], [ topS, h,  topS], [-topS, h,  topS],  // 顶面 EFGH (4-7)
+      ]
+      const e = [
+        [0,1],[1,2],[2,3],[3,0],  // 底面边
+        [4,5],[5,6],[6,7],[7,4],  // 顶面边
+        [0,4],[1,5],[2,6],[3,7],  // 侧棱 AE,BF,CG,DH
+      ]
+      return { vertices: v, edges: e, labels: ['A','B','C','D','E','F','G','H'] }
+    },
+    circularFrustum: () => {
+      // 底面圆(半径=s) + 顶面圆(半径=s/2)，高=size
+      const v = [
+        [0,-s,0],[0,s,0],  // 底面圆心 O, 顶面圆心 O'
+        [ s,-s,0],[-s,-s,0],[0,-s, s],[0,-s,-s],  // 底面标记 A-D
+        [ s/2, s,0],[-s/2, s,0],[0, s, s/2],[0, s,-s/2],  // 顶面标记 A'-D'
+      ]
+      return { vertices: v, edges: [], labels: ['O','O\'','A','B','C','D','A\'','B\'','C\'','D\''] }
+    },
   }
 
   return maps[type]?.() || { vertices: [], edges: [], labels: [] }
@@ -112,6 +136,34 @@ export function createGeometry(type, params) {
       return new THREE.CylinderGeometry(s, s, size, 64)
     case 'cone':
       return new THREE.ConeGeometry(s, size, 64)
+    case 'squareFrustum': {
+      // 底面边长=size，顶面边长=size/2，高=size
+      const h = s
+      const topS = s / 2
+      const verts = [
+        -s, -h, -s,   s, -h, -s,   s, -h,  s,  -s, -h,  s,  // 底面 ABCD (0-3)
+        -topS, h, -topS,  topS, h, -topS,  topS, h, topS,  -topS, h, topS,  // 顶面 EFGH (4-7)
+      ]
+      // 6个面：底面+顶面+4个梯形侧面(每个分成2个三角形)
+      const indices = [
+        // 底面 (注意法线朝外：逆时针从下方看)
+        0,2,1, 0,3,2,
+        // 顶面
+        4,5,6, 4,6,7,
+        // 前面 z+ (C,D,H,G) 2-3-7-6
+        2,3,7, 2,7,6,
+        // 后面 z- (A,B,F,E) 0-1-5-4
+        0,5,1, 0,4,5,
+        // 右面 x+ (B,C,G,F) 1-2-6-5
+        1,6,2, 1,5,6,
+        // 左面 x- (A,D,H,E) 0-3-7-4
+        0,7,3, 0,4,7,
+      ]
+      return createFromArrays(verts, indices)
+    }
+    case 'circularFrustum':
+      // Three.js 原生圆台：半径下大上小
+      return new THREE.CylinderGeometry(s / 2, s, size, 64)
     default:
       return new THREE.BoxGeometry(size, size, size)
   }
@@ -127,7 +179,7 @@ function createFromArrays(flatVerts, indices) {
 
 // 判断是否为棱柱形几何体（可以单独画棱边）
 export function isPolyhedral(type) {
-  return ['cube', 'prism', 'pyramid'].includes(type)
+  return ['cube', 'prism', 'pyramid', 'squareFrustum'].includes(type)
 }
 
 export function calculateVolume(type, params) {
@@ -138,7 +190,16 @@ export function calculateVolume(type, params) {
     cylinder: () => Math.PI * Math.pow(size/2, 2) * size,
     cone:     () => (1/3) * Math.PI * Math.pow(size/2, 2) * size,
     pyramid:  () => (1/3) * Math.pow(size, 3),
-    prism:    () => 0.5 * Math.pow(size, 3)
+    prism:    () => 0.5 * Math.pow(size, 3),
+    squareFrustum: () => {
+      const a = size, b = size / 2, h = size
+      const S1 = a * a, S2 = b * b
+      return (h / 3) * (S1 + S2 + Math.sqrt(S1 * S2))
+    },
+    circularFrustum: () => {
+      const R = size / 2, r = size / 4, h = size
+      return (Math.PI * h / 3) * (R * R + r * r + R * r)
+    },
   }
   return formulas[type]?.() || 0
 }
@@ -151,7 +212,18 @@ export function calculateSurfaceArea(type, params) {
     cylinder: () => 2 * Math.PI * (size/2) * (size + size/2),
     cone:     () => Math.PI * (size/2) * (size/2 + Math.sqrt(Math.pow(size/2, 2) + Math.pow(size, 2))),
     pyramid:  () => Math.pow(size, 2) * (1 + Math.sqrt(5)),
-    prism:    () => Math.pow(size, 2) * (3 + Math.sqrt(2))
+    prism:    () => Math.pow(size, 2) * (3 + Math.sqrt(2)),
+    squareFrustum: () => {
+      const a = size, b = size / 2, h = size
+      const S1 = a * a, S2 = b * b
+      const lateral = 2 * (a + b) * Math.sqrt(h * h + Math.pow((a - b) / 2, 2))
+      return S1 + S2 + lateral
+    },
+    circularFrustum: () => {
+      const R = size / 2, r = size / 4, h = size
+      const l = Math.sqrt(h * h + Math.pow(R - r, 2))
+      return Math.PI * (R + r) * l + Math.PI * (R * R + r * r)
+    },
   }
   return formulas[type]?.() || 0
 }

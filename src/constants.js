@@ -5,7 +5,9 @@ export const GEOMETRY_NAMES = {
   cylinder: '圆柱',
   cone: '圆锥',
   pyramid: '棱锥',
-  prism: '棱柱'
+  prism: '棱柱',
+  squareFrustum: '四棱台',
+  circularFrustum: '圆台',
 }
 
 // 几何体列表（含图标）
@@ -16,6 +18,8 @@ export const GEOMETRIES = [
   { id: 'cone', name: '圆锥', icon: '🔺' },
   { id: 'pyramid', name: '棱锥', icon: '🔻' },
   { id: 'prism', name: '棱柱', icon: '📐' },
+  { id: 'squareFrustum', name: '四棱台', icon: '🏛️' },
+  { id: 'circularFrustum', name: '圆台', icon: '🪣' },
 ]
 
 // 公式展示（用于 UI）
@@ -43,5 +47,13 @@ export const FORMULAS = {
   prism: {
     volume: 'V = (1/2)a²h',
     surface: 'S = (3+√2)a²'
-  }
+  },
+  squareFrustum: {
+    volume: 'V = h/3·(S₁+S₂+√(S₁S₂))',
+    surface: 'S = S₁+S₂+2(a+b)√(h²+((a-b)/2)²)'
+  },
+  circularFrustum: {
+    volume: 'V = πh/3·(R²+r²+Rr)',
+    surface: 'S = π(R+r)l+π(R²+r²)'
+  },
 }

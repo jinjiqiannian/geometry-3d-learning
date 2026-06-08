@@ -81,6 +81,30 @@ function GeoIcon({ type }) {
         </svg>
       )
 
+    // ── 四棱台：大底面 + 小顶面 + 侧棱 ──
+    case 'squareFrustum':
+      return (
+        <svg width={s} height={s} viewBox="0 0 28 28">
+          <rect x="5" y="16" width="16" height="10" fill="none" stroke={stroke} strokeWidth={sw + 0.3} />
+          <rect x="9" y="4" width="10" height="7" fill="none" stroke={stroke} strokeWidth={sw} opacity="0.35" />
+          <line x1="5" y1="16" x2="9" y2="4" stroke={stroke} strokeWidth={sw} />
+          <line x1="21" y1="16" x2="19" y2="4" stroke={stroke} strokeWidth={sw} />
+          <line x1="5" y1="26" x2="9" y2="11" stroke={stroke} strokeWidth={sw} />
+          <line x1="21" y1="26" x2="19" y2="11" stroke={stroke} strokeWidth={sw} />
+        </svg>
+      )
+
+    // ── 圆台：底大椭圆 + 顶小椭圆 + 母线 ──
+    case 'circularFrustum':
+      return (
+        <svg width={s} height={s} viewBox="0 0 28 28">
+          <ellipse cx="14" cy="22" rx="10" ry="3.5" fill="none" stroke={stroke} strokeWidth={sw + 0.3} />
+          <ellipse cx="14" cy="8" rx="5" ry="2" fill="none" stroke={stroke} strokeWidth={sw + 0.3} />
+          <line x1="4" y1="22" x2="9" y2="8" stroke={stroke} strokeWidth={sw} />
+          <line x1="24" y1="22" x2="19" y2="8" stroke={stroke} strokeWidth={sw} />
+        </svg>
+      )
+
     default:
       return <svg width={s} height={s} viewBox="0 0 28 28" />
   }

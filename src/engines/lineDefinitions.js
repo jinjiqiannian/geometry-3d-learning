@@ -74,6 +74,31 @@ function getPoints(type, params) {
         labels: 'OPABCD'.split('') }
     }
 
+    case 'squareFrustum': {
+      // 底面正方形(边长size) + 顶面正方形(边长size/2)，高=size，中心对齐
+      const topS = s / 2
+      const v = [
+        [-s, -s, -s], [s, -s, -s], [s, -s, s], [-s, -s, s],     // 底面 ABCD (0-3)
+        [-topS, s, -topS], [topS, s, -topS], [topS, s, topS], [-topS, s, topS],  // 顶面 EFGH (4-7)
+      ]
+      const c = {
+        body: [0, 0, 0],
+        bottom: [0, -s, 0],
+        top: [0, s, 0],
+      }
+      return { vertices: v, centers: c, labels: 'ABCDEFGH'.split('') }
+    }
+
+    case 'circularFrustum': {
+      const v = [
+        [0, -s, 0], [0, s, 0],                                     // O(0) 底面圆心, O'(1) 顶面圆心
+        [s, -s, 0], [-s, -s, 0], [0, -s, s], [0, -s, -s],          // 底面标记 A-D (2-5)
+        [s / 2, s, 0], [-s / 2, s, 0], [0, s, s / 2], [0, s, -s / 2],  // 顶面标记 A'-D' (6-9)
+      ]
+      return { vertices: v, centers: { body: [0, 0, 0], top: [0, s, 0], bottom: [0, -s, 0] },
+        labels: "OO'ABCDA'B'C'D'".match(/[A-O]'?/g) }
+    }
+
     default:
       return { vertices: [], centers: {}, labels: [] }
   }
@@ -219,6 +244,48 @@ export function getLineDefinitions(type, params) {
       def('h2', '侧棱', 3, 1, true)
       def('h3', '侧棱', 4, 1, true)
       def('h4', '侧棱', 5, 1, true)
+      break
+    }
+
+    // ─── 四棱台（底面 ABCD → 顶面 EFGH）───
+    case 'squareFrustum': {
+      // 底面边 4条
+      def('AB', '底面边', 0, 1); def('BC', '底面边', 1, 2)
+      def('CD', '底面边', 2, 3); def('DA', '底面边', 3, 0)
+      // 顶面边 4条
+      def('EF', '顶面边', 4, 5); def('FG', '顶面边', 5, 6)
+      def('GH', '顶面边', 6, 7); def('HE', '顶面边', 7, 4)
+      // 侧棱 4条
+      def('AE', '侧棱', 0, 4); def('BF', '侧棱', 1, 5)
+      def('CG', '侧棱', 2, 6); def('DH', '侧棱', 3, 7)
+      // 棱（全部12条）
+      def('AB', '棱', 0, 1); def('BC', '棱', 1, 2)
+      def('CD', '棱', 2, 3); def('DA', '棱', 3, 0)
+      def('EF', '棱', 4, 5); def('FG', '棱', 5, 6)
+      def('GH', '棱', 6, 7); def('HE', '棱', 7, 4)
+      def('AE', '棱', 0, 4); def('BF', '棱', 1, 5)
+      def('CG', '棱', 2, 6); def('DH', '棱', 3, 7)
+      // 底面面对角线 2条
+      def('AC', '面对角线', 0, 2, true); def('BD', '面对角线', 1, 3, true)
+      // 顶面面对角线 2条
+      def('EG', '面对角线', 4, 6, true); def('FH', '面对角线', 5, 7, true)
+      // 侧面对角线（梯形对角线）4条
+      def('AF', '面对角线', 0, 5, true); def('BE', '面对角线', 1, 4, true)
+      def('BG', '面对角线', 1, 6, true); def('CF', '面对角线', 2, 5, true)
+      def('CH', '面对角线', 2, 7, true); def('DG', '面对角线', 3, 6, true)
+      def('DE', '面对角线', 3, 4, true); def('AH', '面对角线', 0, 7, true)
+      // 高线（底面中心 → 顶面中心）
+      def('h', '高线', 'bottom', 'top', true)
+      break
+    }
+
+    // ─── 圆台（类似圆柱）───
+    case 'circularFrustum': {
+      def("OO'", '高线', 0, 1, true)     // 中心轴
+      def('h1', '侧棱', 2, 6, true)      // 右母线
+      def('h2', '侧棱', 3, 7, true)      // 左母线
+      def('h3', '侧棱', 4, 8, true)      // 前母线
+      def('h4', '侧棱', 5, 9, true)      // 后母线
       break
     }
 

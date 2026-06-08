@@ -35,6 +35,16 @@ export function getFaces(type) {
         [2, 0, 3, 5],        // 侧面 CAA'C'
       ]
 
+    case 'squareFrustum':
+      return [
+        [0, 1, 2, 3],        // 底面 ABCD
+        [4, 5, 6, 7],        // 顶面 EFGH
+        [0, 1, 5, 4],        // 侧面 ABFE
+        [1, 2, 6, 5],        // 侧面 BCGF
+        [2, 3, 7, 6],        // 侧面 CDHG
+        [3, 0, 4, 7],        // 侧面 DAEH
+      ]
+
     default:
       return []
   }
@@ -268,6 +278,10 @@ export function generateOperationLines(type, operation, params) {
         lines.push({ id: 'h1', category: '高线', from: 'baseBottom', to: 'baseTop', dashed: true })
       } else if (type === 'sphere' || type === 'cylinder' || type === 'cone') {
         lines.push({ id: 'NS', category: '高线', from: 0, to: 1, dashed: true })
+      } else if (type === 'squareFrustum') {
+        lines.push({ id: 'h', category: '高线', from: 'bottom', to: 'top', dashed: true })
+      } else if (type === 'circularFrustum') {
+        lines.push({ id: "OO'", category: '高线', from: 0, to: 1, dashed: true })
       }
       break
     }
@@ -298,6 +312,19 @@ export function generateOperationLines(type, operation, params) {
         // 底面正方形中位线
         lines.push({ id: 'mid_AB_CD', category: '辅助构造线', from: mid(0, 1), to: mid(2, 3), dashed: true })
         lines.push({ id: 'mid_BC_DA', category: '辅助构造线', from: mid(1, 2), to: mid(3, 0), dashed: true })
+      } else if (type === 'squareFrustum' && info.vertices) {
+        const v = info.vertices
+        const mid = (a, b) => [
+          (v[a][0] + v[b][0]) / 2,
+          (v[a][1] + v[b][1]) / 2,
+          (v[a][2] + v[b][2]) / 2,
+        ]
+        // 底面正方形中位线
+        lines.push({ id: 'mid_AB_CD', category: '辅助构造线', from: mid(0, 1), to: mid(2, 3), dashed: true })
+        lines.push({ id: 'mid_BC_DA', category: '辅助构造线', from: mid(1, 2), to: mid(3, 0), dashed: true })
+        // 顶面正方形中位线
+        lines.push({ id: 'mid_EF_GH', category: '辅助构造线', from: mid(4, 5), to: mid(6, 7), dashed: true })
+        lines.push({ id: 'mid_FG_HE', category: '辅助构造线', from: mid(5, 6), to: mid(7, 4), dashed: true })
       }
       break
     }
