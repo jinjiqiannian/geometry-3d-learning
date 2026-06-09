@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react'
-import { parseImageToGeometry } from '../../engines/problemParser'
 import './CameraCapture.css'
 
 export default function CameraCapture({ apiKey, onGeometryGenerated }) {
@@ -65,6 +64,7 @@ export default function CameraCapture({ apiKey, onGeometryGenerated }) {
     setStatus('正在识别图片中的题目...')
 
     try {
+      const { parseImageToGeometry } = await import('../../engines/problemParser')
       const result = await parseImageToGeometry(
         capturedImage.data,
         capturedImage.mediaType,

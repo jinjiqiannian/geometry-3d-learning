@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../contexts/AppContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { EXAMPLES } from '../constants'
+import CameraCapture from '../features/solid-geometry/CameraCapture'
 import './LandingPage.css'
 
 // ── Logo SVG 组件 ─────────────────────────────────
@@ -27,6 +28,12 @@ export default function LandingPage() {
   const [focused, setFocused] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [showCamera, setShowCamera] = useState(false)
+  const cameraApiKey = useRef('')
+  useEffect(() => {
+    try { cameraApiKey.current = localStorage.getItem('mathviz_deepseek_key') || localStorage.getItem('mathviz_openai_key') || '' }
+    catch { /* */ }
+  }, [])
 
   // ── 历史记录（localStorage） ──
   const [history, setHistory] = useState([])
@@ -72,6 +79,13 @@ export default function LandingPage() {
   const handleContinue = (item) => {
     navigate(`/workspace?q=${encodeURIComponent(item.text)}`)
   }
+
+  // ── 拍照识别完成 ──
+  const handleGeometryRecognized = useCallback((result) => {
+    const desc = result?.explanation || result?.text || ''
+    if (desc) setInput(prev => prev ? `${prev}\n${desc}` : desc)
+    setShowCamera(false)
+  }, [])
 
   // ── 格式化日期 ──
   const formatDate = (dateStr) => {
@@ -131,6 +145,31 @@ export default function LandingPage() {
           </div>
 
           {error && <div className="landing-error">{error}</div>}
+
+          {/* 拍照输入 */}
+          <div className="landing-camera-toggle">
+            {!showCamera ? (
+              <button
+                className="landing-camera-trigger"
+                onClick={() => setShowCamera(true)}
+              >
+                拍照识别几何体
+              </button>
+            ) : (
+              <div className="landing-camera-panel">
+                <CameraCapture
+                  apiKey={cameraApiKey.current}
+                  onGeometryGenerated={handleGeometryRecognized}
+                />
+                <button
+                  className="landing-camera-close"
+                  onClick={() => setShowCamera(false)}
+                >
+                  收起
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 

@@ -120,6 +120,8 @@ export default function Canvas3D({
   nonHighlightOpacity = 0.25,
   // ── 自定义标签（从题目解析而来） ──
   vertexLabels = null,
+  // ── 相机重置 ──
+  cameraResetKey = 0,
 }) {
   const { type, params } = geometry
   const size = params.size ?? 2
@@ -226,6 +228,17 @@ export default function Canvas3D({
       targetCamPos.current = null
     }
   }, [cameraPreset])
+
+  // Reset camera on demand (jump immediately, no lerp)
+  useEffect(() => {
+    const preset = cameraPreset || 'overview'
+    const target = CAMERA_PRESETS[preset] || CAMERA_PRESETS.overview
+    if (cameraRef.current) {
+      cameraRef.current.position.set(target[0], target[1], target[2])
+      cameraRef.current.lookAt(0, 0, 0)
+    }
+    targetCamPos.current = null  // stop any ongoing lerp
+  }, [cameraResetKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Smooth camera lerp
   useFrame((_, delta) => {

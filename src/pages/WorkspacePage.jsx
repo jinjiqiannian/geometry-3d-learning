@@ -59,6 +59,9 @@ export default function WorkspacePage() {
   const [quickInput, setQuickInput] = useState('')
   const [followUpLoading, setFollowUpLoading] = useState(false)
   const [followUpAnswer, setFollowUpAnswer] = useState(null)
+  const [cameraResetKey, setCameraResetKey] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const playTimerRef = useRef(null)
 
   // ── Mobile ──────────────────────────────────────
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 767)
@@ -417,6 +420,65 @@ export default function WorkspacePage() {
     }
   }, [problemText, steps, currentStep])
 
+  // ── 重置视角 ──
+  const handleResetCamera = useCallback(() => {
+    setCameraResetKey(k => k + 1)
+  }, [])
+
+  // ── 自动回放 ──
+  const handleTogglePlay = useCallback(() => {
+    setIsPlaying(prev => {
+      if (prev) {
+        // 停止
+        if (playTimerRef.current) clearTimeout(playTimerRef.current)
+        return false
+      }
+      return true
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!isPlaying || steps.length === 0) return
+    const advance = () => {
+      setCurrentStep(prev => {
+        const next = prev + 1
+        if (next >= steps.length) {
+          setIsPlaying(false)
+          return prev
+        }
+        playTimerRef.current = setTimeout(advance, 3500)
+        return next
+      })
+    }
+    playTimerRef.current = setTimeout(advance, 2000)
+    return () => { if (playTimerRef.current) clearTimeout(playTimerRef.current) }
+  }, [isPlaying, steps.length])
+
+  // ── 截图导出 ──
+  const handleScreenshot = useCallback(async () => {
+    if (!canvasRef.current) return
+    try {
+      const { toPng } = await import('html-to-image')
+      const dataUrl = await toPng(canvasRef.current, {
+        pixelRatio: 2,
+        backgroundColor: '#f8f9fb',
+      })
+      const link = document.createElement('a')
+      link.download = `几何维度-${new Date().toISOString().slice(0, 10)}.png`
+      link.href = dataUrl
+      link.click()
+    } catch {
+      // Fallback: canvas.toDataURL
+      const canvas = canvasRef.current?.querySelector('canvas')
+      if (canvas) {
+        const link = document.createElement('a')
+        link.download = `几何维度-${new Date().toISOString().slice(0, 10)}.png`
+        link.href = canvas.toDataURL('image/png')
+        link.click()
+      }
+    }
+  }, [])
+
   return (
     <div className="workspace-page">
       <div className="wp-top-bar">
@@ -487,6 +549,7 @@ export default function WorkspacePage() {
                   faceOpacity={visualIntent?.faceOpacity ?? 0.42}
                   nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
                   vertexLabels={vertexLabels}
+                  cameraResetKey={cameraResetKey}
                 />
               </Canvas>
               <GeometryMiniControls
@@ -496,6 +559,8 @@ export default function WorkspacePage() {
                 onToggleFaces={() => setShowFaces(prev => !prev)}
                 showLabels={showLabels}
                 onToggleLabels={() => setShowLabels(prev => !prev)}
+                onResetCamera={handleResetCamera}
+                onScreenshot={handleScreenshot}
               />
             </div>
           )}
@@ -516,6 +581,8 @@ export default function WorkspacePage() {
               onAskFollowUp={handleAskFollowUp}
               followUpLoading={followUpLoading}
               followUpAnswer={followUpAnswer}
+              onPlay={steps.length > 0 ? handleTogglePlay : undefined}
+              isPlaying={isPlaying}
             />
           </div>
         </div>

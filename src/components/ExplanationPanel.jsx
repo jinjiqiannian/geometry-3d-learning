@@ -20,6 +20,9 @@ export default function ExplanationPanel({
   onAskFollowUp,
   followUpLoading = false,
   followUpAnswer = null,
+  // 自动回放
+  onPlay,
+  isPlaying = false,
 }) {
   const currentStepData = steps[currentStep]
   const showAnswer = currentStepData?.type === 'conclusion' && !loading
@@ -83,6 +86,8 @@ export default function ExplanationPanel({
             totalSteps={steps.length}
             onNext={onNext}
             onPrev={onPrev}
+            onPlay={onPlay}
+            isPlaying={isPlaying}
           />
 
           {/* ── 追问 AI ── */}

@@ -9,6 +9,8 @@ export default function GeometryMiniControls({
   onToggleFaces,
   showLabels,
   onToggleLabels,
+  onResetCamera,
+  onScreenshot,
 }) {
   const [open, setOpen] = useState(false)
 
@@ -37,6 +39,18 @@ export default function GeometryMiniControls({
         >
           标签
         </button>
+
+        {onResetCamera && (
+          <button className="gmc-btn" onClick={onResetCamera} title="重置视角">
+            重置
+          </button>
+        )}
+
+        {onScreenshot && (
+          <button className="gmc-btn" onClick={onScreenshot} title="截图保存">
+            截图
+          </button>
+        )}
       </div>
 
       {open && (
