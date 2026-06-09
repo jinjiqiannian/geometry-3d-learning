@@ -11,6 +11,7 @@ export default function GeometryMiniControls({
   onToggleLabels,
   onResetCamera,
   onScreenshot,
+  onShare,
 }) {
   const [open, setOpen] = useState(false)
 
@@ -49,6 +50,12 @@ export default function GeometryMiniControls({
         {onScreenshot && (
           <button className="gmc-btn" onClick={onScreenshot} title="截图保存">
             截图
+          </button>
+        )}
+
+        {onShare && (
+          <button className="gmc-btn" onClick={onShare} title="分享链接">
+            分享
           </button>
         )}
       </div>

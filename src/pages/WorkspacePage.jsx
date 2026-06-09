@@ -13,6 +13,7 @@ import { computeVerticesFromParams } from '../engines/constraintSolver'
 import { aiAPI } from '../services/api'
 import { computeVisualIntent } from '../engines/visualIntent'
 import { createLabelMap, INTERNAL_LABELS } from '../engines/labelMapper'
+import { generateShareUrl, detectShareParam, decodeShare } from '../engines/shareUtils'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { useTeacher } from '../contexts/TeacherContext'
 import './WorkspacePage.css'
@@ -62,6 +63,7 @@ export default function WorkspacePage() {
   const [cameraResetKey, setCameraResetKey] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const playTimerRef = useRef(null)
+  const [shareToast, setShareToast] = useState('')
 
   // ── Mobile ──────────────────────────────────────
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 767)
@@ -73,10 +75,38 @@ export default function WorkspacePage() {
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  // ── Auto-parse from URL query ────────────────────
+  // ── Auto-parse from URL query / share link ────────
   useEffect(() => {
     const q = searchParams.get('q')
     const replay = searchParams.get('replay')
+    const shareParam = detectShareParam()
+
+    // 分享链接加载
+    if (shareParam && !q) {
+      const shared = decodeShare(shareParam)
+      if (shared) {
+        setProblemText(shared.text || '')
+        if (shared.geometry) {
+          setGeometry({
+            type: shared.geometry.type || 'cube',
+            params: { size: shared.geometry.size || shared.geometry.params?.size || 2 },
+            ...defaultConstraintParams(shared.geometry.type || 'cube'),
+          })
+        }
+        if (shared.steps) {
+          setSteps(shared.steps)
+          setParsedData(shared.parsedData || null)
+          setCurrentStep(0)
+          setLoadingStage('done')
+        } else if (shared.text) {
+          handleParseProblem(shared.text)
+        }
+        setShareToast('已加载分享的几何场景')
+        setTimeout(() => setShareToast(''), 2500)
+        return
+      }
+    }
+
     if (q && q.trim()) {
       // 检查是否有历史回放数据（sessionStorage）
       if (replay === '1') {
@@ -479,6 +509,27 @@ export default function WorkspacePage() {
     }
   }, [])
 
+  // ── 分享链接 ──
+  const handleShare = useCallback(async () => {
+    const shareData = {
+      text: problemText,
+      geometry: { type: geometry.type, params: geometry.params },
+      steps: steps.length > 0 ? steps : undefined,
+      parsedData: parsedData,
+    }
+    const url = generateShareUrl(shareData)
+    if (!url) return
+
+    try {
+      await navigator.clipboard.writeText(url)
+      setShareToast('链接已复制，可发送给朋友')
+    } catch {
+      // Fallback: show in prompt
+      setShareToast(url)
+    }
+    setTimeout(() => setShareToast(''), 3000)
+  }, [problemText, geometry, steps, parsedData])
+
   return (
     <div className="workspace-page">
       <div className="wp-top-bar">
@@ -561,6 +612,7 @@ export default function WorkspacePage() {
                 onToggleLabels={() => setShowLabels(prev => !prev)}
                 onResetCamera={handleResetCamera}
                 onScreenshot={handleScreenshot}
+                onShare={handleShare}
               />
             </div>
           )}
@@ -655,6 +707,25 @@ export default function WorkspacePage() {
       />
       <PaywallModal />
       <AuthModal />
+
+      {/* ── Share toast ── */}
+      {shareToast && (
+        <div className="wp-share-toast">
+          <span className="wp-share-toast-text">{shareToast}</span>
+          {shareToast.startsWith('http') && (
+            <button
+              className="wp-share-toast-copy"
+              onClick={async () => {
+                try { await navigator.clipboard.writeText(shareToast); setShareToast('链接已复制！') }
+                catch { /* */ }
+                setTimeout(() => setShareToast(''), 2000)
+              }}
+            >
+              点此复制
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

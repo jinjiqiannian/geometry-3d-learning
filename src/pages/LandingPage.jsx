@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../contexts/AppContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { EXAMPLES } from '../constants'
+import { recommendProblems } from '../engines/difficultyEngine'
 import CameraCapture from '../features/solid-geometry/CameraCapture'
 import './LandingPage.css'
 
@@ -37,11 +38,17 @@ export default function LandingPage() {
 
   // ── 历史记录（localStorage） ──
   const [history, setHistory] = useState([])
+  const [recommended, setRecommended] = useState(null)
 
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('mathviz_history') || '[]')
       setHistory(saved.slice(0, 5))
+      // 自适应推荐
+      if (saved.length > 0) {
+        const recs = recommendProblems(saved)
+        setRecommended(recs)
+      }
     } catch { /* */ }
   }, [])
 
@@ -192,6 +199,31 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
+      {/* ── 为你推荐（自适应） ───────────────── */}
+      {recommended && recommended.recommendations?.length > 0 && (
+        <section className="landing-section">
+          <div className="landing-section-header">
+            <h2 className="landing-section-title">为你推荐</h2>
+            <span className="landing-section-hint">{recommended.reason}</span>
+          </div>
+          <div className="landing-examples-grid">
+            {recommended.recommendations.map((rec, i) => (
+              <button
+                key={`rec-${i}`}
+                className="landing-example-card"
+                onClick={() => handleExample(rec.text)}
+              >
+                <span className="landing-example-category">
+                  {rec.difficulty === 'easy' ? '🟢 入门' : rec.difficulty === 'medium' ? '🟡 进阶' : '🔴 挑战'}
+                </span>
+                <span className="landing-example-title">{rec.title}</span>
+                <span className="landing-example-desc">{rec.text.slice(0, 40)}…</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── 最近学习 ──────────────────────────── */}
       {history.length > 0 && (

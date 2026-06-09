@@ -214,3 +214,63 @@
     font-size: 11px;
   }
 }
+
+/* ── Share toast ─────────────────────────────────── */
+.wp-share-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  animation: wp-toast-in 0.3s ease;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  max-width: 90vw;
+  overflow: hidden;
+}
+
+@keyframes wp-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.wp-share-toast-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60vw;
+}
+
+.wp-share-toast-copy {
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--brand-gradient);
+  color: white;
+  font-size: var(--text-xs);
+  font-weight: 550;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  border: none;
+  transition: opacity var(--transition-fast);
+}
+
+.wp-share-toast-copy:hover {
+  opacity: 0.85;
+}
+
+@media (max-width: 767px) {
+  .wp-share-toast {
+    bottom: 80px;
+    padding: 8px 16px;
+    font-size: var(--text-xs);
+  }
+}

@@ -234,12 +234,21 @@
 
 .landing-section-header {
   margin-bottom: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .landing-section-title {
   font-size: var(--text-base);
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.landing-section-hint {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-weight: 400;
 }
 
 /* ── Example cards ───────────────────────────────── */
