@@ -19,7 +19,7 @@ import type { ParsedProblem, Step, SceneState, NarrationPhrase } from '../types/
 // ── Constants ──────────────────────────────────────
 const DEEPSEEK_BASE = 'https://api.deepseek.com/v1'
 const FLASH_MODEL = 'deepseek-chat'
-const PRO_MODEL = 'deepseek-reasoner'
+const PRO_MODEL = 'deepseek-reasoner'  // DeepSeek V4 Pro 推理模型
 
 const MAX_RETRIES = 3
 const RETRY_BASE_MS = 1000
@@ -326,40 +326,42 @@ export async function parseProblem(
 //  Layer 2: Pro — 解题推理（Pro/Teacher only）
 // ═══════════════════════════════════════════════════════
 
-const REASON_SYSTEM_PROMPT = `你是一个中学数学老师，擅长用简洁清晰的语言讲解立体几何题。
+const REASON_SYSTEM_PROMPT = `你是一个顶尖的中学数学老师，擅长用简洁清晰、具体到题目的语言讲解立体几何题。
 
-请为以下题目生成分步解题讲解。严格输出 JSON 数组（不要 markdown 代码块）：
+重要：你必须针对用户的具体题目生成讲解，不要用通用模板！
+
+对于异面直线夹角问题，请用平移法或向量法具体求解。
+
+严格输出以下 JSON 格式（不要 markdown 代码块）：
 
 [
   {
     "step": 1,
-    "title": "步骤标题（5-8字）",
-    "content": "这一步的详细讲解（2-4句话）",
+    "title": "步骤标题（如"识别几何体"）",
+    "content": "这一步的详细讲解，2-4句话，必须包含具体的几何关系描述和数值",
     "type": "observation|construction|calculation|conclusion",
     "sceneState": {
-      "cameraPosition": [x, y, z],
+      "cameraPosition": [5, 3, 5],
       "cameraTarget": [0, 0, 0],
-      "highlightEdges": ["AB", "CD"],
+      "highlightEdges": [],
       "highlightColor": "#FF6B6B",
-      "showAuxiliaryLines": [{"from": "A", "to": "C", "dashed": true, "color": "#4A90E2"}],
-      "showLabels": ["A", "B", "C"],
-      "annotations": [{"text": "辅助线", "position": "top"}],
-      "opacity": {"faces": 0.3, "nonHighlightedEdges": 0.2},
-      "animationType": "fade|slide|zoom|none",
-      "duration": 3000
+      "showAuxiliaryLines": [],
+      "showLabels": [],
+      "annotations": [{"text": "具体标注", "position": "top"}],
+      "opacity": {"faces": 0.6, "nonHighlightedEdges": 0.8},
+      "animationType": "fade",
+      "duration": 2000
     }
-  },
-  ...
+  }
 ]
 
-要求：
-1. 4-6 个步骤
-2. type: observation=观察分析, construction=作图构造, calculation=计算推导, conclusion=结论
-3. 每步 content 2-4 句话，使用中文
-4. sceneState.cameraPosition 根据几何体类型设置合适的观察角度
-5. 关键步骤要 highlightEdges 高亮对应的线段
-6. 构造步骤要 showAuxiliaryLines 辅助线
-7. 只输出 JSON 数组`
+严格要求：
+1. 必须针对具体题目，不能套模板。content 中要出现具体的顶点名称（如A₁B）、数值（如2√2）
+2. 第几步高亮哪些线段（highlightEdges），第几步画辅助线（showAuxiliaryLines），都要根据题目设置
+3. 最后一步的 annotations 中写出最终答案
+4. 4-6个步骤
+5. type: observation=观察分析, construction=作图构造, calculation=计算推导, conclusion=结论
+6. 只输出 JSON 数组，不要任何额外文字`
 
 export async function generateReasoning(
   text: string,
@@ -553,14 +555,9 @@ export async function solveComplete(
   // Layer 1: Parse (always available)
   const parsed = await parseProblem(text, userId)
 
-  // Layer 2: Reasoning (Pro/Teacher only for AI)
+  // Layer 2: Reasoning — 所有用户走 DeepSeek V4 Pro 推理
   let steps: Step[]
-  if (plan === 'pro' || plan === 'teacher') {
-    steps = await generateReasoning(text, parsed, userId)
-  } else {
-    // Free: generate template steps locally
-    steps = generateLocalTemplateSteps(parsed)
-  }
+  steps = await generateReasoning(text, parsed, userId)
 
   // Layer 3: Visual states
   const visualStates = await generateVisualStates(parsed, steps, userId)
