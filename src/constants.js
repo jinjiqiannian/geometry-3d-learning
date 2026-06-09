@@ -78,9 +78,9 @@ export const PRICING_PLANS = [
     description: '体验 3D 几何可视化',
     features: [
       '完整 3D 可视化',
-      '本地分步解题讲解',
+      'AI 分步解题讲解',
       '支持所有几何题型',
-      '每日 10 次',
+      '每日 50 次',
     ],
     cta: '开始使用',
     popular: false,

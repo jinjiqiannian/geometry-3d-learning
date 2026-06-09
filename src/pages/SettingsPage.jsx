@@ -22,7 +22,7 @@ const PROVIDERS = [
 
 export default function SettingsPage() {
   const { user, connected } = useSupabase()
-  const { plan, isPro, isTeacher, dailyUsage, dailyLimit } = useSubscription()
+  const { plan, isPro, isTeacher, dailyUsage, dailyLimit, initiateUpgrade, manageSubscription } = useSubscription()
   const { theme, setTheme, isDark } = useTheme()
 
   // ── Local state ──────────────────────────────────
@@ -158,6 +158,31 @@ export default function SettingsPage() {
                 </span>
               </div>
             )}
+
+            {/* Subscription action */}
+            <div className="settings-row settings-row-action">
+              {isPro || isTeacher ? (
+                <button
+                  className="settings-btn settings-btn-secondary"
+                  onClick={() => manageSubscription()}
+                >
+                  管理订阅
+                </button>
+              ) : (
+                <button
+                  className="settings-btn settings-btn-primary"
+                  onClick={() => {
+                    if (!user) {
+                      document.dispatchEvent(new CustomEvent('mathviz:show-auth'))
+                      return
+                    }
+                    initiateUpgrade('pro', 'monthly')
+                  }}
+                >
+                  升级专业版
+                </button>
+              )}
+            </div>
           </div>
         </section>
 

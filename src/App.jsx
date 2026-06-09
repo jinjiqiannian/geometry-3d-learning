@@ -16,6 +16,7 @@ const WorkspacePage = lazy(() => import('./pages/WorkspacePage'))
 const PricingPage = lazy(() => import('./pages/PricingPage'))
 const HistoryPage = lazy(() => import('./pages/HistoryPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 
 // ── Suspense fallback ──
 function PageLoader() {
@@ -67,6 +68,7 @@ const router = createBrowserRouter([
       { path: 'pricing', element: <WrappedRoute><PricingPage /></WrappedRoute> },
       { path: 'history', element: <WrappedRoute><HistoryPage /></WrappedRoute> },
       { path: 'settings', element: <WrappedRoute><SettingsPage /></WrappedRoute> },
+      { path: 'profile', element: <WrappedRoute><ProfilePage /></WrappedRoute> },
     ],
   },
 ], { basename })

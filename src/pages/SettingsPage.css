@@ -270,6 +270,23 @@
   background: var(--accent-hover);
 }
 
+.settings-btn-secondary {
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+}
+
+.settings-btn-secondary:hover {
+  color: var(--text-primary);
+  border-color: var(--border-emphasis);
+}
+
+.settings-row-action {
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 4px;
+}
+
 .settings-btn-ghost {
   background: transparent;
   color: var(--text-muted);

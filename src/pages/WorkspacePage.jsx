@@ -5,8 +5,6 @@ import Canvas3D from '../features/solid-geometry/Canvas3D'
 import GeometryMiniControls from '../components/GeometryMiniControls'
 import ExplanationPanel from '../components/ExplanationPanel'
 import TeacherModePanel from '../components/TeacherModePanel'
-import PaywallModal from '../components/PaywallModal'
-import AuthModal from '../components/AuthModal'
 import { getLineDefinitions } from '../engines/lineDefinitions'
 import { isPolyhedral } from '../engines/geometryEngine'
 import { computeVerticesFromParams } from '../engines/constraintSolver'
@@ -27,7 +25,7 @@ function defaultConstraintParams(type) {
 }
 
 export default function WorkspacePage() {
-  const { checkCanGenerate, recordUsage } = useSubscription()
+  const { checkCanGenerate, recordUsage, remaining, isPro, triggerPaywall } = useSubscription()
   const { setNarration, setCurrentPhrase } = useTeacher()
   const [searchParams] = useSearchParams()
   const canvasRef = useRef(null)
@@ -558,6 +556,34 @@ export default function WorkspacePage() {
         </div>
       </div>
 
+      {/* ── 升级引导条（免费用户剩余不足时） ── */}
+      {!isPro && problemText && !loading && remaining <= 5 && remaining > 0 && (
+        <div className="wp-upgrade-banner">
+          <span className="wp-upgrade-banner-text">
+            今日还剩 <strong>{remaining}</strong> 次免费使用
+          </span>
+          <button
+            className="wp-upgrade-banner-btn"
+            onClick={() => triggerPaywall('免费额度即将用完，升级解锁无限使用')}
+          >
+            升级无限使用 →
+          </button>
+        </div>
+      )}
+      {!isPro && remaining === 0 && (
+        <div className="wp-upgrade-banner danger">
+          <span className="wp-upgrade-banner-text">
+            今日免费次数已用完
+          </span>
+          <button
+            className="wp-upgrade-banner-btn"
+            onClick={() => triggerPaywall('已达每日使用上限，升级继续使用')}
+          >
+            升级继续使用 →
+          </button>
+        </div>
+      )}
+
       {/* ── Quick input: workspace 空状态 ── */}
       {!problemText && !loading && (
         <div className="wp-empty-state">
@@ -735,9 +761,6 @@ export default function WorkspacePage() {
         onExportPPT={handleExportPPT}
         pptLoading={pptLoading}
       />
-      <PaywallModal />
-      <AuthModal />
-
       {/* ── Share toast ── */}
       {shareToast && (
         <div className="wp-share-toast">

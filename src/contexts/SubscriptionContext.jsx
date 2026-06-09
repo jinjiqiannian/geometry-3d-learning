@@ -101,6 +101,17 @@ export function SubscriptionProvider({ children }) {
     }
   }, [])
 
+  // Listen for paywall trigger event (from anywhere in the app)
+  useEffect(() => {
+    const handler = (e) => {
+      const reason = e.detail?.reason || '升级解锁更多功能'
+      setPaywallReason(reason)
+      setShowPaywall(true)
+    }
+    document.addEventListener('mathviz:show-paywall', handler)
+    return () => document.removeEventListener('mathviz:show-paywall', handler)
+  }, [])
+
   // Feature gates — guests can use everything, just rate-limited
   const checkCanGenerate = useCallback(() => {
     if (dailyUsage >= dailyLimit) {

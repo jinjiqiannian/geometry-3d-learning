@@ -46,14 +46,27 @@ export default function AuthModal() {
       <div className="auth-overlay" onClick={() => setVisible(false)}>
         <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
           <button className="auth-close" onClick={() => setVisible(false)}>×</button>
-          <h2 className="auth-title">账号功能暂未开放</h2>
+          <div className="auth-offline-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <h2 className="auth-title">离线模式</h2>
           <p className="auth-desc">
-            登录后可保存作品、解锁 AI 讲解。<br />
-            当前可直接使用全部免费功能，无需登录。
+            当前运行在本地模式，所有功能均可使用。
+          </p>
+          <ul className="auth-offline-features">
+            <li>完整 3D 几何可视化</li>
+            <li>AI 分步解题讲解</li>
+            <li>每日 50 次免费使用</li>
+            <li>历史记录本地保存</li>
+          </ul>
+          <p className="auth-offline-note">
+            配置 Supabase 后可启用云端同步、账号系统和专业版订阅。
           </p>
           <div className="auth-actions">
             <button className="auth-submit" onClick={() => setVisible(false)}>
-              继续使用
+              开始使用
             </button>
           </div>
         </div>

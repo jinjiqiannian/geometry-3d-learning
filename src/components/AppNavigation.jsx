@@ -1,14 +1,12 @@
 import { Link, useLocation } from 'react-router-dom'
-import { useSupabase } from '../contexts/SupabaseContext'
-import { useSubscription } from '../contexts/SubscriptionContext'
 import ThemeToggle from './ThemeToggle'
+import UserMenu from './UserMenu'
 import './AppNavigation.css'
 
 const NAV_ITEMS = [
   { path: '/', label: '首页' },
   { path: '/workspace', label: '工作台' },
   { path: '/history', label: '历史' },
-  { path: '/settings', label: '设置' },
 ]
 
 function LogoIcon() {
@@ -23,29 +21,11 @@ function LogoIcon() {
 
 export default function AppNavigation() {
   const location = useLocation()
-  const { user, signOut } = useSupabase()
-  const { isPro, isTeacher, plan } = useSubscription()
-
-  const handleAuth = () => {
-    document.dispatchEvent(new CustomEvent('mathviz:show-auth'))
-  }
-
-  const handleUpgrade = () => {
-    document.dispatchEvent(new CustomEvent('mathviz:show-paywall'))
-  }
 
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/'
     return location.pathname.startsWith(path)
   }
-
-  const planBadge = () => {
-    if (isTeacher) return { label: '教师版', className: 'teacher' }
-    if (isPro) return { label: '专业版', className: 'pro' }
-    return { label: '免费版', className: 'free' }
-  }
-
-  const badge = planBadge()
 
   return (
     <nav className="app-nav">
@@ -70,22 +50,7 @@ export default function AppNavigation() {
 
       <div className="app-nav-right">
         <ThemeToggle />
-        <button
-          className={`app-nav-plan-badge ${badge.className}`}
-          onClick={handleUpgrade}
-        >
-          {badge.label}
-        </button>
-
-        {user ? (
-          <button className="app-nav-auth-btn" onClick={signOut}>
-            {user.email?.split('@')[0]}
-          </button>
-        ) : (
-          <button className="app-nav-auth-btn" onClick={handleAuth}>
-            登录
-          </button>
-        )}
+        <UserMenu />
       </div>
     </nav>
   )
