@@ -37,9 +37,9 @@ export default function TeacherModePanel({
         <button
           className="tmp-classroom-btn"
           onClick={toggleClassroomMode}
-          title="Classroom mode"
+          title="课堂模式"
         >
-          Present
+          演示
         </button>
       )}
 
@@ -49,11 +49,11 @@ export default function TeacherModePanel({
           {/* Top bar */}
           <div className="tmp-topbar">
             <div className="tmp-topbar-left">
-              <button className="tmp-btn" onClick={toggleClassroomMode} title="Exit (Esc)">
-                Exit
+              <button className="tmp-btn" onClick={toggleClassroomMode} title="退出 (Esc)">
+                退出
               </button>
               <span className="tmp-step-info">
-                Step {currentStep + 1} / {totalSteps}
+                步骤 {currentStep + 1} / {totalSteps}
               </span>
             </div>
 
@@ -61,29 +61,29 @@ export default function TeacherModePanel({
               <button
                 className={`tmp-btn ${autoPlay ? 'tmp-active' : ''}`}
                 onClick={() => toggleAutoPlay(totalSteps, onStepChange)}
-                title="Auto-play (Space)"
+                title="自动播放 (空格)"
               >
-                {autoPlay ? 'Pause' : 'Play'}
+                {autoPlay ? '暂停' : '播放'}
               </button>
 
-              <button className="tmp-btn" onClick={cycleSpeed} title="Playback speed">
+              <button className="tmp-btn" onClick={cycleSpeed} title="播放速度">
                 {playSpeed}x
               </button>
 
               <button
                 className={`tmp-btn ${showSubtitles ? 'tmp-active' : ''}`}
                 onClick={() => setShowSubtitles(!showSubtitles)}
-                title="Subtitles"
+                title="字幕"
               >
-                CC
+                字幕
               </button>
 
               <button
                 className={`tmp-btn ${darkMode ? 'tmp-active' : ''}`}
                 onClick={() => setDarkMode(!darkMode)}
-                title="Dark mode"
+                title="深色模式"
               >
-                Dark
+                深色
               </button>
             </div>
 
@@ -92,9 +92,9 @@ export default function TeacherModePanel({
                 className="tmp-btn tmp-export-btn"
                 onClick={onExportPPT}
                 disabled={pptLoading}
-                title="Export PPT"
+                title="导出 PPT"
               >
-                {pptLoading ? 'Generating…' : 'Export PPT'}
+                {pptLoading ? '生成中…' : '导出 PPT'}
               </button>
             </div>
           </div>
@@ -107,7 +107,7 @@ export default function TeacherModePanel({
               onStepChange?.(newStep)
             }}
             disabled={currentStep <= 0}
-            title="Previous"
+            title="上一步"
           >
             ←
           </button>
@@ -119,7 +119,7 @@ export default function TeacherModePanel({
               onStepChange?.(newStep)
             }}
             disabled={currentStep >= totalSteps - 1}
-            title="Next"
+            title="下一步"
           >
             →
           </button>

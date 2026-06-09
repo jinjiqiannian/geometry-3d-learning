@@ -1,10 +1,10 @@
 import './StepCard.css'
 
 const TYPE_CONFIG = {
-  observation: { label: '观察' },
-  construction: { label: '作图' },
-  calculation: { label: '计算' },
-  conclusion: { label: '结论' },
+  observation:  { label: '观察', color: '#0550ae' },
+  construction: { label: '作图', color: '#563098' },
+  calculation:  { label: '计算', color: '#954a00' },
+  conclusion:   { label: '结论', color: '#0d6b2e' },
 }
 
 export default function StepCard({ step, index, isCurrent, locked, onClick, onUpgrade }) {
@@ -21,7 +21,10 @@ export default function StepCard({ step, index, isCurrent, locked, onClick, onUp
 
       <div className="step-body">
         <div className="step-header">
-          <span className="step-type-badge">
+          <span
+            className="step-type-badge"
+            style={{ borderColor: config.color, color: config.color }}
+          >
             {config.label}
           </span>
           <h4 className="step-title">{step.title}</h4>

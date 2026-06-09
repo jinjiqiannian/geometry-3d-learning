@@ -35,7 +35,7 @@ export default function AuthModal() {
         await signUp(email, password)
       }
     } catch (err) {
-      setError(err.message || 'Failed. Please try again.')
+      setError(err.message || '操作失败，请重试。')
     } finally {
       setLoading(false)
     }
@@ -46,12 +46,12 @@ export default function AuthModal() {
       <div className="auth-overlay" onClick={() => setVisible(false)}>
         <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
           <button className="auth-close" onClick={() => setVisible(false)}>×</button>
-          <h2 className="auth-title">Backend not connected</h2>
+          <h2 className="auth-title">后端未连接</h2>
           <p className="auth-desc">
-            Authentication requires Supabase. You can still use core features offline.
+            认证需要连接 Supabase。离线状态下仍可使用核心功能。
           </p>
           <button className="auth-submit" onClick={() => setVisible(false)}>
-            Continue offline
+            离线使用
           </button>
         </div>
       </div>
@@ -63,14 +63,14 @@ export default function AuthModal() {
       <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
         <button className="auth-close" onClick={() => setVisible(false)}>×</button>
 
-        <h2 className="auth-title">{isLogin ? 'Sign in' : 'Create account'}</h2>
-        <p className="auth-desc">Save your work and access Pro features</p>
+        <h2 className="auth-title">{isLogin ? '登录' : '注册账号'}</h2>
+        <p className="auth-desc">保存作品，解锁专业版功能</p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <input
             className="auth-input"
             type="email"
-            placeholder="Email address"
+            placeholder="邮箱地址"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -78,7 +78,7 @@ export default function AuthModal() {
           <input
             className="auth-input"
             type="password"
-            placeholder="Password (6+ characters)"
+            placeholder="密码（至少 6 位）"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             minLength={6}
@@ -88,26 +88,26 @@ export default function AuthModal() {
           {error && <div className="auth-error">{error}</div>}
 
           <button className="auth-submit" type="submit" disabled={loading}>
-            {loading ? 'Please wait…' : isLogin ? 'Sign in' : 'Create account'}
+            {loading ? '请稍候…' : isLogin ? '登录' : '注册'}
           </button>
         </form>
 
         <div className="auth-divider">
-          <span>or</span>
+          <span>或</span>
         </div>
 
         <button className="auth-google" onClick={signInWithGoogle} type="button">
-          Continue with Google
+          使用 Google 账号登录
         </button>
 
         <p className="auth-switch">
-          {isLogin ? 'No account?' : 'Have an account?'}
+          {isLogin ? '还没有账号？' : '已有账号？'}
           <button
             type="button"
             className="auth-switch-btn"
             onClick={() => { setIsLogin(!isLogin); setError('') }}
           >
-            {isLogin ? 'Sign up' : 'Sign in'}
+            {isLogin ? '注册' : '登录'}
           </button>
         </p>
       </div>

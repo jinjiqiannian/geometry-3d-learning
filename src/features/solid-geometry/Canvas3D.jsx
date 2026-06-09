@@ -1,9 +1,11 @@
-import { useMemo, useCallback, useRef } from 'react'
+import { useMemo, useCallback, useRef, useEffect } from 'react'
 import * as THREE from 'three'
+import { useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Text, Line, Billboard } from '@react-three/drei'
 import { createGeometry, getVertexAndEdgeInfo } from '../../engines/geometryEngine'
 import { getLineDefinitions, resolvePoint, getLineStyle } from '../../engines/lineDefinitions'
 import { searchLines } from '../../engines/lineConnector'
+import { CAMERA_PRESETS } from '../../engines/visualIntent'
 
 // ── 圆采样 ──────────────────────────────────────────
 function ring(radius, plane, seg = 64) {
@@ -109,6 +111,13 @@ export default function Canvas3D({
   allLines, shownLengthLabels, searchedLine,
   selectedEdge, onEdgeClick, edgeColorOverrides,
   customVertices,
+  // ── VisualIntent-driven props ──
+  highlightEdgeIds = [],
+  highlightColor = '#FF6B6B',
+  auxLines = [],
+  cameraPreset = null,
+  faceOpacity = 0.42,
+  nonHighlightOpacity = 0.25,
 }) {
   const { type, params } = geometry
   const size = params.size ?? 2
@@ -137,6 +146,66 @@ export default function Canvas3D({
     const matches = searchLines(searchedLine, allLines)
     return new Set(matches)
   }, [searchedLine, allLines])
+
+  // ── VisualIntent highlight set ──
+  const highlightSet = useMemo(() => {
+    return new Set(highlightEdgeIds)
+  }, [highlightEdgeIds])
+
+  const hasHighlights = highlightEdgeIds.length > 0
+
+  // ── Aux lines (resolved from vertex labels) ──
+  const resolvedAuxLines = useMemo(() => {
+    if (!auxLines || auxLines.length === 0) return []
+    return auxLines.map(al => {
+      const from = resolvePoint(al.from, pts)
+      const to = resolvePoint(al.to, pts)
+      if (!from || !to) return null
+      return { ...al, from, to }
+    }).filter(Boolean)
+  }, [auxLines, pts])
+
+  // ── Camera preset lerp ──
+  const cameraRef = useRef(null)
+  const targetCamPos = useRef(null)
+  const { camera } = useThree()
+
+  // Keep cameraRef in sync
+  useEffect(() => {
+    cameraRef.current = camera
+  }, [camera])
+
+  // Update target when preset changes
+  useEffect(() => {
+    if (cameraPreset && CAMERA_PRESETS[cameraPreset]) {
+      targetCamPos.current = CAMERA_PRESETS[cameraPreset]
+    } else {
+      targetCamPos.current = null
+    }
+  }, [cameraPreset])
+
+  // Smooth camera lerp
+  useFrame((_, delta) => {
+    if (!targetCamPos.current || !cameraRef.current) return
+    const target = targetCamPos.current
+    const cam = cameraRef.current
+    const lerpFactor = 1 - Math.exp(-4 * delta) // smooth exponential decay
+
+    cam.position.x += (target[0] - cam.position.x) * lerpFactor
+    cam.position.y += (target[1] - cam.position.y) * lerpFactor
+    cam.position.z += (target[2] - cam.position.z) * lerpFactor
+
+    // Stop lerping when close enough
+    const dist = Math.hypot(
+      target[0] - cam.position.x,
+      target[1] - cam.position.y,
+      target[2] - cam.position.z
+    )
+    if (dist < 0.02) {
+      cam.position.set(target[0], target[1], target[2])
+      targetCamPos.current = null
+    }
+  })
 
   // ── 解析线段坐标 ──
   const resolvedLines = useMemo(() => (allLines || []).map(l => {
@@ -174,6 +243,9 @@ export default function Canvas3D({
 
     const style = getLineStyle(l.category)
 
+    // Determine if this edge is highlighted via VisualIntent
+    const isVisualHighlight = hasHighlights && highlightSet.has(l.id)
+
     let color, opacity
     if (selected) {
       color = '#FF8C00'; opacity = 1
@@ -181,6 +253,11 @@ export default function Canvas3D({
       color = '#4A90E2'; opacity = 1
     } else if (searched) {
       color = '#2979ff'; opacity = 1
+    } else if (isVisualHighlight) {
+      color = highlightColor; opacity = 1
+    } else if (hasHighlights && !isVisualHighlight) {
+      // Dim non-highlighted edges when visual intent is active
+      color = style.color; opacity = nonHighlightOpacity
     } else if (l.colorOverride) {
       color = l.colorOverride; opacity = style.opacity
     } else if (edgeColorOverrides?.[key]) {
@@ -227,9 +304,9 @@ export default function Canvas3D({
         {showLen && visible && (
           <Billboard position={l.mid} follow>
             <Text
-              fontSize={0.14} color="#555555"
+              fontSize={0.14} color="#666666"
               anchorX="center" anchorY="bottom"
-              outlineWidth={0.015} outlineColor="white"
+              outlineWidth={0.015} outlineColor="#f0f0f3"
             >
               {l.id} = {l.length.toFixed(2)}
             </Text>
@@ -241,22 +318,44 @@ export default function Canvas3D({
 
   return (
     <>
+      {/* 白色背景 */}
+      <color attach="background" args={['#f8f9fb']} />
+
       <perspectiveCamera makeDefault fov={50} position={[4, 4, 6]} />
 
-      {/* 半透明白色面 */}
+      {/* 半透明灰色面 — opacity driven by VisualIntent */}
       {showFaces && (
         <mesh>
           <primitive attach="geometry" object={geoData} />
-          <meshBasicMaterial color="white" transparent opacity={0.38} depthWrite={false} side={THREE.DoubleSide} />
+          <meshBasicMaterial color="#d0d0d8" transparent opacity={faceOpacity} depthWrite={false} side={THREE.DoubleSide} />
         </mesh>
       )}
+
+      {/* ── VisualIntent Auxiliary Lines ── */}
+      {resolvedAuxLines.map((al, i) => (
+        <group key={`aux-${i}`}>
+          <line geometry={
+            new THREE.BufferGeometry().setFromPoints([
+              new THREE.Vector3(al.from[0], al.from[1], al.from[2]),
+              new THREE.Vector3(al.to[0], al.to[1], al.to[2]),
+            ])
+          }>
+            <lineBasicMaterial
+              color={al.color || '#4A90E2'}
+              transparent
+              opacity={0.7}
+              dashed={al.dashed !== false}
+            />
+          </line>
+        </group>
+      ))}
 
       {/* ── 多面体线段 ── */}
       {!isCurved && resolvedLines.map(l => renderLine(l, lineKey(l)))}
 
       {/* ── 曲面体线框 ── */}
       {isCurved && curveLines.map((pts, i) => (
-        <Line key={`curve-${i}`} points={pts} color="#1a1a1a" lineWidth={1} />
+        <Line key={`curve-${i}`} points={pts} color="#aaaaaa" lineWidth={1} />
       ))}
 
       {/* ── 曲面体线段 ── */}
@@ -265,7 +364,7 @@ export default function Canvas3D({
       {/* ── 顶点标签 ── */}
       {showLabels && edgeInfo.vertices.map((v, i) => (
         <Billboard key={`v-${i}`} position={v} follow>
-          <Text fontSize={0.28} color="black" anchorX="center" anchorY="middle">
+          <Text fontSize={0.28} color="#1d1d1f" anchorX="center" anchorY="middle">
             {edgeInfo.labels[i] || String.fromCharCode(65 + i)}
           </Text>
         </Billboard>

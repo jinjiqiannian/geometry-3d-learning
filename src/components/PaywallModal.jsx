@@ -22,24 +22,24 @@ export default function PaywallModal() {
       <div className="paywall-modal" onClick={(e) => e.stopPropagation()}>
         <button className="paywall-close" onClick={() => setShowPaywall(false)}>×</button>
 
-        <h2 className="paywall-title">Upgrade to Pro</h2>
+        <h2 className="paywall-title">升级专业版</h2>
 
         {paywallReason && (
           <p className="paywall-reason">{paywallReason}</p>
         )}
 
         <ul className="paywall-benefits">
-          <li>Unlimited generations</li>
-          <li>Cloud sync & history</li>
-          <li>Priority access</li>
+          <li>无限次生成</li>
+          <li>云端同步与历史</li>
+          <li>优先 AI 访问</li>
         </ul>
 
         <div className="paywall-actions">
           <button className="paywall-btn primary" onClick={handleUpgrade}>
-            Upgrade — ¥19/month
+            升级 — ¥19/月
           </button>
           <button className="paywall-btn secondary" onClick={() => setShowPaywall(false)}>
-            Continue with free
+            继续免费使用
           </button>
         </div>
       </div>

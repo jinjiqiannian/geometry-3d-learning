@@ -5,42 +5,42 @@
 
 :root {
   /* ── Background ── */
-  --bg-deep: #080808;
-  --bg-base: #0d0d0d;
-  --bg-surface: #141414;
-  --bg-elevated: #1a1a1a;
-  --bg-overlay: rgba(0, 0, 0, 0.7);
+  --bg-deep: #ffffff;
+  --bg-base: #f8f9fb;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f0f0f3;
+  --bg-overlay: rgba(0, 0, 0, 0.2);
 
   /* ── Border ── */
-  --border-subtle: #1f1f1f;
-  --border-default: #292929;
-  --border-emphasis: #3a3a3a;
-  --border-focus: #525252;
+  --border-subtle: #d8d8dc;
+  --border-default: #bcbcc0;
+  --border-emphasis: #9a9a9f;
+  --border-focus: #7a7a7f;
 
   /* ── Text ── */
-  --text-primary: #e8e8e8;
-  --text-secondary: #9a9a9a;
-  --text-muted: #5c5c5c;
-  --text-inverse: #0d0d0d;
+  --text-primary: #1d1d1f;
+  --text-secondary: #444448;
+  --text-muted: #636368;
+  --text-inverse: #ffffff;
 
   /* ── Accent ── */
-  --accent: #fafafa;
-  --accent-hover: #ffffff;
-  --accent-subtle: rgba(255, 255, 255, 0.06);
-  --accent-pressed: rgba(255, 255, 255, 0.12);
+  --accent: #1d1d1f;
+  --accent-hover: #000000;
+  --accent-subtle: rgba(0, 0, 0, 0.04);
+  --accent-pressed: rgba(0, 0, 0, 0.08);
 
-  /* ── Semantic (desaturated for dark) ── */
-  --color-success: #3fb950;
-  --color-warning: #d29922;
-  --color-error: #f85149;
-  --color-info: #58a6ff;
+  /* ── Semantic ── */
+  --color-success: #1a7f37;
+  --color-warning: #9a6700;
+  --color-error: #b11c28;
+  --color-info: #0550ae;
 
   /* ── Shadows ── */
-  --shadow-xs: 0 0 0 1px rgba(0, 0, 0, 0.4);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --shadow-xs: 0 0 0 1px rgba(0, 0, 0, 0.06);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.15);
 
   /* ── Radius ── */
   --radius-sm: 4px;
@@ -86,25 +86,25 @@
 :root {
   --color-primary: var(--text-primary);
   --color-primary-dark: var(--text-secondary);
-  --color-primary-light: rgba(255, 255, 255, 0.06);
-  --color-primary-glow: rgba(255, 255, 255, 0.04);
+  --color-primary-light: rgba(0, 0, 0, 0.04);
+  --color-primary-glow: rgba(0, 0, 0, 0.02);
   --color-success: var(--color-success);
-  --color-success-light: rgba(63, 185, 80, 0.08);
+  --color-success-light: rgba(45, 164, 78, 0.08);
   --color-warning: var(--color-warning);
-  --color-warning-light: rgba(210, 153, 34, 0.08);
+  --color-warning-light: rgba(191, 135, 0, 0.08);
   --color-error: var(--color-error);
-  --color-error-light: rgba(248, 81, 73, 0.08);
+  --color-error-light: rgba(207, 34, 46, 0.08);
   --color-gold: var(--color-warning);
-  --color-gold-light: rgba(210, 153, 34, 0.08);
-  --color-gold-dark: #b0881a;
+  --color-gold-light: rgba(191, 135, 0, 0.08);
+  --color-gold-dark: #9a7200;
   --color-pro: var(--text-primary);
-  --color-pro-light: rgba(255, 255, 255, 0.06);
+  --color-pro-light: rgba(0, 0, 0, 0.04);
   --color-pro-gradient: var(--accent);
   --color-teacher: var(--text-primary);
-  --color-teacher-light: rgba(255, 255, 255, 0.06);
+  --color-teacher-light: rgba(0, 0, 0, 0.04);
   --color-teacher-gradient: var(--accent);
   --color-free: var(--text-muted);
-  --color-free-light: rgba(255, 255, 255, 0.04);
+  --color-free-light: rgba(0, 0, 0, 0.02);
   --color-text: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
@@ -112,10 +112,10 @@
   --color-border-light: var(--border-subtle);
   --color-bg: var(--bg-deep);
   --color-bg-alt: var(--bg-surface);
-  --color-bg-hover: rgba(255, 255, 255, 0.04);
-  --badge-pro-bg: rgba(255, 255, 255, 0.08);
+  --color-bg-hover: rgba(0, 0, 0, 0.04);
+  --badge-pro-bg: rgba(0, 0, 0, 0.06);
   --badge-pro-text: var(--text-primary);
-  --badge-teacher-bg: rgba(255, 255, 255, 0.08);
+  --badge-teacher-bg: rgba(0, 0, 0, 0.06);
   --badge-teacher-text: var(--text-primary);
 }
 
@@ -145,7 +145,7 @@ body {
 }
 
 ::selection {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.1);
   color: var(--text-primary);
 }
 
@@ -175,17 +175,17 @@ a:hover {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.12);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.2);
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
 }
 
 /* ── Button reset ──────────────────────────────────── */

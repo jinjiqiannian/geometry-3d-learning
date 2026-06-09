@@ -15,8 +15,10 @@ import { computeVerticesFromParams, getEdgeDirectionGroups, getDefaultEdgeLength
 import { parseProblem } from '../engines/problemParser'
 import { generateLocalSteps } from '../engines/explanationEngine'
 import { generatePPT } from '../engines/pptExporter'
+import { computeVisualIntent } from '../engines/visualIntent'
 import { useAppContext } from '../contexts/AppContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
+import { useWorkspace } from '../contexts/WorkspaceContext'
 import { GEOMETRY_NAMES } from '../constants'
 import './WorkspacePage.css'
 
@@ -31,6 +33,7 @@ function defaultConstraintParams(type) {
 export default function WorkspacePage() {
   const { apiKey, setApiKey } = useAppContext()
   const { checkCanGenerate, checkCanExportPpt, checkCanExportImage, recordUsage, isPro, isTeacher } = useSubscription()
+  const { saveWorkspace, loadWorkspace } = useWorkspace()
   const [searchParams] = useSearchParams()
   const canvasRef = useRef(null)
 
@@ -52,9 +55,11 @@ export default function WorkspacePage() {
 
   // ── Workspace state ──────────────────────────────
   const [problemText, setProblemText] = useState('')
+  const [parsedData, setParsedData] = useState(null)
   const [steps, setSteps] = useState([])
   const [currentStep, setCurrentStep] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [loadingStage, setLoadingStage] = useState('idle') // idle|parsing|reasoning|visualizing|done
   const [error, setError] = useState(null)
 
   // ── Mobile ──────────────────────────────────────
@@ -104,39 +109,45 @@ export default function WorkspacePage() {
     setEdgeColorOverrides({})
   }, [geometry.type]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Parse problem (AI or local) ──────────────────
+  // ── Parse problem (AI or local) with progressive stages ──
   const handleParseProblem = useCallback(async (text) => {
     if (!checkCanGenerate()) return
 
     setProblemText(text)
     setLoading(true)
+    setLoadingStage('parsing')
     setError(null)
 
     try {
-      let parsedData
+      // Stage 1: Parse
+      let result
       try {
-        parsedData = await parseProblem(text, apiKey)
+        result = await parseProblem(text, apiKey)
       } catch {
         // Fallback: quick match from problemParser
-        parsedData = { type: 'cube', size: 2, labels: [], highlightLines: [], explanation: '快速匹配' }
+        result = { type: 'cube', size: 2, labels: [], highlightLines: [], explanation: '快速匹配' }
       }
+      setParsedData(result)
+      setLoadingStage('reasoning')
 
-      // Generate local template steps
-      const localSteps = generateLocalSteps(text, parsedData)
-
+      // Stage 2: Generate steps
+      const localSteps = generateLocalSteps(text, result)
       setSteps(localSteps)
       setCurrentStep(0)
+      setLoadingStage('visualizing')
+
+      // Stage 3: Set up geometry
       setGeometry({
-        type: parsedData.type || 'cube',
-        params: { size: parsedData.size || 2 },
-        ...defaultConstraintParams(parsedData.type || 'cube'),
+        type: result.type || 'cube',
+        params: { size: result.size || 2 },
+        ...defaultConstraintParams(result.type || 'cube'),
       })
 
       // Handle highlight lines from AI
-      if (parsedData.highlightLines?.length > 0) {
-        const { lines: predefinedLines } = getLineDefinitions(parsedData.type || 'cube', { size: parsedData.size || 2 })
+      if (result.highlightLines?.length > 0) {
+        const { lines: predefinedLines } = getLineDefinitions(result.type || 'cube', { size: result.size || 2 })
         const newCustomLines = []
-        parsedData.highlightLines.forEach(hl => {
+        result.highlightLines.forEach(hl => {
           const exists = predefinedLines.some(l => l.id === hl.label && l.category === 'AI高亮')
           if (!exists) {
             newCustomLines.push({
@@ -160,8 +171,10 @@ export default function WorkspacePage() {
       }
 
       await recordUsage('generate', text)
+      setLoadingStage('done')
     } catch (err) {
       setError(err.message || '解析失败')
+      setLoadingStage('idle')
     } finally {
       setLoading(false)
     }
@@ -257,6 +270,13 @@ export default function WorkspacePage() {
 
   const polyhedral = isPolyhedral(geometry.type)
 
+  // ── VisualIntent — Step→3D deterministic mapping ──
+  const visualIntent = useMemo(() => {
+    const step = steps[currentStep]
+    if (!step || !parsedData) return null
+    return computeVisualIntent(step, parsedData, problemText)
+  }, [currentStep, steps, parsedData, problemText])
+
   // ── Step navigation ──────────────────────────────
   const handleStepClick = useCallback((index) => {
     setCurrentStep(index)
@@ -300,7 +320,7 @@ export default function WorkspacePage() {
   return (
     <div className="workspace-page">
       <WorkspaceToolbar
-        title={problemText?.slice(0, 40) || 'MathViz Workspace'}
+        title={problemText?.slice(0, 40) || 'MathViz 工作台'}
         onExportPpt={handleExportPpt}
         onExportImage={handleExportImage}
       />
@@ -323,6 +343,13 @@ export default function WorkspacePage() {
               onEdgeClick={setSelectedEdge}
               edgeColorOverrides={edgeColorOverrides}
               customVertices={customVertices}
+              // ── VisualIntent-driven ──
+              highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
+              highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
+              auxLines={visualIntent?.auxLines || []}
+              cameraPreset={visualIntent?.cameraPreset || null}
+              faceOpacity={visualIntent?.faceOpacity ?? 0.42}
+              nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
             />
           </Canvas>
 
@@ -359,6 +386,8 @@ export default function WorkspacePage() {
           onNext={handleNextStep}
           onPrev={handlePrevStep}
           loading={loading}
+          loadingStage={loadingStage}
+          parsedData={parsedData}
           error={error}
         />
       </div>

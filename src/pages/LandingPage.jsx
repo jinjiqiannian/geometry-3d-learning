@@ -9,6 +9,7 @@ import { getLineDefinitions } from '../engines/lineDefinitions'
 import { isPolyhedral } from '../engines/geometryEngine'
 import { quickMatch } from '../engines/problemParser'
 import { generateLocalSteps } from '../engines/explanationEngine'
+import { computeVisualIntent } from '../engines/visualIntent'
 import { useAppContext } from '../contexts/AppContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { GEOMETRIES } from '../constants'
@@ -47,12 +48,21 @@ export default function LandingPage() {
   const [visibleLines, setVisibleLines] = useState(() => new Set())
   const [hoveredLine, setHoveredLine] = useState(null)
   const [problemText, setProblemText] = useState('')
+  const [parsedData, setParsedData] = useState(null)
   const [steps, setSteps] = useState([])
   const [currentStep, setCurrentStep] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [loadingStage, setLoadingStage] = useState('idle')
   const [error, setError] = useState(null)
 
   const polyhedral = isPolyhedral(geometry.type)
+
+  // ── VisualIntent — Step→3D deterministic mapping ──
+  const visualIntent = useMemo(() => {
+    const step = steps[currentStep]
+    if (!step || !parsedData) return null
+    return computeVisualIntent(step, parsedData, problemText)
+  }, [currentStep, steps, parsedData, problemText])
 
   // ── Lines ──
   const mergedLines = useMemo(() => {
@@ -82,6 +92,7 @@ export default function LandingPage() {
 
     setProblemText(text)
     setLoading(true)
+    setLoadingStage('parsing')
     setError(null)
     if (!silent) setHasGenerated(true)
 
@@ -93,17 +104,24 @@ export default function LandingPage() {
         parsed = { type: 'cube', size: 2, labels: [], highlightLines: [], explanation: '' }
       }
 
+      setParsedData(parsed)
+      setLoadingStage('reasoning')
+
       const localSteps = generateLocalSteps(text, parsed)
 
       setSteps(localSteps)
       setCurrentStep(0)
+      setLoadingStage('visualizing')
+
       setGeometry(defaultGeometry(parsed.type || 'cube'))
+      setLoadingStage('done')
 
       await recordUsage('generate', text)
     } catch (err) {
       setError(err.message || '解析失败')
     } finally {
       setLoading(false)
+      setLoadingStage('idle')
     }
   }, [apiKey, checkCanGenerate, recordUsage])
 
@@ -217,6 +235,13 @@ export default function LandingPage() {
               selectedEdge={null}
               onEdgeClick={() => {}}
               edgeColorOverrides={{}}
+              // ── VisualIntent-driven ──
+              highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
+              highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
+              auxLines={visualIntent?.auxLines || []}
+              cameraPreset={visualIntent?.cameraPreset || null}
+              faceOpacity={visualIntent?.faceOpacity ?? 0.42}
+              nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
             />
           </Canvas>
 
@@ -238,7 +263,9 @@ export default function LandingPage() {
           onNext={handleNextStep}
           onPrev={handlePrevStep}
           loading={loading}
-          error={null}
+          loadingStage={loadingStage}
+          parsedData={parsedData}
+          error={error}
         />
       </section>
 

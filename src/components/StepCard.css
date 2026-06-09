@@ -19,7 +19,16 @@
 
 .step-card.current {
   background: var(--accent-subtle);
-  border-left-color: var(--text-secondary);
+  border-left-color: var(--color-info);
+}
+
+.step-card.current .step-body {
+  opacity: 1;
+}
+
+/* Dim non-current steps slightly when another step is selected */
+.step-card:not(.current) .step-body {
+  opacity: 0.65;
 }
 
 .step-indicator {
@@ -35,8 +44,8 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 550;
   display: flex;
@@ -46,7 +55,7 @@
 }
 
 .step-card.current .step-number {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.08);
   color: var(--text-primary);
 }
 
@@ -65,13 +74,17 @@
 .step-type-badge {
   font-size: 10px;
   font-weight: 550;
-  padding: 2px 6px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-muted);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: transparent;
   white-space: nowrap;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+}
+
+.step-card.current .step-type-badge {
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .step-title {

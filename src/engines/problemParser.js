@@ -268,11 +268,15 @@ export function quickMatch(text) {
 
     // 提取可能的关键线段
     const highlightLines = []
-    const linePattern = /(?:对角线|线段|求|求长|计算|证明)\s*([A-H]{2})/g
+    // Pattern 1: near keywords (对角/求/计算/证明/异面)
+    const linePattern = /(?:对角线|异面直线|线段|求|求长|计算|证明|夹角|与)\s*([A-Z]'?[A-Z]?'?)/g
     let m
     while ((m = linePattern.exec(text)) !== null) {
-      const label = m[1]
-      highlightLines.push({ from: label[0], to: label[1], label, reason: '题目提及' })
+      const label = m[1].replace(/\s/g, '').replace(/'/g, "'")
+      const clean = label.replace(/'/g, '')
+      if (clean.length >= 2) {
+        highlightLines.push({ from: clean[0], to: clean[clean.length - 1], label, reason: '题目提及' })
+      }
     }
 
     return {

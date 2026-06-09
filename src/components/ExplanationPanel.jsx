@@ -1,4 +1,7 @@
-import StepCard from './StepCard'
+import ProgressHeader from './ProgressHeader'
+import StepList from './StepList'
+import AnswerPanel from './AnswerPanel'
+import PlaybackControls from './PlaybackControls'
 import './ExplanationPanel.css'
 
 export default function ExplanationPanel({
@@ -8,50 +11,47 @@ export default function ExplanationPanel({
   onNext,
   onPrev,
   loading = false,
+  loadingStage = 'idle',
+  parsedData = null,
   error = null,
 }) {
+  const currentStepData = steps[currentStep]
+  const showAnswer = currentStepData?.type === 'conclusion' && !loading
+
   return (
     <div className="explanation-panel">
-      <div className="ep-header">
-        <h3 className="ep-title">解题步骤</h3>
-        {loading && <span className="ep-loading">思考中…</span>}
-      </div>
+      {/* AI parsing progress */}
+      <ProgressHeader
+        loadingStage={loadingStage}
+        parsedData={parsedData}
+        loading={loading}
+        error={error}
+      />
 
-      {error && <div className="ep-error">{error}</div>}
+      {/* Step cards */}
+      <StepList
+        steps={steps}
+        currentStep={currentStep}
+        onStepClick={onStepClick}
+      />
 
-      <div className="ep-steps">
-        {steps.length === 0 && !loading && (
-          <div className="ep-empty">
-            <p className="ep-empty-main">输入题目开始</p>
-            <p className="ep-empty-hint">
-              输入一道几何题，AI 将生成分步解题讲解
-            </p>
-          </div>
-        )}
+      {/* Final answer (only on conclusion step) */}
+      {showAnswer && (
+        <AnswerPanel
+          step={currentStepData}
+          parsedData={parsedData}
+          geometryType={parsedData?.type || 'cube'}
+        />
+      )}
 
-        {steps.map((step, i) => (
-          <StepCard
-            key={i}
-            step={step}
-            index={i}
-            isCurrent={i === currentStep}
-            onClick={() => onStepClick?.(i)}
-          />
-        ))}
-      </div>
-
+      {/* Navigation controls */}
       {steps.length > 0 && (
-        <div className="ep-controls">
-          <button className="ep-ctrl-btn" onClick={onPrev} disabled={currentStep <= 0}>
-            上一步
-          </button>
-          <span className="ep-ctrl-indicator">
-            {currentStep + 1} / {steps.length}
-          </span>
-          <button className="ep-ctrl-btn" onClick={onNext} disabled={currentStep >= steps.length - 1}>
-            下一步
-          </button>
-        </div>
+        <PlaybackControls
+          currentStep={currentStep}
+          totalSteps={steps.length}
+          onNext={onNext}
+          onPrev={onPrev}
+        />
       )}
     </div>
   )

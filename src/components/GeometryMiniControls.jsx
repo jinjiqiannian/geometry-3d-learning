@@ -35,7 +35,7 @@ export default function GeometryMiniControls({
           className={`gmc-btn ${showLabels ? 'active' : ''}`}
           onClick={onToggleLabels}
         >
-          Labels
+          标签
         </button>
       </div>
 

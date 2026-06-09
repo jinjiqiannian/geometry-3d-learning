@@ -1,0 +1,68 @@
+/* ═══════════════════════════════════════════════════════
+   PlaybackControls — Step navigation bar
+   ═══════════════════════════════════════════════════════ */
+
+.playback-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.pc-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.pc-btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--border-default);
+  background: var(--accent-subtle);
+}
+
+.pc-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.pc-btn-play {
+  font-weight: 550;
+}
+
+.pc-btn-play.active {
+  color: var(--text-primary);
+  border-color: var(--border-focus);
+  background: var(--accent-pressed);
+}
+
+.pc-indicator {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-weight: 500;
+  min-width: 36px;
+  text-align: center;
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .playback-controls {
+    padding: 8px;
+    gap: 4px;
+  }
+
+  .pc-btn {
+    padding: 6px 10px;
+  }
+}
