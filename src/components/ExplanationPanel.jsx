@@ -38,7 +38,7 @@ export default function ExplanationPanel({
       )}
 
       {/* ── 解析 ── */}
-      {steps.length > 0 && (
+      {steps.length > 0 ? (
         <div className="ep-steps-wrap">
           <div className="ep-steps-label">解析</div>
           <StepList
@@ -64,6 +64,12 @@ export default function ExplanationPanel({
             onPrev={onPrev}
           />
         </div>
+      ) : (
+        !loading && loadingStage === 'done' && (
+          <div className="ep-empty-steps">
+            <p className="ep-empty-text">未能生成步骤，请尝试重新输入题目</p>
+          </div>
+        )
       )}
     </div>
   )

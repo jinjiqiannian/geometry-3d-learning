@@ -56,6 +56,7 @@ export default function WorkspacePage() {
   const [loadingStage, setLoadingStage] = useState('idle') // idle|parsing|reasoning|visualizing|done
   const [error, setError] = useState(null)
   const [pptLoading, setPptLoading] = useState(false)
+  const [quickInput, setQuickInput] = useState('')
 
   // ── Mobile ──────────────────────────────────────
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 767)
@@ -108,6 +109,7 @@ export default function WorkspacePage() {
   // ── Parse problem with AI backend ──
   const handleParseProblem = useCallback(async (text) => {
     if (!checkCanGenerate()) return
+    if (loading) return  // 防止重复提交
 
     setProblemText(text)
     setLoading(true)
@@ -293,6 +295,20 @@ export default function WorkspacePage() {
     setCurrentStep(prev => Math.max(prev - 1, 0))
   }, [])
 
+  // ── Quick input submit (workspace empty state) ──
+  const handleQuickSubmit = useCallback(() => {
+    const trimmed = quickInput.trim()
+    if (trimmed.length < 3 || loading) return
+    handleParseProblem(trimmed)
+  }, [quickInput, loading, handleParseProblem])
+
+  const handleQuickKeyDown = useCallback((e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleQuickSubmit()
+    }
+  }, [handleQuickSubmit])
+
   // ── 生成教师讲稿（从步骤内容） ─────────────────
   useEffect(() => {
     if (steps.length === 0) return
@@ -348,6 +364,28 @@ export default function WorkspacePage() {
           )}
         </div>
       </div>
+
+      {/* ── Quick input: workspace 空状态 ── */}
+      {!problemText && !loading && (
+        <div className="wp-quick-input-bar">
+          <textarea
+            className="wp-quick-input"
+            value={quickInput}
+            onChange={(e) => setQuickInput(e.target.value)}
+            onKeyDown={handleQuickKeyDown}
+            placeholder="输入一道几何题开始解析…"
+            rows={2}
+            spellCheck={false}
+          />
+          <button
+            className="wp-quick-submit"
+            onClick={handleQuickSubmit}
+            disabled={quickInput.trim().length < 3}
+          >
+            解析
+          </button>
+        </div>
+      )}
 
       {isMobile ? (
         /* ── Mobile: 上下布局 ── */

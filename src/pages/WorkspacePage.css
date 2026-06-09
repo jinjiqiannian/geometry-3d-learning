@@ -120,6 +120,65 @@
   overflow-y: auto;
 }
 
+/* ── Quick input bar (empty state) ─────────────────── */
+.wp-quick-input-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+  flex-shrink: 0;
+}
+
+.wp-quick-input {
+  flex: 1;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  font-size: var(--text-sm);
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  resize: none;
+  outline: none;
+  line-height: 1.5;
+  transition: border-color var(--transition-fast);
+}
+
+.wp-quick-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
+}
+
+.wp-quick-input::placeholder {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.wp-quick-submit {
+  padding: 7px 16px;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: white;
+  font-size: var(--text-xs);
+  font-weight: 550;
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.wp-quick-submit:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.wp-quick-submit:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width: 900px) {
   .wp-explain-col {
@@ -137,5 +196,21 @@
 
   .wp-main {
     flex-direction: column;
+  }
+
+  .wp-quick-input-bar {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .wp-quick-input {
+    font-size: var(--text-xs);
+    padding: 6px 10px;
+    min-height: 40px;
+  }
+
+  .wp-quick-submit {
+    padding: 6px 12px;
+    font-size: 11px;
   }
 }
