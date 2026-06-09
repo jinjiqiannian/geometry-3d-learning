@@ -256,8 +256,9 @@ export default function Canvas3D({
     } else if (isVisualHighlight) {
       color = highlightColor; opacity = 1
     } else if (hasHighlights && !isVisualHighlight) {
-      // 有高亮时，与题目无关的线完全隐藏（不参与当前步骤的认知动作）
-      color = style.color; opacity = 0
+      // 有高亮时：基本外轮廓保持淡淡可见，其他无关线完全隐藏
+      const isStructural = ['棱', '底面边', '顶面边', '侧棱'].includes(l.category)
+      color = style.color; opacity = isStructural ? 0.08 : 0
     } else if (l.colorOverride) {
       color = l.colorOverride; opacity = style.opacity
     } else if (edgeColorOverrides?.[key]) {
