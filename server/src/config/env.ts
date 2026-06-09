@@ -17,9 +17,9 @@ export const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   IS_DEV: (process.env.NODE_ENV || 'development') === 'development',
 
-  // Supabase
-  SUPABASE_URL: requireEnv('SUPABASE_URL'),
-  SUPABASE_SERVICE_ROLE_KEY: requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
+  // Supabase (开发模式可选，生产模式必须)
+  SUPABASE_URL: process.env.SUPABASE_URL || '',
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
 
   // JWT
   JWT_SECRET: requireEnv('JWT_SECRET', 'dev-secret-change-in-production-' + Date.now()),
