@@ -300,6 +300,183 @@ input, textarea {
   color: inherit;
 }
 
+/* ── Dark mode: Landing page ─────────────────────── */
+[data-theme="dark"] .landing {
+  background: linear-gradient(180deg, var(--bg-base) 0%, var(--bg-deep) 40%);
+}
+
+[data-theme="dark"] .landing-title {
+  background: linear-gradient(135deg, #f0f0f5 0%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Dark mode: Legacy feature components ────────── */
+/* CameraCapture */
+[data-theme="dark"] .cc-capture-btn,
+[data-theme="dark"] .pi-textarea,
+[data-theme="dark"] .ac-input,
+[data-theme="dark"] .pi-example-btn {
+  background: var(--bg-elevated);
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .cc-capture-btn:hover,
+[data-theme="dark"] .pi-example-btn:hover {
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+}
+
+[data-theme="dark"] .cc-capture-text,
+[data-theme="dark"] .pi-example-btn {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .cc-capture-hint,
+[data-theme="dark"] .pi-hint,
+[data-theme="dark"] .ac-input::placeholder,
+[data-theme="dark"] .pi-textarea::placeholder,
+[data-theme="dark"] .ac-sug-type {
+  color: var(--text-muted);
+}
+
+[data-theme="dark"] .cc-preview,
+[data-theme="dark"] .ac-suggestions {
+  border-color: var(--border-default);
+}
+
+[data-theme="dark"] .cc-preview-img {
+  background: var(--bg-elevated);
+}
+
+[data-theme="dark"] .cc-preview-actions,
+[data-theme="dark"] .cc-btn-ghost {
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+}
+
+[data-theme="dark"] .cc-btn-ghost {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .cc-btn-ghost:hover:not(:disabled) {
+  background: var(--bg-elevated);
+}
+
+[data-theme="dark"] .cc-error,
+[data-theme="dark"] .pi-error,
+[data-theme="dark"] .ac-message.error {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.15);
+}
+
+[data-theme="dark"] .cc-status,
+[data-theme="dark"] .pi-success,
+[data-theme="dark"] .ac-message.success {
+  background: rgba(34, 197, 94, 0.08);
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.15);
+}
+
+[data-theme="dark"] .cc-title,
+[data-theme="dark"] .pi-title,
+[data-theme="dark"] .ac-suggestion-item {
+  color: var(--text-primary);
+}
+
+/* AutoConnect */
+[data-theme="dark"] .ac-input:focus {
+  background: var(--bg-surface);
+}
+
+[data-theme="dark"] .ac-btn {
+  background: var(--bg-elevated);
+  border-color: var(--border-default);
+}
+
+[data-theme="dark"] .ac-btn:hover,
+[data-theme="dark"] .ac-suggestion-item:hover,
+[data-theme="dark"] .ac-suggestion-item.active {
+  background: var(--accent-subtle);
+  color: var(--text-primary);
+}
+
+/* ProblemInput */
+[data-theme="dark"] .pi-textarea:focus {
+  background: var(--bg-surface);
+}
+
+[data-theme="dark"] .pi-examples {
+  border-top-color: var(--border-subtle);
+}
+
+[data-theme="dark"] .pi-examples h4 {
+  color: var(--text-muted);
+}
+
+/* GeometryMiniControls — already uses vars for bg now */
+
+/* LineControlPanel */
+[data-theme="dark"] .len-toggle,
+[data-theme="dark"] .line-remove {
+  background: var(--bg-elevated);
+  border-color: var(--border-default);
+}
+
+/* EdgePropertyPanel */
+[data-theme="dark"] .edge-property-panel {
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+}
+
+/* AppNavigation badge free */
+[data-theme="dark"] .app-nav-plan-badge.free {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Pricing page toggle */
+[data-theme="dark"] .pp-toggle {
+  background: var(--bg-elevated);
+}
+
+/* Settings page */
+[data-theme="dark"] .settings-key-toggle {
+  color: var(--text-secondary);
+}
+[data-theme="dark"] .settings-key-toggle:hover {
+  color: var(--text-primary);
+}
+
+/* Workspace page quick input */
+[data-theme="dark"] .wp-quick-input {
+  background: var(--bg-elevated);
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+/* ControlPanel mobile overlay */
+[data-theme="dark"] .control-panel-mobile {
+  background: var(--bg-surface);
+}
+
+/* PricingCard */
+[data-theme="dark"] .pricing-card {
+  background: var(--bg-surface);
+}
+
+/* EdgePropertyPanel — white shadow fix */
+[data-theme="dark"] .ep-color-input {
+  box-shadow: 0 0 0 2px var(--bg-surface), 0 0 0 3px var(--border-emphasis);
+}
+
+/* LineControlPanel — white shadow fix */
+[data-theme="dark"] .lc-len-input {
+  box-shadow: 0 0 0 2px var(--bg-surface), 0 0 0 3px var(--accent);
+}
+
 /* ── Mobile ────────────────────────────────────────── */
 @media (max-width: 767px) {
   body {
