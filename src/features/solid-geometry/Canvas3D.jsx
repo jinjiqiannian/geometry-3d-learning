@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useRef, useEffect } from 'react'
+import { useMemo, useCallback, useRef, useEffect, useState } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Text, Line, Billboard } from '@react-three/drei'
@@ -156,6 +156,47 @@ export default function Canvas3D({
 
   const hasHighlights = highlightEdgeIds.length > 0
 
+  // ── Highlight fade-in transition ──────────────────
+  const prevHighlights = useRef(new Set())
+  const highlightStartTimes = useRef(new Map())  // edgeId → performance.now()
+  const [transitionTick, setTransitionTick] = useState(0)
+  const animating = useRef(false)
+
+  // Detect new highlights and start transitions
+  useEffect(() => {
+    const newSet = new Set(highlightEdgeIds)
+    const oldSet = prevHighlights.current
+    const now = performance.now()
+    let hasNew = false
+    newSet.forEach(id => {
+      if (!oldSet.has(id)) {
+        highlightStartTimes.current.set(id, now)
+        hasNew = true
+      }
+    })
+    // Clean up transitions for removed edges
+    highlightStartTimes.current.forEach((_, id) => {
+      if (!newSet.has(id)) highlightStartTimes.current.delete(id)
+    })
+    prevHighlights.current = newSet
+    if (hasNew) animating.current = true
+  }, [highlightEdgeIds])
+
+  // Drive transition animation frames
+  useFrame(() => {
+    if (!animating.current) return
+    const now = performance.now()
+    let anyActive = false
+    highlightStartTimes.current.forEach((startTime, id) => {
+      if (now - startTime < 500) anyActive = true
+    })
+    if (anyActive) {
+      setTransitionTick(t => t + 1)
+    } else {
+      animating.current = false
+    }
+  })
+
   // ── Aux lines (resolved from vertex labels) ──
   const resolvedAuxLines = useMemo(() => {
     if (!auxLines || auxLines.length === 0) return []
@@ -256,7 +297,16 @@ export default function Canvas3D({
     } else if (searched) {
       color = '#2979ff'; opacity = 1
     } else if (isVisualHighlight) {
-      color = highlightColor; opacity = 1
+      color = highlightColor
+      // 渐入过渡：新高亮边从 0.3 淡入到 1.0
+      const startTime = highlightStartTimes.current.get(l.id)
+      if (startTime) {
+        const elapsed = performance.now() - startTime
+        const t = Math.min(1, elapsed / 400)  // 400ms 过渡
+        opacity = 0.3 + 0.7 * (1 - Math.pow(1 - t, 3))  // easeOutCubic
+      } else {
+        opacity = 1
+      }
     } else if (hasHighlights && !isVisualHighlight) {
       // 有高亮时：基本外轮廓保持淡淡可见，其他无关线完全隐藏
       const isStructural = ['棱', '底面边', '顶面边', '侧棱'].includes(l.category)

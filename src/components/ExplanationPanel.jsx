@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import ProgressHeader from './ProgressHeader'
 import StepList from './StepList'
 import AnswerPanel from './AnswerPanel'
@@ -15,9 +16,29 @@ export default function ExplanationPanel({
   parsedData = null,
   problemText = '',
   error = null,
+  // 追问
+  onAskFollowUp,
+  followUpLoading = false,
+  followUpAnswer = null,
 }) {
   const currentStepData = steps[currentStep]
   const showAnswer = currentStepData?.type === 'conclusion' && !loading
+  const [followUpInput, setFollowUpInput] = useState('')
+  const [showFollowUp, setShowFollowUp] = useState(false)
+
+  const handleFollowUpSubmit = () => {
+    const q = followUpInput.trim()
+    if (q.length < 2 || followUpLoading) return
+    onAskFollowUp?.(q)
+    setFollowUpInput('')
+  }
+
+  const handleFollowUpKey = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleFollowUpSubmit()
+    }
+  }
 
   return (
     <div className="explanation-panel">
@@ -63,6 +84,54 @@ export default function ExplanationPanel({
             onNext={onNext}
             onPrev={onPrev}
           />
+
+          {/* ── 追问 AI ── */}
+          <div className="ep-follow-up">
+            {!showFollowUp ? (
+              <button
+                className="ep-follow-up-toggle"
+                onClick={() => setShowFollowUp(true)}
+              >
+                有疑问？追问 AI
+              </button>
+            ) : (
+              <div className="ep-follow-up-body">
+                <div className="ep-follow-up-input-row">
+                  <input
+                    className="ep-follow-up-input"
+                    value={followUpInput}
+                    onChange={(e) => setFollowUpInput(e.target.value)}
+                    onKeyDown={handleFollowUpKey}
+                    placeholder="例如：为什么这一步要用余弦定理？"
+                    disabled={followUpLoading}
+                    spellCheck={false}
+                  />
+                  <button
+                    className="ep-follow-up-submit"
+                    onClick={handleFollowUpSubmit}
+                    disabled={followUpInput.trim().length < 2 || followUpLoading}
+                  >
+                    {followUpLoading ? '…' : '发送'}
+                  </button>
+                </div>
+
+                {/* AI 回复 */}
+                {followUpAnswer && (
+                  <div className="ep-follow-up-answer">
+                    <span className="ep-follow-up-answer-label">AI 回复</span>
+                    <p className="ep-follow-up-answer-text">{followUpAnswer}</p>
+                  </div>
+                )}
+
+                <button
+                  className="ep-follow-up-close"
+                  onClick={() => setShowFollowUp(false)}
+                >
+                  收起
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         !loading && loadingStage === 'done' && (

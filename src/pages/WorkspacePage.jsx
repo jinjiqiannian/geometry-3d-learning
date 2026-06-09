@@ -57,6 +57,8 @@ export default function WorkspacePage() {
   const [error, setError] = useState(null)
   const [pptLoading, setPptLoading] = useState(false)
   const [quickInput, setQuickInput] = useState('')
+  const [followUpLoading, setFollowUpLoading] = useState(false)
+  const [followUpAnswer, setFollowUpAnswer] = useState(null)
 
   // ── Mobile ──────────────────────────────────────
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 767)
@@ -393,6 +395,28 @@ export default function WorkspacePage() {
     }
   }, [problemText, steps, parsedData, geometry])
 
+  // ── 追问 AI ──
+  const handleAskFollowUp = useCallback(async (question) => {
+    setFollowUpLoading(true)
+    setFollowUpAnswer(null)
+    try {
+      const currentStepData = steps[currentStep]
+      const contextPrompt = `原题：${problemText}\n当前步骤（第${currentStep + 1}步）：${currentStepData?.title || ''}\n${currentStepData?.content || ''}\n\n学生追问：${question}\n\n请针对这个追问给出简洁的解答（2-4句话），用中文。`
+      const result = await aiAPI.solve(contextPrompt)
+      if (result?.data?.steps?.length > 0) {
+        setFollowUpAnswer(result.data.steps[0].content || result.data.steps[0].title || '抱歉，无法回答这个问题。')
+      } else if (result?.data?.parsed?.explanation) {
+        setFollowUpAnswer(result.data.parsed.explanation)
+      } else {
+        setFollowUpAnswer('抱歉，无法回答这个问题，请尝试换一种方式提问。')
+      }
+    } catch {
+      setFollowUpAnswer('追问失败，请检查网络后重试。')
+    } finally {
+      setFollowUpLoading(false)
+    }
+  }, [problemText, steps, currentStep])
+
   return (
     <div className="workspace-page">
       <div className="wp-top-bar">
@@ -489,6 +513,9 @@ export default function WorkspacePage() {
               parsedData={parsedData}
               problemText={problemText}
               error={error}
+              onAskFollowUp={handleAskFollowUp}
+              followUpLoading={followUpLoading}
+              followUpAnswer={followUpAnswer}
             />
           </div>
         </div>
@@ -508,6 +535,9 @@ export default function WorkspacePage() {
               parsedData={parsedData}
               problemText={problemText}
               error={error}
+              onAskFollowUp={handleAskFollowUp}
+              followUpLoading={followUpLoading}
+              followUpAnswer={followUpAnswer}
             />
           </div>
 
