@@ -350,6 +350,7 @@ export default function WorkspacePage() {
               cameraPreset={visualIntent?.cameraPreset || null}
               faceOpacity={visualIntent?.faceOpacity ?? 0.42}
               nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
+              visibleCategories={visualIntent?.visibleCategories || null}
             />
           </Canvas>
 

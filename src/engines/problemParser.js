@@ -250,6 +250,32 @@ function parseResponse(text) {
 export function quickMatch(text) {
   const t = text.toLowerCase()
 
+  // ── 检测问题子类型 ──
+  function detectSubType(text, type) {
+    if (/异面|skew|异面直线/.test(text) && type === 'cube') return 'skew_lines'
+    if (/对角线|diagonal/.test(text) && (type === 'cube' || type === 'cuboid')) return 'diagonal'
+    if (/体积|volume/.test(text)) return 'volume'
+    if (/截面|section/.test(text)) return 'section'
+    if (/内接|inscribed/.test(text)) return 'inscribed'
+    if (/表面[积积]|表面|面积/.test(text)) return 'surface_area'
+    return 'general'
+  }
+
+  // ── 边名提取（通用） ──
+  function extractEdgeRefs(text) {
+    const lines = []
+    const pattern = /(?:对角线|异面直线|线段|求|求长|计算|证明|夹角|与|等于|=)\s*([A-Z]'?[A-Z]?'?)/g
+    let m
+    while ((m = pattern.exec(text)) !== null) {
+      const label = m[1].replace(/\s/g, '').replace(/'/g, "'")
+      const clean = label.replace(/'/g, '')
+      if (clean.length >= 2 && !lines.some(h => h.label === label)) {
+        lines.push({ from: clean[0], to: clean[clean.length - 1], label, reason: '题目提及' })
+      }
+    }
+    return lines
+  }
+
   // 正方体
   const cubeMatch = t.match(/正方体|立方体|cube/)
   if (cubeMatch) {
@@ -266,24 +292,15 @@ export function quickMatch(text) {
     }
     if (sizeMatch) confidence = 0.9
 
-    // 提取可能的关键线段
-    const highlightLines = []
-    // Pattern 1: near keywords (对角/求/计算/证明/异面)
-    const linePattern = /(?:对角线|异面直线|线段|求|求长|计算|证明|夹角|与)\s*([A-Z]'?[A-Z]?'?)/g
-    let m
-    while ((m = linePattern.exec(text)) !== null) {
-      const label = m[1].replace(/\s/g, '').replace(/'/g, "'")
-      const clean = label.replace(/'/g, '')
-      if (clean.length >= 2) {
-        highlightLines.push({ from: clean[0], to: clean[clean.length - 1], label, reason: '题目提及' })
-      }
-    }
+    const highlightLines = extractEdgeRefs(text)
 
     return {
       type: 'cube',
       size,
+      subType: detectSubType(text, 'cube'),
       labels,
       highlightLines,
+      params: { size },
       annotations: [],
       explanation: sizeMatch
         ? `正方体，棱长 ${size}`
@@ -296,13 +313,16 @@ export function quickMatch(text) {
   const sphereMatch = t.match(/球体|球|sphere/)
   if (sphereMatch) {
     const sizeMatch = t.match(/半径[为是]?\s*(\d+(?:\.\d+)?)/)
+    const size = sizeMatch ? parseFloat(sizeMatch[1]) : 2
     return {
       type: 'sphere',
-      size: sizeMatch ? parseFloat(sizeMatch[1]) : 2,
+      size,
+      subType: detectSubType(text, 'sphere'),
       labels: ['N', 'S', 'E', 'W', 'F', 'B'],
       highlightLines: [],
+      params: { size },
       annotations: [],
-      explanation: sizeMatch ? `球体，半径 ${parseFloat(sizeMatch[1])}` : '球体（参数来自快速匹配）',
+      explanation: sizeMatch ? `球体，半径 ${size}` : '球体（参数来自快速匹配）',
       confidence: sizeMatch ? 0.9 : 0.6,
     }
   }
@@ -316,8 +336,10 @@ export function quickMatch(text) {
     return {
       type: 'cylinder',
       size,
+      subType: detectSubType(text, 'cylinder'),
       labels: ['O', "O'", 'A', 'B', 'C', 'D', "A'", "B'", "C'", "D'"],
       highlightLines: [],
+      params: { size, height: hMatch ? parseFloat(hMatch[1]) : size * 2 },
       annotations: hMatch ? [{ text: `高=${parseFloat(hMatch[1])}`, position: 'right' }] : [],
       explanation: `圆柱，半径 ${size}` + (hMatch ? `，高 ${parseFloat(hMatch[1])}` : ''),
       confidence: rMatch ? 0.85 : 0.6,
@@ -328,13 +350,16 @@ export function quickMatch(text) {
   const coneMatch = t.match(/圆锥|cone/)
   if (coneMatch) {
     const rMatch = t.match(/半径[为是]?\s*(\d+(?:\.\d+)?)/)
+    const size = rMatch ? parseFloat(rMatch[1]) : 2
     return {
       type: 'cone',
-      size: rMatch ? parseFloat(rMatch[1]) : 2,
+      size,
+      subType: detectSubType(text, 'cone'),
       labels: ['O', 'P', 'A', 'B', 'C', 'D'],
       highlightLines: [],
+      params: { size },
       annotations: [],
-      explanation: rMatch ? `圆锥，半径 ${parseFloat(rMatch[1])}` : '圆锥（参数来自快速匹配）',
+      explanation: rMatch ? `圆锥，半径 ${size}` : '圆锥（参数来自快速匹配）',
       confidence: rMatch ? 0.85 : 0.6,
     }
   }
@@ -343,13 +368,17 @@ export function quickMatch(text) {
   const pyramidMatch = t.match(/棱锥|四棱锥|pyramid/)
   if (pyramidMatch) {
     const sizeMatch = t.match(/边长[为是]?\s*(\d+(?:\.\d+)?)/)
+    const hMatch = t.match(/高[为是]?\s*(\d+(?:\.\d+)?)/)
+    const size = sizeMatch ? parseFloat(sizeMatch[1]) : 2
     return {
       type: 'pyramid',
-      size: sizeMatch ? parseFloat(sizeMatch[1]) : 2,
+      size,
+      subType: detectSubType(text, 'pyramid'),
       labels: ['A', 'B', 'C', 'D', 'P'],
       highlightLines: [],
+      params: { size, height: hMatch ? parseFloat(hMatch[1]) : size * 1.5 },
       annotations: [],
-      explanation: sizeMatch ? `正四棱锥，底面边长 ${parseFloat(sizeMatch[1])}` : '正四棱锥（参数来自快速匹配）',
+      explanation: sizeMatch ? `正四棱锥，底面边长 ${size}` : '正四棱锥（参数来自快速匹配）',
       confidence: sizeMatch ? 0.85 : 0.6,
     }
   }
@@ -358,14 +387,36 @@ export function quickMatch(text) {
   const prismMatch = t.match(/棱柱|三棱柱|prism/)
   if (prismMatch) {
     const sizeMatch = t.match(/(?:棱长|边长)[为是]?\s*(\d+(?:\.\d+)?)/)
+    const size = sizeMatch ? parseFloat(sizeMatch[1]) : 2
     return {
       type: 'prism',
-      size: sizeMatch ? parseFloat(sizeMatch[1]) : 2,
+      size,
+      subType: detectSubType(text, 'prism'),
       labels: ['A', 'B', 'C', "A'", "B'", "C'"],
       highlightLines: [],
+      params: { size },
       annotations: [],
-      explanation: sizeMatch ? `直角三棱柱，边长 ${parseFloat(sizeMatch[1])}` : '直角三棱柱（参数来自快速匹配）',
+      explanation: sizeMatch ? `直角三棱柱，边长 ${size}` : '直角三棱柱（参数来自快速匹配）',
       confidence: sizeMatch ? 0.85 : 0.6,
+    }
+  }
+
+  // 长方体
+  const cuboidMatch = t.match(/长方体|cuboid/)
+  if (cuboidMatch) {
+    const sizeMatch = t.match(/(?:棱长[为是]?|长[为是]?)\s*(\d+(?:\.\d+)?)/)
+    const size = sizeMatch ? parseFloat(sizeMatch[1]) : 2
+    const highlightLines = extractEdgeRefs(text)
+    return {
+      type: 'cuboid',
+      size,
+      subType: detectSubType(text, 'cuboid'),
+      labels: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+      highlightLines,
+      params: { size },
+      annotations: [],
+      explanation: sizeMatch ? `长方体，棱长 ${size}` : '长方体（参数来自快速匹配）',
+      confidence: 0.85,
     }
   }
 

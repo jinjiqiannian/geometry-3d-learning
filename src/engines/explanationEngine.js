@@ -64,6 +64,13 @@ const TEMPLATES = {
       { step: 4, title: '代入计算', content: '将数值代入公式。', type: 'calculation' },
       { step: 5, title: '得出结论', content: '圆柱的体积、侧面积和表面积。', type: 'conclusion' },
     ],
+    section: [
+      { step: 1, title: '识别几何体', content: '圆柱，上下底面为全等的圆，侧面展开为矩形。', type: 'observation' },
+      { step: 2, title: '理解截面', content: '过上下底面中心的截面是一个矩形，其一边等于底面直径，另一边等于圆柱的高。', type: 'observation' },
+      { step: 3, title: '确定截面参数', content: '截面矩形的长 = 底面直径 = 2r，宽 = 圆柱的高 = h。', type: 'calculation' },
+      { step: 4, title: '计算截面面积', content: '截面面积 = 长 × 宽 = (2r) × h = 2rh。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '圆柱过上下底面中心截面的面积为2rh。', type: 'conclusion' },
+    ],
   },
 
   cone: {
@@ -78,10 +85,10 @@ const TEMPLATES = {
 
   pyramid: {
     default: [
-      { step: 1, title: '识别几何体', content: '正棱锥，底面为正多边形，顶点在底面中心的垂直上方。', type: 'observation' },
+      { step: 1, title: '识别几何体', content: '正四棱锥，底面为正方形，顶点在底面中心的垂直上方。', type: 'observation' },
       { step: 2, title: '分析已知条件', content: '底面边长a，高h。斜高 = √(h² + (a/2)²)。', type: 'observation' },
-      { step: 3, title: '应用棱锥公式', content: '体积 V = (1/3)×底面积×高。', type: 'calculation' },
-      { step: 4, title: '代入计算', content: '计算底面积，再求体积。', type: 'calculation' },
+      { step: 3, title: '应用棱锥公式', content: '体积 V = (1/3)×底面积×高 = (1/3)×a²×h。', type: 'calculation' },
+      { step: 4, title: '代入计算', content: '将底面边长和高代入体积公式。', type: 'calculation' },
       { step: 5, title: '得出结论', content: '棱锥的体积。', type: 'conclusion' },
     ],
   },
@@ -117,6 +124,63 @@ const TEMPLATES = {
   },
 }
 
+// ── 为每一步构建 sceneState（3D场景状态）────────────
+// 按步骤位置生成：第1步展示全貌 → 逐渐聚焦 → 第5步结论
+
+function buildSceneState(stepIndex, step, parsedData) {
+  const edgeRefs = (parsedData?.highlightLines || []).map(h => h.label)
+
+  switch (stepIndex) {
+    case 0: // 第1步: 识别几何体 — 显示所有主要棱，无高亮
+      return {
+        highlightEdges: [],
+        faceOpacity: 0.35,
+        nonHighlightOpacity: 1.0,
+        cameraPreset: 'overview',
+        auxLines: [],
+        visibleCategories: ['棱', '底面边', '顶面边', '侧棱'],
+      }
+    case 1: // 第2步: 分析题目 — 聚焦问题涉及的边
+      return {
+        highlightEdges: edgeRefs,
+        faceOpacity: 0.30,
+        nonHighlightOpacity: 0.20,
+        cameraPreset: 'diagonal',
+        auxLines: [],
+        visibleCategories: null,
+      }
+    case 2: // 第3步: 构造/作图 — 显示问题边 + 辅助线
+      return {
+        highlightEdges: edgeRefs,
+        faceOpacity: 0.25,
+        nonHighlightOpacity: 0.15,
+        cameraPreset: 'diagonal',
+        auxLines: [],
+        visibleCategories: null,
+      }
+    case 3: // 第4步: 计算 — 只关注计算涉及的边
+      return {
+        highlightEdges: edgeRefs,
+        faceOpacity: 0.20,
+        nonHighlightOpacity: 0.12,
+        cameraPreset: 'closeUp',
+        auxLines: [],
+        visibleCategories: null,
+      }
+    case 4: // 第5步: 结论 — 恢复全貌，绿色高亮
+      return {
+        highlightEdges: edgeRefs,
+        faceOpacity: 0.35,
+        nonHighlightOpacity: 1.0,
+        cameraPreset: 'overview',
+        auxLines: [],
+        visibleCategories: null,
+      }
+    default:
+      return null
+  }
+}
+
 // ── 关键词 → 题型匹配 ────────────────────────────
 
 function detectProblemType(type, text) {
@@ -149,17 +213,25 @@ export function generateLocalSteps(problemText, parsedData) {
 
   if (!templates) {
     // Generic fallback
-    return [
+    const fallback = [
       { step: 1, title: '识别几何体', content: `这是一个${type}类型的几何体。`, type: 'observation' },
       { step: 2, title: '分析已知条件', content: '提取题目中给出的参数和条件。', type: 'observation' },
       { step: 3, title: '选择解题方法', content: '根据题目类型选择合适的公式和方法。', type: 'observation' },
       { step: 4, title: '进行计算', content: '代入公式进行计算。', type: 'calculation' },
       { step: 5, title: '得出结论', content: '整理结果，得出最终答案。', type: 'conclusion' },
     ]
+    return fallback.map((step, i) => ({
+      ...step,
+      sceneState: buildSceneState(i, step, parsedData),
+    }))
   }
 
   const problemType = detectProblemType(type, problemText)
-  return templates[problemType] || templates.default
+  const steps = templates[problemType] || templates.default
+  return steps.map((step, i) => ({
+    ...step,
+    sceneState: buildSceneState(i, step, parsedData),
+  }))
 }
 
 // ── AI 增强讲解（需要 Claude API）─────────────────

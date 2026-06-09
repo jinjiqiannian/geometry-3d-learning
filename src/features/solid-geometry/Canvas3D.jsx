@@ -118,6 +118,7 @@ export default function Canvas3D({
   cameraPreset = null,
   faceOpacity = 0.42,
   nonHighlightOpacity = 0.25,
+  visibleCategories = null,
 }) {
   const { type, params } = geometry
   const size = params.size ?? 2
@@ -262,6 +263,10 @@ export default function Canvas3D({
       color = l.colorOverride; opacity = style.opacity
     } else if (edgeColorOverrides?.[key]) {
       color = edgeColorOverrides[key]; opacity = style.opacity
+    } else if (visibleCategories && !visibleCategories.includes(l.category)) {
+      // visibleCategories 限制只显示某些类别的线段
+      // 高亮边不受影响（已在上面处理），非高亮不在此类别的隐藏
+      color = style.color; opacity = 0
     } else if (visible) {
       color = style.color; opacity = style.opacity
     } else {

@@ -10,20 +10,11 @@ import { isPolyhedral } from '../engines/geometryEngine'
 import { quickMatch } from '../engines/problemParser'
 import { generateLocalSteps } from '../engines/explanationEngine'
 import { computeVisualIntent } from '../engines/visualIntent'
+import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../contexts/AppContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
-import { GEOMETRIES } from '../constants'
+import { EXAMPLES, GEOMETRIES } from '../constants'
 import './LandingPage.css'
-
-// 默认示例 — 页面加载时自动展示
-const DEFAULT_PROBLEM = "正方体ABCD-EFGH棱长为2，求异面直线AB与B'D的夹角"
-
-const EXAMPLES = [
-  "正方体ABCD-EFGH棱长为2，求异面直线AB与B'D的夹角",
-  "正三棱锥P-ABC，底面边长3，高为4，求侧棱PA与底面ABC的夹角",
-  "长方体ABCD-A'B'C'D'中，AB=3，BC=4，AA'=12，求体对角线AC'的长度",
-  "球体半径为3，求其内接正方体的棱长",
-]
 
 function defaultGeometry(type) {
   if (type === 'cuboid') {
@@ -33,6 +24,7 @@ function defaultGeometry(type) {
 }
 
 export default function LandingPage() {
+  const navigate = useNavigate()
   const { apiKey } = useAppContext()
   const { checkCanGenerate, recordUsage } = useSubscription()
 
@@ -81,9 +73,9 @@ export default function LandingPage() {
     setVisibleLines(defaults)
   }, [geometry.type])
 
-  // ── Auto-load default example ──
+  // ── Auto-load first example ──
   useEffect(() => {
-    handleGenerate(DEFAULT_PROBLEM, true)
+    handleGenerate(EXAMPLES[0].text, true)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Generate ──
@@ -198,17 +190,18 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Examples */}
+        {/* Examples from constants */}
         <div className="landing-examples">
           <span className="landing-examples-label">试试这些例子</span>
           <div className="landing-examples-row">
-            {EXAMPLES.map((text, i) => (
+            {EXAMPLES.map((ex, i) => (
               <button
-                key={i}
+                key={ex.id}
                 className="landing-example"
-                onClick={() => handleExample(text)}
+                onClick={() => handleExample(ex.text)}
+                title={ex.text}
               >
-                {text.length > 30 ? text.slice(0, 30) + '…' : text}
+                {ex.title}
               </button>
             ))}
           </div>
@@ -242,6 +235,7 @@ export default function LandingPage() {
               cameraPreset={visualIntent?.cameraPreset || null}
               faceOpacity={visualIntent?.faceOpacity ?? 0.42}
               nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
+              visibleCategories={visualIntent?.visibleCategories || null}
             />
           </Canvas>
 
@@ -255,18 +249,30 @@ export default function LandingPage() {
           />
         </div>
 
-        {/* Explanation panel */}
-        <ExplanationPanel
-          steps={steps}
-          currentStep={currentStep}
-          onStepClick={handleStepClick}
-          onNext={handleNextStep}
-          onPrev={handlePrevStep}
-          loading={loading}
-          loadingStage={loadingStage}
-          parsedData={parsedData}
-          error={error}
-        />
+        {/* Right column: Explanation panel + workspace entry */}
+        <div className="lw-sidebar">
+          <ExplanationPanel
+            steps={steps}
+            currentStep={currentStep}
+            onStepClick={handleStepClick}
+            onNext={handleNextStep}
+            onPrev={handlePrevStep}
+            loading={loading}
+            loadingStage={loadingStage}
+            parsedData={parsedData}
+            error={error}
+          />
+
+          {/* Go to workspace */}
+          {steps.length > 0 && !loading && (
+            <button
+              className="lw-goto-workspace"
+              onClick={() => navigate(`/workspace?q=${encodeURIComponent(problemText)}`)}
+            >
+              去工作台继续 →
+            </button>
+          )}
+        </div>
       </section>
 
       {/* Status bar */}

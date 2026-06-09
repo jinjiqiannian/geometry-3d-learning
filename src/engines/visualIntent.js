@@ -112,6 +112,20 @@ const EDGE_KEYWORDS = /棱长|棱[为是]|边长|边[为是]|侧棱/
 export function computeVisualIntent(step, parsedData, problemText) {
   if (!step || !parsedData) return defaultIntent()
 
+  // 模式1：step 携带 sceneState — 直接使用（最准确）
+  if (step.sceneState) {
+    const typeDefaults = TYPE_DEFAULTS[step.type] || TYPE_DEFAULTS.observation
+    return {
+      highlightEdgeIds: step.sceneState.highlightEdges || [],
+      highlightColor: typeDefaults.highlightColor,
+      auxLines: step.sceneState.auxLines || [],
+      cameraPreset: step.sceneState.cameraPreset || typeDefaults.cameraPreset,
+      faceOpacity: step.sceneState.faceOpacity ?? typeDefaults.faceOpacity,
+      nonHighlightOpacity: step.sceneState.nonHighlightOpacity ?? typeDefaults.nonHighlightOpacity,
+      visibleCategories: step.sceneState.visibleCategories || null,
+    }
+  }
+
   const geoType = parsedData.type || 'cube'
   const validEdges = new Set(GEOMETRY_EDGES[geoType] || GEOMETRY_EDGES.cube)
   const typeDefaults = TYPE_DEFAULTS[step.type] || TYPE_DEFAULTS.observation
@@ -132,6 +146,7 @@ export function computeVisualIntent(step, parsedData, problemText) {
     cameraPreset,
     faceOpacity: typeDefaults.faceOpacity,
     nonHighlightOpacity: typeDefaults.nonHighlightOpacity,
+    visibleCategories: null,
   }
 }
 
@@ -395,6 +410,7 @@ function defaultIntent() {
     cameraPreset: 'overview',
     faceOpacity: 0.42,
     nonHighlightOpacity: 1.0,
+    visibleCategories: null,
   }
 }
 

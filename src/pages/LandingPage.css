@@ -269,3 +269,32 @@
     min-height: 240px;
   }
 }
+
+/* ── Sidebar (explanation + workspace entry) ──────── */
+.lw-sidebar {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* ── Go to workspace ───────────────────────────────── */
+.lw-goto-workspace {
+  padding: 8px 20px;
+  background: var(--accent);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin: 8px;
+}
+
+.lw-goto-workspace:hover {
+  background: var(--accent-hover);
+}
