@@ -20,28 +20,26 @@ export default function PaywallModal() {
   return (
     <div className="paywall-overlay" onClick={() => setShowPaywall(false)}>
       <div className="paywall-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="paywall-close" onClick={() => setShowPaywall(false)}>✕</button>
+        <button className="paywall-close" onClick={() => setShowPaywall(false)}>×</button>
 
-        <div className="paywall-icon">🔒</div>
-        <h2 className="paywall-title">升级 Pro 解锁完整功能</h2>
+        <h2 className="paywall-title">Upgrade to Pro</h2>
 
         {paywallReason && (
           <p className="paywall-reason">{paywallReason}</p>
         )}
 
         <ul className="paywall-benefits">
-          <li>✓ 无限次生成</li>
-          <li>✓ 完整AI分步讲解</li>
-          <li>✓ 高清图片导出</li>
-          <li>✓ 历史记录保存</li>
+          <li>Unlimited generations</li>
+          <li>Cloud sync & history</li>
+          <li>Priority access</li>
         </ul>
 
         <div className="paywall-actions">
           <button className="paywall-btn primary" onClick={handleUpgrade}>
-            ¥19/月 立即升级
+            Upgrade — ¥19/month
           </button>
           <button className="paywall-btn secondary" onClick={() => setShowPaywall(false)}>
-            继续使用免费版
+            Continue with free
           </button>
         </div>
       </div>

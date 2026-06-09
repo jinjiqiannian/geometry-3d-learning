@@ -1,13 +1,12 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useSupabase } from './SupabaseContext'
 
-const FREE_DAILY_LIMIT = 3
+const FREE_DAILY_LIMIT = 50
 
 function getToday() {
   return new Date().toISOString().slice(0, 10)
 }
 
-// ── Local fallback when Supabase is not connected ──
 function getLocalTier() {
   try { return localStorage.getItem('mathviz_tier') || 'free' }
   catch { return 'free' }
@@ -49,10 +48,10 @@ export function SubscriptionProvider({ children }) {
 
   const isPro = plan === 'pro' || plan === 'teacher'
   const isTeacher = plan === 'teacher'
-  const dailyLimit = isPro ? Infinity : FREE_DAILY_LIMIT
-  const remaining = isPro ? Infinity : Math.max(0, FREE_DAILY_LIMIT - dailyUsage)
+  const dailyLimit = FREE_DAILY_LIMIT
+  const remaining = Math.max(0, dailyLimit - dailyUsage)
 
-  // ── Load subscription from Supabase when user logs in ──
+  // Load subscription from Supabase when user logs in
   useEffect(() => {
     if (!connected || !user || !supabase) return
 
@@ -70,7 +69,6 @@ export function SubscriptionProvider({ children }) {
         setLocalTier(data.plan || 'free')
       })
 
-    // Realtime subscription for plan changes
     const channel = supabase
       .channel('subscription-changes')
       .on('postgres_changes',
@@ -89,7 +87,7 @@ export function SubscriptionProvider({ children }) {
     return () => { supabase.removeChannel(channel) }
   }, [connected, user, supabase])
 
-  // ── Reset daily usage on new day ──
+  // Reset daily usage on new day
   useEffect(() => {
     const today = getToday()
     const stored = (() => {
@@ -103,45 +101,33 @@ export function SubscriptionProvider({ children }) {
     }
   }, [])
 
-  // ── Feature gates ──
+  // Feature gates — guests can use everything, just rate-limited
   const checkCanGenerate = useCallback(() => {
-    if (isPro) return true
-    if (dailyUsage >= FREE_DAILY_LIMIT) {
-      setPaywallReason('今日免费次数已用完')
+    if (dailyUsage >= dailyLimit) {
+      setPaywallReason('You\'ve reached the daily limit. Sign in for more.')
       setShowPaywall(true)
       return false
     }
     return true
-  }, [isPro, dailyUsage])
+  }, [dailyUsage])
 
   const checkCanAiExplain = useCallback(() => {
-    if (isPro) return true
-    setPaywallReason('AI完整讲解为Pro专属功能')
-    setShowPaywall(true)
-    return false
-  }, [isPro])
+    return true // Guest-friendly: always allow
+  }, [])
 
   const checkCanExportPpt = useCallback(() => {
-    if (isTeacher) return true
-    setPaywallReason('PPT导出为教师版专属功能')
-    setShowPaywall(true)
-    return false
-  }, [isTeacher])
+    return true // Guest-friendly: always allow
+  }, [])
 
   const checkCanExportImage = useCallback(() => {
-    if (isPro) return true
-    setPaywallReason('图片导出为Pro专属功能')
-    setShowPaywall(true)
-    return false
-  }, [isPro])
+    return true // Guest-friendly: always allow
+  }, [])
 
-  // ── Record usage (increment count) ──
+  // Record usage
   const recordUsage = useCallback(async (action, problemText, workspaceId) => {
-    // Increment local counter
     const newCount = incrementLocalDailyUsage()
     setDailyUsage(newCount)
 
-    // Record to Supabase if connected
     if (connected && user && supabase) {
       try {
         await supabase.from('usage_records').insert({
@@ -154,16 +140,19 @@ export function SubscriptionProvider({ children }) {
     }
   }, [connected, user, supabase])
 
-  // ── Upgrade flow ──
+  // Upgrade flow (requires login)
   const initiateUpgrade = useCallback(async (targetPlan, interval = 'monthly') => {
+    if (!user) {
+      document.dispatchEvent(new CustomEvent('mathviz:show-auth'))
+      return { needsAuth: true }
+    }
+
     if (!connected || !supabase) {
-      // Offline mode: just set tier locally
       setPlan(targetPlan)
       setLocalTier(targetPlan)
       return { offline: true }
     }
 
-    // Map plan + interval to Stripe price ID
     const priceMap = {
       'pro_monthly': import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY || 'pro_monthly',
       'pro_yearly': import.meta.env.VITE_STRIPE_PRICE_PRO_YEARLY || 'pro_yearly',
@@ -181,14 +170,9 @@ export function SubscriptionProvider({ children }) {
     })
 
     if (error) throw new Error(error.message || 'Failed to create checkout session')
-
-    // Redirect to Stripe Checkout
-    if (data?.url) {
-      window.location.href = data.url
-    }
-
+    if (data?.url) window.location.href = data.url
     return data
-  }, [connected, supabase])
+  }, [connected, supabase, user])
 
   const manageSubscription = useCallback(async () => {
     if (!connected || !supabase || !stripeCustomerId) {
@@ -208,7 +192,7 @@ export function SubscriptionProvider({ children }) {
   }, [connected, supabase, stripeCustomerId])
 
   const cancelSubscription = useCallback(async () => {
-    await manageSubscription() // Redirect to Stripe portal to cancel
+    await manageSubscription()
   }, [manageSubscription])
 
   return (

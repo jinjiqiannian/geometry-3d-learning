@@ -1,108 +1,249 @@
-import { useState } from 'react'
-import { useSupabase } from '../contexts/SupabaseContext'
-import HeroInput from '../components/HeroInput'
-import ExampleCards from '../components/ExampleCards'
-import PricingCard from '../components/PricingCard'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { Canvas } from '@react-three/fiber'
+import Canvas3D from '../features/solid-geometry/Canvas3D'
+import GeometryMiniControls from '../components/GeometryMiniControls'
+import ExplanationPanel from '../components/ExplanationPanel'
+import WorkspaceStatusBar from '../components/WorkspaceStatusBar'
 import AuthModal from '../components/AuthModal'
-import { PRICING_PLANS } from '../constants'
+import { getLineDefinitions } from '../engines/lineDefinitions'
+import { isPolyhedral } from '../engines/geometryEngine'
+import { quickMatch } from '../engines/problemParser'
+import { generateLocalSteps } from '../engines/explanationEngine'
+import { useAppContext } from '../contexts/AppContext'
+import { useSubscription } from '../contexts/SubscriptionContext'
+import { GEOMETRIES } from '../constants'
 import './LandingPage.css'
 
-export default function LandingPage() {
-  const { user, signOut } = useSupabase()
-  const [yearly, setYearly] = useState(false)
+// 默认示例 — 页面加载时自动展示
+const DEFAULT_PROBLEM = "正方体ABCD-EFGH棱长为2，求异面直线AB与B'D的夹角"
 
-  const handleShowAuth = () => {
-    document.dispatchEvent(new CustomEvent('mathviz:show-auth'))
+const EXAMPLES = [
+  "正方体ABCD-EFGH棱长为2，求异面直线AB与B'D的夹角",
+  "正三棱锥P-ABC，底面边长3，高为4，求侧棱PA与底面ABC的夹角",
+  "长方体ABCD-A'B'C'D'中，AB=3，BC=4，AA'=12，求体对角线AC'的长度",
+  "球体半径为3，求其内接正方体的棱长",
+]
+
+function defaultGeometry(type) {
+  if (type === 'cuboid') {
+    return { type, params: { size: 2 }, constraintMode: 'cuboid', cubeSize: 2, cuboidA: 2, cuboidB: 1.2, cuboidC: 2, freeEdgeLengths: {} }
+  }
+  return { type, params: { size: 2 }, constraintMode: 'cube', cubeSize: 2, cuboidA: 2, cuboidB: 1.2, cuboidC: 2, freeEdgeLengths: {} }
+}
+
+export default function LandingPage() {
+  const { apiKey } = useAppContext()
+  const { checkCanGenerate, recordUsage } = useSubscription()
+
+  // ── Input state ──
+  const [input, setInput] = useState('')
+  const [focused, setFocused] = useState(false)
+  const [hasGenerated, setHasGenerated] = useState(false)
+
+  // ── Workspace state ──
+  const [geometry, setGeometry] = useState(() => defaultGeometry('cube'))
+  const [showFaces, setShowFaces] = useState(true)
+  const [showLabels, setShowLabels] = useState(true)
+  const [visibleLines, setVisibleLines] = useState(() => new Set())
+  const [hoveredLine, setHoveredLine] = useState(null)
+  const [problemText, setProblemText] = useState('')
+  const [steps, setSteps] = useState([])
+  const [currentStep, setCurrentStep] = useState(0)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const polyhedral = isPolyhedral(geometry.type)
+
+  // ── Lines ──
+  const mergedLines = useMemo(() => {
+    const { lines } = getLineDefinitions(geometry.type, geometry.params)
+    return lines
+  }, [geometry.type, geometry.params])
+
+  // ── Init visible lines ──
+  useEffect(() => {
+    const { lines } = getLineDefinitions(geometry.type, geometry.params)
+    const defaults = new Set(
+      lines
+        .filter(l => ['棱', '底面边', '顶面边', '侧棱'].includes(l.category) && !l.dashed)
+        .map(l => `${l.id}|${l.category}`)
+    )
+    setVisibleLines(defaults)
+  }, [geometry.type])
+
+  // ── Auto-load default example ──
+  useEffect(() => {
+    handleGenerate(DEFAULT_PROBLEM, true)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Generate ──
+  const handleGenerate = useCallback(async (text, silent = false) => {
+    if (!checkCanGenerate()) return
+
+    setProblemText(text)
+    setLoading(true)
+    setError(null)
+    if (!silent) setHasGenerated(true)
+
+    try {
+      // 本地快速匹配（无需 API）
+      let parsed = quickMatch(text)
+      if (!parsed) {
+        // 兜底：默认正方体
+        parsed = { type: 'cube', size: 2, labels: [], highlightLines: [], explanation: '' }
+      }
+
+      const localSteps = generateLocalSteps(text, parsed)
+
+      setSteps(localSteps)
+      setCurrentStep(0)
+      setGeometry(defaultGeometry(parsed.type || 'cube'))
+
+      await recordUsage('generate', text)
+    } catch (err) {
+      setError(err.message || '解析失败')
+    } finally {
+      setLoading(false)
+    }
+  }, [apiKey, checkCanGenerate, recordUsage])
+
+  // ── Input handlers ──
+  const handleSubmit = () => {
+    const text = input.trim()
+    if (text.length < 3) return
+    handleGenerate(text)
   }
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit()
+    }
+  }
+
+  const handleExample = (text) => {
+    handleGenerate(text)
+  }
+
+  const handleGeometryChange = useCallback((type, params) => {
+    setGeometry(defaultGeometry(type))
+  }, [])
+
+  const handleStepClick = useCallback((index) => {
+    setCurrentStep(index)
+  }, [])
+
+  const handleNextStep = useCallback(() => {
+    setCurrentStep(prev => Math.min(prev + 1, steps.length - 1))
+  }, [steps.length])
+
+  const handlePrevStep = useCallback(() => {
+    setCurrentStep(prev => Math.max(prev - 1, 0))
+  }, [])
+
   return (
-    <div className="landing-page">
-      {/* Top auth bar */}
-      <div className="lp-auth-bar">
-        <span className="lp-logo">📐 MathViz</span>
-        <div className="lp-auth-actions">
-          {user ? (
-            <>
-              <span className="lp-user-email">{user.email}</span>
-              <button className="lp-auth-btn" onClick={signOut}>退出</button>
-            </>
-          ) : (
-            <button className="lp-auth-btn primary" onClick={handleShowAuth}>登录</button>
-          )}
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <section className="lp-hero">
-        <div className="lp-hero-content">
-          <h1 className="lp-hero-title">
-            <span className="lp-hero-icon">📐</span>
-            MathViz
-          </h1>
-          <p className="lp-hero-subtitle">
-            AI 驱动的数学可视化与讲解生成系统
-          </p>
-          <p className="lp-hero-desc">
-            输入任意数学题，立即生成交互式 3D 模型 + 分步解题讲解
-          </p>
-        </div>
-
-        <div className="lp-hero-input-area">
-          <HeroInput />
-        </div>
-
-        <div className="lp-hero-shapes">
-          <div className="lp-shape s1" />
-          <div className="lp-shape s2" />
-          <div className="lp-shape s3" />
-        </div>
-      </section>
-
-      {/* Examples Section */}
-      <ExampleCards />
-
-      {/* Teacher CTA */}
-      <section className="lp-teacher-cta">
-        <div className="lp-teacher-content">
-          <h2>💼 数学教师专属</h2>
-          <p>备课时间从 <strong>1小时 → 5分钟</strong></p>
-          <p className="lp-teacher-desc">
-            输入题目 → 自动生成课堂演示动画<br />
-            支持导出 PPT · 投屏讲解 · 课程保存
-          </p>
-          <button className="lp-teacher-btn" onClick={handleShowAuth}>
-            了解教师模式 →
-          </button>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section className="lp-pricing">
-        <h2 className="lp-pricing-heading">💰 选择适合你的方案</h2>
-        <div className="lp-pricing-toggle">
-          <button
-            className={`lp-toggle-btn ${!yearly ? 'active' : ''}`}
-            onClick={() => setYearly(false)}
-          >月付</button>
-          <button
-            className={`lp-toggle-btn ${yearly ? 'active' : ''}`}
-            onClick={() => setYearly(true)}
-          >年付 <span className="lp-save-badge">省17%</span></button>
-        </div>
-        <div className="lp-pricing-grid">
-          {PRICING_PLANS.map(plan => (
-            <PricingCard key={plan.id} plan={plan} yearly={yearly} />
-          ))}
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="lp-footer">
-        <p>MathViz © 2026 · AI 数学可视化学习平台</p>
-        <p className="lp-footer-links">
-          <span>隐私政策</span> · <span>服务条款</span> · <span>联系我们</span>
+    <div className="landing">
+      {/* ── Hero section ────────────────────────────── */}
+      <section className={`landing-hero ${hasGenerated ? 'collapsed' : ''}`}>
+        <h1 className="landing-title">
+          输入一道题，获得 3D 讲解
+        </h1>
+        <p className="landing-subtitle">
+          自动建模 · 辅助线标注 · 分步推理 · 一键生成
         </p>
-      </footer>
+
+        {/* Input */}
+        <div className={`landing-input-wrap ${focused ? 'focused' : ''}`}>
+          <textarea
+            className="landing-input"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            onKeyDown={handleKeyDown}
+            placeholder="输入一道几何题..."
+            rows={2}
+            spellCheck={false}
+          />
+          <div className="landing-input-footer">
+            <span className="landing-input-hint">
+              {input.trim().length < 3 ? '至少输入 3 个字符' : '按 Enter 生成'}
+            </span>
+            <button
+              className="landing-submit"
+              onClick={handleSubmit}
+              disabled={input.trim().length < 3}
+            >
+              生成讲解
+              <span className="landing-submit-shortcut">↵</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Examples */}
+        <div className="landing-examples">
+          <span className="landing-examples-label">试试这些例子</span>
+          <div className="landing-examples-row">
+            {EXAMPLES.map((text, i) => (
+              <button
+                key={i}
+                className="landing-example"
+                onClick={() => handleExample(text)}
+              >
+                {text.length > 30 ? text.slice(0, 30) + '…' : text}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {error && <div className="landing-error">{error}</div>}
+      </section>
+
+      {/* ── Workspace section ────────────────────────── */}
+      <section className="landing-workspace">
+        {/* 3D Canvas */}
+        <div className="lw-canvas">
+          <Canvas style={{ width: '100%', height: '100%' }}>
+            <Canvas3D
+              geometry={geometry}
+              showFaces={showFaces}
+              showLabels={showLabels}
+              visibleLines={visibleLines}
+              hoveredLine={hoveredLine}
+              setHoveredLine={setHoveredLine}
+              allLines={mergedLines}
+              shownLengthLabels={new Set()}
+              searchedLine=""
+              selectedEdge={null}
+              onEdgeClick={() => {}}
+              edgeColorOverrides={{}}
+            />
+          </Canvas>
+
+          <GeometryMiniControls
+            geometry={geometry}
+            onGeometryChange={handleGeometryChange}
+            showFaces={showFaces}
+            onToggleFaces={() => setShowFaces(prev => !prev)}
+            showLabels={showLabels}
+            onToggleLabels={() => setShowLabels(prev => !prev)}
+          />
+        </div>
+
+        {/* Explanation panel */}
+        <ExplanationPanel
+          steps={steps}
+          currentStep={currentStep}
+          onStepClick={handleStepClick}
+          onNext={handleNextStep}
+          onPrev={handlePrevStep}
+          loading={loading}
+          error={null}
+        />
+      </section>
+
+      {/* Status bar */}
+      <WorkspaceStatusBar />
 
       <AuthModal />
     </div>

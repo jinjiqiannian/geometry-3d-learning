@@ -1,86 +1,126 @@
 /* ═══════════════════════════════════════════════════════
-   CSS 变量体系 & 全局样式
+   MathViz Design System — Dark-first, minimal, premium
+   Inspired by Linear · Perplexity · Vercel · Raycast
    ═══════════════════════════════════════════════════════ */
 
 :root {
-  /* ── 主色调 ── */
-  --color-primary: #4A90E2;
-  --color-primary-dark: #357ABD;
-  --color-primary-light: #e8f0fc;
-  --color-primary-glow: rgba(74, 144, 226, 0.15);
+  /* ── Background ── */
+  --bg-deep: #080808;
+  --bg-base: #0d0d0d;
+  --bg-surface: #141414;
+  --bg-elevated: #1a1a1a;
+  --bg-overlay: rgba(0, 0, 0, 0.7);
 
-  /* ── 语义色 ── */
-  --color-success: #4caf50;
-  --color-success-light: #e8f5e9;
-  --color-warning: #ff9800;
-  --color-warning-light: #fff8e1;
-  --color-error: #e74c3c;
-  --color-error-light: #fef0ef;
+  /* ── Border ── */
+  --border-subtle: #1f1f1f;
+  --border-default: #292929;
+  --border-emphasis: #3a3a3a;
+  --border-focus: #525252;
 
-  /* ── 商业色彩 ── */
-  --color-gold: #F5A623;
-  --color-gold-light: #FFF8E1;
-  --color-gold-dark: #D4891A;
-  --color-pro: #8B5CF6;
-  --color-pro-light: #F3F0FF;
-  --color-pro-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --color-teacher: #3B82F6;
-  --color-teacher-light: #EFF6FF;
-  --color-teacher-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  --color-free: #6B7280;
-  --color-free-light: #F3F4F6;
+  /* ── Text ── */
+  --text-primary: #e8e8e8;
+  --text-secondary: #9a9a9a;
+  --text-muted: #5c5c5c;
+  --text-inverse: #0d0d0d;
 
-  /* ── 定价徽章 ── */
-  --badge-pro-bg: #8B5CF6;
-  --badge-pro-text: #FFFFFF;
-  --badge-teacher-bg: #3B82F6;
-  --badge-teacher-text: #FFFFFF;
+  /* ── Accent ── */
+  --accent: #fafafa;
+  --accent-hover: #ffffff;
+  --accent-subtle: rgba(255, 255, 255, 0.06);
+  --accent-pressed: rgba(255, 255, 255, 0.12);
 
-  /* ── 中性色 ── */
-  --color-text: #2c3e50;
-  --color-text-secondary: #666666;
-  --color-text-muted: #999999;
-  --color-border: #e0e3e8;
-  --color-border-light: #f0f0f0;
-  --color-bg: #ffffff;
-  --color-bg-alt: #f8f9fb;
-  --color-bg-hover: #f0f4fa;
+  /* ── Semantic (desaturated for dark) ── */
+  --color-success: #3fb950;
+  --color-warning: #d29922;
+  --color-error: #f85149;
+  --color-info: #58a6ff;
 
-  /* ── 阴影 ── */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --shadow-panel: -2px 0 16px rgba(0, 0, 0, 0.06);
+  /* ── Shadows ── */
+  --shadow-xs: 0 0 0 1px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
 
-  /* ── 圆角 ── */
+  /* ── Radius ── */
   --radius-sm: 4px;
-  --radius-md: 7px;
+  --radius-md: 6px;
   --radius-lg: 10px;
   --radius-xl: 14px;
+  --radius-full: 9999px;
 
-  /* ── 间距 ── */
+  /* ── Spacing ── */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 12px;
   --space-lg: 16px;
   --space-xl: 24px;
   --space-2xl: 32px;
+  --space-3xl: 48px;
+  --space-4xl: 64px;
 
-  /* ── 过渡 ── */
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.25s ease;
-  --transition-slow: 0.35s ease;
+  /* ── Transition ── */
+  --transition-fast: 0.12s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.3s ease;
 
-  /* ── 字体 ── */
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
-    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  /* ── Typography ── */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter',
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'SF Mono', 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
   --font-math: 'Cambria Math', 'Georgia', 'Times New Roman', serif;
-  --font-mono: 'SF Mono', 'Consolas', 'Courier New', monospace;
+
+  /* ── Type scale ── */
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+  --text-3xl: 36px;
+  --text-4xl: 48px;
+  --text-5xl: 60px;
+}
+
+/* ── Legacy alias — backwards compat for feature files ── */
+:root {
+  --color-primary: var(--text-primary);
+  --color-primary-dark: var(--text-secondary);
+  --color-primary-light: rgba(255, 255, 255, 0.06);
+  --color-primary-glow: rgba(255, 255, 255, 0.04);
+  --color-success: var(--color-success);
+  --color-success-light: rgba(63, 185, 80, 0.08);
+  --color-warning: var(--color-warning);
+  --color-warning-light: rgba(210, 153, 34, 0.08);
+  --color-error: var(--color-error);
+  --color-error-light: rgba(248, 81, 73, 0.08);
+  --color-gold: var(--color-warning);
+  --color-gold-light: rgba(210, 153, 34, 0.08);
+  --color-gold-dark: #b0881a;
+  --color-pro: var(--text-primary);
+  --color-pro-light: rgba(255, 255, 255, 0.06);
+  --color-pro-gradient: var(--accent);
+  --color-teacher: var(--text-primary);
+  --color-teacher-light: rgba(255, 255, 255, 0.06);
+  --color-teacher-gradient: var(--accent);
+  --color-free: var(--text-muted);
+  --color-free-light: rgba(255, 255, 255, 0.04);
+  --color-text: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border-default);
+  --color-border-light: var(--border-subtle);
+  --color-bg: var(--bg-deep);
+  --color-bg-alt: var(--bg-surface);
+  --color-bg-hover: rgba(255, 255, 255, 0.04);
+  --badge-pro-bg: rgba(255, 255, 255, 0.08);
+  --badge-pro-text: var(--text-primary);
+  --badge-teacher-bg: rgba(255, 255, 255, 0.08);
+  --badge-teacher-text: var(--text-primary);
 }
 
 /* ── Reset ─────────────────────────────────────────── */
-* {
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -97,39 +137,37 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--color-bg);
-  color: var(--color-text);
+  background: var(--bg-deep);
+  color: var(--text-primary);
   overflow: hidden;
-  touch-action: manipulation;
   line-height: 1.5;
+  letter-spacing: -0.01em;
 }
 
-/* ── 选中文字颜色 ── */
 ::selection {
-  background: var(--color-primary-light);
-  color: var(--color-primary-dark);
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
 }
 
-/* ── 焦点样式 ── */
 :focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--border-focus);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
 
-/* ── 链接 ── */
 a {
-  color: var(--color-primary);
+  color: var(--text-secondary);
   text-decoration: none;
+  transition: color var(--transition-fast);
 }
 a:hover {
-  text-decoration: underline;
+  color: var(--text-primary);
 }
 
-/* ── 滚动条 ────────────────────────────────────────── */
+/* ── Scrollbar ─────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -137,21 +175,35 @@ a:hover {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.22);
+  background: rgba(255, 255, 255, 0.15);
 }
 
-/* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
 }
 
-/* ── 手机端：允许 body 滚动 ────────────────────────── */
+/* ── Button reset ──────────────────────────────────── */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+input, textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+/* ── Mobile ────────────────────────────────────────── */
 @media (max-width: 767px) {
   body {
     overflow: auto;

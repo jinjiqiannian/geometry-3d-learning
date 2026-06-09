@@ -11,14 +11,12 @@ export default function AuthModal() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Listen for show event
   useEffect(() => {
     const handler = () => setVisible(true)
     document.addEventListener('mathviz:show-auth', handler)
     return () => document.removeEventListener('mathviz:show-auth', handler)
   }, [])
 
-  // Hide when user logs in
   useEffect(() => {
     if (user) setVisible(false)
   }, [user])
@@ -37,7 +35,7 @@ export default function AuthModal() {
         await signUp(email, password)
       }
     } catch (err) {
-      setError(err.message || '操作失败，请重试')
+      setError(err.message || 'Failed. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -47,14 +45,13 @@ export default function AuthModal() {
     return (
       <div className="auth-overlay" onClick={() => setVisible(false)}>
         <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
-          <button className="auth-close" onClick={() => setVisible(false)}>✕</button>
-          <div className="auth-icon">🔌</div>
-          <h2 className="auth-title">后端未连接</h2>
+          <button className="auth-close" onClick={() => setVisible(false)}>×</button>
+          <h2 className="auth-title">Backend not connected</h2>
           <p className="auth-desc">
-            用户系统需要 Supabase 后端支持。您仍可以在离线模式下使用核心功能。
+            Authentication requires Supabase. You can still use core features offline.
           </p>
           <button className="auth-submit" onClick={() => setVisible(false)}>
-            继续使用离线版
+            Continue offline
           </button>
         </div>
       </div>
@@ -64,17 +61,16 @@ export default function AuthModal() {
   return (
     <div className="auth-overlay" onClick={() => setVisible(false)}>
       <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="auth-close" onClick={() => setVisible(false)}>✕</button>
+        <button className="auth-close" onClick={() => setVisible(false)}>×</button>
 
-        <div className="auth-icon">📐</div>
-        <h2 className="auth-title">{isLogin ? '登录 MathViz' : '注册 MathViz'}</h2>
-        <p className="auth-desc">解锁 Pro 全部功能，开始 AI 数学学习</p>
+        <h2 className="auth-title">{isLogin ? 'Sign in' : 'Create account'}</h2>
+        <p className="auth-desc">Save your work and access Pro features</p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <input
             className="auth-input"
             type="email"
-            placeholder="邮箱地址"
+            placeholder="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -82,7 +78,7 @@ export default function AuthModal() {
           <input
             className="auth-input"
             type="password"
-            placeholder="密码（至少6位）"
+            placeholder="Password (6+ characters)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             minLength={6}
@@ -92,26 +88,26 @@ export default function AuthModal() {
           {error && <div className="auth-error">{error}</div>}
 
           <button className="auth-submit" type="submit" disabled={loading}>
-            {loading ? '处理中...' : isLogin ? '登录' : '注册'}
+            {loading ? 'Please wait…' : isLogin ? 'Sign in' : 'Create account'}
           </button>
         </form>
 
         <div className="auth-divider">
-          <span>或</span>
+          <span>or</span>
         </div>
 
         <button className="auth-google" onClick={signInWithGoogle} type="button">
-          🅖 使用 Google 账号登录
+          Continue with Google
         </button>
 
         <p className="auth-switch">
-          {isLogin ? '还没有账号？' : '已有账号？'}
+          {isLogin ? 'No account?' : 'Have an account?'}
           <button
             type="button"
             className="auth-switch-btn"
             onClick={() => { setIsLogin(!isLogin); setError('') }}
           >
-            {isLogin ? '立即注册' : '立即登录'}
+            {isLogin ? 'Sign up' : 'Sign in'}
           </button>
         </p>
       </div>

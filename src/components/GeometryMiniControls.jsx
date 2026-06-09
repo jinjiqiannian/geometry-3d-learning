@@ -20,25 +20,22 @@ export default function GeometryMiniControls({
         <button
           className="gmc-btn"
           onClick={() => setOpen(!open)}
-          title="切换几何体"
         >
-          {currentGeo.icon} {currentGeo.name} {open ? '▲' : '▼'}
+          {currentGeo.name} {open ? '▲' : '▼'}
         </button>
 
         <button
           className={`gmc-btn ${showFaces ? 'active' : ''}`}
           onClick={onToggleFaces}
-          title={showFaces ? '实体面' : '线框'}
         >
-          {showFaces ? '🧊' : '🔲'}
+          {showFaces ? '实体' : '线框'}
         </button>
 
         <button
           className={`gmc-btn ${showLabels ? 'active' : ''}`}
           onClick={onToggleLabels}
-          title={showLabels ? '显示标签' : '隐藏标签'}
         >
-          {showLabels ? '🏷️' : '🏷️'}
+          Labels
         </button>
       </div>
 
@@ -50,7 +47,6 @@ export default function GeometryMiniControls({
               className={`gmc-dropdown-item ${geo.id === geometry?.type ? 'active' : ''}`}
               onClick={() => { onGeometryChange?.(geo.id, { size: geometry?.params?.size || 2 }); setOpen(false) }}
             >
-              <span className="gmc-geo-icon">{geo.icon}</span>
               <span className="gmc-geo-name">{geo.name}</span>
             </button>
           ))}

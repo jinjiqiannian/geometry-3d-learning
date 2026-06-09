@@ -1,30 +1,25 @@
 /* ═══════════════════════════════════════════════════════
-   StepCard — 单个解题步骤卡片
+   StepCard — Individual solution step · Dark theme
    ═══════════════════════════════════════════════════════ */
 
 .step-card {
   display: flex;
   gap: 12px;
-  padding: 14px 12px;
+  padding: 12px 12px;
   border-radius: var(--radius-md);
-  border-left: 3px solid transparent;
   cursor: pointer;
   transition: all var(--transition-fast);
-  background: var(--color-bg);
+  border-left: 2px solid transparent;
+  background: transparent;
 }
 
 .step-card:hover {
-  background: var(--color-bg-hover);
+  background: var(--accent-subtle);
 }
 
 .step-card.current {
-  background: var(--color-primary-light);
-  border-left-color: var(--color-primary);
-}
-
-.step-card.locked {
-  opacity: 0.9;
-  cursor: default;
+  background: var(--accent-subtle);
+  border-left-color: var(--text-secondary);
 }
 
 .step-indicator {
@@ -37,25 +32,22 @@
 }
 
 .step-number {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: var(--step-bg, #e8f0fc);
-  color: var(--step-color, #4A90E2);
-  font-size: 13px;
-  font-weight: 700;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 550;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all var(--transition-fast);
 }
 
 .step-card.current .step-number {
-  background: var(--color-primary);
-  color: white;
-}
-
-.step-lock {
-  font-size: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
 }
 
 .step-body {
@@ -72,54 +64,26 @@
 
 .step-type-badge {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 550;
   padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--step-bg, #e8f0fc);
-  color: var(--step-color, #4A90E2);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
   white-space: nowrap;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .step-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: 550;
+  color: var(--text-primary);
   line-height: 1.3;
 }
 
 .step-content {
-  font-size: 12px;
-  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
   line-height: 1.5;
-  margin-top: 4px;
-}
-
-.step-locked-content {
-  position: relative;
-}
-
-.step-content.blurred {
-  filter: blur(3px);
-  user-select: none;
-  pointer-events: none;
-}
-
-.step-upgrade-btn {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1.5px dashed var(--color-pro);
-  border-radius: var(--radius-sm);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-pro);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.step-upgrade-btn:hover {
-  background: var(--color-pro-light);
+  margin-top: 2px;
 }

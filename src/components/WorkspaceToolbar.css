@@ -1,55 +1,54 @@
 /* ═══════════════════════════════════════════════════════
-   WorkspaceToolbar — 工作区顶栏
+   WorkspaceToolbar — Minimal toolbar · Linear-inspired
    ═══════════════════════════════════════════════════════ */
 
-.workspace-toolbar {
+.wt-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 48px;
-  padding: 0 12px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--color-border-light);
-  gap: 8px;
+  height: 44px;
+  padding: 0 14px;
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border-subtle);
+  gap: 12px;
   flex-shrink: 0;
   z-index: 30;
+  -webkit-app-region: no-drag;
 }
 
 .wt-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
   flex: 1;
 }
 
-.wt-back {
+.wt-logo {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  transition: opacity var(--transition-fast);
   background: none;
   border: none;
-  font-size: 13px;
-  color: var(--color-primary);
   cursor: pointer;
-  font-weight: 500;
-  white-space: nowrap;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
   font-family: inherit;
+  padding: 0;
 }
 
-.wt-back:hover {
-  background: var(--color-primary-light);
+.wt-logo:hover {
+  opacity: 0.7;
 }
 
 .wt-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 300px;
 }
 
 .wt-right {
@@ -60,78 +59,62 @@
 }
 
 .wt-btn {
-  padding: 6px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg);
-  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
   font-weight: 500;
-  color: var(--color-text);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
   font-family: inherit;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  letter-spacing: -0.01em;
 }
 
 .wt-btn:hover {
-  background: var(--color-bg-hover);
-  border-color: var(--color-primary);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+  background: var(--accent-subtle);
 }
 
-.wt-btn.premium {
-  border-color: var(--color-teacher);
-  color: var(--color-teacher);
-  background: var(--color-teacher-light);
+.wt-btn-primary {
+  color: var(--text-inverse);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 550;
 }
 
-.wt-upgrade-btn {
-  padding: 6px 14px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--color-pro-gradient);
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  white-space: nowrap;
-  font-family: inherit;
+.wt-btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: var(--text-inverse);
 }
 
-.wt-upgrade-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35);
+.wt-btn-ghost {
+  border-color: transparent;
+  color: var(--text-muted);
 }
 
-.wt-plan-badge {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-pro);
-  background: var(--color-pro-light);
-  padding: 4px 10px;
-  border-radius: 100px;
+.wt-btn-ghost:hover {
+  color: var(--text-secondary);
 }
 
 /* Mobile */
 @media (max-width: 767px) {
-  .workspace-toolbar {
-    height: 44px;
-    padding: 0 8px;
-    gap: 4px;
+  .wt-bar {
+    height: 40px;
+    padding: 0 10px;
+    gap: 6px;
   }
 
   .wt-title {
-    font-size: 12px;
-    max-width: 120px;
+    display: none;
   }
 
   .wt-btn {
-    padding: 5px 8px;
-    font-size: 11px;
-  }
-
-  .wt-upgrade-btn {
-    padding: 5px 10px;
-    font-size: 11px;
+    padding: 4px 10px;
+    font-size: 10px;
   }
 }

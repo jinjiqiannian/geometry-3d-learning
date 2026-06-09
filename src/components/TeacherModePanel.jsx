@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════
-//  TeacherModePanel — 课堂演示控制栏
-//  全屏3D + 自动播放 + 讲稿字幕 + PPT导出
+//  TeacherModePanel — Classroom presentation controls
+//  Fullscreen 3D + auto-play + subtitles + PPT export
 // ═══════════════════════════════════════════════════════
 import { useTeacher } from '../contexts/TeacherContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
@@ -32,28 +32,28 @@ export default function TeacherModePanel({
 
   return (
     <>
-      {/* ── Floating classroom button ──────────────── */}
+      {/* Floating classroom button */}
       {!classroomMode && (
         <button
           className="tmp-classroom-btn"
           onClick={toggleClassroomMode}
-          title="课堂演示模式"
+          title="Classroom mode"
         >
-          🎓 课堂模式
+          Present
         </button>
       )}
 
-      {/* ── Fullscreen classroom overlay ────────────── */}
+      {/* Fullscreen classroom overlay */}
       {classroomMode && (
         <div className={`tmp-overlay ${darkMode ? 'tmp-dark' : ''}`}>
           {/* Top bar */}
           <div className="tmp-topbar">
             <div className="tmp-topbar-left">
-              <button className="tmp-btn" onClick={toggleClassroomMode} title="退出课堂模式 (Esc)">
-                ✕ 退出
+              <button className="tmp-btn" onClick={toggleClassroomMode} title="Exit (Esc)">
+                Exit
               </button>
               <span className="tmp-step-info">
-                步骤 {currentStep + 1} / {totalSteps}
+                Step {currentStep + 1} / {totalSteps}
               </span>
             </div>
 
@@ -61,29 +61,29 @@ export default function TeacherModePanel({
               <button
                 className={`tmp-btn ${autoPlay ? 'tmp-active' : ''}`}
                 onClick={() => toggleAutoPlay(totalSteps, onStepChange)}
-                title="自动播放 (空格键)"
+                title="Auto-play (Space)"
               >
-                {autoPlay ? '⏸ 暂停' : '▶ 播放'}
+                {autoPlay ? 'Pause' : 'Play'}
               </button>
 
-              <button className="tmp-btn" onClick={cycleSpeed} title="切换播放速度">
+              <button className="tmp-btn" onClick={cycleSpeed} title="Playback speed">
                 {playSpeed}x
               </button>
 
               <button
                 className={`tmp-btn ${showSubtitles ? 'tmp-active' : ''}`}
                 onClick={() => setShowSubtitles(!showSubtitles)}
-                title="讲稿字幕"
+                title="Subtitles"
               >
-                💬
+                CC
               </button>
 
               <button
                 className={`tmp-btn ${darkMode ? 'tmp-active' : ''}`}
                 onClick={() => setDarkMode(!darkMode)}
-                title="投屏暗色模式"
+                title="Dark mode"
               >
-                🌙
+                Dark
               </button>
             </div>
 
@@ -92,14 +92,14 @@ export default function TeacherModePanel({
                 className="tmp-btn tmp-export-btn"
                 onClick={onExportPPT}
                 disabled={pptLoading}
-                title="导出PPT"
+                title="Export PPT"
               >
-                {pptLoading ? '⏳ 生成中...' : '📥 导出PPT'}
+                {pptLoading ? 'Generating…' : 'Export PPT'}
               </button>
             </div>
           </div>
 
-          {/* Step navigation — left/right */}
+          {/* Navigation — left/right */}
           <button
             className="tmp-nav tmp-nav-left"
             onClick={() => {
@@ -107,9 +107,9 @@ export default function TeacherModePanel({
               onStepChange?.(newStep)
             }}
             disabled={currentStep <= 0}
-            title="上一步 (←)"
+            title="Previous"
           >
-            ‹
+            ←
           </button>
 
           <button
@@ -119,9 +119,9 @@ export default function TeacherModePanel({
               onStepChange?.(newStep)
             }}
             disabled={currentStep >= totalSteps - 1}
-            title="下一步 (→)"
+            title="Next"
           >
-            ›
+            →
           </button>
 
           {/* Bottom subtitle bar */}
@@ -138,7 +138,7 @@ export default function TeacherModePanel({
                 key={i}
                 className={`tmp-dot ${i === currentStep ? 'tmp-dot-active' : ''} ${i < currentStep ? 'tmp-dot-done' : ''}`}
                 onClick={() => onStepChange?.(i)}
-                title={`步骤 ${i + 1}`}
+                title={`Step ${i + 1}`}
               />
             ))}
           </div>

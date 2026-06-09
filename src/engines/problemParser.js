@@ -247,7 +247,7 @@ function parseResponse(text) {
  * 本地快速关键词匹配（减少不必要的 API 调用）
  * 返回 null 表示无法匹配，需要调用 API
  */
-function quickMatch(text) {
+export function quickMatch(text) {
   const t = text.toLowerCase()
 
   // 正方体

@@ -1,78 +1,68 @@
 /* ═══════════════════════════════════════════════════════
-   PricingPage — 定价页
+   PricingPage — Dark theme
    ═══════════════════════════════════════════════════════ */
 
 .pricing-page {
   min-height: 100vh;
-  background: var(--color-bg-alt);
-  padding-bottom: 60px;
+  background: var(--bg-deep);
+  padding-bottom: 80px;
 }
 
 .pp-header {
   text-align: center;
-  padding: 48px 24px 24px;
-  background: linear-gradient(135deg, #4A90E2 0%, #6366F1 100%);
-  color: white;
+  padding: 64px 24px 32px;
 }
-
-.pp-back {
-  display: inline-block;
-  font-size: 14px;
-  color: rgba(255,255,255,0.85);
-  text-decoration: none;
-  margin-bottom: 16px;
-  transition: color var(--transition-fast);
-}
-.pp-back:hover { color: white; text-decoration: none; }
 
 .pp-title {
-  font-size: 32px;
-  font-weight: 800;
+  font-size: var(--text-4xl);
+  font-weight: 600;
+  color: var(--text-primary);
   margin-bottom: 8px;
+  letter-spacing: -0.03em;
 }
 
 .pp-subtitle {
-  font-size: 15px;
-  opacity: 0.85;
+  font-size: var(--text-lg);
+  color: var(--text-muted);
 }
 
 .pp-toggle-wrap {
   display: flex;
   justify-content: center;
   gap: 8px;
-  margin: 32px 0 24px;
+  margin-bottom: 36px;
 }
 
 .pp-toggle {
-  padding: 10px 24px;
-  border: 2px solid var(--color-border);
-  border-radius: 100px;
-  background: var(--color-bg);
-  font-size: 14px;
-  font-weight: 600;
+  padding: 8px 20px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  background: transparent;
+  font-size: var(--text-sm);
+  font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
   font-family: inherit;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
 }
 
 .pp-toggle.active {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
+  background: var(--accent-subtle);
+  color: var(--text-primary);
+  border-color: var(--border-emphasis);
 }
 
 .pp-save {
-  font-size: 11px;
-  background: var(--color-gold);
-  color: white;
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
   padding: 2px 8px;
-  border-radius: 100px;
+  border-radius: var(--radius-full);
   margin-left: 6px;
 }
 
 .pp-grid {
-  max-width: 960px;
+  max-width: 920px;
   margin: 0 auto;
   padding: 0 24px;
   display: grid;
@@ -81,44 +71,45 @@
 }
 
 .pp-faq {
-  max-width: 640px;
-  margin: 56px auto 0;
+  max-width: 600px;
+  margin: 64px auto 0;
   padding: 0 24px;
 }
 
 .pp-faq h2 {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--color-text);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--text-primary);
   margin-bottom: 24px;
   text-align: center;
+  letter-spacing: -0.02em;
 }
 
 .pp-faq-item {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   padding: 20px;
-  background: var(--color-bg);
+  background: var(--bg-surface);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border-light);
+  border: 1px solid var(--border-subtle);
 }
 
 .pp-faq-item h3 {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-text);
+  font-size: var(--text-base);
+  font-weight: 550;
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
 .pp-faq-item p {
-  font-size: 13px;
-  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
 /* Mobile */
 @media (max-width: 767px) {
-  .pp-header { padding: 36px 16px 20px; }
-  .pp-title { font-size: 24px; }
+  .pp-header { padding: 40px 16px 24px; }
+  .pp-title { font-size: var(--text-3xl); }
   .pp-grid { grid-template-columns: 1fr; max-width: 380px; gap: 14px; }
-  .pp-faq { margin-top: 40px; }
+  .pp-faq { margin-top: 48px; }
 }

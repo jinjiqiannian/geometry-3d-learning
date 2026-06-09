@@ -10,12 +10,11 @@ export default function PricingCard({ plan, yearly = false }) {
   const price = yearly && plan.stripeYearlyId
     ? (plan.id === 'pro' ? 190 : plan.id === 'teacher' ? 390 : 0)
     : plan.price
-  const period = yearly ? '/年' : plan.period
+  const period = yearly ? '/year' : plan.period
 
   const handleUpgrade = () => {
     if (plan.id === 'free') return
     if (!user) {
-      // Prompt login first
       document.dispatchEvent(new CustomEvent('mathviz:show-auth'))
       return
     }
@@ -24,10 +23,9 @@ export default function PricingCard({ plan, yearly = false }) {
 
   return (
     <div className={`pricing-card ${plan.popular ? 'popular' : ''} ${isCurrent ? 'current' : ''}`}>
-      {plan.popular && <div className="pricing-badge">🔥 最受欢迎</div>}
-      {isCurrent && <div className="pricing-badge current">✓ 当前方案</div>}
+      {plan.popular && <div className="pricing-badge">Most popular</div>}
+      {isCurrent && <div className="pricing-badge current">Current plan</div>}
 
-      <div className="pricing-icon">{plan.icon}</div>
       <h3 className="pricing-name">{plan.name}</h3>
       <p className="pricing-desc">{plan.description}</p>
 
@@ -40,7 +38,6 @@ export default function PricingCard({ plan, yearly = false }) {
       <ul className="pricing-features">
         {plan.features.map((f, i) => (
           <li key={i} className="pricing-feature">
-            <span className="pricing-check">✓</span>
             {f}
           </li>
         ))}
@@ -51,7 +48,7 @@ export default function PricingCard({ plan, yearly = false }) {
         onClick={handleUpgrade}
         disabled={isCurrent}
       >
-        {isCurrent ? '当前方案' : plan.cta}
+        {isCurrent ? 'Current plan' : plan.cta}
       </button>
     </div>
   )

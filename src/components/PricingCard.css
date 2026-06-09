@@ -1,34 +1,31 @@
 /* ═══════════════════════════════════════════════════════
-   PricingCard — 定价方案卡片
+   PricingCard — Dark theme
    ═══════════════════════════════════════════════════════ */
 
 .pricing-card {
   position: relative;
-  background: var(--color-bg);
-  border: 1.5px solid var(--color-border);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
   padding: 32px 24px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  transition: all var(--transition-normal);
-  overflow: hidden;
+  transition: all var(--transition-base);
 }
 
 .pricing-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  border-color: var(--border-emphasis);
 }
 
 .pricing-card.popular {
-  border-color: var(--color-pro);
-  box-shadow: 0 0 0 1px var(--color-pro), var(--shadow-md);
+  border-color: var(--border-emphasis);
+  background: var(--bg-elevated);
 }
 
 .pricing-card.current {
-  border-color: var(--color-success);
-  background: var(--color-success-light);
+  border-color: var(--border-emphasis);
 }
 
 .pricing-badge {
@@ -37,63 +34,57 @@
   left: 50%;
   transform: translateX(-50%);
   padding: 3px 12px;
-  border-radius: 100px;
-  font-size: 11px;
-  font-weight: 700;
-  background: var(--color-pro-light);
-  color: var(--color-pro);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 550;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
 .pricing-badge.current {
-  background: var(--color-success-light);
   color: var(--color-success);
-}
-
-.pricing-icon {
-  font-size: 36px;
-  margin-bottom: 12px;
-  line-height: 1;
+  background: rgba(63, 185, 80, 0.1);
 }
 
 .pricing-name {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-text);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-primary);
   margin-bottom: 4px;
+  letter-spacing: -0.02em;
 }
 
 .pricing-desc {
-  font-size: 13px;
-  color: var(--color-text-muted);
-  margin-bottom: 16px;
-  line-height: 1.4;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-bottom: 20px;
 }
 
 .pricing-price-wrap {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   display: flex;
   align-items: baseline;
   gap: 2px;
 }
 
 .pricing-currency {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--color-text);
+  font-size: var(--text-lg);
+  font-weight: 550;
+  color: var(--text-secondary);
 }
 
 .pricing-amount {
-  font-size: 40px;
-  font-weight: 800;
-  color: var(--color-text);
+  font-size: 44px;
+  font-weight: 600;
+  color: var(--text-primary);
   line-height: 1;
-  letter-spacing: -1px;
+  letter-spacing: -0.03em;
 }
 
 .pricing-period {
-  font-size: 14px;
-  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
 }
 
 .pricing-features {
@@ -102,51 +93,47 @@
   margin-bottom: 24px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .pricing-feature {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
   text-align: left;
-}
-
-.pricing-check {
-  color: var(--color-success);
-  font-weight: 700;
-  flex-shrink: 0;
+  padding-left: 8px;
 }
 
 .pricing-cta {
   width: 100%;
   padding: 12px;
   border-radius: var(--radius-md);
-  border: 1.5px solid var(--color-border);
-  background: var(--color-bg);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text);
+  border: 1px solid var(--border-default);
+  background: transparent;
+  font-size: var(--text-sm);
+  font-weight: 550;
+  color: var(--text-primary);
   cursor: pointer;
   transition: all var(--transition-fast);
+  font-family: inherit;
+  letter-spacing: -0.01em;
 }
 
 .pricing-cta.primary {
-  background: var(--color-pro-gradient);
-  color: white;
-  border: none;
+  background: var(--accent);
+  color: var(--text-inverse);
+  border-color: var(--accent);
+}
+
+.pricing-cta.primary:hover {
+  background: var(--accent-hover);
 }
 
 .pricing-cta.current {
-  background: var(--color-success);
-  color: white;
-  border: none;
+  opacity: 0.5;
   cursor: default;
 }
 
-.pricing-cta:hover:not(.current) {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+.pricing-cta:hover:not(.current):not(.primary) {
+  border-color: var(--border-emphasis);
+  background: var(--accent-subtle);
 }
