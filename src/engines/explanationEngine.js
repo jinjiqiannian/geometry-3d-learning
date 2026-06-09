@@ -7,11 +7,11 @@
 const TEMPLATES = {
   cube: {
     default: [
-      { step: 1, title: '识别几何体', content: '正方体，所有棱长相等，每个面都是全等的正方形，对面互相平行。', type: 'observation' },
-      { step: 2, title: '分析题目条件', content: '仔细阅读题目，提取已知条件和求解目标。', type: 'observation' },
+      { step: 1, title: '识别几何体', content: '这是一个{typeName}，所有棱长相等（棱长 {size}），每个面都是全等的正方形，对面互相平行。', type: 'observation' },
+      { step: 2, title: '分析题目条件', content: '已知棱长 {size}，仔细阅读题目，提取已知条件和求解目标。', type: 'observation' },
       { step: 3, title: '构建辅助线/面', content: '根据需要作辅助线或辅助平面，将空间问题转化为平面问题。', type: 'construction' },
-      { step: 4, title: '计算求解', content: '使用勾股定理、余弦定理或向量法进行计算。', type: 'calculation' },
-      { step: 5, title: '得出结论', content: '综合以上各步的计算结果，得出最终答案。回顾解题思路：先识别几何体特征，再根据已知条件选择合适的公式，代入数据计算后得到结论。', type: 'conclusion' },
+      { step: 4, title: '计算求解', content: '代入棱长 {size}，使用勾股定理、余弦定理或向量法进行计算。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '综合以上各步的计算结果，得出最终答案。回顾解题思路：先识别{typeName}特征（棱长 {size}），再根据已知条件选择合适的公式，代入数据计算后得到结论。', type: 'conclusion' },
     ],
     angle_skew_lines: [
       { step: 1, title: '识别几何体', content: '正方体，所有棱长相等，对面平行，相邻面垂直。', type: 'observation' },
@@ -31,11 +31,11 @@ const TEMPLATES = {
 
   cuboid: {
     default: [
-      { step: 1, title: '识别几何体', content: '长方体，三组对面分别平行且全等，相邻面互相垂直。', type: 'observation' },
-      { step: 2, title: '分析题目条件', content: '长方体长、宽、高分别为a、b、c，提取已知条件。', type: 'observation' },
-      { step: 3, title: '构建辅助线', content: '根据需要作对角线或辅助平面。', type: 'construction' },
-      { step: 4, title: '计算求解', content: '使用勾股定理的推广：体对角线 = √(a² + b² + c²)。', type: 'calculation' },
-      { step: 5, title: '得出结论', content: '应用三维勾股定理：体对角线 = √(长² + 宽² + 高²) = √(a² + b² + c²)。代入题目给出的长、宽、高数值后，开平方即得长方体的体对角线长度。', type: 'conclusion' },
+      { step: 1, title: '识别几何体', content: '这是一个{typeName}，三组对面分别平行且全等，相邻面互相垂直。', type: 'observation' },
+      { step: 2, title: '分析题目条件', content: '已知{typeName}的尺寸参数，提取长、宽、高等已知条件。', type: 'observation' },
+      { step: 3, title: '构建辅助线', content: '根据需要作对角线或辅助平面，将空间问题分解。', type: 'construction' },
+      { step: 4, title: '计算求解', content: '使用勾股定理的推广：体对角线 = √(长² + 宽² + 高²)。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '应用三维勾股定理：体对角线 = √(长² + 宽² + 高²)。代入题目给出的长、宽、高数值后，开平方即得{typeName}的体对角线长度。', type: 'conclusion' },
     ],
     diagonal_long: [
       { step: 1, title: '识别几何体', content: '长方体，长a、宽b、高c。三组对面分别平行且全等。', type: 'observation' },
@@ -146,27 +146,61 @@ function detectProblemType(type, text) {
 
 /**
  * 根据几何体类型和题目文字，本地生成解题步骤模板
+ * 自动插值：将模板中的占位符替换为题目实际参数
  * @param {string} problemText - 用户输入的题目
  * @param {Object} parsedData - parseProblem返回的结构化数据
  * @returns {Array} 解题步骤数组
  */
 export function generateLocalSteps(problemText, parsedData) {
   const type = parsedData?.type || 'cube'
+  const size = parsedData?.size
+  const labels = parsedData?.labels || parsedData?.vertices || []
+
+  // 构建插值上下文
+  const ctx = {
+    type,
+    size,
+    typeName: GEOMETRY_NAMES[type] || type,
+    labelStr: labels.join('、'),
+    firstLabel: labels[0] || '',
+  }
+
   const templates = TEMPLATES[type]
 
   if (!templates) {
-    // Generic fallback
-    return [
-      { step: 1, title: '识别几何体', content: `这是一个${type}类型的几何体。`, type: 'observation' },
-      { step: 2, title: '分析已知条件', content: '提取题目中给出的参数和条件。', type: 'observation' },
+    // Generic fallback — 带插值
+    return interpolateSteps([
+      { step: 1, title: '识别几何体', content: `这是一个${ctx.typeName}。`, type: 'observation' },
+      { step: 2, title: '分析已知条件', content: size ? `已知关键参数：尺寸为 ${size}。` : '提取题目中给出的参数和条件。', type: 'observation' },
       { step: 3, title: '选择解题方法', content: '根据题目类型选择合适的公式和方法。', type: 'observation' },
       { step: 4, title: '进行计算', content: '代入公式进行计算。', type: 'calculation' },
       { step: 5, title: '得出结论', content: '整理结果，得出最终答案。', type: 'conclusion' },
-    ]
+    ], ctx)
   }
 
   const problemType = detectProblemType(type, problemText)
-  return templates[problemType] || templates.default
+  const steps = templates[problemType] || templates.default
+  return interpolateSteps(steps, ctx)
+}
+
+/**
+ * 将模板步骤中的占位符替换为实际数值
+ */
+function interpolateSteps(steps, ctx) {
+  return steps.map(step => ({
+    ...step,
+    content: step.content
+      .replace(/\{typeName\}/g, ctx.typeName)
+      .replace(/\{size\}/g, ctx.size != null ? String(ctx.size) : '')
+      .replace(/\{labels\}/g, ctx.labelStr)
+      .replace(/\{label\}/g, ctx.firstLabel),
+  }))
+}
+
+const GEOMETRY_NAMES = {
+  cube: '正方体', cuboid: '长方体', sphere: '球体', cylinder: '圆柱体',
+  cone: '圆锥体', pyramid: '正四棱锥', prism: '棱柱',
+  squareFrustum: '四棱台', circularFrustum: '圆台',
 }
 
 // ── AI 增强讲解（需要 Claude API）─────────────────

@@ -71,7 +71,35 @@ export default function WorkspacePage() {
   // ── Auto-parse from URL query ────────────────────
   useEffect(() => {
     const q = searchParams.get('q')
+    const replay = searchParams.get('replay')
     if (q && q.trim()) {
+      // 检查是否有历史回放数据（sessionStorage）
+      if (replay === '1') {
+        try {
+          const savedSteps = sessionStorage.getItem('mathviz_replay_steps')
+          const savedParsed = sessionStorage.getItem('mathviz_replay_parsed')
+          if (savedSteps) {
+            const steps = JSON.parse(savedSteps)
+            const parsed = savedParsed ? JSON.parse(savedParsed) : null
+            setProblemText(q.trim())
+            setSteps(steps)
+            setParsedData(parsed)
+            setCurrentStep(0)
+            if (parsed) {
+              setGeometry({
+                type: parsed.type || 'cube',
+                params: { size: parsed.size || 2 },
+                ...defaultConstraintParams(parsed.type || 'cube'),
+              })
+            }
+            setLoadingStage('done')
+            // 清除回放数据
+            sessionStorage.removeItem('mathviz_replay_steps')
+            sessionStorage.removeItem('mathviz_replay_parsed')
+            return
+          }
+        } catch { /* fall through to normal parse */ }
+      }
       handleParseProblem(q.trim())
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -170,22 +198,40 @@ export default function WorkspacePage() {
 
       await recordUsage('generate', text)
 
-      // 保存到学习记录
+      // 保存到学习记录（含步骤，支持历史回放）
       try {
         const saved = JSON.parse(localStorage.getItem('mathviz_history') || '[]')
         saved.unshift({
           date: new Date().toISOString(),
           text,
           type: parsed?.type || 'cube',
+          steps: mergedSteps,  // 保存步骤避免重复AI请求
+          parsedData: parsed,  // 保存解析结果
         })
         // 最多保存 50 条
         if (saved.length > 50) saved.length = 50
         localStorage.setItem('mathviz_history', JSON.stringify(saved))
       } catch { /* */ }
 
+      // 短暂延迟让"构建3D可视化"阶段真实可见
+      await new Promise(r => setTimeout(r, 350))
       setLoadingStage('done')
     } catch (err) {
-      setError(err.message || '解析失败')
+      // 错误分类：区分网络问题 / AI超时 / 题目无法识别
+      const msg = err.message || ''
+      let userError = '解析失败，请重试'
+      if (msg.includes('fetch') || msg.includes('network') || msg.includes('Network')) {
+        userError = '网络连接失败，请检查网络后重试'
+      } else if (msg.includes('timeout') || msg.includes('Timeout')) {
+        userError = 'AI 响应超时，请尝试简化题目描述'
+      } else if (msg.includes('401') || msg.includes('403')) {
+        userError = 'API 密钥无效，请在设置中更新'
+      } else if (msg.includes('429')) {
+        userError = '请求过于频繁，请稍后重试'
+      } else if (msg) {
+        userError = msg
+      }
+      setError(userError)
       // Fallback: local template
       try {
         const { quickMatch } = await import('../engines/problemParser')
@@ -209,6 +255,8 @@ export default function WorkspacePage() {
             date: new Date().toISOString(),
             text,
             type: parsed?.type || 'cube',
+            steps: fallbackSteps,
+            parsedData: parsed,
           })
           if (saved.length > 50) saved.length = 50
           localStorage.setItem('mathviz_history', JSON.stringify(saved))
