@@ -1,0 +1,52 @@
+/* ═══════════════════════════════════════════════════════
+   ThemeToggle — 深色/浅色切换按钮
+   ═══════════════════════════════════════════════════════ */
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--transition-fast);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.theme-toggle:hover {
+  border-color: var(--border-default);
+  color: var(--text-primary);
+  background: var(--accent-subtle);
+}
+
+.theme-toggle:active {
+  transform: scale(0.96);
+}
+
+.theme-toggle-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.theme-toggle-label {
+  white-space: nowrap;
+}
+
+/* ── Mobile ──────────────────────────────────────── */
+@media (max-width: 767px) {
+  .theme-toggle {
+    padding: 5px 10px;
+    min-height: 36px;
+  }
+
+  .theme-toggle-label {
+    display: none; /* 移动端只显示图标 */
+  }
+}

@@ -5,6 +5,7 @@ import { SubscriptionProvider } from './contexts/SubscriptionContext'
 import { AppProvider } from './contexts/AppContext'
 import { WorkspaceProvider } from './contexts/WorkspaceContext'
 import { TeacherProvider } from './contexts/TeacherContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import PageLayout from './layouts/PageLayout'
 import LandingPage from './pages/LandingPage'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -77,7 +78,9 @@ export default function App() {
         <AppProvider>
           <WorkspaceProvider>
             <TeacherProvider>
-              <RouterProvider router={router} />
+              <ThemeProvider>
+                <RouterProvider router={router} />
+              </ThemeProvider>
             </TeacherProvider>
           </WorkspaceProvider>
         </AppProvider>

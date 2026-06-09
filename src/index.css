@@ -88,6 +88,85 @@
   --text-5xl: 60px;
 }
 
+/* ── Dark theme ─────────────────────────────────────── */
+[data-theme="dark"] {
+  /* ── Background ── */
+  --bg-deep: #0f0f13;
+  --bg-base: #131318;
+  --bg-surface: #1a1a22;
+  --bg-elevated: #22222b;
+  --bg-overlay: rgba(0, 0, 0, 0.55);
+  --bg-glass: rgba(26, 26, 34, 0.72);
+
+  /* ── Border ── */
+  --border-subtle: #252530;
+  --border-default: #333340;
+  --border-emphasis: #555568;
+
+  /* ── Text ── */
+  --text-primary: #f0f0f5;
+  --text-secondary: #a0a0b0;
+  --text-inverse: #1d1d1f;
+
+  /* ── Accent (brand) ── */
+  --accent-subtle: rgba(99, 102, 241, 0.1);
+  --accent-pressed: rgba(99, 102, 241, 0.18);
+
+  /* ── Semantic ── */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+
+  /* ── Shadows ── */
+  --shadow-xs: 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.4);
+
+  /* ── Legacy compat overrides ── */
+  --color-primary-light: rgba(99, 102, 241, 0.1);
+  --color-primary-glow: rgba(99, 102, 241, 0.06);
+  --color-success-light: rgba(34, 197, 94, 0.1);
+  --color-warning-light: rgba(245, 158, 11, 0.1);
+  --color-error-light: rgba(239, 68, 68, 0.1);
+  --color-gold-light: rgba(245, 158, 11, 0.1);
+  --color-pro-light: rgba(99, 102, 241, 0.1);
+  --color-teacher-light: rgba(245, 158, 11, 0.1);
+  --color-free-light: rgba(255, 255, 255, 0.03);
+  --color-bg-hover: rgba(99, 102, 241, 0.08);
+  --badge-pro-bg: rgba(99, 102, 241, 0.15);
+  --badge-teacher-bg: rgba(245, 158, 11, 0.15);
+}
+
+/* Dark: glassmorphism adjustment */
+[data-theme="dark"] .glass {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .glass-strong {
+  background: rgba(26, 26, 34, 0.85);
+}
+
+/* Dark: scrollbar */
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] * {
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+/* Dark: selection */
+[data-theme="dark"] ::selection {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+}
+
 /* ── Glassmorphism utility ───────────────────────────── */
 .glass {
   background: var(--bg-glass);

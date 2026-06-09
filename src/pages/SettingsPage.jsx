@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useSupabase } from '../contexts/SupabaseContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
+import { useTheme } from '../contexts/ThemeContext'
 import './SettingsPage.css'
 
 const STORAGE_KEYS = {
@@ -22,6 +23,7 @@ const PROVIDERS = [
 export default function SettingsPage() {
   const { user, connected } = useSupabase()
   const { plan, isPro, isTeacher, dailyUsage, dailyLimit } = useSubscription()
+  const { theme, setTheme, isDark } = useTheme()
 
   // ── Local state ──────────────────────────────────
   const [apiProvider, setApiProvider] = useState(() => {
@@ -231,6 +233,33 @@ export default function SettingsPage() {
             <p className="settings-hint">
               API Key 仅保存在浏览器本地，不会上传到服务器。
             </p>
+          </div>
+        </section>
+
+        {/* ── Appearance ── */}
+        <section className="settings-card">
+          <h2 className="settings-card-title">外观</h2>
+          <div className="settings-card-body">
+            <div className="settings-row">
+              <div>
+                <span className="settings-label">主题模式</span>
+                <p className="settings-desc">切换深色/浅色主题，跟随系统或手动设置</p>
+              </div>
+              <div className="settings-toggle-group">
+                <button
+                  className={`settings-toggle-btn ${theme === 'light' ? 'active' : ''}`}
+                  onClick={() => setTheme('light')}
+                >
+                  ☀️ 浅色
+                </button>
+                <button
+                  className={`settings-toggle-btn ${theme === 'dark' ? 'active' : ''}`}
+                  onClick={() => setTheme('dark')}
+                >
+                  🌙 深色
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 

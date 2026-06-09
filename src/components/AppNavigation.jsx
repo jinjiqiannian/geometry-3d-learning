@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useSupabase } from '../contexts/SupabaseContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
+import ThemeToggle from './ThemeToggle'
 import './AppNavigation.css'
 
 const NAV_ITEMS = [
@@ -68,6 +69,7 @@ export default function AppNavigation() {
       </div>
 
       <div className="app-nav-right">
+        <ThemeToggle />
         <button
           className={`app-nav-plan-badge ${badge.className}`}
           onClick={handleUpgrade}
