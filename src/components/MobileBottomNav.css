@@ -1,63 +1,73 @@
 /* ═══════════════════════════════════════════════════════
-   MobileBottomNav — 移动端底部 Tab 导航
+   MobileBottomNav — 移动端底部 Tab Bar
+   固定在底部，磨砂玻璃效果，SVG 图标 + 文字标签
    ═══════════════════════════════════════════════════════ */
 
 .mobile-bottom-nav {
-  display: none; /* 桌面端隐藏 */
+  display: none;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 56px;
-  background: var(--bg-base);
+  height: 64px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid var(--border-subtle);
-  z-index: 200;
+  z-index: 100;
+  padding: 6px 0 env(safe-area-inset-bottom, 0);
   justify-content: space-around;
-  align-items: center;
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  align-items: stretch;
 }
 
 .mb-nav-item {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
-  padding: 6px 12px;
   text-decoration: none;
-  color: var(--text-secondary);
-  transition: color var(--transition-fast);
-  border-radius: var(--radius-md);
-  min-width: 56px;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+  padding: 4px 0;
+  position: relative;
 }
 
 .mb-nav-item.active {
-  color: var(--accent);
+  color: var(--text-primary);
 }
 
-.mb-nav-item:active {
-  background: var(--accent-subtle);
-}
-
-.mb-nav-icon {
-  font-size: 18px;
-  line-height: 1;
+.mb-nav-item.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
 }
 
 .mb-nav-label {
   font-size: 10px;
   font-weight: 500;
-  line-height: 1;
+  letter-spacing: -0.01em;
 }
 
-/* 移动端：显示底部导航 */
+.mb-nav-item.active .mb-nav-label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* 移动端：显示底部导航，为 Tab Bar 腾出空间 */
 @media (max-width: 767px) {
   .mobile-bottom-nav {
     display: flex;
   }
 
-  /* 为底部导航腾出空间 */
   .page-layout {
-    padding-bottom: 56px;
+    padding-bottom: 64px;
   }
 }

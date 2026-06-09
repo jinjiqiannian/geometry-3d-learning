@@ -1,67 +1,103 @@
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import './HistoryPage.css'
 
 export default function HistoryPage() {
-  return (
-    <div style={{
-      flex: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 16,
-      padding: 40,
-      color: 'var(--text-secondary)',
-      position: 'relative',
-    }}>
-      {/* ← 返回首页 */}
-      <Link
-        to="/"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 4,
-          color: 'var(--text-secondary)',
-          textDecoration: 'none',
-          fontSize: 'var(--text-sm)',
-          fontWeight: 500,
-          padding: '6px 12px',
-          borderRadius: 'var(--radius-md)',
-          alignSelf: 'flex-start',
-        }}
-        onMouseOver={e => e.currentTarget.style.background = 'var(--accent-subtle)'}
-        onMouseOut={e => e.currentTarget.style.background = 'transparent'}
-      >
-        ← 返回首页
-      </Link>
+  const navigate = useNavigate()
+  const [history, setHistory] = useState([])
 
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 16,
-      }}>
-        <h2 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-          历史记录
-        </h2>
-        <p style={{ margin: 0, fontSize: 'var(--text-sm)' }}>
-          暂无解题记录
-        </p>
-        <Link
-          to="/"
-          style={{
-            marginTop: 8,
-            padding: '8px 20px',
-            borderRadius: 'var(--radius-full)',
-            background: 'var(--accent)',
-            color: 'var(--text-inverse)',
-            textDecoration: 'none',
-            fontSize: 'var(--text-sm)',
-            fontWeight: 500,
-          }}
-        >
-          开始解题
-        </Link>
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('mathviz_history') || '[]')
+      setHistory(saved)
+    } catch { /* */ }
+  }, [])
+
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr)
+    const now = new Date()
+    const diff = now - d
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+    if (days === 0) return '今天'
+    if (days === 1) return '昨天'
+    if (days < 7) return `${days}天前`
+    if (days < 30) return `${Math.floor(days / 7)}周前`
+    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
+  }
+
+  const formatTime = (dateStr) => {
+    const d = new Date(dateStr)
+    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
+  }
+
+  const handleContinue = (item) => {
+    navigate(`/workspace?q=${encodeURIComponent(item.text)}`)
+  }
+
+  const handleClear = () => {
+    try {
+      localStorage.removeItem('mathviz_history')
+      setHistory([])
+    } catch { /* */ }
+  }
+
+  // 按日期分组
+  const grouped = history.reduce((groups, item) => {
+    const dateKey = formatDate(item.date)
+    if (!groups[dateKey]) groups[dateKey] = []
+    groups[dateKey].push(item)
+    return groups
+  }, {})
+
+  return (
+    <div className="history-page">
+      <div className="history-header">
+        <Link to="/" className="history-back">← 返回首页</Link>
+        <h1 className="history-title">学习记录</h1>
+        {history.length > 0 && (
+          <button className="history-clear" onClick={handleClear}>
+            清空记录
+          </button>
+        )}
       </div>
+
+      {history.length === 0 ? (
+        <div className="history-empty">
+          <div className="history-empty-icon">◈</div>
+          <h2 className="history-empty-title">暂无学习记录</h2>
+          <p className="history-empty-desc">开始解一道几何题，记录会自动保存</p>
+          <Link to="/" className="history-empty-cta">开始解题</Link>
+        </div>
+      ) : (
+        <div className="history-list">
+          {Object.entries(grouped).map(([dateLabel, items]) => (
+            <div key={dateLabel} className="history-group">
+              <div className="history-group-label">{dateLabel}</div>
+              {items.map((item, i) => (
+                <button
+                  key={i}
+                  className="history-item"
+                  onClick={() => handleContinue(item)}
+                >
+                  <div className="history-item-main">
+                    <span className="history-item-time">{formatTime(item.date)}</span>
+                    <div className="history-item-content">
+                      <span className="history-item-type">
+                        {item.type || '立体几何'}
+                      </span>
+                      <span className="history-item-text">
+                        {item.text?.slice(0, 80)}{item.text?.length > 80 ? '…' : ''}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="history-item-arrow">→</span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

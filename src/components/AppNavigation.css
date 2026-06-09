@@ -1,27 +1,35 @@
 /* ═══════════════════════════════════════════════════════
-   AppNavigation — Global top navigation bar
+   AppNavigation — 顶部固定导航栏
+   左侧: Logo + 链接 · 右侧: 会员标签 + 登录
    ═══════════════════════════════════════════════════════ */
 
 .app-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 48px;
-  padding: 0 20px;
-  background: var(--bg-base);
+  height: 52px;
+  padding: 0 24px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
   z-index: 100;
+  position: sticky;
+  top: 0;
   -webkit-app-region: no-drag;
 }
 
 .app-nav-left {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
 }
 
 .app-nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: var(--text-base);
   font-weight: 650;
   color: var(--text-primary);
@@ -34,14 +42,20 @@
   color: var(--text-primary);
 }
 
+.app-nav-logo-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--accent);
+}
+
 .app-nav-links {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .app-nav-link {
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   font-weight: 450;
@@ -53,6 +67,7 @@
   border: none;
   font-family: inherit;
   white-space: nowrap;
+  position: relative;
 }
 
 .app-nav-link:hover {
@@ -63,7 +78,18 @@
 .app-nav-link.active {
   color: var(--text-primary);
   font-weight: 550;
-  background: var(--accent-subtle);
+}
+
+.app-nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
 }
 
 .app-nav-right {
@@ -72,23 +98,78 @@
   gap: 8px;
 }
 
-/* Mobile */
+.app-nav-plan-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.app-nav-plan-badge.free {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+.app-nav-plan-badge.free:hover {
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--accent);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.app-nav-plan-badge.pro {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.12));
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.app-nav-plan-badge.teacher {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.12), rgba(234, 179, 8, 0.12));
+  color: #f59e0b;
+  border: 1px solid rgba(249, 115, 22, 0.25);
+}
+
+.app-nav-auth-btn {
+  padding: 5px 12px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 450;
+  color: var(--text-secondary);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  transition: all var(--transition-fast);
+}
+
+.app-nav-auth-btn:hover {
+  color: var(--text-primary);
+  background: var(--accent-subtle);
+}
+
+/* Mobile — hide nav links, show compact version */
 @media (max-width: 767px) {
   .app-nav {
-    height: 44px;
-    padding: 0 12px;
+    height: 48px;
+    padding: 0 16px;
+  }
+
+  .app-nav-links {
+    display: none;
   }
 
   .app-nav-left {
     gap: 12px;
   }
 
-  .app-nav-links {
-    gap: 2px;
-  }
-
-  .app-nav-link {
-    padding: 4px 8px;
-    font-size: var(--text-xs);
+  .app-nav-plan-badge {
+    font-size: 10px;
+    padding: 2px 8px;
   }
 }

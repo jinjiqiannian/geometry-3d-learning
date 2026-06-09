@@ -25,11 +25,12 @@ async function captureCanvas(canvasElement) {
 }
 
 const PPT_THEME = {
-  primary: '2c3e50',
-  secondary: '666666',
-  accent: '4A90E2',
-  light: 'f8f9fb',
+  primary: '1d1d1f',
+  secondary: '444456',
+  accent: '6366f1',
+  light: 'f8f9ff',
   white: 'FFFFFF',
+  purple: '8b5cf6',
 }
 
 /**

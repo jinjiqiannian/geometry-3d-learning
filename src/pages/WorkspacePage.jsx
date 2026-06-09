@@ -1,25 +1,20 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 import { Canvas } from '@react-three/fiber'
 import Canvas3D from '../features/solid-geometry/Canvas3D'
-import EdgePropertyPanel from '../features/solid-geometry/EdgePropertyPanel'
 import GeometryMiniControls from '../components/GeometryMiniControls'
-import WorkspaceToolbar from '../components/WorkspaceToolbar'
 import ExplanationPanel from '../components/ExplanationPanel'
-import WorkspaceStatusBar from '../components/WorkspaceStatusBar'
+import TeacherModePanel from '../components/TeacherModePanel'
 import PaywallModal from '../components/PaywallModal'
 import AuthModal from '../components/AuthModal'
 import { getLineDefinitions } from '../engines/lineDefinitions'
 import { isPolyhedral } from '../engines/geometryEngine'
-import { computeVerticesFromParams, getEdgeDirectionGroups, getDefaultEdgeLengths } from '../engines/constraintSolver'
+import { computeVerticesFromParams } from '../engines/constraintSolver'
 import { aiAPI } from '../services/api'
-import { generatePPT } from '../engines/pptExporter'
 import { computeVisualIntent } from '../engines/visualIntent'
 import { createLabelMap, INTERNAL_LABELS } from '../engines/labelMapper'
-import { useAppContext } from '../contexts/AppContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
-import { useWorkspace } from '../contexts/WorkspaceContext'
-import { GEOMETRY_NAMES } from '../constants'
+import { useTeacher } from '../contexts/TeacherContext'
 import './WorkspacePage.css'
 
 // ── Default constraint params ─────────────────────
@@ -31,9 +26,8 @@ function defaultConstraintParams(type) {
 }
 
 export default function WorkspacePage() {
-  const { apiKey, setApiKey } = useAppContext()
-  const { checkCanGenerate, checkCanExportPpt, checkCanExportImage, recordUsage, isPro, isTeacher } = useSubscription()
-  const { saveWorkspace, loadWorkspace } = useWorkspace()
+  const { checkCanGenerate, recordUsage } = useSubscription()
+  const { setNarration, setCurrentPhrase } = useTeacher()
   const [searchParams] = useSearchParams()
   const canvasRef = useRef(null)
 
@@ -61,9 +55,11 @@ export default function WorkspacePage() {
   const [loading, setLoading] = useState(false)
   const [loadingStage, setLoadingStage] = useState('idle') // idle|parsing|reasoning|visualizing|done
   const [error, setError] = useState(null)
+  const [pptLoading, setPptLoading] = useState(false)
 
   // ── Mobile ──────────────────────────────────────
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 767)
+  const [show3D, setShow3D] = useState(true)
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth <= 767)
@@ -171,6 +167,20 @@ export default function WorkspacePage() {
       }
 
       await recordUsage('generate', text)
+
+      // 保存到学习记录
+      try {
+        const saved = JSON.parse(localStorage.getItem('mathviz_history') || '[]')
+        saved.unshift({
+          date: new Date().toISOString(),
+          text,
+          type: parsed?.type || 'cube',
+        })
+        // 最多保存 50 条
+        if (saved.length > 50) saved.length = 50
+        localStorage.setItem('mathviz_history', JSON.stringify(saved))
+      } catch { /* */ }
+
       setLoadingStage('done')
     } catch (err) {
       setError(err.message || '解析失败')
@@ -189,6 +199,18 @@ export default function WorkspacePage() {
           ...defaultConstraintParams(parsed.type || 'cube'),
         })
         setError(null)
+
+        // 保存到学习记录（本地回退也保存）
+        try {
+          const saved = JSON.parse(localStorage.getItem('mathviz_history') || '[]')
+          saved.unshift({
+            date: new Date().toISOString(),
+            text,
+            type: parsed?.type || 'cube',
+          })
+          if (saved.length > 50) saved.length = 50
+          localStorage.setItem('mathviz_history', JSON.stringify(saved))
+        } catch { /* */ }
       } catch { /* */ }
     } finally {
       setLoading(false)
@@ -196,65 +218,7 @@ export default function WorkspacePage() {
     }
   }, [checkCanGenerate, recordUsage])
 
-  // ── Edge management callbacks ────────────────────
-  const handleEdgeLengthChange = useCallback((edgeId, newLength) => {
-    setGeometry(prev => {
-      const mode = prev.constraintMode
-      if (mode === 'cube') {
-        return { ...prev, cubeSize: newLength, params: { ...prev.params, size: newLength } }
-      }
-      if (mode === 'cuboid') {
-        const groups = getEdgeDirectionGroups(prev.type)
-        const updated = { ...prev }
-        for (const [gName, edges] of Object.entries(groups)) {
-          if (edges.includes(edgeId)) {
-            if (gName === '长 (X)') updated.cuboidA = newLength
-            else if (gName === '宽 (Z)') updated.cuboidB = newLength
-            else if (gName === '高 (Y)') updated.cuboidC = newLength
-            break
-          }
-        }
-        return updated
-      }
-      return { ...prev, freeEdgeLengths: { ...prev.freeEdgeLengths, [edgeId]: newLength } }
-    })
-  }, [])
-
-  const handleEdgeColorChange = useCallback((edgeKey, color) => {
-    setEdgeColorOverrides(prev => {
-      if (color === null) { const next = { ...prev }; delete next[edgeKey]; return next }
-      return { ...prev, [edgeKey]: color }
-    })
-  }, [])
-
-  const handleQuickInput = useCallback((input) => {
-    const match = input.trim().match(/^([A-Za-z']+)\s*=\s*([\d.]+)$/)
-    if (!match) return false
-    const [, edgeId, valueStr] = match
-    const value = parseFloat(valueStr)
-    if (isNaN(value) || value <= 0) return false
-    handleEdgeLengthChange(edgeId, value)
-    return true
-  }, [handleEdgeLengthChange])
-
-  const handleConstraintModeChange = useCallback((mode) => {
-    setGeometry(prev => {
-      const updated = { ...prev, constraintMode: mode }
-      if (mode === 'cube') {
-        updated.cubeSize = prev.cubeSize || 2
-        updated.params = { ...prev.params, size: updated.cubeSize }
-      }
-      if (mode === 'cuboid') {
-        updated.cuboidA = prev.cuboidA || 2
-        updated.cuboidB = prev.cuboidB || 1.2
-        updated.cuboidC = prev.cuboidC || 2
-      }
-      if (mode === 'free') {
-        updated.freeEdgeLengths = getDefaultEdgeLengths(prev.type, 'cube', { cubeSize: prev.cubeSize || 2 })
-      }
-      return updated
-    })
-  }, [])
+  // ── Geometry change (from GeometryMiniControls) ──
 
   const handleGeometryChange = useCallback((type, params) => {
     setGeometry({
@@ -264,7 +228,38 @@ export default function WorkspacePage() {
     })
   }, [])
 
-  // ── Merged lines ─────────────────────────────────
+  const polyhedral = isPolyhedral(geometry.type)
+
+  // ═══════════════════════════════════════════════════════
+  //  以下变量严格按照依赖顺序声明 —— 前面的变量不能引用后面的变量
+  // ═══════════════════════════════════════════════════════
+
+  // ── (1) labelMap — 题目标签 → 内部索引映射 ─────────
+  //  依赖: parsedData
+  const labelMap = useMemo(() => {
+    if (!parsedData?.vertices && !parsedData?.labels) return null
+    const userLabels = parsedData.vertices || parsedData.labels || null
+    const internalLabels = INTERNAL_LABELS[parsedData.type] || INTERNAL_LABELS.cube
+    return createLabelMap(userLabels, internalLabels)
+  }, [parsedData])
+
+  // ── (2) vertexLabels — 自定义顶点标签（从题目解析）──
+  //  依赖: labelMap
+  const vertexLabels = useMemo(() => {
+    if (!labelMap) return null
+    return labelMap.displayLabels
+  }, [labelMap])
+
+  // ── (3) visualIntent — Step→3D deterministic mapping ──
+  //  依赖: steps, parsedData, problemText, labelMap
+  const visualIntent = useMemo(() => {
+    const step = steps[currentStep]
+    if (!step || !parsedData) return null
+    return computeVisualIntent(step, parsedData, problemText, labelMap)
+  }, [currentStep, steps, parsedData, problemText, labelMap])
+
+  // ── (4) mergedLines — 合并的边定义 ─────────────────
+  //  依赖: geometry, customVertices, vertexLabels, customLines, edgeColorOverrides
   const mergedLines = useMemo(() => {
     const { lines } = getLineDefinitions(geometry.type, geometry.params, customVertices, vertexLabels)
     const merged = [...lines, ...customLines]
@@ -277,35 +272,13 @@ export default function WorkspacePage() {
     return merged
   }, [geometry.type, geometry.params.size, customLines, edgeColorOverrides, customVertices, vertexLabels])
 
-  // ── Selected edge data ───────────────────────────
+  // ── (5) selectedEdgeData — 选中边的详细信息 ─────────
+  //  依赖: selectedEdge, geometry, vertexLabels, customLines
   const selectedEdgeData = useMemo(() => {
     if (!selectedEdge) return null
     const { lines } = getLineDefinitions(geometry.type, geometry.params, customVertices, vertexLabels)
     return [...lines, ...customLines].find(l => `${l.id}|${l.category}` === selectedEdge) || null
   }, [selectedEdge, geometry.type, geometry.params, customLines, customVertices, vertexLabels])
-
-  const polyhedral = isPolyhedral(geometry.type)
-
-  // ── LabelMap — 题目标签 → 内部索引映射 ──────────────
-  const labelMap = useMemo(() => {
-    if (!parsedData?.vertices && !parsedData?.labels) return null
-    const userLabels = parsedData.vertices || parsedData.labels || null
-    const internalLabels = INTERNAL_LABELS[parsedData.type] || INTERNAL_LABELS.cube
-    return createLabelMap(userLabels, internalLabels)
-  }, [parsedData])
-
-  // ── 自定义顶点标签（从题目解析而来） ─────────────────
-  const vertexLabels = useMemo(() => {
-    if (!labelMap) return null
-    return labelMap.displayLabels
-  }, [labelMap])
-
-  // ── VisualIntent — Step→3D deterministic mapping ──
-  const visualIntent = useMemo(() => {
-    const step = steps[currentStep]
-    if (!step || !parsedData) return null
-    return computeVisualIntent(step, parsedData, problemText, labelMap)
-  }, [currentStep, steps, parsedData, problemText, labelMap])
 
   // ── Step navigation ──────────────────────────────
   const handleStepClick = useCallback((index) => {
@@ -320,113 +293,183 @@ export default function WorkspacePage() {
     setCurrentStep(prev => Math.max(prev - 1, 0))
   }, [])
 
-  // ── Export ───────────────────────────────────────
-  const handleExportPpt = useCallback(async () => {
-    if (!checkCanExportPpt()) return
-    try {
-      const ws = { problemText, steps, parsedData: { type: geometry.type, size: geometry.params.size } }
-      await generatePPT(ws, canvasRef.current)
-    } catch (err) {
-      setError('PPT 导出失败: ' + err.message)
-    }
-  }, [checkCanExportPpt, problemText, steps, geometry.type, geometry.params.size])
+  // ── 生成教师讲稿（从步骤内容） ─────────────────
+  useEffect(() => {
+    if (steps.length === 0) return
+    const narration = steps.map((s, i) => ({
+      step: i,
+      text: `${s.title}。${s.content}`,
+      delay: Math.max(3000, s.content.length * 40),
+    }))
+    setNarration(narration)
+    setCurrentPhrase(narration[0]?.text || '')
+  }, [steps, setNarration, setCurrentPhrase])
 
-  const handleExportImage = useCallback(async () => {
-    if (!checkCanExportImage()) return
+  // 当前步骤切换时更新字幕
+  useEffect(() => {
+    if (steps.length === 0) return
+    const phrase = `${steps[currentStep]?.title || ''}。${steps[currentStep]?.content || ''}`
+    setCurrentPhrase(phrase)
+  }, [currentStep, steps, setCurrentPhrase])
+
+  // ── PPT 导出 ───────────────────────────────────
+  const handleExportPPT = useCallback(async () => {
+    if (!canvasRef.current) return
+    setPptLoading(true)
     try {
-      const { toPng } = await import('html-to-image')
-      const el = canvasRef.current
-      if (!el) return
-      const dataUrl = await toPng(el, { pixelRatio: 2, backgroundColor: '#f8f9fb' })
-      const link = document.createElement('a')
-      link.download = `几何维度-${geometry.type}.png`
-      link.href = dataUrl
-      link.click()
+      const { generatePPT } = await import('../engines/pptExporter')
+      await generatePPT(
+        { problemText, steps, parsedData, geometry },
+        canvasRef.current
+      )
     } catch (err) {
-      setError('图片导出失败')
+      console.error('PPT export failed:', err)
+    } finally {
+      setPptLoading(false)
     }
-  }, [checkCanExportImage, geometry.type])
+  }, [problemText, steps, parsedData, geometry])
 
   return (
     <div className="workspace-page">
-      <WorkspaceToolbar
-        title={problemText?.slice(0, 40) || '几何维度 - 工作台'}
-        onExportPpt={handleExportPpt}
-        onExportImage={handleExportImage}
-      />
+      <div className="wp-top-bar">
+        <Link to="/" className="wp-back-link">← 返回首页</Link>
+        <span className="wp-top-title">
+          {problemText ? problemText.slice(0, 50) + (problemText.length > 50 ? '…' : '') : '几何维度'}
+        </span>
+        <div className="wp-top-actions">
+          {/* 移动端 3D 切换 */}
+          {isMobile && (
+            <button
+              className="wp-toggle-3d"
+              onClick={() => setShow3D(prev => !prev)}
+            >
+              {show3D ? '隐藏 3D' : '显示 3D'}
+            </button>
+          )}
+        </div>
+      </div>
 
-      <div className="wp-main">
-        {/* 3D Canvas */}
-        <div className={`wp-canvas-wrap ${isMobile ? 'mobile' : ''}`} ref={canvasRef}>
-          <Canvas style={{ width: '100%', height: '100%' }}>
-            <Canvas3D
-              geometry={geometry}
-              showFaces={showFaces}
-              showLabels={showLabels}
-              visibleLines={visibleLines}
-              hoveredLine={hoveredLine}
-              setHoveredLine={setHoveredLine}
-              allLines={mergedLines}
-              shownLengthLabels={shownLengthLabels}
-              searchedLine={searchedLine}
-              selectedEdge={selectedEdge}
-              onEdgeClick={setSelectedEdge}
-              edgeColorOverrides={edgeColorOverrides}
-              customVertices={customVertices}
-              // ── VisualIntent-driven ──
-              highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
-              highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
-              auxLines={visualIntent?.auxLines || []}
-              cameraPreset={visualIntent?.cameraPreset || null}
-              faceOpacity={visualIntent?.faceOpacity ?? 0.42}
-              nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
-              // ── 自定义标签（从题目解析） ──
-              vertexLabels={vertexLabels}
-            />
-          </Canvas>
-
-          <GeometryMiniControls
-            geometry={geometry}
-            onGeometryChange={handleGeometryChange}
-            showFaces={showFaces}
-            onToggleFaces={() => setShowFaces(prev => !prev)}
-            showLabels={showLabels}
-            onToggleLabels={() => setShowLabels(prev => !prev)}
-          />
-
-          {/* Mobile: floating edge panel */}
-          {isMobile && selectedEdge && selectedEdgeData && polyhedral && (
-            <div className="wp-floating-edge">
-              <EdgePropertyPanel
-                edgeKey={selectedEdge}
-                edgeData={selectedEdgeData}
+      {isMobile ? (
+        /* ── Mobile: 上下布局 ── */
+        <div className="wp-main-mobile">
+          {/* 3D 场景（可折叠） */}
+          {show3D && (
+            <div className="wp-canvas-mobile" ref={canvasRef}>
+              <Canvas style={{ width: '100%', height: '100%' }}>
+                <Canvas3D
+                  geometry={geometry}
+                  showFaces={showFaces}
+                  showLabels={showLabels}
+                  visibleLines={visibleLines}
+                  hoveredLine={hoveredLine}
+                  setHoveredLine={setHoveredLine}
+                  allLines={mergedLines}
+                  shownLengthLabels={shownLengthLabels}
+                  searchedLine={searchedLine}
+                  selectedEdge={selectedEdge}
+                  onEdgeClick={setSelectedEdge}
+                  edgeColorOverrides={edgeColorOverrides}
+                  customVertices={customVertices}
+                  highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
+                  highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
+                  auxLines={visualIntent?.auxLines || []}
+                  cameraPreset={visualIntent?.cameraPreset || null}
+                  faceOpacity={visualIntent?.faceOpacity ?? 0.42}
+                  nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
+                  vertexLabels={vertexLabels}
+                />
+              </Canvas>
+              <GeometryMiniControls
                 geometry={geometry}
-                edgeColorOverrides={edgeColorOverrides}
-                onEdgeLengthChange={handleEdgeLengthChange}
-                onEdgeColorChange={handleEdgeColorChange}
-                onClose={() => setSelectedEdge(null)}
+                onGeometryChange={handleGeometryChange}
+                showFaces={showFaces}
+                onToggleFaces={() => setShowFaces(prev => !prev)}
+                showLabels={showLabels}
+                onToggleLabels={() => setShowLabels(prev => !prev)}
               />
             </div>
           )}
+
+          {/* 讲解面板（优先） */}
+          <div className="wp-explain-mobile">
+            <ExplanationPanel
+              steps={steps}
+              currentStep={currentStep}
+              onStepClick={handleStepClick}
+              onNext={handleNextStep}
+              onPrev={handlePrevStep}
+              loading={loading}
+              loadingStage={loadingStage}
+              parsedData={parsedData}
+              problemText={problemText}
+              error={error}
+            />
+          </div>
         </div>
+      ) : (
+        /* ── Desktop: 左右布局 ── */
+        <div className="wp-main">
+          {/* 讲解面板（左侧，优先） */}
+          <div className="wp-explain-col">
+            <ExplanationPanel
+              steps={steps}
+              currentStep={currentStep}
+              onStepClick={handleStepClick}
+              onNext={handleNextStep}
+              onPrev={handlePrevStep}
+              loading={loading}
+              loadingStage={loadingStage}
+              parsedData={parsedData}
+              problemText={problemText}
+              error={error}
+            />
+          </div>
 
-        {/* Explanation Panel */}
-        <ExplanationPanel
-          steps={steps}
-          currentStep={currentStep}
-          onStepClick={handleStepClick}
-          onNext={handleNextStep}
-          onPrev={handlePrevStep}
-          loading={loading}
-          loadingStage={loadingStage}
-          parsedData={parsedData}
-          problemText={problemText}
-          error={error}
-        />
-      </div>
+          {/* 3D 场景（右侧） */}
+          <div className="wp-canvas-col" ref={canvasRef}>
+            <Canvas style={{ width: '100%', height: '100%' }}>
+              <Canvas3D
+                geometry={geometry}
+                showFaces={showFaces}
+                showLabels={showLabels}
+                visibleLines={visibleLines}
+                hoveredLine={hoveredLine}
+                setHoveredLine={setHoveredLine}
+                allLines={mergedLines}
+                shownLengthLabels={shownLengthLabels}
+                searchedLine={searchedLine}
+                selectedEdge={selectedEdge}
+                onEdgeClick={setSelectedEdge}
+                edgeColorOverrides={edgeColorOverrides}
+                customVertices={customVertices}
+                highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
+                highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
+                auxLines={visualIntent?.auxLines || []}
+                cameraPreset={visualIntent?.cameraPreset || null}
+                faceOpacity={visualIntent?.faceOpacity ?? 0.42}
+                nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
+                vertexLabels={vertexLabels}
+              />
+            </Canvas>
+            <GeometryMiniControls
+              geometry={geometry}
+              onGeometryChange={handleGeometryChange}
+              showFaces={showFaces}
+              onToggleFaces={() => setShowFaces(prev => !prev)}
+              showLabels={showLabels}
+              onToggleLabels={() => setShowLabels(prev => !prev)}
+            />
+          </div>
+        </div>
+      )}
 
-      <WorkspaceStatusBar />
-
+      <TeacherModePanel
+        totalSteps={steps.length}
+        currentStep={currentStep}
+        onStepChange={handleStepClick}
+        onExportPPT={handleExportPPT}
+        pptLoading={pptLoading}
+      />
       <PaywallModal />
       <AuthModal />
     </div>

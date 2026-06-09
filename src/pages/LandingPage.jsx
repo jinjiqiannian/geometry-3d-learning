@@ -1,155 +1,58 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { Canvas } from '@react-three/fiber'
-import Canvas3D from '../features/solid-geometry/Canvas3D'
-import GeometryMiniControls from '../components/GeometryMiniControls'
-import ExplanationPanel from '../components/ExplanationPanel'
-import WorkspaceStatusBar from '../components/WorkspaceStatusBar'
-import AuthModal from '../components/AuthModal'
-import { getLineDefinitions } from '../engines/lineDefinitions'
-import { isPolyhedral } from '../engines/geometryEngine'
-import { quickMatch } from '../engines/problemParser'
-import { generateLocalSteps } from '../engines/explanationEngine'
-import { computeVisualIntent } from '../engines/visualIntent'
-import { createLabelMap, INTERNAL_LABELS } from '../engines/labelMapper'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../contexts/AppContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
-import { EXAMPLES, GEOMETRIES } from '../constants'
-import { aiAPI } from '../services/api'
+import { EXAMPLES } from '../constants'
 import './LandingPage.css'
 
-function defaultGeometry(type) {
-  if (type === 'cuboid') {
-    return { type, params: { size: 2 }, constraintMode: 'cuboid', cubeSize: 2, cuboidA: 2, cuboidB: 1.2, cuboidC: 2, freeEdgeLengths: {} }
-  }
-  return { type, params: { size: 2 }, constraintMode: 'cube', cubeSize: 2, cuboidA: 2, cuboidB: 1.2, cuboidC: 2, freeEdgeLengths: {} }
+// ── Logo SVG 组件 ─────────────────────────────────
+function GeometryLogo() {
+  return (
+    <svg className="landing-logo-svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 2L3 9v14l13 7 13-7V9L16 2z" />
+      <path d="M3 9l13 7 13-7" />
+      <path d="M16 23V9" />
+      <path d="M8 13.5l8 4 8-4" />
+      <path d="M8 18.5l8 4 8-4" />
+    </svg>
+  )
 }
 
 export default function LandingPage() {
   const navigate = useNavigate()
-  const { apiKey } = useAppContext()
-  const { checkCanGenerate, recordUsage, isPro, plan } = useSubscription()
+  const { isPro } = useSubscription()
 
   // ── Input state ──
   const [input, setInput] = useState('')
   const [focused, setFocused] = useState(false)
-  const [hasGenerated, setHasGenerated] = useState(false)
-
-  // ── Workspace state ──
-  const [geometry, setGeometry] = useState(() => defaultGeometry('cube'))
-  const [showFaces, setShowFaces] = useState(true)
-  const [showLabels, setShowLabels] = useState(true)
-  const [visibleLines, setVisibleLines] = useState(() => new Set())
-  const [hoveredLine, setHoveredLine] = useState(null)
-  const [problemText, setProblemText] = useState('')
-  const [parsedData, setParsedData] = useState(null)
-  const [steps, setSteps] = useState([])
-  const [currentStep, setCurrentStep] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [loadingStage, setLoadingStage] = useState('idle')
   const [error, setError] = useState(null)
 
-  const polyhedral = isPolyhedral(geometry.type)
+  // ── 历史记录（localStorage） ──
+  const [history, setHistory] = useState([])
 
-  // ── LabelMap — 题目标签 → 内部索引映射 ──────────────
-  const labelMap = useMemo(() => {
-    if (!parsedData?.vertices && !parsedData?.labels) return null
-    const userLabels = parsedData.vertices || parsedData.labels || null
-    const internalLabels = INTERNAL_LABELS[parsedData.type] || INTERNAL_LABELS.cube
-    return createLabelMap(userLabels, internalLabels)
-  }, [parsedData])
-
-  // ── 自定义顶点标签（从题目解析而来） ─────────────────
-  const vertexLabels = useMemo(() => {
-    if (!labelMap) return null
-    return labelMap.displayLabels
-  }, [labelMap])
-
-  // ── VisualIntent — Step→3D deterministic mapping ──
-  const visualIntent = useMemo(() => {
-    const step = steps[currentStep]
-    if (!step || !parsedData) return null
-    return computeVisualIntent(step, parsedData, problemText, labelMap)
-  }, [currentStep, steps, parsedData, problemText, labelMap])
-
-  // ── Lines ──
-  const mergedLines = useMemo(() => {
-    const { lines } = getLineDefinitions(geometry.type, geometry.params, null, vertexLabels)
-    return lines
-  }, [geometry.type, geometry.params, vertexLabels])
-
-  // ── Init visible lines ──
   useEffect(() => {
-    const { lines } = getLineDefinitions(geometry.type, geometry.params)
-    const defaults = new Set(
-      lines
-        .filter(l => ['棱', '底面边', '顶面边', '侧棱'].includes(l.category) && !l.dashed)
-        .map(l => `${l.id}|${l.category}`)
-    )
-    setVisibleLines(defaults)
-  }, [geometry.type])
-
-  // ── Auto-load first example ──
-  useEffect(() => {
-    handleGenerate(EXAMPLES[0].text, true)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Generate ──
-  const handleGenerate = useCallback(async (text, silent = false) => {
-    // Pro 用户不限制次数
-    if (!isPro && !checkCanGenerate()) return
-
-    setProblemText(text)
-    setLoading(true)
-    setLoadingStage('parsing')
-    setError(null)
-    if (!silent) setHasGenerated(true)
-
     try {
-      // ── 所有用户：调用后端 DeepSeek AI（临时放开，测试用）──
-      setLoadingStage('reasoning')
-      const result = await aiAPI.solve(text)
+      const saved = JSON.parse(localStorage.getItem('mathviz_history') || '[]')
+      setHistory(saved.slice(0, 5))
+    } catch { /* */ }
+  }, [])
 
-      if (result?.data) {
-        const { parsed, steps, visualStates } = result.data
-        setParsedData(parsed)
+  // ── Handle generate ──
+  const handleGenerate = useCallback(async (text) => {
+    const trimmed = text.trim()
+    if (trimmed.length < 3) return
 
-        const mergedSteps = steps.map((step, i) => ({
-          ...step,
-          sceneState: visualStates?.[i] || null,
-        }))
-        setSteps(mergedSteps)
-        setCurrentStep(0)
-        setLoadingStage('visualizing')
+    setLoading(true)
+    setError(null)
 
-        setGeometry(defaultGeometry(parsed?.type || 'cube'))
-        setLoadingStage('done')
-      }
+    // 导航到工作台，附带题目
+    navigate(`/workspace?q=${encodeURIComponent(trimmed)}`)
+  }, [navigate])
 
-      await recordUsage('generate', text)
-    } catch (err) {
-      setError(err.message || '解析失败，请重试')
-      // AI 失败时降级到本地模板
-      try {
-        const parsed = quickMatch(text) || { type: 'cube', size: 2, labels: [], highlightLines: [], explanation: '' }
-        setParsedData(parsed)
-        const fallbackSteps = generateLocalSteps(text, parsed)
-        setSteps(fallbackSteps)
-        setCurrentStep(0)
-        setGeometry(defaultGeometry(parsed.type || 'cube'))
-        setError(null)
-      } catch { /* */ }
-    } finally {
-      setLoading(false)
-      setLoadingStage('idle')
-    }
-  }, [isPro, checkCanGenerate, recordUsage])
-
-  // ── Input handlers ──
+  // ── Submit ──
   const handleSubmit = () => {
-    const text = input.trim()
-    if (text.length < 3) return
-    handleGenerate(text)
+    handleGenerate(input)
   }
 
   const handleKeyDown = (e) => {
@@ -159,156 +62,140 @@ export default function LandingPage() {
     }
   }
 
+  // ── 点击例题 ──
   const handleExample = (text) => {
+    setInput(text)
     handleGenerate(text)
   }
 
-  const handleGeometryChange = useCallback((type, params) => {
-    setGeometry(defaultGeometry(type))
-  }, [])
+  // ── 最近学习记录 ──
+  const handleContinue = (item) => {
+    navigate(`/workspace?q=${encodeURIComponent(item.text)}`)
+  }
 
-  const handleStepClick = useCallback((index) => {
-    setCurrentStep(index)
-  }, [])
-
-  const handleNextStep = useCallback(() => {
-    setCurrentStep(prev => Math.min(prev + 1, steps.length - 1))
-  }, [steps.length])
-
-  const handlePrevStep = useCallback(() => {
-    setCurrentStep(prev => Math.max(prev - 1, 0))
-  }, [])
+  // ── 格式化日期 ──
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr)
+    const now = new Date()
+    const diff = now - d
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+    if (days === 0) return '今天'
+    if (days === 1) return '昨天'
+    if (days < 7) return `${days}天前`
+    return `${d.getMonth() + 1}月${d.getDate()}日`
+  }
 
   return (
     <div className="landing">
-      {/* ── Hero section ────────────────────────────── */}
-      <section className={`landing-hero ${hasGenerated ? 'collapsed' : ''}`}>
-        <h1 className="landing-title">
-          输入一道几何题，AI 生成 3D 分步讲解
-        </h1>
-        <p className="landing-subtitle">
-          自动建模 · 辅助线标注 · 逐步骤推导 · 一键生成
-        </p>
-
-        {/* Input */}
-        <div className={`landing-input-wrap ${focused ? 'focused' : ''}`}>
-          <textarea
-            className="landing-input"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            onKeyDown={handleKeyDown}
-            placeholder="输入一道几何题..."
-            rows={2}
-            spellCheck={false}
-          />
-          <div className="landing-input-footer">
-            <span className="landing-input-hint">
-              {input.trim().length < 3 ? '至少输入 3 个字符' : '按 Enter 生成'}
-            </span>
-            <button
-              className="landing-submit"
-              onClick={handleSubmit}
-              disabled={input.trim().length < 3}
-            >
-              生成讲解
-              <span className="landing-submit-shortcut">↵</span>
-            </button>
+      {/* ── Hero ─────────────────────────────────── */}
+      <section className="landing-hero">
+        <div className="landing-hero-inner">
+          <div className="landing-logo">
+            <GeometryLogo />
+            <span className="landing-logo-text">几何维度</span>
           </div>
-        </div>
 
-        {/* Examples from constants */}
-        <div className="landing-examples">
-          <span className="landing-examples-label">试试这些例子</span>
-          <div className="landing-examples-row">
-            {EXAMPLES.map((ex, i) => (
+          <h1 className="landing-title">
+            AI 立体几何学习助手
+          </h1>
+          <p className="landing-subtitle">
+            输入一道几何题，自动生成三维讲解
+          </p>
+
+          {/* ── Input ── */}
+          <div className={`landing-input-wrap ${focused ? 'focused' : ''}`}>
+            <textarea
+              className="landing-input"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              onKeyDown={handleKeyDown}
+              placeholder="输入一道立体几何题，如：正方体ABCD-A₁B₁C₁D₁棱长为2，求异面直线A₁B与B₁C所成角余弦值"
+              rows={3}
+              spellCheck={false}
+            />
+            <div className="landing-input-footer">
+              <span className="landing-input-hint">
+                {loading ? '解析中…' : (input.trim().length < 3 ? '请输入题目' : '按 Enter 发送')}
+              </span>
               <button
-                key={ex.id}
-                className="landing-example"
-                onClick={() => handleExample(ex.text)}
-                title={ex.text}
+                className="landing-submit"
+                onClick={handleSubmit}
+                disabled={input.trim().length < 3 || loading}
               >
-                {ex.title}
+                {loading ? '解析中…' : '开始解析'}
+                <span className="landing-submit-shortcut">↵</span>
+              </button>
+            </div>
+          </div>
+
+          {error && <div className="landing-error">{error}</div>}
+        </div>
+      </section>
+
+      {/* ── 热门例题 ──────────────────────────── */}
+      <section className="landing-section">
+        <div className="landing-section-header">
+          <h2 className="landing-section-title">热门例题</h2>
+        </div>
+        <div className="landing-examples-grid">
+          {EXAMPLES.slice(0, 6).map((ex) => (
+            <button
+              key={ex.id}
+              className="landing-example-card"
+              onClick={() => handleExample(ex.text)}
+            >
+              <span className="landing-example-category">{ex.category}</span>
+              <span className="landing-example-title">{ex.title}</span>
+              <span className="landing-example-desc">{ex.text.slice(0, 40)}…</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 最近学习 ──────────────────────────── */}
+      {history.length > 0 && (
+        <section className="landing-section">
+          <div className="landing-section-header">
+            <h2 className="landing-section-title">最近学习</h2>
+          </div>
+          <div className="landing-history-list">
+            {history.map((item, i) => (
+              <button
+                key={i}
+                className="landing-history-item"
+                onClick={() => handleContinue(item)}
+              >
+                <div className="landing-history-left">
+                  <span className="landing-history-date">{formatDate(item.date)}</span>
+                  <span className="landing-history-text">{item.text.slice(0, 60)}{item.text.length > 60 ? '…' : ''}</span>
+                </div>
+                <span className="landing-history-arrow">→</span>
               </button>
             ))}
           </div>
-        </div>
+        </section>
+      )}
 
-        {error && <div className="landing-error">{error}</div>}
+      {/* ── Footer 品牌区 ─────────────────────── */}
+      <section className="landing-footer">
+        <div className="landing-footer-brand">
+          <GeometryLogo />
+          <span>几何维度</span>
+        </div>
+        <p className="landing-footer-text">
+          AI 驱动的立体几何学习工具 · 三步学会一道题
+        </p>
+        {!isPro && (
+          <button
+            className="landing-footer-upgrade"
+            onClick={() => document.dispatchEvent(new CustomEvent('mathviz:show-paywall'))}
+          >
+            升级专业版，解锁无限解析
+          </button>
+        )}
       </section>
-
-      {/* ── Workspace section ────────────────────────── */}
-      <section className="landing-workspace">
-        {/* 3D Canvas */}
-        <div className="lw-canvas">
-          <Canvas style={{ width: '100%', height: '100%' }}>
-            <Canvas3D
-              geometry={geometry}
-              showFaces={showFaces}
-              showLabels={showLabels}
-              visibleLines={visibleLines}
-              hoveredLine={hoveredLine}
-              setHoveredLine={setHoveredLine}
-              allLines={mergedLines}
-              shownLengthLabels={new Set()}
-              searchedLine=""
-              selectedEdge={null}
-              onEdgeClick={() => {}}
-              edgeColorOverrides={{}}
-              // ── VisualIntent-driven ──
-              highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
-              highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
-              auxLines={visualIntent?.auxLines || []}
-              cameraPreset={visualIntent?.cameraPreset || null}
-              faceOpacity={visualIntent?.faceOpacity ?? 0.42}
-              nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
-              // ── 自定义标签（从题目解析） ──
-              vertexLabels={vertexLabels}
-            />
-          </Canvas>
-
-          <GeometryMiniControls
-            geometry={geometry}
-            onGeometryChange={handleGeometryChange}
-            showFaces={showFaces}
-            onToggleFaces={() => setShowFaces(prev => !prev)}
-            showLabels={showLabels}
-            onToggleLabels={() => setShowLabels(prev => !prev)}
-          />
-        </div>
-
-        {/* Right column: Explanation panel + workspace entry */}
-        <div className="lw-sidebar">
-          <ExplanationPanel
-            steps={steps}
-            currentStep={currentStep}
-            onStepClick={handleStepClick}
-            onNext={handleNextStep}
-            onPrev={handlePrevStep}
-            loading={loading}
-            loadingStage={loadingStage}
-            parsedData={parsedData}
-            problemText={problemText}
-            error={error}
-          />
-
-          {/* Go to workspace */}
-          {steps.length > 0 && !loading && (
-            <button
-              className="lw-goto-workspace"
-              onClick={() => navigate(`/workspace?q=${encodeURIComponent(problemText)}`)}
-            >
-              去工作台继续 →
-            </button>
-          )}
-        </div>
-      </section>
-
-      {/* Status bar */}
-      <WorkspaceStatusBar />
-
-      <AuthModal />
     </div>
   )
 }

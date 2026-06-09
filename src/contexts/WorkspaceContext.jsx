@@ -1,8 +1,6 @@
 import { createContext, useContext, useState, useCallback, useMemo } from 'react'
 import { useSupabase } from './SupabaseContext'
 import { useSubscription } from './SubscriptionContext'
-import { parseProblem } from '../engines/problemParser'
-import { generateLocalSteps } from '../engines/explanationEngine'
 
 const WorkspaceContext = createContext(null)
 
@@ -44,9 +42,11 @@ export function WorkspaceProvider({ children }) {
     setWorkspace(prev => ({ ...prev, loading: true, error: null }))
 
     try {
+      const { parseProblem } = await import('../engines/problemParser')
       const parsedData = await parseProblem(text, userApiKey || '')
 
       // Generate local template steps
+      const { generateLocalSteps } = await import('../engines/explanationEngine')
       const steps = generateLocalSteps(text, parsedData)
 
       setWorkspace(prev => ({

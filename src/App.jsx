@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { SupabaseProvider } from './contexts/SupabaseContext'
 import { SubscriptionProvider } from './contexts/SubscriptionContext'
@@ -6,10 +7,41 @@ import { WorkspaceProvider } from './contexts/WorkspaceContext'
 import { TeacherProvider } from './contexts/TeacherContext'
 import PageLayout from './layouts/PageLayout'
 import LandingPage from './pages/LandingPage'
-import WorkspacePage from './pages/WorkspacePage'
-import PricingPage from './pages/PricingPage'
-import HistoryPage from './pages/HistoryPage'
-import SettingsPage from './pages/SettingsPage'
+import ErrorBoundary from './components/ErrorBoundary'
+
+// ── Route-level code splitting ──
+// Three.js, pptExporter, and heavy engines only load when needed
+const WorkspacePage = lazy(() => import('./pages/WorkspacePage'))
+const PricingPage = lazy(() => import('./pages/PricingPage'))
+const HistoryPage = lazy(() => import('./pages/HistoryPage'))
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+
+// ── Suspense fallback ──
+function PageLoader() {
+  return (
+    <div style={{
+      flex: 1,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 200,
+      color: 'var(--text-muted)',
+      fontSize: 'var(--text-sm)',
+    }}>
+      加载中…
+    </div>
+  )
+}
+
+function WrappedRoute({ children }) {
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<PageLoader />}>
+        {children}
+      </Suspense>
+    </ErrorBoundary>
+  )
+}
 
 // GitHub Pages 生产环境 base 路径
 const basename = import.meta.env.MODE === 'production' ? '/geometry-3d-learning/' : '/'
@@ -19,11 +51,11 @@ const router = createBrowserRouter([
     path: '/',
     element: <PageLayout />,
     children: [
-      { index: true, element: <LandingPage /> },
-      { path: 'workspace', element: <WorkspacePage /> },
-      { path: 'pricing', element: <PricingPage /> },
-      { path: 'history', element: <HistoryPage /> },
-      { path: 'settings', element: <SettingsPage /> },
+      { index: true, element: <WrappedRoute><LandingPage /></WrappedRoute> },
+      { path: 'workspace', element: <WrappedRoute><WorkspacePage /></WrappedRoute> },
+      { path: 'pricing', element: <WrappedRoute><PricingPage /></WrappedRoute> },
+      { path: 'history', element: <WrappedRoute><HistoryPage /></WrappedRoute> },
+      { path: 'settings', element: <WrappedRoute><SettingsPage /></WrappedRoute> },
     ],
   },
 ], { basename })
