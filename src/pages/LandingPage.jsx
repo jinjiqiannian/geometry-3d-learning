@@ -91,42 +91,23 @@ export default function LandingPage() {
     if (!silent) setHasGenerated(true)
 
     try {
-      if (isPro) {
-        // ── Pro/Teacher 用户：调用后端 DeepSeek AI ──
-        setLoadingStage('reasoning')
-        const result = await aiAPI.solve(text)
+      // ── 所有用户：调用后端 DeepSeek AI（临时放开，测试用）──
+      setLoadingStage('reasoning')
+      const result = await aiAPI.solve(text)
 
-        if (result?.data) {
-          const { parsed, steps, visualStates } = result.data
-          setParsedData(parsed)
-
-          // 合并 3D 场景状态到步骤
-          const mergedSteps = steps.map((step, i) => ({
-            ...step,
-            sceneState: visualStates?.[i] || null,
-          }))
-          setSteps(mergedSteps)
-          setCurrentStep(0)
-          setLoadingStage('visualizing')
-
-          setGeometry(defaultGeometry(parsed?.type || 'cube'))
-          setLoadingStage('done')
-        }
-      } else {
-        // ── 免费用户：本地模板 ──
-        let parsed = quickMatch(text)
-        if (!parsed) {
-          parsed = { type: 'cube', size: 2, labels: [], highlightLines: [], explanation: '' }
-        }
+      if (result?.data) {
+        const { parsed, steps, visualStates } = result.data
         setParsedData(parsed)
-        setLoadingStage('reasoning')
 
-        const localSteps = generateLocalSteps(text, parsed)
-        setSteps(localSteps)
+        const mergedSteps = steps.map((step, i) => ({
+          ...step,
+          sceneState: visualStates?.[i] || null,
+        }))
+        setSteps(mergedSteps)
         setCurrentStep(0)
         setLoadingStage('visualizing')
 
-        setGeometry(defaultGeometry(parsed.type || 'cube'))
+        setGeometry(defaultGeometry(parsed?.type || 'cube'))
         setLoadingStage('done')
       }
 
@@ -134,17 +115,15 @@ export default function LandingPage() {
     } catch (err) {
       setError(err.message || '解析失败，请重试')
       // AI 失败时降级到本地模板
-      if (isPro) {
-        try {
-          const parsed = quickMatch(text) || { type: 'cube', size: 2, labels: [], highlightLines: [], explanation: '' }
-          setParsedData(parsed)
-          const fallbackSteps = generateLocalSteps(text, parsed)
-          setSteps(fallbackSteps)
-          setCurrentStep(0)
-          setGeometry(defaultGeometry(parsed.type || 'cube'))
-          setError(null)
-        } catch { /* */ }
-      }
+      try {
+        const parsed = quickMatch(text) || { type: 'cube', size: 2, labels: [], highlightLines: [], explanation: '' }
+        setParsedData(parsed)
+        const fallbackSteps = generateLocalSteps(text, parsed)
+        setSteps(fallbackSteps)
+        setCurrentStep(0)
+        setGeometry(defaultGeometry(parsed.type || 'cube'))
+        setError(null)
+      } catch { /* */ }
     } finally {
       setLoading(false)
       setLoadingStage('idle')

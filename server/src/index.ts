@@ -13,8 +13,17 @@ import { billingRouter } from './routes/billing.js'
 const app = express()
 
 // ── 基础中间件 ────────────────────────────────────
+const allowedOrigins = [
+  env.FRONTEND_URL,
+  // 开发环境所有端口
+  ...Array.from({ length: 100 }, (_, i) => `http://localhost:${5173 + i}`),
+]
 app.use(cors({
-  origin: [env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:5178', 'http://localhost:5179', 'http://localhost:5180'],
+  origin: (origin, cb) => {
+    // 允许无 origin 的请求（如 curl）
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true)
+    cb(null, true) // 开发阶段放行所有 origin
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
