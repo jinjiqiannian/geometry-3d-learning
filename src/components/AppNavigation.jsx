@@ -12,10 +12,12 @@ const NAV_ITEMS = [
 
 function LogoIcon() {
   return (
-    <svg className="app-nav-logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2L2 7v10l10 5 10-5V7l-10-5z" />
-      <path d="M2 7l10 5 10-5" />
-      <path d="M12 22V12" />
+    <svg className="app-nav-logo-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 2L3 9v14l13 7 13-7V9L16 2z" />
+      <path d="M3 9l13 7 13-7" />
+      <path d="M16 23V9" />
+      <path d="M8 13.5l8 4 8-4" />
+      <path d="M8 18.5l8 4 8-4" />
     </svg>
   )
 }
