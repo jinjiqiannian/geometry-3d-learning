@@ -160,6 +160,7 @@ export function computeVisualIntent(step, parsedData, problemText) {
       const cameraPreset = stepIndex <= 1 ? 'overview' : 'diagonal'
       return {
         highlightEdgeIds: [],
+        highlightColor: typeDefaults.highlightColor,
         auxLines: [],
         cameraPreset,
         faceOpacity: stepIndex <= 1 ? 0.42 : 0.35,
@@ -172,6 +173,7 @@ export function computeVisualIntent(step, parsedData, problemText) {
       const auxLines = computeAuxLines(step, parsedData, geoType, problemEdges, problemText)
       return {
         highlightEdgeIds: [],
+        highlightColor: typeDefaults.highlightColor,
         auxLines: auxLines.slice(0, 2),
         cameraPreset: 'diagonal',
         faceOpacity: 0.30,
@@ -183,6 +185,7 @@ export function computeVisualIntent(step, parsedData, problemText) {
       // calculation → 只高亮参与计算的边
       return {
         highlightEdgeIds: problemEdges,
+        highlightColor: typeDefaults.highlightColor,
         auxLines: [],
         cameraPreset: 'closeUp',
         faceOpacity: 0.20,
@@ -194,6 +197,7 @@ export function computeVisualIntent(step, parsedData, problemText) {
       // conclusion → 结果边绿色高亮，全恢复
       return {
         highlightEdgeIds: problemEdges,
+        highlightColor: typeDefaults.highlightColor,
         auxLines: [],
         cameraPreset: 'overview',
         faceOpacity: 0.42,
@@ -204,6 +208,7 @@ export function computeVisualIntent(step, parsedData, problemText) {
     default: {
       return {
         highlightEdgeIds: problemEdges,
+        highlightColor: typeDefaults.highlightColor,
         auxLines: [],
         cameraPreset: typeDefaults.cameraPreset,
         faceOpacity: typeDefaults.faceOpacity,
@@ -215,14 +220,32 @@ export function computeVisualIntent(step, parsedData, problemText) {
 
 // ── Edge extraction ──────────────────────────────────
 
-// Map primed vertex labels (A'→E, B'→F, etc.) for cube/cuboid ABCD-EFGH convention
+// Map primed vertex labels (A'→E, B'→F, etc.) for cube/cuboid ABCD-EFGH convention.
+// Only letters followed by "'" get mapped; unprimed letters stay as-is.
+// Example: "B'D" → B'=F, D=D → "FD" (canonical edge = DF).
 function mapPrimedVertex(label, geoType) {
   if (!label.includes("'") || (geoType !== 'cube' && geoType !== 'cuboid' && geoType !== 'squareFrustum')) {
     return label
   }
   // ABCD-EFGH convention: A'→E, B'→F, C'→G, D'→H
   const PRIME_MAP = { A: 'E', B: 'F', C: 'G', D: 'H', E: 'A', F: 'B', G: 'C', H: 'D' }
-  return label.replace(/'/g, '').split('').map(ch => PRIME_MAP[ch] || ch).join('')
+  // Track which chars have primes; strip primes but only map primed chars
+  let result = ''
+  let i = 0
+  while (i < label.length) {
+    const ch = label[i]
+    if (ch === "'") { i++; continue }
+    if (i + 1 < label.length && label[i + 1] === "'") {
+      // This char was primed → map it
+      result += PRIME_MAP[ch] || ch
+      i += 2
+    } else {
+      // Unprimed → keep as-is
+      result += ch
+      i++
+    }
+  }
+  return result
 }
 
 // Resolve an edge label to a valid edge ID, trying variations
@@ -232,19 +255,20 @@ function resolveEdgeLabel(label, validEdges, geoType) {
   // 2) Reverse (edges are undirected: AB = BA)
   const rev = label.split('').reverse().join('')
   if (validEdges.has(rev)) return rev
-  // 3) Strip primes → try
-  const noPrime = label.replace(/'/g, '')
-  if (noPrime !== label) {
-    if (validEdges.has(noPrime)) return noPrime
-    const revPrime = noPrime.split('').reverse().join('')
-    if (validEdges.has(revPrime)) return revPrime
-  }
-  // 4) Map primed vertices (B'D → FD → DF)
+  // 3) Map primed vertices first (B'D → FD → DF)
+  //    Do this BEFORE stripping primes — "B'D" should map to DF, not BD
   const mapped = mapPrimedVertex(label, geoType)
   if (mapped !== label) {
     if (validEdges.has(mapped)) return mapped
     const revMapped = mapped.split('').reverse().join('')
     if (validEdges.has(revMapped)) return revMapped
+  }
+  // 4) Strip primes → try (fallback for simple prime labels like "A'B'")
+  const noPrime = label.replace(/'/g, '')
+  if (noPrime !== label) {
+    if (validEdges.has(noPrime)) return noPrime
+    const revPrime = noPrime.split('').reverse().join('')
+    if (validEdges.has(revPrime)) return revPrime
   }
   return null
 }
