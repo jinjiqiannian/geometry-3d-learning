@@ -38,19 +38,19 @@ const TYPE_DEFAULTS = {
     cameraPreset: 'overview',
   },
   construction: {
-    highlightColor: '#8B5CF6',
+    highlightColor: '#4A90E2',
     faceOpacity: 0.30,
     nonHighlightOpacity: 0.25,
     cameraPreset: 'diagonal',
   },
   calculation: {
-    highlightColor: '#FF6B6B',
+    highlightColor: '#4A90E2',
     faceOpacity: 0.25,
     nonHighlightOpacity: 0.20,
     cameraPreset: 'closeUp',
   },
   conclusion: {
-    highlightColor: '#3FB950',
+    highlightColor: '#4A90E2',
     faceOpacity: 0.42,
     nonHighlightOpacity: 1.0,
     cameraPreset: 'overview',
@@ -155,16 +155,16 @@ export function computeVisualIntent(step, parsedData, problemText) {
   switch (step.type) {
     case 'observation': {
       // observation → 不连线，仅视角变化
-      // 第一次 observation: overview, 全可见
-      // 后续 observation: diagonal, 非高亮变暗
-      const cameraPreset = stepIndex <= 1 ? 'overview' : 'diagonal'
+      // 第一个 observation（step 1）: overview, 全可见
+      // 后续 observation: diagonal, 面半透明聚焦
+      const isFirstObs = step.step === 1
       return {
         highlightEdgeIds: [],
         highlightColor: typeDefaults.highlightColor,
         auxLines: [],
-        cameraPreset,
-        faceOpacity: stepIndex <= 1 ? 0.42 : 0.35,
-        nonHighlightOpacity: stepIndex <= 1 ? 1.0 : 0.25,
+        cameraPreset: isFirstObs ? 'overview' : 'diagonal',
+        faceOpacity: isFirstObs ? 0.42 : 0.18,
+        nonHighlightOpacity: isFirstObs ? 1.0 : 0.25,
       }
     }
 

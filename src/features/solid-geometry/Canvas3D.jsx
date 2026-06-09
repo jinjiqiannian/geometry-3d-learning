@@ -269,6 +269,11 @@ export default function Canvas3D({
       color = style.color; opacity = 0
     }
 
+    // 全局调光：无高亮时 nonHighlightOpacity 控制整体明暗（观察/构造步骤聚焦效果）
+    if (!hasHighlights && !selected && !hovered && !searched && nonHighlightOpacity < 1.0) {
+      opacity *= nonHighlightOpacity
+    }
+
     const geo = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(l.from[0], l.from[1], l.from[2]),
       new THREE.Vector3(l.to[0], l.to[1], l.to[2]),
