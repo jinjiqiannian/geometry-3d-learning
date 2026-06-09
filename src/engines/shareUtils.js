@@ -50,15 +50,20 @@ export function generateShareUrl(data) {
   const encoded = encodeShare(data)
   if (!encoded) return ''
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://jiheweidu.cn'
-  return `${origin}/workspace?share=${encoded}`
+  // Hash routing: /#/workspace?share=xxx
+  return `${origin}/#/workspace?share=${encoded}`
 }
 
 /**
- * 从当前 URL 检测分享参数
+ * 从当前 URL 检测分享参数（支持 hash 路由）
  * @returns {string|null} 分享编码
  */
 export function detectShareParam() {
   if (typeof window === 'undefined') return null
-  const params = new URLSearchParams(window.location.search)
+  // Hash routing: search params are inside the hash fragment
+  const hash = window.location.hash
+  const qIndex = hash.indexOf('?')
+  if (qIndex === -1) return null
+  const params = new URLSearchParams(hash.slice(qIndex + 1))
   return params.get('share') || null
 }

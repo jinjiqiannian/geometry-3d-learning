@@ -175,8 +175,8 @@ export function SubscriptionProvider({ children }) {
     const { data, error } = await supabase.functions.invoke('stripe-checkout', {
       body: {
         priceId,
-        successUrl: `${window.location.origin}/workspace?upgrade=success`,
-        cancelUrl: `${window.location.origin}/pricing`,
+        successUrl: `${window.location.origin}/#/workspace?upgrade=success`,
+        cancelUrl: `${window.location.origin}/#/pricing`,
       },
     })
 
@@ -187,14 +187,14 @@ export function SubscriptionProvider({ children }) {
 
   const manageSubscription = useCallback(async () => {
     if (!connected || !supabase || !stripeCustomerId) {
-      window.location.href = '/pricing'
+      window.location.href = '/#/pricing'
       return
     }
 
     const { data, error } = await supabase.functions.invoke('stripe-portal', {
       body: {
         customerId: stripeCustomerId,
-        returnUrl: window.location.origin + '/pricing',
+        returnUrl: window.location.origin + '/#/pricing',
       },
     })
 

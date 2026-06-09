@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createHashRouter, RouterProvider } from 'react-router-dom'
 import { SupabaseProvider } from './contexts/SupabaseContext'
 import { SubscriptionProvider } from './contexts/SubscriptionContext'
 import { AppProvider } from './contexts/AppContext'
@@ -45,20 +45,7 @@ function WrappedRoute({ children }) {
   )
 }
 
-// GitHub Pages / 自定义域名 base 路径
-// - jiheweidu.cn → 自定义域名，根路径
-// - jinjiqiannian.github.io → GitHub Pages 子路径
-// - localhost → 开发环境，根路径
-function getBasename() {
-  if (typeof window === 'undefined') return '/'
-  const host = window.location.hostname
-  if (host === 'jiheweidu.cn' || host === 'localhost' || host === '127.0.0.1') return '/'
-  if (host === 'jinjiqiannian.github.io') return '/geometry-3d-learning/'
-  return '/'
-}
-const basename = getBasename()
-
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: '/',
     element: <PageLayout />,
@@ -71,7 +58,7 @@ const router = createBrowserRouter([
       { path: 'profile', element: <WrappedRoute><ProfilePage /></WrappedRoute> },
     ],
   },
-], { basename })
+])
 
 export default function App() {
   return (
