@@ -36,7 +36,7 @@ export function SupabaseProvider({ children }) {
     }
 
     // Get initial session
-    supabase.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
       if (session?.user) {
