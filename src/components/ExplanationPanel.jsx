@@ -16,6 +16,7 @@ export default function ExplanationPanel({
   parsedData = null,
   problemText = '',
   error = null,
+  onRetry = null,
   // 追问
   onAskFollowUp,
   followUpLoading = false,
@@ -51,6 +52,7 @@ export default function ExplanationPanel({
         parsedData={parsedData}
         loading={loading}
         error={error}
+        onRetry={onRetry}
       />
 
       {/* ── 题目 ── */}

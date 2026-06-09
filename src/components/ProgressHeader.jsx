@@ -9,7 +9,7 @@ const STAGES = {
   done: { label: '解析完成', icon: '●' },
 }
 
-export default function ProgressHeader({ loadingStage = 'idle', parsedData, loading, error }) {
+export default function ProgressHeader({ loadingStage = 'idle', parsedData, loading, error, onRetry }) {
   const stage = STAGES[loadingStage] || STAGES.idle
   const isActive = loading || loadingStage === 'done'
 
@@ -34,7 +34,14 @@ export default function ProgressHeader({ loadingStage = 'idle', parsedData, load
 
       {/* Error */}
       {error && (
-        <div className="ph-error">{error}</div>
+        <div className="ph-error">
+          <span className="ph-error-text">{error}</span>
+          {onRetry && (
+            <button className="ph-retry-btn" onClick={onRetry}>
+              重试
+            </button>
+          )}
+        </div>
       )}
 
       {/* Idle: prompt */}

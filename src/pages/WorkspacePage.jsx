@@ -484,6 +484,14 @@ export default function WorkspacePage() {
     return () => { if (playTimerRef.current) clearTimeout(playTimerRef.current) }
   }, [isPlaying, steps.length])
 
+  // ── 重试 ──
+  const handleRetry = useCallback(() => {
+    if (!problemText || loading) return
+    setError(null)
+    setLoadingStage('idle')
+    handleParseProblem(problemText)
+  }, [problemText, loading, handleParseProblem])
+
   // ── 截图导出 ──
   const handleScreenshot = useCallback(async () => {
     if (!canvasRef.current) return
@@ -552,23 +560,43 @@ export default function WorkspacePage() {
 
       {/* ── Quick input: workspace 空状态 ── */}
       {!problemText && !loading && (
-        <div className="wp-quick-input-bar">
-          <textarea
-            className="wp-quick-input"
-            value={quickInput}
-            onChange={(e) => setQuickInput(e.target.value)}
-            onKeyDown={handleQuickKeyDown}
-            placeholder="输入一道几何题开始解析…"
-            rows={2}
-            spellCheck={false}
-          />
-          <button
-            className="wp-quick-submit"
-            onClick={handleQuickSubmit}
-            disabled={quickInput.trim().length < 3}
-          >
-            解析
-          </button>
+        <div className="wp-empty-state">
+          <div className="wp-quick-input-bar">
+            <textarea
+              className="wp-quick-input"
+              value={quickInput}
+              onChange={(e) => setQuickInput(e.target.value)}
+              onKeyDown={handleQuickKeyDown}
+              placeholder="输入一道几何题开始解析…"
+              rows={2}
+              spellCheck={false}
+            />
+            <button
+              className="wp-quick-submit"
+              onClick={handleQuickSubmit}
+              disabled={quickInput.trim().length < 3}
+            >
+              解析
+            </button>
+          </div>
+          <div className="wp-empty-examples">
+            <span className="wp-empty-examples-label">快速体验</span>
+            <div className="wp-empty-examples-row">
+              {[
+                { text: '正方体棱长为2，求体对角线AG的长度', label: '正方体对角线' },
+                { text: '球体半径为3，求体积和表面积', label: '球体体积' },
+                { text: '正四棱锥底面边长4，高6，求体积', label: '棱锥体积' },
+              ].map((ex) => (
+                <button
+                  key={ex.label}
+                  className="wp-empty-example-btn"
+                  onClick={() => handleParseProblem(ex.text)}
+                >
+                  {ex.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -630,6 +658,7 @@ export default function WorkspacePage() {
               parsedData={parsedData}
               problemText={problemText}
               error={error}
+              onRetry={handleRetry}
               onAskFollowUp={handleAskFollowUp}
               followUpLoading={followUpLoading}
               followUpAnswer={followUpAnswer}
@@ -654,6 +683,7 @@ export default function WorkspacePage() {
               parsedData={parsedData}
               problemText={problemText}
               error={error}
+              onRetry={handleRetry}
               onAskFollowUp={handleAskFollowUp}
               followUpLoading={followUpLoading}
               followUpAnswer={followUpAnswer}

@@ -8,8 +8,9 @@
   padding: 10px 12px;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease;
   position: relative;
+  border-left: 2px solid transparent;
 }
 
 .step-card:hover {
@@ -18,6 +19,13 @@
 
 .step-card.current {
   background: var(--accent-subtle);
+  border-left-color: var(--accent);
+  animation: stepActivate 0.3s ease;
+}
+
+@keyframes stepActivate {
+  from { background: var(--accent-pressed); }
+  to { background: var(--accent-subtle); }
 }
 
 .step-card.locked {
