@@ -309,7 +309,7 @@ export default function WorkspacePage() {
       if (!el) return
       const dataUrl = await toPng(el, { pixelRatio: 2, backgroundColor: '#f8f9fb' })
       const link = document.createElement('a')
-      link.download = `MathViz-${geometry.type}.png`
+      link.download = `几何维度-${geometry.type}.png`
       link.href = dataUrl
       link.click()
     } catch (err) {
@@ -320,7 +320,7 @@ export default function WorkspacePage() {
   return (
     <div className="workspace-page">
       <WorkspaceToolbar
-        title={problemText?.slice(0, 40) || 'MathViz 工作台'}
+        title={problemText?.slice(0, 40) || '几何维度 - 工作台'}
         onExportPpt={handleExportPpt}
         onExportImage={handleExportImage}
       />
@@ -350,7 +350,6 @@ export default function WorkspacePage() {
               cameraPreset={visualIntent?.cameraPreset || null}
               faceOpacity={visualIntent?.faceOpacity ?? 0.42}
               nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
-              visibleCategories={visualIntent?.visibleCategories || null}
             />
           </Canvas>
 

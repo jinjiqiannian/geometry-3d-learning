@@ -24,24 +24,6 @@
   flex: 1;
 }
 
-.wt-logo {
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--text-primary);
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-  transition: opacity var(--transition-fast);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  padding: 0;
-}
-
-.wt-logo:hover {
-  opacity: 0.7;
-}
-
 .wt-title {
   font-size: var(--text-sm);
   color: var(--text-muted);

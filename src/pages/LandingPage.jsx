@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../contexts/AppContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { EXAMPLES, GEOMETRIES } from '../constants'
+import { aiAPI } from '../services/api'
 import './LandingPage.css'
 
 function defaultGeometry(type) {
@@ -26,7 +27,7 @@ function defaultGeometry(type) {
 export default function LandingPage() {
   const navigate = useNavigate()
   const { apiKey } = useAppContext()
-  const { checkCanGenerate, recordUsage } = useSubscription()
+  const { checkCanGenerate, recordUsage, isPro, plan } = useSubscription()
 
   // ── Input state ──
   const [input, setInput] = useState('')
@@ -80,7 +81,8 @@ export default function LandingPage() {
 
   // ── Generate ──
   const handleGenerate = useCallback(async (text, silent = false) => {
-    if (!checkCanGenerate()) return
+    // Pro 用户不限制次数
+    if (!isPro && !checkCanGenerate()) return
 
     setProblemText(text)
     setLoading(true)
@@ -89,33 +91,65 @@ export default function LandingPage() {
     if (!silent) setHasGenerated(true)
 
     try {
-      // 本地快速匹配（无需 API）
-      let parsed = quickMatch(text)
-      if (!parsed) {
-        // 兜底：默认正方体
-        parsed = { type: 'cube', size: 2, labels: [], highlightLines: [], explanation: '' }
+      if (isPro) {
+        // ── Pro/Teacher 用户：调用后端 DeepSeek AI ──
+        setLoadingStage('reasoning')
+        const result = await aiAPI.solve(text)
+
+        if (result?.data) {
+          const { parsed, steps, visualStates } = result.data
+          setParsedData(parsed)
+
+          // 合并 3D 场景状态到步骤
+          const mergedSteps = steps.map((step, i) => ({
+            ...step,
+            sceneState: visualStates?.[i] || null,
+          }))
+          setSteps(mergedSteps)
+          setCurrentStep(0)
+          setLoadingStage('visualizing')
+
+          setGeometry(defaultGeometry(parsed?.type || 'cube'))
+          setLoadingStage('done')
+        }
+      } else {
+        // ── 免费用户：本地模板 ──
+        let parsed = quickMatch(text)
+        if (!parsed) {
+          parsed = { type: 'cube', size: 2, labels: [], highlightLines: [], explanation: '' }
+        }
+        setParsedData(parsed)
+        setLoadingStage('reasoning')
+
+        const localSteps = generateLocalSteps(text, parsed)
+        setSteps(localSteps)
+        setCurrentStep(0)
+        setLoadingStage('visualizing')
+
+        setGeometry(defaultGeometry(parsed.type || 'cube'))
+        setLoadingStage('done')
       }
-
-      setParsedData(parsed)
-      setLoadingStage('reasoning')
-
-      const localSteps = generateLocalSteps(text, parsed)
-
-      setSteps(localSteps)
-      setCurrentStep(0)
-      setLoadingStage('visualizing')
-
-      setGeometry(defaultGeometry(parsed.type || 'cube'))
-      setLoadingStage('done')
 
       await recordUsage('generate', text)
     } catch (err) {
-      setError(err.message || '解析失败')
+      setError(err.message || '解析失败，请重试')
+      // AI 失败时降级到本地模板
+      if (isPro) {
+        try {
+          const parsed = quickMatch(text) || { type: 'cube', size: 2, labels: [], highlightLines: [], explanation: '' }
+          setParsedData(parsed)
+          const fallbackSteps = generateLocalSteps(text, parsed)
+          setSteps(fallbackSteps)
+          setCurrentStep(0)
+          setGeometry(defaultGeometry(parsed.type || 'cube'))
+          setError(null)
+        } catch { /* */ }
+      }
     } finally {
       setLoading(false)
       setLoadingStage('idle')
     }
-  }, [apiKey, checkCanGenerate, recordUsage])
+  }, [isPro, checkCanGenerate, recordUsage])
 
   // ── Input handlers ──
   const handleSubmit = () => {
@@ -156,10 +190,10 @@ export default function LandingPage() {
       {/* ── Hero section ────────────────────────────── */}
       <section className={`landing-hero ${hasGenerated ? 'collapsed' : ''}`}>
         <h1 className="landing-title">
-          输入一道题，获得 3D 讲解
+          输入一道几何题，AI 生成 3D 分步讲解
         </h1>
         <p className="landing-subtitle">
-          自动建模 · 辅助线标注 · 分步推理 · 一键生成
+          自动建模 · 辅助线标注 · 逐步骤推导 · 一键生成
         </p>
 
         {/* Input */}
@@ -235,7 +269,6 @@ export default function LandingPage() {
               cameraPreset={visualIntent?.cameraPreset || null}
               faceOpacity={visualIntent?.faceOpacity ?? 0.42}
               nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
-              visibleCategories={visualIntent?.visibleCategories || null}
             />
           </Canvas>
 

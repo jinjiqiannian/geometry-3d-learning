@@ -118,7 +118,6 @@ export default function Canvas3D({
   cameraPreset = null,
   faceOpacity = 0.42,
   nonHighlightOpacity = 0.25,
-  visibleCategories = null,
 }) {
   const { type, params } = geometry
   const size = params.size ?? 2
@@ -257,16 +256,12 @@ export default function Canvas3D({
     } else if (isVisualHighlight) {
       color = highlightColor; opacity = 1
     } else if (hasHighlights && !isVisualHighlight) {
-      // Dim non-highlighted edges when visual intent is active
-      color = style.color; opacity = nonHighlightOpacity
+      // 有高亮时，与题目无关的线完全隐藏（不参与当前步骤的认知动作）
+      color = style.color; opacity = 0
     } else if (l.colorOverride) {
       color = l.colorOverride; opacity = style.opacity
     } else if (edgeColorOverrides?.[key]) {
       color = edgeColorOverrides[key]; opacity = style.opacity
-    } else if (visibleCategories && !visibleCategories.includes(l.category)) {
-      // visibleCategories 限制只显示某些类别的线段
-      // 高亮边不受影响（已在上面处理），非高亮不在此类别的隐藏
-      color = style.color; opacity = 0
     } else if (visible) {
       color = style.color; opacity = style.opacity
     } else {

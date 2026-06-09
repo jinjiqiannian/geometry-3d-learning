@@ -46,13 +46,16 @@ export default function AuthModal() {
       <div className="auth-overlay" onClick={() => setVisible(false)}>
         <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
           <button className="auth-close" onClick={() => setVisible(false)}>×</button>
-          <h2 className="auth-title">后端未连接</h2>
+          <h2 className="auth-title">账号功能暂未开放</h2>
           <p className="auth-desc">
-            认证需要连接 Supabase。离线状态下仍可使用核心功能。
+            登录后可保存作品、解锁 AI 讲解。<br />
+            当前可直接使用全部免费功能，无需登录。
           </p>
-          <button className="auth-submit" onClick={() => setVisible(false)}>
-            离线使用
-          </button>
+          <div className="auth-actions">
+            <button className="auth-submit" onClick={() => setVisible(false)}>
+              继续使用
+            </button>
+          </div>
         </div>
       </div>
     )

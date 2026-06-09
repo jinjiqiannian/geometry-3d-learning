@@ -13,7 +13,7 @@ export default function WorkspaceStatusBar() {
         )}
       </span>
 
-      <span className="wsb-brand">MathViz</span>
+      <span className="wsb-brand">几何维度</span>
     </footer>
   )
 }

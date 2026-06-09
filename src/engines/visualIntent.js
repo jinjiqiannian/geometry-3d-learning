@@ -1,11 +1,17 @@
 // ═══════════════════════════════════════════════════════
 //  VisualIntent — Deterministic step→visual mapper
 //
-//  Pure function: AI step (type, title, content)
+//  Pure function: step (type, title, content)
 //               + parsedData (type, highlightLines)
 //               → VisualIntent (highlight, aux, camera, opacity)
 //
-//  Zero AI dependency. Debuggable. Testable.
+//  Sparse Visual Mapping (ECC):
+//    observation  → no highlights, camera only
+//    construction → no highlights, 1-2 aux lines
+//    calculation  → only edges being calculated
+//    conclusion   → result edges, full overview
+//
+//  Zero AI dependency. No sceneState. Debuggable.
 // ═══════════════════════════════════════════════════════
 
 // ── Camera position presets ──────────────────────────
@@ -102,51 +108,108 @@ const EDGE_KEYWORDS = /棱长|棱[为是]|边长|边[为是]|侧棱/
 // ── Core function ────────────────────────────────────
 
 /**
- * Compute visual intent for a step.
+ * Extract valid edge IDs from parsedData.highlightLines.
+ *
+ * @param {Object} parsedData — { type, highlightLines, ... }
+ * @param {Set} validEdges — Set of valid edge IDs for this geometry
+ * @param {string} geoType — geometry type (for prime→unprimed mapping)
+ * @returns {string[]} deduplicated valid edge IDs
+ */
+function extractEdgesFromParsedData(parsedData, validEdges, geoType) {
+  if (!parsedData?.highlightLines?.length) return []
+  const ids = new Set()
+  for (const hl of parsedData.highlightLines) {
+    const label = (hl.label || `${hl.from}${hl.to}`).replace(/\s/g, '')
+    const resolved = resolveEdgeLabel(label, validEdges, geoType)
+    if (resolved) ids.add(resolved)
+  }
+  return [...ids]
+}
+
+/**
+ * Compute visual intent for a step — Sparse Visual Mapping (ECC).
+ *
+ * Each step type expresses exactly one cognitive action:
+ *   observation  → no highlighted edges, camera changes only
+ *   construction → no highlighted edges, 1-2 key auxiliary lines
+ *   calculation  → only edges being calculated
+ *   conclusion   → result edges, full overview
  *
  * @param {Object} step — { step, title, content, type }
  * @param {Object} parsedData — { type, size, labels, highlightLines, explanation }
- * @param {string} [problemText] — original problem text (used for edge extraction)
- * @returns {Object} VisualIntent
+ * @param {string} [problemText] — original problem text (used for aux line generation)
+ * @returns {Object} VisualIntent — { highlightEdgeIds, auxLines, cameraPreset, faceOpacity, nonHighlightOpacity }
  */
 export function computeVisualIntent(step, parsedData, problemText) {
   if (!step || !parsedData) return defaultIntent()
 
-  // 模式1：step 携带 sceneState — 直接使用（最准确）
-  if (step.sceneState) {
-    const typeDefaults = TYPE_DEFAULTS[step.type] || TYPE_DEFAULTS.observation
-    return {
-      highlightEdgeIds: step.sceneState.highlightEdges || [],
-      highlightColor: typeDefaults.highlightColor,
-      auxLines: step.sceneState.auxLines || [],
-      cameraPreset: step.sceneState.cameraPreset || typeDefaults.cameraPreset,
-      faceOpacity: step.sceneState.faceOpacity ?? typeDefaults.faceOpacity,
-      nonHighlightOpacity: step.sceneState.nonHighlightOpacity ?? typeDefaults.nonHighlightOpacity,
-      visibleCategories: step.sceneState.visibleCategories || null,
-    }
-  }
-
   const geoType = parsedData.type || 'cube'
   const validEdges = new Set(GEOMETRY_EDGES[geoType] || GEOMETRY_EDGES.cube)
   const typeDefaults = TYPE_DEFAULTS[step.type] || TYPE_DEFAULTS.observation
+  const stepIndex = step.step ? step.step - 1 : 0
 
-  // 1. Extract edge IDs from step content + problem text
-  const highlightEdgeIds = extractHighlightEdges(step, parsedData, validEdges, geoType, problemText)
+  // Extract edges from parsedData (not from step content — steps are pure text)
+  const problemEdges = extractEdgesFromParsedData(parsedData, validEdges, geoType)
 
-  // 2. Determine auxiliary lines
-  const auxLines = computeAuxLines(step, parsedData, geoType, highlightEdgeIds, problemText)
+  // ── Sparse Visual Mapping by Step Type ──
+  switch (step.type) {
+    case 'observation': {
+      // observation → 不连线，仅视角变化
+      // 第一次 observation: overview, 全可见
+      // 后续 observation: diagonal, 非高亮变暗
+      const cameraPreset = stepIndex <= 1 ? 'overview' : 'diagonal'
+      return {
+        highlightEdgeIds: [],
+        auxLines: [],
+        cameraPreset,
+        faceOpacity: stepIndex <= 1 ? 0.42 : 0.35,
+        nonHighlightOpacity: stepIndex <= 1 ? 1.0 : 0.25,
+      }
+    }
 
-  // 3. Determine camera preset
-  const cameraPreset = determineCameraPreset(step, parsedData, geoType, highlightEdgeIds, problemText)
+    case 'construction': {
+      // construction → 只添加 1–2 条关键辅助线，不连线
+      const auxLines = computeAuxLines(step, parsedData, geoType, problemEdges, problemText)
+      return {
+        highlightEdgeIds: [],
+        auxLines: auxLines.slice(0, 2),
+        cameraPreset: 'diagonal',
+        faceOpacity: 0.30,
+        nonHighlightOpacity: 0.20,
+      }
+    }
 
-  return {
-    highlightEdgeIds,
-    highlightColor: typeDefaults.highlightColor,
-    auxLines,
-    cameraPreset,
-    faceOpacity: typeDefaults.faceOpacity,
-    nonHighlightOpacity: typeDefaults.nonHighlightOpacity,
-    visibleCategories: null,
+    case 'calculation': {
+      // calculation → 只高亮参与计算的边
+      return {
+        highlightEdgeIds: problemEdges,
+        auxLines: [],
+        cameraPreset: 'closeUp',
+        faceOpacity: 0.20,
+        nonHighlightOpacity: 0.10,
+      }
+    }
+
+    case 'conclusion': {
+      // conclusion → 结果边绿色高亮，全恢复
+      return {
+        highlightEdgeIds: problemEdges,
+        auxLines: [],
+        cameraPreset: 'overview',
+        faceOpacity: 0.42,
+        nonHighlightOpacity: 1.0,
+      }
+    }
+
+    default: {
+      return {
+        highlightEdgeIds: problemEdges,
+        auxLines: [],
+        cameraPreset: typeDefaults.cameraPreset,
+        faceOpacity: typeDefaults.faceOpacity,
+        nonHighlightOpacity: typeDefaults.nonHighlightOpacity,
+      }
+    }
   }
 }
 
@@ -410,7 +473,6 @@ function defaultIntent() {
     cameraPreset: 'overview',
     faceOpacity: 0.42,
     nonHighlightOpacity: 1.0,
-    visibleCategories: null,
   }
 }
 

@@ -104,7 +104,7 @@ export function SubscriptionProvider({ children }) {
   // Feature gates — guests can use everything, just rate-limited
   const checkCanGenerate = useCallback(() => {
     if (dailyUsage >= dailyLimit) {
-      setPaywallReason('You\'ve reached the daily limit. Sign in for more.')
+      setPaywallReason('已达每日使用上限，登录后可继续使用')
       setShowPaywall(true)
       return false
     }

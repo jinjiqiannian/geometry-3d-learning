@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════
-   PageLayout — Minimal top nav · Linear-inspired
+   PageLayout — Page wrapper with global nav
    ═══════════════════════════════════════════════════════ */
 
 .page-layout {
@@ -10,54 +10,6 @@
   background: var(--bg-deep);
 }
 
-/* ── Nav bar ───────────────────────────────────────── */
-.nav-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 48px;
-  padding: 0 20px;
-  border-bottom: 1px solid var(--border-subtle);
-  flex-shrink: 0;
-  z-index: 100;
-  -webkit-app-region: no-drag;
-}
-
-.nav-logo {
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--text-primary);
-  letter-spacing: -0.02em;
-  text-decoration: none;
-}
-
-.nav-logo:hover {
-  color: var(--text-primary);
-}
-
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.nav-link {
-  font-size: var(--text-sm);
-  font-weight: 450;
-  color: var(--text-secondary);
-  transition: color var(--transition-fast);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  padding: 0;
-}
-
-.nav-link:hover {
-  color: var(--text-primary);
-}
-
-/* ── Main ──────────────────────────────────────────── */
 .page-main {
   flex: 1;
   width: 100%;

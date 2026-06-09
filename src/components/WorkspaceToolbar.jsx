@@ -1,13 +1,11 @@
 import { useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { useSupabase } from '../contexts/SupabaseContext'
 import { useWorkspace } from '../contexts/WorkspaceContext'
 import './WorkspaceToolbar.css'
 
 export default function WorkspaceToolbar({ title, onExportImage, onExportPpt }) {
-  const navigate = useNavigate()
-  const { plan, isPro, isTeacher, triggerPaywall } = useSubscription()
+  const { isPro, isTeacher, triggerPaywall } = useSubscription()
   const { user, signOut } = useSupabase()
   const { saveWorkspace, workspace } = useWorkspace()
 
@@ -66,9 +64,6 @@ export default function WorkspaceToolbar({ title, onExportImage, onExportPpt }) 
   return (
     <header className="wt-bar">
       <div className="wt-left">
-        <button className="wt-logo" onClick={() => navigate('/')}>
-          MathViz
-        </button>
         {title && (
           <span className="wt-title">{title}</span>
         )}
