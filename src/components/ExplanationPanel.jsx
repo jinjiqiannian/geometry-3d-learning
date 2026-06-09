@@ -13,6 +13,7 @@ export default function ExplanationPanel({
   loading = false,
   loadingStage = 'idle',
   parsedData = null,
+  problemText = '',
   error = null,
 }) {
   const currentStepData = steps[currentStep]
@@ -20,7 +21,7 @@ export default function ExplanationPanel({
 
   return (
     <div className="explanation-panel">
-      {/* AI parsing progress */}
+      {/* Progress / idle state */}
       <ProgressHeader
         loadingStage={loadingStage}
         parsedData={parsedData}
@@ -28,30 +29,41 @@ export default function ExplanationPanel({
         error={error}
       />
 
-      {/* Step cards */}
-      <StepList
-        steps={steps}
-        currentStep={currentStep}
-        onStepClick={onStepClick}
-      />
-
-      {/* Final answer (only on conclusion step) */}
-      {showAnswer && (
-        <AnswerPanel
-          step={currentStepData}
-          parsedData={parsedData}
-          geometryType={parsedData?.type || 'cube'}
-        />
+      {/* ── 题目 ── */}
+      {!loading && loadingStage === 'done' && problemText && (
+        <div className="ep-problem">
+          <div className="ep-problem-label">题目</div>
+          <p className="ep-problem-text">{problemText}</p>
+        </div>
       )}
 
-      {/* Navigation controls */}
+      {/* ── 解析 ── */}
       {steps.length > 0 && (
-        <PlaybackControls
-          currentStep={currentStep}
-          totalSteps={steps.length}
-          onNext={onNext}
-          onPrev={onPrev}
-        />
+        <div className="ep-steps-wrap">
+          <div className="ep-steps-label">解析</div>
+          <StepList
+            steps={steps}
+            currentStep={currentStep}
+            onStepClick={onStepClick}
+          />
+
+          {/* Final answer (only on conclusion step) */}
+          {showAnswer && (
+            <AnswerPanel
+              step={currentStepData}
+              parsedData={parsedData}
+              geometryType={parsedData?.type || 'cube'}
+            />
+          )}
+
+          {/* Navigation controls */}
+          <PlaybackControls
+            currentStep={currentStep}
+            totalSteps={steps.length}
+            onNext={onNext}
+            onPrev={onPrev}
+          />
+        </div>
       )}
     </div>
   )

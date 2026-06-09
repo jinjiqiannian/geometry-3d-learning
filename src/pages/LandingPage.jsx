@@ -293,6 +293,7 @@ export default function LandingPage() {
             loading={loading}
             loadingStage={loadingStage}
             parsedData={parsedData}
+            problemText={problemText}
             error={error}
           />
 

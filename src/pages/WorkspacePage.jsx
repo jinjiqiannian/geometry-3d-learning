@@ -388,6 +388,7 @@ export default function WorkspacePage() {
           loading={loading}
           loadingStage={loadingStage}
           parsedData={parsedData}
+          problemText={problemText}
           error={error}
         />
       </div>
