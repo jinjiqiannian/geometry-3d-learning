@@ -127,7 +127,42 @@ function extractEdgesFromParsedData(parsedData, validEdges, geoType) {
 }
 
 /**
- * Compute visual intent for a step — Sparse Visual Mapping (ECC).
+ * Convert AI sceneState fields to VisualIntent props for Canvas3D.
+ */
+function sceneStateToIntent(sceneState) {
+  return {
+    highlightEdgeIds: sceneState.highlightEdges?.map(e =>
+      typeof e === 'string' ? e : `${e.from}${e.to}`
+    ) || [],
+    highlightColor: sceneState.highlightColor || '#FF6B6B',
+    auxLines: sceneState.showAuxiliaryLines || [],
+    cameraPreset: sceneState.cameraPosition
+      ? positionToPreset(sceneState.cameraPosition)
+      : 'overview',
+    faceOpacity: sceneState.opacity?.faces ?? 0.42,
+    nonHighlightOpacity: sceneState.opacity?.nonHighlightedEdges ?? 1.0,
+    annotations: sceneState.annotations || [],
+  }
+}
+
+/**
+ * Roughly map [x,y,z] to nearest preset name.
+ */
+function positionToPreset(pos) {
+  if (!pos || pos.length < 3) return 'overview'
+  // If y is high → top, if x is high → side, else diagonal/overview
+  if (pos[1] > 5) return 'top'
+  if (pos[0] > 5 && pos[2] > 3) return 'side'
+  if (pos[0] > 3 && pos[1] > 2 && pos[2] > 3) return 'diagonal'
+  return 'overview'
+}
+
+/**
+ * Compute visual intent for a step.
+ *
+ * Priority:
+ *   1. step.sceneState (from AI DeepSeek) — highest fidelity
+ *   2. Rule-based fallback (ECC Sparse Visual Mapping)
  *
  * Each step type expresses exactly one cognitive action:
  *   observation  → no highlighted edges, camera changes only
@@ -135,7 +170,7 @@ function extractEdgesFromParsedData(parsedData, validEdges, geoType) {
  *   calculation  → only edges being calculated
  *   conclusion   → result edges, full overview
  *
- * @param {Object} step — { step, title, content, type }
+ * @param {Object} step — { step, title, content, type, sceneState }
  * @param {Object} parsedData — { type, size, labels, highlightLines, explanation }
  * @param {string} [problemText] — original problem text (used for aux line generation)
  * @returns {Object} VisualIntent — { highlightEdgeIds, auxLines, cameraPreset, faceOpacity, nonHighlightOpacity }
@@ -143,20 +178,20 @@ function extractEdgesFromParsedData(parsedData, validEdges, geoType) {
 export function computeVisualIntent(step, parsedData, problemText) {
   if (!step || !parsedData) return defaultIntent()
 
+  // ── Priority 1: AI sceneState (DeepSeek 返回的结构化场景数据) ──
+  if (step.sceneState) {
+    return sceneStateToIntent(step.sceneState)
+  }
+
+  // ── Priority 2: Rule-based fallback ──
   const geoType = parsedData.type || 'cube'
   const validEdges = new Set(GEOMETRY_EDGES[geoType] || GEOMETRY_EDGES.cube)
   const typeDefaults = TYPE_DEFAULTS[step.type] || TYPE_DEFAULTS.observation
-  const stepIndex = step.step ? step.step - 1 : 0
 
-  // Extract edges from parsedData (not from step content — steps are pure text)
   const problemEdges = extractEdgesFromParsedData(parsedData, validEdges, geoType)
 
-  // ── Sparse Visual Mapping by Step Type ──
   switch (step.type) {
     case 'observation': {
-      // observation → 不连线，仅视角变化
-      // 第一个 observation（step 1）: overview, 全可见
-      // 后续 observation: diagonal, 面半透明聚焦
       const isFirstObs = step.step === 1
       return {
         highlightEdgeIds: [],
@@ -169,7 +204,6 @@ export function computeVisualIntent(step, parsedData, problemText) {
     }
 
     case 'construction': {
-      // construction → 只添加 1–2 条关键辅助线，不连线
       const auxLines = computeAuxLines(step, parsedData, geoType, problemEdges, problemText)
       return {
         highlightEdgeIds: [],
@@ -182,7 +216,6 @@ export function computeVisualIntent(step, parsedData, problemText) {
     }
 
     case 'calculation': {
-      // calculation → 只高亮参与计算的边
       return {
         highlightEdgeIds: problemEdges,
         highlightColor: typeDefaults.highlightColor,
@@ -194,7 +227,6 @@ export function computeVisualIntent(step, parsedData, problemText) {
     }
 
     case 'conclusion': {
-      // conclusion → 结果边绿色高亮，全恢复
       return {
         highlightEdgeIds: problemEdges,
         highlightColor: typeDefaults.highlightColor,

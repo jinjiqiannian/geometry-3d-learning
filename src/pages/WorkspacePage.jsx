@@ -12,8 +12,7 @@ import AuthModal from '../components/AuthModal'
 import { getLineDefinitions } from '../engines/lineDefinitions'
 import { isPolyhedral } from '../engines/geometryEngine'
 import { computeVerticesFromParams, getEdgeDirectionGroups, getDefaultEdgeLengths } from '../engines/constraintSolver'
-import { parseProblem } from '../engines/problemParser'
-import { generateLocalSteps } from '../engines/explanationEngine'
+import { aiAPI } from '../services/api'
 import { generatePPT } from '../engines/pptExporter'
 import { computeVisualIntent } from '../engines/visualIntent'
 import { useAppContext } from '../contexts/AppContext'
@@ -109,7 +108,7 @@ export default function WorkspacePage() {
     setEdgeColorOverrides({})
   }, [geometry.type]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Parse problem (AI or local) with progressive stages ──
+  // ── Parse problem with AI backend ──
   const handleParseProblem = useCallback(async (text) => {
     if (!checkCanGenerate()) return
 
@@ -119,54 +118,54 @@ export default function WorkspacePage() {
     setError(null)
 
     try {
-      // Stage 1: Parse
-      let result
-      try {
-        result = await parseProblem(text, apiKey)
-      } catch {
-        // Fallback: quick match from problemParser
-        result = { type: 'cube', size: 2, labels: [], highlightLines: [], explanation: '快速匹配' }
-      }
-      setParsedData(result)
+      // Stage 1: Call AI solve endpoint
       setLoadingStage('reasoning')
+      const result = await aiAPI.solve(text)
 
-      // Stage 2: Generate steps
-      const localSteps = generateLocalSteps(text, result)
-      setSteps(localSteps)
-      setCurrentStep(0)
-      setLoadingStage('visualizing')
+      if (result?.data) {
+        const { parsed, steps, visualStates } = result.data
+        setParsedData(parsed)
 
-      // Stage 3: Set up geometry
-      setGeometry({
-        type: result.type || 'cube',
-        params: { size: result.size || 2 },
-        ...defaultConstraintParams(result.type || 'cube'),
-      })
+        const mergedSteps = steps.map((step, i) => ({
+          ...step,
+          sceneState: visualStates?.[i] || null,
+        }))
+        setSteps(mergedSteps)
+        setCurrentStep(0)
+        setLoadingStage('visualizing')
 
-      // Handle highlight lines from AI
-      if (result.highlightLines?.length > 0) {
-        const { lines: predefinedLines } = getLineDefinitions(result.type || 'cube', { size: result.size || 2 })
-        const newCustomLines = []
-        result.highlightLines.forEach(hl => {
-          const exists = predefinedLines.some(l => l.id === hl.label && l.category === 'AI高亮')
-          if (!exists) {
-            newCustomLines.push({
-              id: hl.label || `${hl.from}${hl.to}`,
-              category: 'AI高亮',
-              from: hl.from,
-              to: hl.to,
-              dashed: false,
-              custom: true,
+        // Stage 2: Set up geometry
+        setGeometry({
+          type: parsed?.type || 'cube',
+          params: { size: parsed?.size || 2 },
+          ...defaultConstraintParams(parsed?.type || 'cube'),
+        })
+
+        // Handle highlight lines from AI
+        if (parsed?.highlightLines?.length > 0) {
+          const { lines: predefinedLines } = getLineDefinitions(parsed.type || 'cube', { size: parsed.size || 2 })
+          const newCustomLines = []
+          parsed.highlightLines.forEach(hl => {
+            const exists = predefinedLines.some(l => l.id === hl.label && l.category === 'AI高亮')
+            if (!exists) {
+              newCustomLines.push({
+                id: hl.label || `${hl.from}${hl.to}`,
+                category: 'AI高亮',
+                from: hl.from,
+                to: hl.to,
+                dashed: false,
+                custom: true,
+              })
+            }
+          })
+          if (newCustomLines.length > 0) {
+            setCustomLines(newCustomLines)
+            setVisibleLines(prev => {
+              const next = new Set(prev)
+              newCustomLines.forEach(l => next.add(`${l.id}|${l.category}`))
+              return next
             })
           }
-        })
-        if (newCustomLines.length > 0) {
-          setCustomLines(newCustomLines)
-          setVisibleLines(prev => {
-            const next = new Set(prev)
-            newCustomLines.forEach(l => next.add(`${l.id}|${l.category}`))
-            return next
-          })
         }
       }
 
@@ -174,11 +173,27 @@ export default function WorkspacePage() {
       setLoadingStage('done')
     } catch (err) {
       setError(err.message || '解析失败')
-      setLoadingStage('idle')
+      // Fallback: local template
+      try {
+        const { quickMatch } = await import('../engines/problemParser')
+        const { generateLocalSteps } = await import('../engines/explanationEngine')
+        const parsed = quickMatch(text) || { type: 'cube', size: 2, labels: [], highlightLines: [], explanation: '' }
+        setParsedData(parsed)
+        const fallbackSteps = generateLocalSteps(text, parsed)
+        setSteps(fallbackSteps)
+        setCurrentStep(0)
+        setGeometry({
+          type: parsed.type || 'cube',
+          params: { size: parsed.size || 2 },
+          ...defaultConstraintParams(parsed.type || 'cube'),
+        })
+        setError(null)
+      } catch { /* */ }
     } finally {
       setLoading(false)
+      setLoadingStage('idle')
     }
-  }, [apiKey, checkCanGenerate, recordUsage])
+  }, [checkCanGenerate, recordUsage])
 
   // ── Edge management callbacks ────────────────────
   const handleEdgeLengthChange = useCallback((edgeId, newLength) => {
