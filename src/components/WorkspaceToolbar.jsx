@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { useSupabase } from '../contexts/SupabaseContext'
 import { useWorkspace } from '../contexts/WorkspaceContext'
@@ -64,6 +65,7 @@ export default function WorkspaceToolbar({ title, onExportImage, onExportPpt }) 
   return (
     <header className="wt-bar">
       <div className="wt-left">
+        <Link to="/" className="wt-back-link" title="返回首页">←</Link>
         {title && (
           <span className="wt-title">{title}</span>
         )}

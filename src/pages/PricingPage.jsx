@@ -11,6 +11,12 @@ export default function PricingPage() {
   return (
     <div className="pricing-page">
       <div className="pp-header">
+        <Link
+          to="/"
+          className="pp-back-link"
+        >
+          ← 返回首页
+        </Link>
         <h1 className="pp-title">简洁定价</h1>
         <p className="pp-subtitle">免费开始，按需升级</p>
       </div>

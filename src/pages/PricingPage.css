@@ -11,6 +11,28 @@
 .pp-header {
   text-align: center;
   padding: 64px 24px 32px;
+  position: relative;
+}
+
+.pp-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  position: absolute;
+  left: 24px;
+  top: 24px;
+  transition: all var(--transition-fast);
+}
+
+.pp-back-link:hover {
+  background: var(--accent-subtle);
+  color: var(--text-primary);
 }
 
 .pp-title {

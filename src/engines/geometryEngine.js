@@ -2,13 +2,15 @@ import * as THREE from 'three'
 
 // 为各几何体提供精确的顶点和边信息
 // customVertices: 自由模式下由约束求解器提供的顶点（覆盖默认计算）
-export function getVertexAndEdgeInfo(type, params, customVertices) {
+// customLabels: 题目解析后提供的自定义标签（覆盖默认标签）
+export function getVertexAndEdgeInfo(type, params, customVertices, customLabels) {
   const { size = 2 } = params
 
   // 自由模式：使用自定义顶点，保留原有的边拓扑和标签
   if (customVertices && customVertices.length > 0 && isPolyhedral(type)) {
     const info = getVertexAndEdgeInfo(type, params)  // 获取标签和边
-    return { vertices: customVertices, edges: info.edges, labels: info.labels }
+    const labels = customLabels || info.labels
+    return { vertices: customVertices, edges: info.edges, labels }
   }
 
   const s = size / 2
@@ -25,7 +27,8 @@ export function getVertexAndEdgeInfo(type, params, customVertices) {
         [4,5],[5,6],[6,7],[7,4],  // 顶面边
         [0,4],[1,5],[2,6],[3,7],  // 侧棱 AE,BF,CG,DH
       ]
-      return { vertices: v, edges: e, labels: ['A','B','C','D','E','F','G','H'] }
+      const labels = customLabels || ['A','B','C','D','E','F','G','H']
+      return { vertices: v, edges: e, labels }
     },
     prism: () => {
       // 标准直角三棱柱：底面为等腰直角三角形(直角边=size)，高=size
@@ -34,7 +37,8 @@ export function getVertexAndEdgeInfo(type, params, customVertices) {
         [-s, s,-s],[ s, s,-s],[-s, s, s]
       ]
       const e = [[0,1],[1,2],[2,0],[3,4],[4,5],[5,3],[0,3],[1,4],[2,5]]
-      return { vertices: v, edges: e, labels: ['A','B','C','A\'','B\'','C\''] }
+      const labels = customLabels || ['A','B','C','A\'','B\'','C\'']
+      return { vertices: v, edges: e, labels }
     },
     pyramid: () => {
       // 标准正四棱锥：底面边长=size，高=size
@@ -43,11 +47,13 @@ export function getVertexAndEdgeInfo(type, params, customVertices) {
         [ 0, s, 0]
       ]
       const e = [[0,1],[1,2],[2,3],[3,0],[0,4],[1,4],[2,4],[3,4]]
-      return { vertices: v, edges: e, labels: ['A','B','C','D','P'] }
+      const labels = customLabels || ['A','B','C','D','P']
+      return { vertices: v, edges: e, labels }
     },
     sphere: () => {
       const v = [[0,-s,0],[0,s,0],[s,0,0],[-s,0,0],[0,0,s],[0,0,-s]]
-      return { vertices: v, edges: [], labels: ['S','N','E','W','F','B'] }
+      const labels = customLabels || ['S','N','E','W','F','B']
+      return { vertices: v, edges: [], labels }
     },
     cylinder: () => {
       const v = [
@@ -55,14 +61,16 @@ export function getVertexAndEdgeInfo(type, params, customVertices) {
         [ s,-s,0],[-s,-s,0],[0,-s, s],[0,-s,-s],
         [ s, s,0],[-s, s,0],[0, s, s],[0, s,-s]
       ]
-      return { vertices: v, edges: [], labels: ['O','O\'','A','B','C','D','A\'','B\'','C\'','D\''] }
+      const labels = customLabels || ['O','O\'','A','B','C','D','A\'','B\'','C\'','D\'']
+      return { vertices: v, edges: [], labels }
     },
     cone: () => {
       const v = [
         [0,-s,0],[0,s,0],
         [ s,-s,0],[-s,-s,0],[0,-s, s],[0,-s,-s]
       ]
-      return { vertices: v, edges: [], labels: ['O','P','A','B','C','D'] }
+      const labels = customLabels || ['O','P','A','B','C','D']
+      return { vertices: v, edges: [], labels }
     },
     squareFrustum: () => {
       // 底面正方形 (size) → 顶面正方形 (size/2)，高=size
@@ -77,7 +85,8 @@ export function getVertexAndEdgeInfo(type, params, customVertices) {
         [4,5],[5,6],[6,7],[7,4],  // 顶面边
         [0,4],[1,5],[2,6],[3,7],  // 侧棱 AE,BF,CG,DH
       ]
-      return { vertices: v, edges: e, labels: ['A','B','C','D','E','F','G','H'] }
+      const labels = customLabels || ['A','B','C','D','E','F','G','H']
+      return { vertices: v, edges: e, labels }
     },
     circularFrustum: () => {
       // 底面圆(半径=s) + 顶面圆(半径=s/2)，高=size
@@ -86,7 +95,8 @@ export function getVertexAndEdgeInfo(type, params, customVertices) {
         [ s,-s,0],[-s,-s,0],[0,-s, s],[0,-s,-s],  // 底面标记 A-D
         [ s/2, s,0],[-s/2, s,0],[0, s, s/2],[0, s,-s/2],  // 顶面标记 A'-D'
       ]
-      return { vertices: v, edges: [], labels: ['O','O\'','A','B','C','D','A\'','B\'','C\'','D\''] }
+      const labels = customLabels || ['O','O\'','A','B','C','D','A\'','B\'','C\'','D\'']
+      return { vertices: v, edges: [], labels }
     },
     cuboid: () => {
       // 长方体：长(size)×宽(0.6size)×高(size)，底面→顶面，每面逆时针
@@ -102,7 +112,8 @@ export function getVertexAndEdgeInfo(type, params, customVertices) {
         [4,5],[5,6],[6,7],[7,4],  // 顶面边
         [0,4],[1,5],[2,6],[3,7],  // 侧棱
       ]
-      return { vertices: v, edges: e, labels: ['A','B','C','D','E','F','G','H'] }
+      const labels = customLabels || ['A','B','C','D','E','F','G','H']
+      return { vertices: v, edges: e, labels }
     },
   }
 

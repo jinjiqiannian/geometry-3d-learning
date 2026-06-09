@@ -2,6 +2,8 @@
 //  AI 题目解析引擎 — 文字题目 + 拍照 → 结构化几何数据
 // ═══════════════════════════════════════════════════════
 
+import { extractVerticesFromText, normalizeSubscripts } from './labelMapper'
+
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages'
 const MODEL = 'claude-sonnet-4-6'
 
@@ -261,19 +263,57 @@ export function quickMatch(text) {
     return 'general'
   }
 
-  // ── 边名提取（通用） ──
+  // ── 边名提取（通用，支持Unicode下标） ──
   function extractEdgeRefs(text) {
     const lines = []
-    const pattern = /(?:对角线|异面直线|线段|求|求长|计算|证明|夹角|与|等于|=)\s*([A-Z]'?[A-Z]?'?)/g
+    const seen = new Set()
+
+    // 模式1: 关键词后跟边名（如 "异面直线 A₁B 与 B₁C"）
+    const pattern1 = /(?:对角线|异面直线|线段|求|求长|计算|证明|夹角|与|等于|=|已知)\s*([A-Za-z][₀₁₂₃₄₅₆₇₈₉'ᵢ]*(?:[A-Za-z][₀₁₂₃₄₅₆₇₈₉'ᵢ]*)?)/g
     let m
-    while ((m = pattern.exec(text)) !== null) {
-      const label = m[1].replace(/\s/g, '').replace(/'/g, "'")
-      const clean = label.replace(/'/g, '')
-      if (clean.length >= 2 && !lines.some(h => h.label === label)) {
-        lines.push({ from: clean[0], to: clean[clean.length - 1], label, reason: '题目提及' })
+    while ((m = pattern1.exec(text)) !== null) {
+      const raw = m[1].replace(/\s/g, '')
+      const normalized = normalizeSubscripts(raw)
+      if (normalized.length >= 2 && !seen.has(normalized)) {
+        seen.add(normalized)
+        // 标签，尝试分割：A₁B → 找出前缀和后缀
+        const tokens = splitEdgeTokens(normalized)
+        if (tokens) {
+          lines.push({ from: tokens[0], to: tokens[1], label: normalized, reason: '题目提及' })
+        }
       }
     }
+
+    // 模式2: 通用相邻字母对（回退）
+    if (lines.length === 0) {
+      const pattern2 = /([A-Za-z])[₀₁₂₃₄₅₆₇₈₉]*([A-Za-z])/g
+      while ((m = pattern2.exec(text)) !== null) {
+        const a = normalizeSubscripts(m[1])
+        const b = normalizeSubscripts(m[2])
+        const label = a + b
+        if (!seen.has(label)) {
+          seen.add(label)
+          lines.push({ from: a, to: b, label, reason: '题目提及' })
+        }
+      }
+    }
+
     return lines
+
+    // 辅助：将规范化边名分割为两个 token
+    // "A1B" → ["A1", "B"], "AB" → ["A", "B"], "B1C" → ["B1", "C"]
+    function splitEdgeTokens(s) {
+      if (s.length < 2) return null
+      // 尝试匹配首字符+数字（如A1）作为第一个 token
+      if (s.length >= 3 && /\d/.test(s[1])) {
+        return [s[0] + s[1], s.slice(2)]
+      }
+      // 简单两个字符
+      if (s.length === 2) {
+        return [s[0], s[1]]
+      }
+      return null
+    }
   }
 
   // 正方体
@@ -282,12 +322,13 @@ export function quickMatch(text) {
     const sizeMatch = t.match(/棱长[为是]?\s*(\d+(?:\.\d+)?)/)
     const size = sizeMatch ? parseFloat(sizeMatch[1]) : 2
 
-    // 尝试提取顶点标注
-    const labelMatch = t.match(/[（(]?\s*([A-H]{1,8})\s*[-—]\s*([A-H]{1,8})\s*[）)]?/)
-    let labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    // 从题目文本提取实际顶点标签（支持 A₁B₁C₁D₁ 等命名）
+    const extractedLabels = extractVerticesFromText(text)
+    let labels = extractedLabels || ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
     let confidence = 0.6
+    let vertices = labels // 顶点列表
 
-    if (labelMatch) {
+    if (extractedLabels) {
       confidence = 0.85
     }
     if (sizeMatch) confidence = 0.9
@@ -298,7 +339,8 @@ export function quickMatch(text) {
       type: 'cube',
       size,
       subType: detectSubType(text, 'cube'),
-      labels,
+      labels,          // 显示用标签（含Unicode下标 A₁）
+      vertices,        // 顶点列表（规范化形式 A1）
       highlightLines,
       params: { size },
       annotations: [],
@@ -406,12 +448,17 @@ export function quickMatch(text) {
   if (cuboidMatch) {
     const sizeMatch = t.match(/(?:棱长[为是]?|长[为是]?)\s*(\d+(?:\.\d+)?)/)
     const size = sizeMatch ? parseFloat(sizeMatch[1]) : 2
+
+    const extractedLabels = extractVerticesFromText(text)
+    const labels = extractedLabels || ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+
     const highlightLines = extractEdgeRefs(text)
     return {
       type: 'cuboid',
       size,
       subType: detectSubType(text, 'cuboid'),
-      labels: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+      labels,
+      vertices: labels,
       highlightLines,
       params: { size },
       annotations: [],

@@ -52,7 +52,8 @@ function computeCentersFromVertices(type, vertices, defaultPts) {
 
 /** 根据 size 参数计算所有顶点和参考点 */
 // customVertices: 自由模式下由约束求解器提供的顶点（覆盖模板计算）
-function getPoints(type, params, customVertices) {
+// customLabels: 题目解析后提供的自定义标签（覆盖默认标签）
+function getPoints(type, params, customVertices, customLabels) {
   const { size = 2 } = params
 
   // 自由模式：用自定义顶点覆盖模板顶点，中心点从实际顶点计算
@@ -78,7 +79,8 @@ function getPoints(type, params, customVertices) {
         left: [-s, 0, 0], right: [s, 0, 0],
         top: [0, s, 0], bottom: [0, -s, 0],
       }
-      return { vertices: v, centers: c, labels: 'ABCDEFGH'.split('') }
+      const labels = customLabels || 'ABCDEFGH'.split('')
+      return { vertices: v, centers: c, labels }
     }
 
     case 'pyramid': {
@@ -88,7 +90,8 @@ function getPoints(type, params, customVertices) {
       ]
       const baseCenter = [0, -s, 0]
       const c = { body: [0, 0, 0], base: baseCenter, apex: [0, s, 0] }
-      return { vertices: v, centers: c, labels: 'ABCDP'.split('') }
+      const labels = customLabels || 'ABCDP'.split('')
+      return { vertices: v, centers: c, labels }
     }
 
     case 'prism': {
@@ -101,7 +104,8 @@ function getPoints(type, params, customVertices) {
         baseBottom: [-s / 3, -s, -s / 3],
         baseTop: [-s / 3, s, -s / 3],
       }
-      return { vertices: v, centers: c, labels: "ABC A'B'C'".match(/[A-C]'?/g) }
+      const labels = customLabels || "ABC A'B'C'".match(/[A-C]'?/g)
+      return { vertices: v, centers: c, labels }
     }
 
     case 'sphere': {
@@ -109,7 +113,8 @@ function getPoints(type, params, customVertices) {
         [0, -s, 0], [0, s, 0], [s, 0, 0],
         [-s, 0, 0], [0, 0, s], [0, 0, -s],
       ]
-      return { vertices: v, centers: { body: [0, 0, 0] }, labels: 'SNEWFB'.split('') }
+      const labels = customLabels || 'SNEWFB'.split('')
+      return { vertices: v, centers: { body: [0, 0, 0] }, labels }
     }
 
     case 'cylinder': {
@@ -118,8 +123,8 @@ function getPoints(type, params, customVertices) {
         [s, -s, 0], [-s, -s, 0], [0, -s, s], [0, -s, -s],
         [s, s, 0], [-s, s, 0], [0, s, s], [0, s, -s],
       ]
-      return { vertices: v, centers: { body: [0, 0, 0], top: [0, s, 0], bottom: [0, -s, 0] },
-        labels: "OO'ABCDA'B'C'D'".match(/[A-O]'?/g) }
+      const labels = customLabels || "OO'ABCDA'B'C'D'".match(/[A-O]'?/g)
+      return { vertices: v, centers: { body: [0, 0, 0], top: [0, s, 0], bottom: [0, -s, 0] }, labels }
     }
 
     case 'cone': {
@@ -127,8 +132,8 @@ function getPoints(type, params, customVertices) {
         [0, -s, 0], [0, s, 0],
         [s, -s, 0], [-s, -s, 0], [0, -s, s], [0, -s, -s],
       ]
-      return { vertices: v, centers: { base: [0, -s, 0], apex: [0, s, 0] },
-        labels: 'OPABCD'.split('') }
+      const labels = customLabels || 'OPABCD'.split('')
+      return { vertices: v, centers: { base: [0, -s, 0], apex: [0, s, 0] }, labels }
     }
 
     case 'squareFrustum': {
@@ -143,7 +148,8 @@ function getPoints(type, params, customVertices) {
         bottom: [0, -s, 0],
         top: [0, s, 0],
       }
-      return { vertices: v, centers: c, labels: 'ABCDEFGH'.split('') }
+      const labels = customLabels || 'ABCDEFGH'.split('')
+      return { vertices: v, centers: c, labels }
     }
 
     case 'circularFrustum': {
@@ -152,8 +158,8 @@ function getPoints(type, params, customVertices) {
         [s, -s, 0], [-s, -s, 0], [0, -s, s], [0, -s, -s],          // 底面标记 A-D (2-5)
         [s / 2, s, 0], [-s / 2, s, 0], [0, s, s / 2], [0, s, -s / 2],  // 顶面标记 A'-D' (6-9)
       ]
-      return { vertices: v, centers: { body: [0, 0, 0], top: [0, s, 0], bottom: [0, -s, 0] },
-        labels: "OO'ABCDA'B'C'D'".match(/[A-O]'?/g) }
+      const labels = customLabels || "OO'ABCDA'B'C'D'".match(/[A-O]'?/g)
+      return { vertices: v, centers: { body: [0, 0, 0], top: [0, s, 0], bottom: [0, -s, 0] }, labels }
     }
 
     case 'cuboid': {
@@ -171,7 +177,8 @@ function getPoints(type, params, customVertices) {
         left: [-a, 0, 0], right: [a, 0, 0],
         top: [0, c, 0], bottom: [0, -c, 0],
       }
-      return { vertices: v, centers, labels: 'ABCDEFGH'.split('') }
+      const labels = customLabels || 'ABCDEFGH'.split('')
+      return { vertices: v, centers, labels }
     }
 
     default:
@@ -188,10 +195,10 @@ function getPoints(type, params, customVertices) {
  *   lines: [{ id, category, from, to, dashed?, label? }]
  * }
  */
-export function getLineDefinitions(type, params, customVertices) {
+export function getLineDefinitions(type, params, customVertices, customLabels) {
   const { size = 2 } = params
   const s = size / 2
-  const pts = getPoints(type, params, customVertices)
+  const pts = getPoints(type, params, customVertices, customLabels)
   const v = pts.vertices
   const L = pts.labels
   const lines = []

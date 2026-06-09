@@ -14,6 +14,9 @@
 //  Zero AI dependency. No sceneState. Debuggable.
 // ═══════════════════════════════════════════════════════
 
+import { resolveEdge, createLabelMap } from './labelMapper'
+import { enforceProgression } from './intentProgression'
+
 // ── Camera position presets ──────────────────────────
 
 export const CAMERA_PRESETS = {
@@ -109,31 +112,63 @@ const EDGE_KEYWORDS = /棱长|棱[为是]|边长|边[为是]|侧棱/
 
 /**
  * Extract valid edge IDs from parsedData.highlightLines.
+ * Uses labelMap to translate user labels to internal edge IDs.
  *
  * @param {Object} parsedData — { type, highlightLines, ... }
  * @param {Set} validEdges — Set of valid edge IDs for this geometry
- * @param {string} geoType — geometry type (for prime→unprimed mapping)
+ * @param {string} geoType — geometry type
+ * @param {Object} [labelMap] — from createLabelMap()
  * @returns {string[]} deduplicated valid edge IDs
  */
-function extractEdgesFromParsedData(parsedData, validEdges, geoType) {
+function extractEdgesFromParsedData(parsedData, validEdges, geoType, labelMap) {
   if (!parsedData?.highlightLines?.length) return []
   const ids = new Set()
   for (const hl of parsedData.highlightLines) {
     const label = (hl.label || `${hl.from}${hl.to}`).replace(/\s/g, '')
-    const resolved = resolveEdgeLabel(label, validEdges, geoType)
+    const resolved = resolveWithLabelMap(label, validEdges, labelMap)
     if (resolved) ids.add(resolved)
   }
   return [...ids]
 }
 
 /**
- * Convert AI sceneState fields to VisualIntent props for Canvas3D.
+ * Resolve a label to a valid internal edge ID, using labelMap if available.
  */
-function sceneStateToIntent(sceneState) {
+function resolveWithLabelMap(label, validEdges, labelMap) {
+  // 1) Direct match
+  if (validEdges.has(label)) return label
+  // 2) Reverse
+  const rev = label.split('').reverse().join('')
+  if (validEdges.has(rev)) return rev
+  // 3) Use labelMap to translate user edge → internal edge
+  if (labelMap) {
+    const internal = resolveEdge(label, labelMap)
+    if (internal) {
+      if (validEdges.has(internal)) return internal
+      const revInternal = internal.split('').reverse().join('')
+      if (validEdges.has(revInternal)) return revInternal
+    }
+  }
+  return null
+}
+
+/**
+ * Convert AI sceneState fields to VisualIntent props for Canvas3D.
+ * Uses labelMap to translate user-facing edge IDs to internal edge IDs.
+ */
+function sceneStateToIntent(sceneState, labelMap) {
+  const highlightEdgeIds = (sceneState.highlightEdges?.map(e => {
+    const raw = typeof e === 'string' ? e : `${e.from}${e.to}`
+    // 通过 labelMap 将用户标签转为内部边 ID
+    if (labelMap) {
+      const resolved = resolveUserEdge(raw, labelMap)
+      if (resolved) return resolved
+    }
+    return raw
+  }) || []).filter(Boolean)
+
   return {
-    highlightEdgeIds: sceneState.highlightEdges?.map(e =>
-      typeof e === 'string' ? e : `${e.from}${e.to}`
-    ) || [],
+    highlightEdgeIds,
     highlightColor: sceneState.highlightColor || '#FF6B6B',
     auxLines: sceneState.showAuxiliaryLines || [],
     cameraPreset: sceneState.cameraPosition
@@ -143,6 +178,27 @@ function sceneStateToIntent(sceneState) {
     nonHighlightOpacity: sceneState.opacity?.nonHighlightedEdges ?? 1.0,
     annotations: sceneState.annotations || [],
   }
+}
+
+/**
+ * 使用 labelMap 将用户边标签解析为内部边 ID
+ * "A1B" → "EB" (A1→E, B→B)
+ * "B1C" → "FC" (B1→F, C→C)
+ */
+function resolveUserEdge(userEdge, labelMap) {
+  if (!labelMap || !userEdge || userEdge.length < 2) return null
+
+  // 先尝试直接匹配（已经是内部边）
+  const normalized = userEdge.replace(/['']/g, "'")
+  if (labelMap.internalLabels.some(l => l === normalized || l === normalized.split('').reverse().join(''))) {
+    return normalized
+  }
+
+  // 通过 resolveEdge 解析
+  const internal = resolveEdge(normalized, labelMap)
+  if (internal) return internal
+
+  return null
 }
 
 /**
@@ -161,11 +217,11 @@ function positionToPreset(pos) {
  * Compute visual intent for a step.
  *
  * Priority:
- *   1. step.sceneState (from AI DeepSeek) — highest fidelity
+ *   1. step.sceneState (from AI DeepSeek) — constrained by enforceProgression
  *   2. Rule-based fallback (ECC Sparse Visual Mapping)
  *
  * Each step type expresses exactly one cognitive action:
- *   observation  → no highlighted edges, camera changes only
+ *   observation  → no highlighted edges (step 1), or only problem lines (step 2+)
  *   construction → no highlighted edges, 1-2 key auxiliary lines
  *   calculation  → only edges being calculated
  *   conclusion   → result edges, full overview
@@ -173,33 +229,46 @@ function positionToPreset(pos) {
  * @param {Object} step — { step, title, content, type, sceneState }
  * @param {Object} parsedData — { type, size, labels, highlightLines, explanation }
  * @param {string} [problemText] — original problem text (used for aux line generation)
+ * @param {Object} [labelMap] — from createLabelMap() — maps user labels to internal edge IDs
  * @returns {Object} VisualIntent — { highlightEdgeIds, auxLines, cameraPreset, faceOpacity, nonHighlightOpacity }
  */
-export function computeVisualIntent(step, parsedData, problemText) {
+export function computeVisualIntent(step, parsedData, problemText, labelMap) {
   if (!step || !parsedData) return defaultIntent()
 
-  // ── Priority 1: AI sceneState (DeepSeek 返回的结构化场景数据) ──
-  if (step.sceneState) {
-    return sceneStateToIntent(step.sceneState)
-  }
-
-  // ── Priority 2: Rule-based fallback ──
   const geoType = parsedData.type || 'cube'
   const validEdges = new Set(GEOMETRY_EDGES[geoType] || GEOMETRY_EDGES.cube)
   const typeDefaults = TYPE_DEFAULTS[step.type] || TYPE_DEFAULTS.observation
 
-  const problemEdges = extractEdgesFromParsedData(parsedData, validEdges, geoType)
+  // 解析题目涉及的边（使用 labelMap 将用户标签转内部边 ID）
+  const problemEdges = extractEdgesFromParsedData(parsedData, validEdges, geoType, labelMap)
 
+  // ── Priority 1: AI sceneState (constrained by progression) ──
+  if (step.sceneState) {
+    const rawIntent = sceneStateToIntent(step.sceneState, labelMap)
+    // 用 progression 约束
+    const stepIndex = (step.step || 1) - 1
+    return enforceProgression(rawIntent, stepIndex, step.type, problemEdges, geoType)
+  }
+
+  // ── Priority 2: Rule-based fallback (ECC Sparse Visual Mapping) ──
+  const stepIndex = (step.step || 1) - 1
+  const rawIntent = computeRuleBasedIntent(step, parsedData, problemText, geoType, typeDefaults, problemEdges, validEdges)
+  return enforceProgression(rawIntent, stepIndex, step.type, problemEdges, geoType)
+}
+
+/**
+ * Rule-based intent computation (fallback when AI sceneState is not available)
+ */
+function computeRuleBasedIntent(step, parsedData, problemText, geoType, typeDefaults, problemEdges, validEdges) {
   switch (step.type) {
     case 'observation': {
-      const isFirstObs = step.step === 1
       return {
-        highlightEdgeIds: [],
+        highlightEdgeIds: problemEdges,
         highlightColor: typeDefaults.highlightColor,
         auxLines: [],
-        cameraPreset: isFirstObs ? 'overview' : 'diagonal',
-        faceOpacity: isFirstObs ? 0.42 : 0.18,
-        nonHighlightOpacity: isFirstObs ? 1.0 : 0.25,
+        cameraPreset: typeDefaults.cameraPreset,
+        faceOpacity: typeDefaults.faceOpacity,
+        nonHighlightOpacity: typeDefaults.nonHighlightOpacity,
       }
     }
 
@@ -209,9 +278,9 @@ export function computeVisualIntent(step, parsedData, problemText) {
         highlightEdgeIds: [],
         highlightColor: typeDefaults.highlightColor,
         auxLines: auxLines.slice(0, 2),
-        cameraPreset: 'diagonal',
-        faceOpacity: 0.30,
-        nonHighlightOpacity: 0.20,
+        cameraPreset: typeDefaults.cameraPreset,
+        faceOpacity: typeDefaults.faceOpacity,
+        nonHighlightOpacity: typeDefaults.nonHighlightOpacity,
       }
     }
 
@@ -220,9 +289,9 @@ export function computeVisualIntent(step, parsedData, problemText) {
         highlightEdgeIds: problemEdges,
         highlightColor: typeDefaults.highlightColor,
         auxLines: [],
-        cameraPreset: 'closeUp',
-        faceOpacity: 0.20,
-        nonHighlightOpacity: 0.10,
+        cameraPreset: typeDefaults.cameraPreset,
+        faceOpacity: typeDefaults.faceOpacity,
+        nonHighlightOpacity: typeDefaults.nonHighlightOpacity,
       }
     }
 
@@ -231,9 +300,9 @@ export function computeVisualIntent(step, parsedData, problemText) {
         highlightEdgeIds: problemEdges,
         highlightColor: typeDefaults.highlightColor,
         auxLines: [],
-        cameraPreset: 'overview',
-        faceOpacity: 0.42,
-        nonHighlightOpacity: 1.0,
+        cameraPreset: typeDefaults.cameraPreset,
+        faceOpacity: typeDefaults.faceOpacity,
+        nonHighlightOpacity: typeDefaults.nonHighlightOpacity,
       }
     }
 

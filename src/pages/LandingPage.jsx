@@ -10,6 +10,7 @@ import { isPolyhedral } from '../engines/geometryEngine'
 import { quickMatch } from '../engines/problemParser'
 import { generateLocalSteps } from '../engines/explanationEngine'
 import { computeVisualIntent } from '../engines/visualIntent'
+import { createLabelMap, INTERNAL_LABELS } from '../engines/labelMapper'
 import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../contexts/AppContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
@@ -50,18 +51,32 @@ export default function LandingPage() {
 
   const polyhedral = isPolyhedral(geometry.type)
 
+  // ── LabelMap — 题目标签 → 内部索引映射 ──────────────
+  const labelMap = useMemo(() => {
+    if (!parsedData?.vertices && !parsedData?.labels) return null
+    const userLabels = parsedData.vertices || parsedData.labels || null
+    const internalLabels = INTERNAL_LABELS[parsedData.type] || INTERNAL_LABELS.cube
+    return createLabelMap(userLabels, internalLabels)
+  }, [parsedData])
+
+  // ── 自定义顶点标签（从题目解析而来） ─────────────────
+  const vertexLabels = useMemo(() => {
+    if (!labelMap) return null
+    return labelMap.displayLabels
+  }, [labelMap])
+
   // ── VisualIntent — Step→3D deterministic mapping ──
   const visualIntent = useMemo(() => {
     const step = steps[currentStep]
     if (!step || !parsedData) return null
-    return computeVisualIntent(step, parsedData, problemText)
-  }, [currentStep, steps, parsedData, problemText])
+    return computeVisualIntent(step, parsedData, problemText, labelMap)
+  }, [currentStep, steps, parsedData, problemText, labelMap])
 
   // ── Lines ──
   const mergedLines = useMemo(() => {
-    const { lines } = getLineDefinitions(geometry.type, geometry.params)
+    const { lines } = getLineDefinitions(geometry.type, geometry.params, null, vertexLabels)
     return lines
-  }, [geometry.type, geometry.params])
+  }, [geometry.type, geometry.params, vertexLabels])
 
   // ── Init visible lines ──
   useEffect(() => {
@@ -248,6 +263,8 @@ export default function LandingPage() {
               cameraPreset={visualIntent?.cameraPreset || null}
               faceOpacity={visualIntent?.faceOpacity ?? 0.42}
               nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
+              // ── 自定义标签（从题目解析） ──
+              vertexLabels={vertexLabels}
             />
           </Canvas>
 

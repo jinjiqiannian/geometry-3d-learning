@@ -118,6 +118,8 @@ export default function Canvas3D({
   cameraPreset = null,
   faceOpacity = 0.42,
   nonHighlightOpacity = 0.25,
+  // ── 自定义标签（从题目解析而来） ──
+  vertexLabels = null,
 }) {
   const { type, params } = geometry
   const size = params.size ?? 2
@@ -128,13 +130,13 @@ export default function Canvas3D({
     [type, size, customVertices]
   )
   const edgeInfo = useMemo(
-    () => getVertexAndEdgeInfo(type, params, customVertices),
-    [type, size, customVertices]
+    () => getVertexAndEdgeInfo(type, params, customVertices, vertexLabels),
+    [type, size, customVertices, vertexLabels]
   )
 
   const { points: pts } = useMemo(
-    () => getLineDefinitions(type, params, customVertices),
-    [type, size, customVertices]
+    () => getLineDefinitions(type, params, customVertices, vertexLabels),
+    [type, size, customVertices, vertexLabels]
   )
 
   const curveLines = useCurveData(type, s)

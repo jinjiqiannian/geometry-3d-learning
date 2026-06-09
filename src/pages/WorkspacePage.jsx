@@ -15,6 +15,7 @@ import { computeVerticesFromParams, getEdgeDirectionGroups, getDefaultEdgeLength
 import { aiAPI } from '../services/api'
 import { generatePPT } from '../engines/pptExporter'
 import { computeVisualIntent } from '../engines/visualIntent'
+import { createLabelMap, INTERNAL_LABELS } from '../engines/labelMapper'
 import { useAppContext } from '../contexts/AppContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { useWorkspace } from '../contexts/WorkspaceContext'
@@ -265,7 +266,7 @@ export default function WorkspacePage() {
 
   // ── Merged lines ─────────────────────────────────
   const mergedLines = useMemo(() => {
-    const { lines } = getLineDefinitions(geometry.type, geometry.params, customVertices)
+    const { lines } = getLineDefinitions(geometry.type, geometry.params, customVertices, vertexLabels)
     const merged = [...lines, ...customLines]
     if (Object.keys(edgeColorOverrides).length > 0) {
       return merged.map(l => {
@@ -274,23 +275,37 @@ export default function WorkspacePage() {
       })
     }
     return merged
-  }, [geometry.type, geometry.params.size, customLines, edgeColorOverrides, customVertices])
+  }, [geometry.type, geometry.params.size, customLines, edgeColorOverrides, customVertices, vertexLabels])
 
   // ── Selected edge data ───────────────────────────
   const selectedEdgeData = useMemo(() => {
     if (!selectedEdge) return null
-    const { lines } = getLineDefinitions(geometry.type, geometry.params, customVertices)
+    const { lines } = getLineDefinitions(geometry.type, geometry.params, customVertices, vertexLabels)
     return [...lines, ...customLines].find(l => `${l.id}|${l.category}` === selectedEdge) || null
-  }, [selectedEdge, geometry.type, geometry.params, customLines, customVertices])
+  }, [selectedEdge, geometry.type, geometry.params, customLines, customVertices, vertexLabels])
 
   const polyhedral = isPolyhedral(geometry.type)
+
+  // ── LabelMap — 题目标签 → 内部索引映射 ──────────────
+  const labelMap = useMemo(() => {
+    if (!parsedData?.vertices && !parsedData?.labels) return null
+    const userLabels = parsedData.vertices || parsedData.labels || null
+    const internalLabels = INTERNAL_LABELS[parsedData.type] || INTERNAL_LABELS.cube
+    return createLabelMap(userLabels, internalLabels)
+  }, [parsedData])
+
+  // ── 自定义顶点标签（从题目解析而来） ─────────────────
+  const vertexLabels = useMemo(() => {
+    if (!labelMap) return null
+    return labelMap.displayLabels
+  }, [labelMap])
 
   // ── VisualIntent — Step→3D deterministic mapping ──
   const visualIntent = useMemo(() => {
     const step = steps[currentStep]
     if (!step || !parsedData) return null
-    return computeVisualIntent(step, parsedData, problemText)
-  }, [currentStep, steps, parsedData, problemText])
+    return computeVisualIntent(step, parsedData, problemText, labelMap)
+  }, [currentStep, steps, parsedData, problemText, labelMap])
 
   // ── Step navigation ──────────────────────────────
   const handleStepClick = useCallback((index) => {
@@ -365,6 +380,8 @@ export default function WorkspacePage() {
               cameraPreset={visualIntent?.cameraPreset || null}
               faceOpacity={visualIntent?.faceOpacity ?? 0.42}
               nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
+              // ── 自定义标签（从题目解析） ──
+              vertexLabels={vertexLabels}
             />
           </Canvas>
 

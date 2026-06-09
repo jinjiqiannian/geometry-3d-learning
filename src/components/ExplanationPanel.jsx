@@ -52,7 +52,7 @@ export default function ExplanationPanel({
             <AnswerPanel
               step={currentStepData}
               parsedData={parsedData}
-              geometryType={parsedData?.type || 'cube'}
+              steps={steps}
             />
           )}
 

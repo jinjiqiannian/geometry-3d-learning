@@ -1,0 +1,63 @@
+/* ═══════════════════════════════════════════════════════
+   MobileBottomNav — 移动端底部 Tab 导航
+   ═══════════════════════════════════════════════════════ */
+
+.mobile-bottom-nav {
+  display: none; /* 桌面端隐藏 */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: var(--bg-base);
+  border-top: 1px solid var(--border-subtle);
+  z-index: 200;
+  justify-content: space-around;
+  align-items: center;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.mb-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 12px;
+  text-decoration: none;
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+  border-radius: var(--radius-md);
+  min-width: 56px;
+}
+
+.mb-nav-item.active {
+  color: var(--accent);
+}
+
+.mb-nav-item:active {
+  background: var(--accent-subtle);
+}
+
+.mb-nav-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.mb-nav-label {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* 移动端：显示底部导航 */
+@media (max-width: 767px) {
+  .mobile-bottom-nav {
+    display: flex;
+  }
+
+  /* 为底部导航腾出空间 */
+  .page-layout {
+    padding-bottom: 56px;
+  }
+}
