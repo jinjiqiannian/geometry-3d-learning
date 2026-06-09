@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { path: '/', label: '首页' },
   { path: '/workspace', label: '工作台' },
   { path: '/history', label: '历史' },
+  { path: '/settings', label: '设置' },
 ]
 
 function LogoIcon() {
