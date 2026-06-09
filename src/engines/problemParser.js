@@ -475,6 +475,30 @@ export function quickMatch(text) {
     }
   }
 
+  // 正四面体
+  const tetraMatch = t.match(/正四面体|四面体|tetrahedron/)
+  if (tetraMatch) {
+    const sizeMatch = t.match(/(?:棱长|边长)[为是]?\s*(\d+(?:\.\d+)?)/)
+    const size = sizeMatch ? parseFloat(sizeMatch[1]) : 2
+
+    const extractedLabels = extractVerticesFromText(text)
+    const labels = extractedLabels || ['A', 'B', 'C', 'D']
+
+    const highlightLines = extractEdgeRefs(text)
+    return {
+      type: 'tetrahedron',
+      size,
+      subType: detectSubType(text, 'tetrahedron'),
+      labels,
+      vertices: labels,
+      highlightLines,
+      params: { size },
+      annotations: [],
+      explanation: sizeMatch ? `正四面体，棱长 ${size}` : '正四面体（参数来自快速匹配）',
+      confidence: sizeMatch ? 0.9 : 0.75,
+    }
+  }
+
   return null // 需要 API 解析
 }
 

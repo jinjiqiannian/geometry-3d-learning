@@ -274,6 +274,58 @@ export const EXAMPLES = [
     geometryType: 'sphere',
     params: { size: 5 },
   },
+
+  // ═══════════════════════════════════════════════════════
+  //  拓展 · 正四面体
+  // ═══════════════════════════════════════════════════════
+  {
+    id: 'ex33',
+    title: '正四面体体积',
+    category: '拓展',
+    text: '正四面体ABCD棱长为6，求它的体积。',
+    geometryType: 'tetrahedron',
+    params: { size: 6 },
+  },
+  {
+    id: 'ex34',
+    title: '正四面体表面积',
+    category: '拓展',
+    text: '正四面体棱长为4，求它的表面积。',
+    geometryType: 'tetrahedron',
+    params: { size: 4 },
+  },
+  {
+    id: 'ex35',
+    title: '正四面体高',
+    category: '拓展',
+    text: '正四面体ABCD棱长为3，求顶点A到底面BCD的高。',
+    geometryType: 'tetrahedron',
+    params: { size: 3 },
+  },
+  {
+    id: 'ex36',
+    title: '正四面体外接球',
+    category: '拓展',
+    text: '正四面体ABCD棱长为2，求它的外接球半径。',
+    geometryType: 'tetrahedron',
+    params: { size: 2 },
+  },
+  {
+    id: 'ex37',
+    title: '正四面体内切球',
+    category: '拓展',
+    text: '正四面体棱长为3，求它的内切球半径。',
+    geometryType: 'tetrahedron',
+    params: { size: 3 },
+  },
+  {
+    id: 'ex38',
+    title: '正四面体对棱距离',
+    category: '拓展',
+    text: '正四面体ABCD棱长为2，求对棱AB与CD之间的距离。',
+    geometryType: 'tetrahedron',
+    params: { size: 2 },
+  },
 ]
 
 export const PRICING_PLANS = [
@@ -342,6 +394,7 @@ export const GEOMETRY_NAMES = {
   squareFrustum: '四棱台',
   circularFrustum: '圆台',
   cuboid: '长方体',
+  tetrahedron: '正四面体',
 }
 
 export const GEOMETRIES = [
@@ -354,6 +407,7 @@ export const GEOMETRIES = [
   { id: 'squareFrustum', name: '四棱台' },
   { id: 'circularFrustum', name: '圆台' },
   { id: 'cuboid', name: '长方体' },
+  { id: 'tetrahedron', name: '正四面体' },
 ]
 
 export const FORMULAS = {
@@ -366,4 +420,5 @@ export const FORMULAS = {
   squareFrustum: { volume: 'V = h/3·(S₁+S₂+√(S₁S₂))', surface: 'S = S₁+S₂+2(a+b)√(h²+((a-b)/2)²)' },
   circularFrustum: { volume: 'V = πh/3·(R²+r²+Rr)', surface: 'S = π(R+r)l+π(R²+r²)' },
   cuboid: { volume: 'V = abc', surface: 'S = 2(ab+bc+ac)' },
+  tetrahedron: { volume: 'V = a³√2/12', surface: 'S = √3·a²' },
 }

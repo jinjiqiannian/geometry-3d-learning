@@ -206,6 +206,44 @@ const TEMPLATES = {
       { step: 5, title: '得出结论', content: '圆台体积 V = πh/3 × (R² + r² + Rr)，母线 l = √(h² + (R-r)²)。代入上下底面半径和高即得。', type: 'conclusion' },
     ],
   },
+
+  tetrahedron: {
+    default: [
+      { step: 1, title: '识别几何体', content: '正四面体，4个面均为全等的等边三角形，6条棱长相等（棱长 {size}），是最简单的正多面体。', type: 'observation' },
+      { step: 2, title: '分析题目条件', content: '已知正四面体棱长 {size}。正四面体可以看作正方体四个互异顶点的连线（取正方体的四个对角顶点）。', type: 'observation' },
+      { step: 3, title: '应用正四面体公式', content: '高 h = a√6/3，体积 V = a³√2/12，表面积 S = √3·a²。外接球半径 R = a√6/4，内切球半径 r = a√6/12。', type: 'calculation' },
+      { step: 4, title: '代入计算', content: '将棱长 {size} 代入相应公式进行计算。注意√2≈1.414，√3≈1.732，√6≈2.449。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '正四面体的所有度量都可以由棱长a唯一确定。关键：高与底面的交点恰好是底面正三角形的重心，高、外接球半径、内切球半径三者成比例 3:3:1。', type: 'conclusion' },
+    ],
+    volume: [
+      { step: 1, title: '识别几何体', content: '正四面体，4个面均为全等等边三角形，棱长a = {size}。', type: 'observation' },
+      { step: 2, title: '计算底面积', content: '底面是等边三角形，面积 S底 = √3/4 × a²。', type: 'calculation' },
+      { step: 3, title: '计算高', content: '正四面体的高 h = a√6/3。高通过底面重心，且垂直于底面。', type: 'calculation' },
+      { step: 4, title: '计算体积', content: 'V = 1/3 × S底 × h = 1/3 × (√3/4 × a²) × (a√6/3) = a³√2/12。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '正四面体体积 V = a³√2/12。代入棱长 {size} 即可。这个公式的推导体现了"等边三角形面积 → 高 → 体积"的完整思路。', type: 'conclusion' },
+    ],
+    inscribed: [
+      { step: 1, title: '理解内切球', content: '正四面体的内切球与四个面都相切，球心是四面体的内心（各面角平分面的交点）。', type: 'observation' },
+      { step: 2, title: '确定球心位置', content: '内切球球心在正四面体的中心（重心），到每个面的距离相等。可以用体积法：V = 1/3 × S × r × 4。', type: 'observation' },
+      { step: 3, title: '计算内切球半径', content: '由 V = 4 × 1/3 × S底 × r，得 r = 3V/(4S底) = 3(a³√2/12)/(4×√3a²/4) = a√6/12。', type: 'calculation' },
+      { step: 4, title: '验证关系', content: '内切球半径 r = a√6/12，外接球半径 R = a√6/4。R:r = 3:1。球心到顶点距离:球心到面距离 = 3:1。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '正四面体内切球半径 r = a√6/12。代入学中的等体积法技巧：四面体体积 = 4个小四面体体积之和，每个小四面体以球心为顶点、面为底面。', type: 'conclusion' },
+    ],
+    circumscribed: [
+      { step: 1, title: '理解外接球', content: '正四面体的外接球过4个顶点，球心即正四面体的中心。', type: 'observation' },
+      { step: 2, title: '利用正方体关系', content: '正四面体可嵌入正方体：取正方体的4个互异对角顶点。外接球半径 = 正方体体对角线的一半。', type: 'construction' },
+      { step: 3, title: '建立关系式', content: '设正方体棱长为L，则正四面体棱长 a = L√2，正方体体对角线 = L√3。外接球半径 R = L√3/2 = a√6/4。', type: 'calculation' },
+      { step: 4, title: '代入计算', content: '将棱长 {size} 代入 R = a√6/4。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '正四面体外接球半径 R = a√6/4。巧妙之处在于利用正四面体与正方体的关系，化空间问题为熟悉的几何体。', type: 'conclusion' },
+    ],
+    opposite_edges: [
+      { step: 1, title: '理解对棱', content: '正四面体有3组对棱，每组对棱是两条不相交的棱（异面直线），如AB与CD。', type: 'observation' },
+      { step: 2, title: '分析对棱关系', content: '正四面体的对棱互相垂直。对棱中点连线垂直于这两条棱，且长度为 a/√2。', type: 'observation' },
+      { step: 3, title: '计算对棱距离', content: '对棱距离 = 对棱中点连线的长度 = a/√2。这是两条异面直线的公垂线段长度。', type: 'calculation' },
+      { step: 4, title: '代入数值', content: '将棱长 {size} 代入：对棱距离 = {size}/√2。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '正四面体对棱距离 = a/√2。对棱中点连线恰好是正方体相对面中心的连线，这一几何特性使得正四面体的对棱距离计算非常简洁。', type: 'conclusion' },
+    ],
+  },
 }
 
 // ── 关键词 → 题型匹配 ────────────────────────────
@@ -241,6 +279,13 @@ function detectProblemType(type, text) {
   if (type === 'pyramid') {
     if (/外接|外切/.test(t)) return 'circumscribed'
     if (/侧面积|侧棱/.test(t)) return 'lateral_area'
+  }
+
+  if (type === 'tetrahedron') {
+    if (/对棱|异面/.test(t)) return 'opposite_edges'
+    if (/内接|内切/.test(t)) return 'inscribed'
+    if (/外接|外切/.test(t)) return 'circumscribed'
+    if (/体积/.test(t)) return 'volume'
   }
 
   // For other types, default template is fine

@@ -115,6 +115,20 @@ export function getVertexAndEdgeInfo(type, params, customVertices, customLabels)
       const labels = customLabels || ['A','B','C','D','E','F','G','H']
       return { vertices: v, edges: e, labels }
     },
+    tetrahedron: () => {
+      // 正四面体 — 4个顶点取自正方体的4个对角顶点
+      // 正方体边长 L = size/√2 → 面对角线 = size
+      const L = size / Math.sqrt(2)  // 外接正方体边长
+      const h = L / 2                 // 半边长
+      const v = [
+        [-h, -h, -h], [ h,  h, -h], [ h, -h,  h], [-h,  h,  h],
+      ]
+      const e = [
+        [0,1],[0,2],[0,3],[1,2],[1,3],[2,3],
+      ]
+      const labels = customLabels || ['A','B','C','D']
+      return { vertices: v, edges: e, labels }
+    },
   }
 
   return maps[type]?.() || { vertices: [], edges: [], labels: [] }
@@ -168,6 +182,18 @@ export function createGeometry(type, params, customVertices) {
       const indices = [
         0,1,4, 1,2,4, 2,3,4, 3,0,4,
         1,0,3, 1,3,2
+      ]
+      return createFromArrays(verts, indices)
+    }
+    case 'tetrahedron': {
+      // 正四面体 — 4个三角形面，6条等长棱
+      const L = size / Math.sqrt(2)  // 外接正方体边长
+      const h = L / 2
+      const verts = [
+        -h,-h,-h,  h, h,-h,  h,-h, h, -h, h, h,
+      ]
+      const indices = [
+        0,1,2, 0,3,1, 0,2,3, 1,3,2,
       ]
       return createFromArrays(verts, indices)
     }
@@ -267,7 +293,7 @@ function getFaceIndices(type) {
 
 // 判断是否为棱柱形几何体（可以单独画棱边）
 export function isPolyhedral(type) {
-  return ['cube', 'prism', 'pyramid', 'squareFrustum', 'cuboid'].includes(type)
+  return ['cube', 'prism', 'pyramid', 'squareFrustum', 'cuboid', 'tetrahedron'].includes(type)
 }
 
 export function calculateVolume(type, params) {
@@ -289,6 +315,7 @@ export function calculateVolume(type, params) {
       return (Math.PI * h / 3) * (R * R + r * r + R * r)
     },
     cuboid: () => size * size * (size * 0.6),  // V = a·b·c
+    tetrahedron: () => Math.pow(size, 3) * Math.SQRT2 / 12,  // V = a³√2/12
   }
   return formulas[type]?.() || 0
 }
@@ -317,6 +344,7 @@ export function calculateSurfaceArea(type, params) {
       const a = size, b = size * 0.6, c = size
       return 2 * (a * b + b * c + a * c)  // S = 2(ab+bc+ac)
     },
+    tetrahedron: () => Math.sqrt(3) * Math.pow(size, 2),  // S = √3·a²
   }
   return formulas[type]?.() || 0
 }

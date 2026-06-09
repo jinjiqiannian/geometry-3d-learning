@@ -108,16 +108,31 @@
 .wp-canvas-mobile {
   width: 100%;
   height: 40vh;
-  min-height: 240px;
+  min-height: 260px;
+  max-height: 50vh;
   position: relative;
   background: var(--bg-deep);
   overflow: hidden;
   flex-shrink: 0;
 }
 
+.wp-canvas-mobile::after {
+  content: '双指缩放 · 单指旋转';
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 10;
+}
+
 .wp-explain-mobile {
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ── Upgrade banner ────────────────────────────────── */

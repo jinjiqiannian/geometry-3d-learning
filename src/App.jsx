@@ -9,6 +9,7 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import PageLayout from './layouts/PageLayout'
 import LandingPage from './pages/LandingPage'
 import ErrorBoundary from './components/ErrorBoundary'
+import ChunkErrorBoundary from './components/ChunkErrorBoundary'
 
 // ── Route-level code splitting ──
 // Three.js, pptExporter, and heavy engines only load when needed
@@ -38,9 +39,11 @@ function PageLoader() {
 function WrappedRoute({ children }) {
   return (
     <ErrorBoundary>
-      <Suspense fallback={<PageLoader />}>
-        {children}
-      </Suspense>
+      <ChunkErrorBoundary>
+        <Suspense fallback={<PageLoader />}>
+          {children}
+        </Suspense>
+      </ChunkErrorBoundary>
     </ErrorBoundary>
   )
 }
@@ -68,7 +71,9 @@ export default function App() {
           <WorkspaceProvider>
             <TeacherProvider>
               <ThemeProvider>
-                <RouterProvider router={router} />
+                <ErrorBoundary>
+                  <RouterProvider router={router} />
+                </ErrorBoundary>
               </ThemeProvider>
             </TeacherProvider>
           </WorkspaceProvider>

@@ -96,6 +96,9 @@ const GEOMETRY_EDGES = {
   cylinder: ["OO'",'h1','h2'],
   cone: ['OP','h1','h2','h3','h4'],
   circularFrustum: ["OO'",'h1','h2','h3','h4'],
+  tetrahedron: [
+    'AB','AC','AD','BC','BD','CD',
+  ],
 }
 
 // ── Keyword patterns for edge extraction ─────────────

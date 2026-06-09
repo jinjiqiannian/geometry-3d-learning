@@ -121,6 +121,21 @@ function GeoIcon({ type }) {
         </svg>
       )
 
+    // ── 正四面体：三角形投影 ──
+    case 'tetrahedron':
+      return (
+        <svg width={s} height={s} viewBox="0 0 28 28">
+          {/* 底面三角形 */}
+          <polygon points="4,22 14,22 24,22" fill="none" stroke={stroke} strokeWidth={sw} opacity="0.3" />
+          {/* 正面三角形 */}
+          <polygon points="4,22 14,22 14,6" fill="none" stroke={stroke} strokeWidth={sw + 0.3} />
+          {/* 右侧面三角形 */}
+          <polygon points="14,22 24,22 14,6" fill="none" stroke={stroke} strokeWidth={sw + 0.2} opacity="0.7" />
+          {/* 左侧面三角形 */}
+          <polygon points="4,22 14,6 24,22" fill="none" stroke={stroke} strokeWidth={sw} opacity="0.4" />
+        </svg>
+      )
+
     default:
       return <svg width={s} height={s} viewBox="0 0 28 28" />
   }

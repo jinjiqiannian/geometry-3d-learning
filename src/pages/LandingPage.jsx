@@ -84,7 +84,16 @@ export default function LandingPage() {
 
   // ── 最近学习记录 ──
   const handleContinue = (item) => {
-    navigate(`/workspace?q=${encodeURIComponent(item.text)}`)
+    // 如果有已保存的步骤，通过 sessionStorage 传递，避免重复 AI 请求
+    if (item.steps && item.steps.length > 0) {
+      try {
+        sessionStorage.setItem('mathviz_replay_steps', JSON.stringify(item.steps))
+        sessionStorage.setItem('mathviz_replay_parsed', JSON.stringify(item.parsedData || null))
+      } catch { /* */ }
+      navigate(`/workspace?q=${encodeURIComponent(item.text)}&replay=1`)
+    } else {
+      navigate(`/workspace?q=${encodeURIComponent(item.text)}`)
+    }
   }
 
   // ── 拍照识别完成 ──

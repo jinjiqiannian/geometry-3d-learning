@@ -43,6 +43,13 @@ function computeCentersFromVertices(type, vertices, defaultPts) {
       c.bottom = avg([0, 1, 2, 3])
       c.top = avg([4, 5, 6, 7])
       break
+    case 'tetrahedron':
+      c.body = avg([0, 1, 2, 3])
+      c.face012 = avg([0, 1, 2])
+      c.face013 = avg([0, 1, 3])
+      c.face023 = avg([0, 2, 3])
+      c.face123 = avg([1, 2, 3])
+      break
     default:
       break
   }
@@ -179,6 +186,35 @@ function getPoints(type, params, customVertices, customLabels) {
       }
       const labels = customLabels || 'ABCDEFGH'.split('')
       return { vertices: v, centers, labels }
+    }
+
+    case 'tetrahedron': {
+      // 正四面体 — 4个顶点取自正方体的4个对角顶点
+      // 正方体边长 L = size/√2
+      const L = size / Math.sqrt(2)
+      const h = L / 2
+      const v = [
+        [-h, -h, -h], [ h,  h, -h], [ h, -h,  h], [-h,  h,  h],
+      ]
+      // 中点
+      const mid01 = [(v[0][0]+v[1][0])/2, (v[0][1]+v[1][1])/2, (v[0][2]+v[1][2])/2]
+      const mid23 = [(v[2][0]+v[3][0])/2, (v[2][1]+v[3][1])/2, (v[2][2]+v[3][2])/2]
+      const mid02 = [(v[0][0]+v[2][0])/2, (v[0][1]+v[2][1])/2, (v[0][2]+v[2][2])/2]
+      const mid13 = [(v[1][0]+v[3][0])/2, (v[1][1]+v[3][1])/2, (v[1][2]+v[3][2])/2]
+      const mid03 = [(v[0][0]+v[3][0])/2, (v[0][1]+v[3][1])/2, (v[0][2]+v[3][2])/2]
+      const mid12 = [(v[1][0]+v[2][0])/2, (v[1][1]+v[2][1])/2, (v[1][2]+v[2][2])/2]
+      // 面重心
+      const face012 = [(v[0][0]+v[1][0]+v[2][0])/3, (v[0][1]+v[1][1]+v[2][1])/3, (v[0][2]+v[1][2]+v[2][2])/3]
+      const face013 = [(v[0][0]+v[1][0]+v[3][0])/3, (v[0][1]+v[1][1]+v[3][1])/3, (v[0][2]+v[1][2]+v[3][2])/3]
+      const face023 = [(v[0][0]+v[2][0]+v[3][0])/3, (v[0][1]+v[2][1]+v[3][1])/3, (v[0][2]+v[2][2]+v[3][2])/3]
+      const face123 = [(v[1][0]+v[2][0]+v[3][0])/3, (v[1][1]+v[2][1]+v[3][1])/3, (v[1][2]+v[2][2]+v[3][2])/3]
+      const c = {
+        body: [0, 0, 0],
+        mid01, mid23, mid02, mid13, mid03, mid12,
+        face012, face013, face023, face123,
+      }
+      const labels = customLabels || 'ABCD'.split('')
+      return { vertices: v, centers: c, labels }
     }
 
     default:
@@ -358,6 +394,24 @@ export function getLineDefinitions(type, params, customVertices, customLabels) {
       def('DE', '面对角线', 3, 4, true); def('AH', '面对角线', 0, 7, true)
       // 高线（底面中心 → 顶面中心）
       def('h', '高线', 'bottom', 'top', true)
+      break
+    }
+
+    // ─── 正四面体（4个顶点，6条等长棱）───
+    case 'tetrahedron': {
+      // 6条棱
+      def('AB', '棱', 0, 1); def('AC', '棱', 0, 2)
+      def('AD', '棱', 0, 3); def('BC', '棱', 1, 2)
+      def('BD', '棱', 1, 3); def('CD', '棱', 2, 3)
+      // 高线（顶点到对面重心）
+      def('hA', '高线', 0, 'face123', true)
+      def('hB', '高线', 1, 'face023', true)
+      def('hC', '高线', 2, 'face013', true)
+      def('hD', '高线', 3, 'face012', true)
+      // 对棱中点连线
+      def('MN', '对棱连线', 'mid01', 'mid23', true)
+      def('PQ', '对棱连线', 'mid02', 'mid13', true)
+      def('RS', '对棱连线', 'mid03', 'mid12', true)
       break
     }
 
