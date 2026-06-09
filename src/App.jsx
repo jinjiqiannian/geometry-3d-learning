@@ -43,8 +43,18 @@ function WrappedRoute({ children }) {
   )
 }
 
-// GitHub Pages 生产环境 base 路径
-const basename = import.meta.env.MODE === 'production' ? '/geometry-3d-learning/' : '/'
+// GitHub Pages / 自定义域名 base 路径
+// - jiheweidu.cn → 自定义域名，根路径
+// - jinjiqiannian.github.io → GitHub Pages 子路径
+// - localhost → 开发环境，根路径
+function getBasename() {
+  if (typeof window === 'undefined') return '/'
+  const host = window.location.hostname
+  if (host === 'jiheweidu.cn' || host === 'localhost' || host === '127.0.0.1') return '/'
+  if (host === 'jinjiqiannian.github.io') return '/geometry-3d-learning/'
+  return '/'
+}
+const basename = getBasename()
 
 const router = createBrowserRouter([
   {
