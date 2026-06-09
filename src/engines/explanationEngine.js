@@ -27,6 +27,48 @@ const TEMPLATES = {
       { step: 4, title: '计算面对角线长度', content: '面对角线 = √(a² + a²) = a√2。', type: 'calculation' },
       { step: 5, title: '得出结论', content: '应用勾股定理：体对角线 = √(长² + 宽² + 高²) = √(a² + a² + a²) = a√3。代入棱长a，即得正方体体对角线的长度。面对角线同理为 a√2。', type: 'conclusion' },
     ],
+    dihedral_angle: [
+      { step: 1, title: '识别几何体与平面', content: '正方体棱长为{size}，确定题目中涉及的两个平面，标记它们的交线。', type: 'observation' },
+      { step: 2, title: '找二面角的棱', content: '两个平面的交线即为二面角的棱。在正方体中，通常是一个对角面与一个底面或侧面的交线。', type: 'observation' },
+      { step: 3, title: '作二面角的平面角', content: '在棱上取一点，分别在两个平面内作棱的垂线，这两条垂线所成的角即为二面角的平面角。', type: 'construction' },
+      { step: 4, title: '计算平面角', content: '利用向量法或坐标法：分别求两个平面的法向量n₁和n₂，二面角余弦 = |n₁·n₂|/(|n₁|·|n₂|)。注意判断锐二面角还是钝二面角。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '二面角的余弦值通过两平面法向量的夹角求得。二面角的大小与平面角的选取有关，结果通常在0°到180°之间。', type: 'conclusion' },
+    ],
+    line_plane_angle: [
+      { step: 1, title: '识别直线与平面', content: '正方体棱长为{size}，确定题目中的直线和平面，找出直线与平面的交点。', type: 'observation' },
+      { step: 2, title: '作投影线', content: '过直线上一点（非交点）作平面的垂线，连接垂足与交点，得到的线段即为直线在平面上的投影。', type: 'construction' },
+      { step: 3, title: '确定线面角', content: '直线与其在平面上的投影所成的锐角，即为线面角。线面角的正弦值 = 直线上一点到平面的距离 / 该点到交点的距离。', type: 'observation' },
+      { step: 4, title: '计算线面角', content: '利用点到平面距离公式和线段长度，sinθ = d/|线段长|。也可用方向向量与法向量：sinθ = |方向向量·法向量|/(|方向向量|·|法向量|)。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '线面角的范围是[0°, 90°]，正弦值等于方向向量与法向量夹角余弦的绝对值。代入具体数值即可求得。', type: 'conclusion' },
+    ],
+    point_plane_distance: [
+      { step: 1, title: '识别点与平面', content: '正方体棱长为{size}，确定目标点和目标平面，建立空间直角坐标系。', type: 'observation' },
+      { step: 2, title: '建立坐标系', content: '以正方体的一个顶点为原点，三条棱为坐标轴建立空间直角坐标系。写出点的坐标和平面的方程。', type: 'construction' },
+      { step: 3, title: '求平面方程', content: '用平面上三点确定平面方程 Ax + By + Cz + D = 0。或用截距式。', type: 'calculation' },
+      { step: 4, title: '代入距离公式', content: '点到平面距离 d = |Ax₀ + By₀ + Cz₀ + D| / √(A² + B² + C²)。代入点的坐标计算。也可用等体积法：点面距离 = 3V/S底。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '使用点到平面距离公式或等体积法求得。等体积法更直观：以目标点为顶点的四面体体积 ÷ 底面面积 = 高。', type: 'conclusion' },
+    ],
+    inscribed: [
+      { step: 1, title: '理解内切关系', content: '正方体棱长为{size}，内切球与正方体的六个面都相切，球心在正方体的中心。', type: 'observation' },
+      { step: 2, title: '确定球心位置', content: '内切球的球心 = 正方体的体心 = 三条体对角线的交点。球心到每个面的距离相等且等于内切球半径。', type: 'observation' },
+      { step: 3, title: '计算内切球半径', content: '正方体内切球半径 r = 棱长/2 = {size}/2。因为球心到面的距离 = 棱长的一半。', type: 'calculation' },
+      { step: 4, title: '计算内切球体积', content: '内切球体积 V = (4/3)πr³，表面积 S = 4πr²。代入 r = {size}/2 即得。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '正方体内切球半径 = a/2，体积 V = (4/3)π(a/2)³ = πa³/6。其表面积 S = 4π(a/2)² = πa²。', type: 'conclusion' },
+    ],
+    circumscribed: [
+      { step: 1, title: '理解外接关系', content: '正方体棱长为{size}，外接球过正方体的8个顶点，球心在正方体的中心。', type: 'observation' },
+      { step: 2, title: '确定球心与半径', content: '外接球的球心 = 正方体的体心。外接球半径 R = 体对角线的一半 = (a√3)/2。', type: 'observation' },
+      { step: 3, title: '计算体对角线', content: '正方体体对角线 = a√3 = {size} × √3。外接球半径 R = (a√3)/2。', type: 'calculation' },
+      { step: 4, title: '计算外接球表面积与体积', content: '外接球体积 V = (4/3)πR³，表面积 S = 4πR²。代入 R = {size}√3/2。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '正方体外接球半径 R = (√3/2)a，体积 V = (4/3)π(√3a/2)³ = (√3π/2)a³，表面积 S = 4π(3a²/4) = 3πa²。', type: 'conclusion' },
+    ],
+    section: [
+      { step: 1, title: '识别截面要求', content: '正方体棱长为{size}，确定截平面经过的顶点或满足的条件。', type: 'observation' },
+      { step: 2, title: '确定截平面', content: '根据给定点确定截平面方程，或作出截平面与正方体各面的交线。', type: 'construction' },
+      { step: 3, title: '分析截面形状', content: '截面可能是三角形、四边形、五边形或六边形。对于过三个顶点的截面，求各边长。', type: 'observation' },
+      { step: 4, title: '计算截面面积', content: '利用截面各顶点的坐标计算边长，再用海伦公式或坐标法计算截面面积。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '截面面积取决于截平面的位置和角度。过正方体对角线的截面积最大。利用空间坐标法可精确计算。', type: 'conclusion' },
+    ],
   },
 
   cuboid: {
@@ -53,6 +95,20 @@ const TEMPLATES = {
       { step: 3, title: '应用球体公式', content: '体积 V = (4/3)πr³，表面积 S = 4πr²。', type: 'calculation' },
       { step: 4, title: '代入计算', content: '将半径值代入公式进行计算。', type: 'calculation' },
       { step: 5, title: '得出结论', content: '代入半径r到公式：体积 V = (4/3)πr³，表面积 S = 4πr²。计算时注意π取近似值3.14，体积和表面积的单位分别为立方单位和平方单位。', type: 'conclusion' },
+    ],
+    inscribed: [
+      { step: 1, title: '理解内接关系', content: '球内接一个正方体，正方体的8个顶点都在球面上，球心即是正方体的体心。', type: 'observation' },
+      { step: 2, title: '建立关系式', content: '设正方体棱长为a，球半径为R。正方体体对角线 = a√3 = 2R（体对角线是球的直径）。', type: 'observation' },
+      { step: 3, title: '求解棱长', content: '由 a√3 = 2R 得 a = 2R/√3。代入已知球半径R即可求得正方体棱长。', type: 'calculation' },
+      { step: 4, title: '验证关系', content: '验证：正方体外接球半径 R = a√3/2，与 a = 2R/√3 一致。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '球内接正方体的棱长 a = 2R/√3。体对角线恰好是球的直径，这一关系是解题的关键。', type: 'conclusion' },
+    ],
+    spherical_cap: [
+      { step: 1, title: '理解球冠', content: '球冠是球体被一个平面截下的一部分。球冠的高h = 球半径R - 球心到截面的距离d。', type: 'observation' },
+      { step: 2, title: '确定球冠参数', content: '已知球半径R和截面到球心的距离d，则球冠的高 h = R - d（若截面不过球心）。', type: 'observation' },
+      { step: 3, title: '应用球冠公式', content: '球冠体积 V = πh²(R - h/3) = πh²(3R-h)/3。也可用 V = πh(3a² + h²)/6，其中a为截面圆半径。', type: 'calculation' },
+      { step: 4, title: '代入计算', content: '将R和h（或d）代入球冠体积公式进行计算。截面圆半径 a = √(R² - d²)。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '球冠体积取决于球半径和冠高。常用公式 V = πh²(R - h/3)。当h=2R时退化为整个球体：V = 4πR³/3。', type: 'conclusion' },
     ],
   },
 
@@ -81,6 +137,20 @@ const TEMPLATES = {
       { step: 4, title: '代入计算', content: '先求母线长 l = √(r² + h²)，再代入体积和表面积公式。', type: 'calculation' },
       { step: 5, title: '得出结论', content: '圆锥体积 V = (1/3)πr²h（等底等高圆柱体积的三分之一），侧面积 S侧 = πrl。先由勾股定理求母线 l = √(r² + h²)，再代入公式即得。', type: 'conclusion' },
     ],
+    generatrix: [
+      { step: 1, title: '识别圆锥参数', content: '圆锥底面半径r，高h，母线l连接顶点与底面圆周上任意一点。', type: 'observation' },
+      { step: 2, title: '理解母线关系', content: '母线l、底面半径r、高h构成直角三角形：l² = r² + h²。', type: 'observation' },
+      { step: 3, title: '计算母线长', content: '母线 l = √(r² + h²)。代入已知的底面半径和高即可求得母线长。', type: 'calculation' },
+      { step: 4, title: '推导其他量', content: '已知母线后可求：侧面积 S侧 = πrl，表面积 S = πr(r+l)，侧面展开图扇形圆心角 θ = 2πr/l × 180°/π。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '母线是圆锥最重要的结构参数之一，通过 l = √(r² + h²) 连接了底面半径和高。', type: 'conclusion' },
+    ],
+    lateral_area: [
+      { step: 1, title: '理解圆锥侧面', content: '圆锥侧面展开是一个扇形，扇形半径 = 母线l，扇形弧长 = 底面周长 = 2πr。', type: 'observation' },
+      { step: 2, title: '计算母线长', content: '先求母线 l = √(r² + h²)。这是计算侧面积的前提。', type: 'calculation' },
+      { step: 3, title: '应用侧面积公式', content: '侧面积 S侧 = πrl（扇形面积 = 1/2 × 弧长 × 半径 = 1/2 × 2πr × l = πrl）。', type: 'calculation' },
+      { step: 4, title: '计算表面积', content: '表面积 S全 = S侧 + S底 = πrl + πr² = πr(l+r)。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '圆锥侧面积 = πrl，表面积 = πr(r+l)。侧面展开扇形的圆心角 θ = (r/l) × 360°。', type: 'conclusion' },
+    ],
   },
 
   pyramid: {
@@ -90,6 +160,20 @@ const TEMPLATES = {
       { step: 3, title: '应用棱锥公式', content: '体积 V = (1/3)×底面积×高 = (1/3)×a²×h。', type: 'calculation' },
       { step: 4, title: '代入计算', content: '将底面边长a和高h代入体积公式 V = (1/3)a²h。', type: 'calculation' },
       { step: 5, title: '得出结论', content: '棱锥体积 = 1/3 × 底面积 × 高 = 1/3 × a² × h。底面积为正方形边长平方，再乘以高的三分之一即得体积。', type: 'conclusion' },
+    ],
+    lateral_area: [
+      { step: 1, title: '识别棱锥结构', content: '正四棱锥底面边长a，侧棱长l，高h。侧面是四个全等的等腰三角形。', type: 'observation' },
+      { step: 2, title: '计算斜高', content: '斜高 h\' = √(l² - (a/2)²)（由侧棱和底边一半构成）。或 h\' = √(h² + (a/2)²)（由高和底边一半构成）。', type: 'calculation' },
+      { step: 3, title: '计算侧面积', content: '侧面积 S侧 = 4 × (1/2 × a × h\') = 2a × h\'。每个侧面三角形面积 = 底×高/2。', type: 'calculation' },
+      { step: 4, title: '计算表面积', content: '表面积 S全 = S侧 + S底 = 2a × h\' + a²。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '正四棱锥的侧面积取决于底面边长和斜高。如果已知侧棱长而非斜高，需先通过直角三角形关系求出斜高。', type: 'conclusion' },
+    ],
+    circumscribed: [
+      { step: 1, title: '理解外接球', content: '正四棱锥外接球的球心在底面中心的正上方（或下方），到所有5个顶点的距离相等。', type: 'observation' },
+      { step: 2, title: '建立方程', content: '设底面中心为O，球心为Q，Q在PO上（P为顶点）。OQ = x，则球半径R满足：R² = x² + (a√2/2)² = (h-x)²。', type: 'construction' },
+      { step: 3, title: '求解球心位置', content: '由 x² + a²/2 = (h-x)² 解得 x = (h² - a²/2)/(2h)。代入求R。', type: 'calculation' },
+      { step: 4, title: '计算外接球半径', content: 'R = √(x² + a²/2)。如果 x < 0，说明球心在底面下方（矮棱锥情况）。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '正四棱锥外接球半径 R = (h² + a²/2)/(2h)（当球心在PO上时）。对于高瘦棱锥，球心在内部；对于矮胖棱锥，球心在底面下方。', type: 'conclusion' },
     ],
   },
 
@@ -130,12 +214,33 @@ function detectProblemType(type, text) {
   const t = text.toLowerCase()
 
   if (type === 'cube') {
+    if (/二面角|dihedral/.test(t)) return 'dihedral_angle'
+    if (/线面角|直线.*平面.*角/.test(t)) return 'line_plane_angle'
+    if (/点.*到.*(平面|面).*距离|等体积法/.test(t)) return 'point_plane_distance'
+    if (/内接|内切/.test(t)) return 'inscribed'
+    if (/外接|外切/.test(t)) return 'circumscribed'
     if (/异面|skew/.test(t)) return 'angle_skew_lines'
+    if (/截面/.test(t)) return 'section'
     if (/对角线|diagonal/.test(t)) return 'diagonal'
   }
 
   if (type === 'cuboid') {
     if (/体对角线|对角线长/.test(t)) return 'diagonal_long'
+  }
+
+  if (type === 'sphere') {
+    if (/内接|内切/.test(t)) return 'inscribed'
+    if (/球冠|crown|spherical cap/.test(t)) return 'spherical_cap'
+  }
+
+  if (type === 'cone') {
+    if (/母线|generatrix/.test(t)) return 'generatrix'
+    if (/侧面积|侧面展开/.test(t)) return 'lateral_area'
+  }
+
+  if (type === 'pyramid') {
+    if (/外接|外切/.test(t)) return 'circumscribed'
+    if (/侧面积|侧棱/.test(t)) return 'lateral_area'
   }
 
   // For other types, default template is fine

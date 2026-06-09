@@ -3,6 +3,9 @@
 // ═══════════════════════════════════════════════════════
 
 export const EXAMPLES = [
+  // ═══════════════════════════════════════════════════════
+  //  必修二 · 正方体/长方体
+  // ═══════════════════════════════════════════════════════
   {
     id: 'ex1',
     title: '正方体异面直线夹角',
@@ -29,6 +32,66 @@ export const EXAMPLES = [
   },
   {
     id: 'ex4',
+    title: '正方体面对角线夹角',
+    category: '必修二',
+    text: '正方体ABCD-A₁B₁C₁D₁棱长为1，求面对角线AC与BC₁所成角的余弦值。',
+    geometryType: 'cube',
+    params: { size: 1 },
+  },
+  {
+    id: 'ex5',
+    title: '正方体二面角',
+    category: '必修二',
+    text: '正方体ABCD-A₁B₁C₁D₁棱长为2，求平面A₁BD与平面ABCD所成二面角的余弦值。',
+    geometryType: 'cube',
+    params: { size: 2 },
+  },
+  {
+    id: 'ex6',
+    title: '正方体线面角',
+    category: '必修二',
+    text: '正方体ABCD-A₁B₁C₁D₁棱长为1，求直线B₁D与平面ABCD所成角的正弦值。',
+    geometryType: 'cube',
+    params: { size: 1 },
+  },
+  {
+    id: 'ex7',
+    title: '正方体点面距离',
+    category: '必修二',
+    text: '正方体ABCD-A₁B₁C₁D₁棱长为2，求点C到平面A₁BD的距离。',
+    geometryType: 'cube',
+    params: { size: 2 },
+  },
+  {
+    id: 'ex8',
+    title: '正方体截面积',
+    category: '必修二',
+    text: '正方体ABCD-A₁B₁C₁D₁棱长为4，过点A、C、D₁作截面，求截面面积。',
+    geometryType: 'cube',
+    params: { size: 4 },
+  },
+  {
+    id: 'ex9',
+    title: '正方体内接球',
+    category: '必修二',
+    text: '正方体棱长为6，求其内切球的半径和体积。',
+    geometryType: 'cube',
+    params: { size: 6 },
+  },
+  {
+    id: 'ex10',
+    title: '正方体外接球',
+    category: '必修二',
+    text: '正方体ABCD-EFGH棱长为3，求其外接球的半径和表面积。',
+    geometryType: 'cube',
+    params: { size: 3 },
+  },
+
+  // ═══════════════════════════════════════════════════════
+  //  必修二 · 棱锥/棱柱
+  // ═══════════════════════════════════════════════════════
+  {
+    id: 'ex11',
     title: '正四棱锥体积',
     category: '必修二',
     text: '正四棱锥P-ABCD，底面正方形边长为4，高为6，求该棱锥的体积。',
@@ -36,7 +99,43 @@ export const EXAMPLES = [
     params: { size: 4 },
   },
   {
-    id: 'ex5',
+    id: 'ex12',
+    title: '正四棱锥侧面积',
+    category: '必修二',
+    text: '正四棱锥P-ABCD，底面边长2，侧棱长3，求侧面积。',
+    geometryType: 'pyramid',
+    params: { size: 2 },
+  },
+  {
+    id: 'ex13',
+    title: '正四棱锥斜高',
+    category: '必修二',
+    text: '正四棱锥底面边长为6，高为4，求斜高和侧棱长。',
+    geometryType: 'pyramid',
+    params: { size: 6 },
+  },
+  {
+    id: 'ex14',
+    title: '三棱柱体积',
+    category: '必修二',
+    text: '正三棱柱ABC-A\'B\'C\'底面边长为2，侧棱长为3，求该三棱柱的体积。',
+    geometryType: 'prism',
+    params: { size: 2 },
+  },
+  {
+    id: 'ex15',
+    title: '三棱柱侧棱与底面夹角',
+    category: '必修二',
+    text: '三棱柱ABC-A\'B\'C\'中，底面是边长为1的正三角形，侧棱长为2，求侧棱与底面所成角。',
+    geometryType: 'prism',
+    params: { size: 1 },
+  },
+
+  // ═══════════════════════════════════════════════════════
+  //  必修二 · 旋转体
+  // ═══════════════════════════════════════════════════════
+  {
+    id: 'ex16',
     title: '圆柱截面面积',
     category: '必修二',
     text: '圆柱底面半径为2，高为4，过上下底面圆心作轴截面，求截面面积。',
@@ -44,7 +143,15 @@ export const EXAMPLES = [
     params: { size: 2 },
   },
   {
-    id: 'ex6',
+    id: 'ex17',
+    title: '圆柱侧面积与体积',
+    category: '必修二',
+    text: '圆柱底面半径为5，高为10，求圆柱的侧面积和体积。',
+    geometryType: 'cylinder',
+    params: { size: 5 },
+  },
+  {
+    id: 'ex18',
     title: '球体体积与表面积',
     category: '必修二',
     text: '已知球体半径为3，求它的体积和表面积。',
@@ -52,7 +159,59 @@ export const EXAMPLES = [
     params: { size: 3 },
   },
   {
-    id: 'ex7',
+    id: 'ex19',
+    title: '球体内接正方体',
+    category: '必修二',
+    text: '球体内接一个正方体，球半径为3，求正方体的棱长。',
+    geometryType: 'sphere',
+    params: { size: 3 },
+  },
+  {
+    id: 'ex20',
+    title: '圆锥体积与母线',
+    category: '必修二',
+    text: '圆锥底面半径为3，高为4，求圆锥的体积和母线长度。',
+    geometryType: 'cone',
+    params: { size: 3 },
+  },
+  {
+    id: 'ex21',
+    title: '圆锥侧面积',
+    category: '必修二',
+    text: '圆锥底面半径为6，母线长为10，求圆锥的侧面积和表面积。',
+    geometryType: 'cone',
+    params: { size: 6 },
+  },
+  {
+    id: 'ex22',
+    title: '圆锥侧面展开图',
+    category: '必修二',
+    text: '圆锥底面半径为2，母线长为6，求侧面展开图扇形的圆心角。',
+    geometryType: 'cone',
+    params: { size: 2 },
+  },
+  {
+    id: 'ex23',
+    title: '圆台体积',
+    category: '必修二',
+    text: '圆台上底面半径3，下底面半径5，高为4，求圆台的体积。',
+    geometryType: 'circularFrustum',
+    params: { size: 5 },
+  },
+  {
+    id: 'ex24',
+    title: '圆台母线',
+    category: '必修二',
+    text: '圆台上底面半径2，下底面半径6，高为3，求圆台的母线长。',
+    geometryType: 'circularFrustum',
+    params: { size: 6 },
+  },
+
+  // ═══════════════════════════════════════════════════════
+  //  拓展 · 综合题型
+  // ═══════════════════════════════════════════════════════
+  {
+    id: 'ex25',
     title: '四棱台体积',
     category: '拓展',
     text: '四棱台上底面边长2，下底面边长4，高为3，求该棱台的体积。',
@@ -60,12 +219,60 @@ export const EXAMPLES = [
     params: { size: 4 },
   },
   {
-    id: 'ex8',
-    title: '圆锥体积与母线',
-    category: '必修二',
-    text: '圆锥底面半径为3，高为4，求圆锥的体积和母线长度。',
+    id: 'ex26',
+    title: '长方体面对角线',
+    category: '拓展',
+    text: '长方体ABCD-A₁B₁C₁D₁中，AB=3，BC=4，AA₁=5，求面对角线A₁C₁的长度。',
+    geometryType: 'cuboid',
+    params: { size: 5 },
+  },
+  {
+    id: 'ex27',
+    title: '正方体两平面夹角',
+    category: '拓展',
+    text: '正方体ABCD-A₁B₁C₁D₁棱长为1，求平面AB₁D₁与平面A₁BC₁的夹角余弦值。',
+    geometryType: 'cube',
+    params: { size: 1 },
+  },
+  {
+    id: 'ex28',
+    title: '圆锥内接球',
+    category: '拓展',
+    text: '圆锥底面半径为4，高为3，在其内部放置一个最大的球，求球的半径。',
     geometryType: 'cone',
-    params: { size: 3 },
+    params: { size: 4 },
+  },
+  {
+    id: 'ex29',
+    title: '圆柱内接长方体',
+    category: '拓展',
+    text: '圆柱底面半径为5，高为8，求其内接长方体的最大体积。',
+    geometryType: 'cylinder',
+    params: { size: 5 },
+  },
+  {
+    id: 'ex30',
+    title: '正四棱锥外接球',
+    category: '拓展',
+    text: '正四棱锥P-ABCD底面边长为2，高为3，求其外接球的半径。',
+    geometryType: 'pyramid',
+    params: { size: 2 },
+  },
+  {
+    id: 'ex31',
+    title: '正方体截面周长',
+    category: '拓展',
+    text: '正方体ABCD-A₁B₁C₁D₁棱长为4，过A₁、B、D三点作截面，求截面三角形的周长。',
+    geometryType: 'cube',
+    params: { size: 4 },
+  },
+  {
+    id: 'ex32',
+    title: '球冠体积',
+    category: '拓展',
+    text: '球体半径为5，用一个距球心3的平面截球，求球冠的体积。',
+    geometryType: 'sphere',
+    params: { size: 5 },
   },
 ]
 

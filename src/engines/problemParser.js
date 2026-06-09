@@ -254,12 +254,20 @@ export function quickMatch(text) {
 
   // ── 检测问题子类型 ──
   function detectSubType(text, type) {
+    if (/二面角|dihedral/.test(text)) return 'dihedral_angle'
+    if (/线面角|直线.*(?:与|和).*(?:平面|面).*(?:所成|的)角/.test(text)) return 'line_plane_angle'
     if (/异面|skew|异面直线/.test(text) && type === 'cube') return 'skew_lines'
+    if (/点.*到.*(?:平面|面).*距离|等体积法/.test(text)) return 'point_plane_distance'
     if (/对角线|diagonal/.test(text) && (type === 'cube' || type === 'cuboid')) return 'diagonal'
+    if (/内接|内切|inscribed/.test(text)) return 'inscribed'
+    if (/外接|外切|circumscribed/.test(text)) return 'circumscribed'
     if (/体积|volume/.test(text)) return 'volume'
     if (/截面|section/.test(text)) return 'section'
-    if (/内接|inscribed/.test(text)) return 'inscribed'
+    if (/侧面积|侧面展开/.test(text)) return 'lateral_area'
+    if (/母线|generatrix/.test(text)) return 'generatrix'
     if (/表面[积积]|表面|面积/.test(text)) return 'surface_area'
+    if (/球冠|crown|spherical cap/.test(text)) return 'spherical_cap'
+    if (/对棱/.test(text)) return 'opposite_edges'
     return 'general'
   }
 
@@ -516,5 +524,37 @@ export const EXAMPLE_PROBLEMS = [
   {
     title: '圆锥母线',
     text: '圆锥的底面半径为3，高为4，求母线长。',
+  },
+  {
+    title: '异面直线夹角',
+    text: '正方体ABCD-A₁B₁C₁D₁棱长为2，求异面直线A₁B与B₁C所成角的余弦值。',
+  },
+  {
+    title: '二面角',
+    text: '正方体ABCD-A₁B₁C₁D₁棱长为2，求平面A₁BD与平面ABCD所成二面角的余弦值。',
+  },
+  {
+    title: '线面角',
+    text: '正方体ABCD-A₁B₁C₁D₁棱长为1，求直线B₁D与平面ABCD所成角的正弦值。',
+  },
+  {
+    title: '点面距离',
+    text: '正方体ABCD-A₁B₁C₁D₁棱长为2，求点C到平面A₁BD的距离。',
+  },
+  {
+    title: '外接球',
+    text: '正方体ABCD-EFGH棱长为3，求其外接球的半径和表面积。',
+  },
+  {
+    title: '内切球',
+    text: '正方体棱长为6，求其内切球的半径和体积。',
+  },
+  {
+    title: '圆台体积',
+    text: '圆台上底面半径3，下底面半径5，高为4，求圆台的体积。',
+  },
+  {
+    title: '球冠体积',
+    text: '球体半径为5，用一个距球心3的平面截球，求球冠的体积。',
   },
 ]

@@ -29,6 +29,9 @@ export const CAMERA_PRESETS = {
   apex:         [0, 5, 1.5],
   closeUp:      [2.5, 2, 3.5],
   bottomUp:     [0, -3, 2],
+  corner:       [3.5, 2.5, 4.5],   // 角点视角 — 适合二面角
+  section:      [2, 1.5, 5],        // 截面正对视角
+  projection:   [1, 3, 5],          // 投影视角 — 适合线面角
 }
 
 // ── Step type → visual defaults ──────────────────────
@@ -568,6 +571,26 @@ function determineCameraPreset(step, parsedData, geoType, highlightEdgeIds, prob
   // Skew lines → diagonal for 3D perspective
   if (SKEW_KEYWORDS.test(searchText)) {
     return 'diagonal'
+  }
+
+  // Dihedral angle → corner view to see both planes clearly
+  if (/二面角|dihedral/.test(searchText)) {
+    return 'corner'
+  }
+
+  // Line-plane angle → projection view
+  if (/线面角|投影/.test(searchText)) {
+    return 'projection'
+  }
+
+  // Point-plane distance → side view for perpendicular
+  if (/点.*到.*(平面|面).*距离|等体积法/.test(searchText)) {
+    return 'side'
+  }
+
+  // Inscribed/circumscribed sphere → overview for spatial relationship
+  if (/内接|外接|内切|外切/.test(searchText)) {
+    return 'overview'
   }
 
   // Specific calculation → close up

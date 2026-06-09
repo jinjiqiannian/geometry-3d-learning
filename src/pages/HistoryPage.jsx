@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { GEOMETRY_NAMES } from '../constants'
 import './HistoryPage.css'
+
+const ALL_TYPES = '全部类型'
 
 export default function HistoryPage() {
   const navigate = useNavigate()
   const [history, setHistory] = useState([])
+  const [filterType, setFilterType] = useState(ALL_TYPES)
+  const [deleteConfirm, setDeleteConfirm] = useState(null) // index of item to delete
 
   useEffect(() => {
     try {
@@ -51,8 +56,25 @@ export default function HistoryPage() {
     } catch { /* */ }
   }
 
+  const handleDeleteOne = (index) => {
+    try {
+      const updated = history.filter((_, i) => i !== index)
+      localStorage.setItem('mathviz_history', JSON.stringify(updated))
+      setHistory(updated)
+      setDeleteConfirm(null)
+    } catch { /* */ }
+  }
+
+  // ── 提取所有出现过的类型 ──
+  const availableTypes = [...new Set(history.map(item => item.type || '其他'))]
+
+  // ── 按类型筛选 ──
+  const filtered = filterType === ALL_TYPES
+    ? history
+    : history.filter(item => (item.type || '其他') === filterType)
+
   // 按日期分组
-  const grouped = history.reduce((groups, item) => {
+  const grouped = filtered.reduce((groups, item) => {
     const dateKey = formatDate(item.date)
     if (!groups[dateKey]) groups[dateKey] = []
     groups[dateKey].push(item)
@@ -64,45 +86,91 @@ export default function HistoryPage() {
       <div className="history-header">
         <Link to="/" className="history-back">← 返回首页</Link>
         <h1 className="history-title">学习记录</h1>
-        {history.length > 0 && (
-          <button className="history-clear" onClick={handleClear}>
-            清空记录
-          </button>
-        )}
+        <div className="history-header-actions">
+          {availableTypes.length > 1 && (
+            <select
+              className="history-filter"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+            >
+              <option value={ALL_TYPES}>{ALL_TYPES}（{history.length}）</option>
+              {availableTypes.map(t => (
+                <option key={t} value={t}>
+                  {GEOMETRY_NAMES[t] || t}（{history.filter(item => (item.type || '其他') === t).length}）
+                </option>
+              ))}
+            </select>
+          )}
+          {history.length > 0 && (
+            <button className="history-clear" onClick={handleClear}>
+              清空全部
+            </button>
+          )}
+        </div>
       </div>
 
-      {history.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="history-empty">
           <div className="history-empty-icon">◈</div>
-          <h2 className="history-empty-title">暂无学习记录</h2>
-          <p className="history-empty-desc">开始解一道几何题，记录会自动保存</p>
+          <h2 className="history-empty-title">
+            {history.length === 0 ? '暂无学习记录' : '没有匹配的记录'}
+          </h2>
+          <p className="history-empty-desc">
+            {history.length === 0 ? '开始解一道几何题，记录会自动保存' : '尝试切换筛选类型'}
+          </p>
           <Link to="/" className="history-empty-cta">开始解题</Link>
         </div>
       ) : (
         <div className="history-list">
           {Object.entries(grouped).map(([dateLabel, items]) => (
             <div key={dateLabel} className="history-group">
-              <div className="history-group-label">{dateLabel}</div>
-              {items.map((item, i) => (
-                <button
-                  key={i}
-                  className="history-item"
-                  onClick={() => handleContinue(item)}
-                >
-                  <div className="history-item-main">
-                    <span className="history-item-time">{formatTime(item.date)}</span>
-                    <div className="history-item-content">
-                      <span className="history-item-type">
-                        {item.type || '立体几何'}
-                      </span>
-                      <span className="history-item-text">
-                        {item.text?.slice(0, 80)}{item.text?.length > 80 ? '…' : ''}
-                      </span>
-                    </div>
+              <div className="history-group-label">
+                {dateLabel}
+                <span className="history-group-count">{items.length} 题</span>
+              </div>
+              {items.map((item, groupIdx) => {
+                const globalIdx = history.indexOf(item)
+                return (
+                  <div key={groupIdx} className="history-item-wrap">
+                    <button
+                      className="history-item"
+                      onClick={() => handleContinue(item)}
+                    >
+                      <div className="history-item-main">
+                        <span className="history-item-time">{formatTime(item.date)}</span>
+                        <div className="history-item-content">
+                          <span className="history-item-type">
+                            {GEOMETRY_NAMES[item.type] || item.type || '立体几何'}
+                            {item.steps?.length > 0 && (
+                              <span className="history-item-badge">可回放</span>
+                            )}
+                          </span>
+                          <span className="history-item-text">
+                            {item.text?.slice(0, 80)}{item.text?.length > 80 ? '…' : ''}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="history-item-arrow">→</span>
+                    </button>
+                    <button
+                      className="history-item-delete"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (deleteConfirm === globalIdx) {
+                          handleDeleteOne(globalIdx)
+                        } else {
+                          setDeleteConfirm(globalIdx)
+                          // 3秒后自动取消确认
+                          setTimeout(() => setDeleteConfirm(null), 3000)
+                        }
+                      }}
+                      title={deleteConfirm === globalIdx ? '确认删除' : '删除此记录'}
+                    >
+                      {deleteConfirm === globalIdx ? '确认?' : '×'}
+                    </button>
                   </div>
-                  <span className="history-item-arrow">→</span>
-                </button>
-              ))}
+                )
+              })}
             </div>
           ))}
         </div>
