@@ -135,7 +135,7 @@ aiRouter.post(
   async (req: Request, res: Response) => {
     try {
       const body = parseSchema.parse(req.body)
-      const plan = req.userPlan || 'free'
+      const plan = req.userPlan || 'pro'     // 临时：未登录用户也走 AI
 
       const solution = await aiService.solveComplete(body.problemText, plan, req.userId)
 
