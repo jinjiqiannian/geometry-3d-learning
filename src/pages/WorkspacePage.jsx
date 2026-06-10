@@ -655,6 +655,7 @@ export default function WorkspacePage() {
                   nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
                   vertexLabels={vertexLabels}
                   cameraResetKey={cameraResetKey}
+                  sphereOverlay={visualIntent?.sphereOverlay || null}
                 />
               </Canvas>
               <GeometryMiniControls
@@ -740,6 +741,7 @@ export default function WorkspacePage() {
                 faceOpacity={visualIntent?.faceOpacity ?? 0.42}
                 nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
                 vertexLabels={vertexLabels}
+                sphereOverlay={visualIntent?.sphereOverlay || null}
               />
             </Canvas>
             <GeometryMiniControls

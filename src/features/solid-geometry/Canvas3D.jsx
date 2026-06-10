@@ -122,6 +122,8 @@ export default function Canvas3D({
   vertexLabels = null,
   // ── 相机重置 ──
   cameraResetKey = 0,
+  // ── 球体叠加（内接球/外接球） ──
+  sphereOverlay = null,
 }) {
   const { type, params } = geometry
   const size = params.size ?? 2
@@ -399,6 +401,20 @@ export default function Canvas3D({
         <mesh>
           <primitive attach="geometry" object={geoData} />
           <meshBasicMaterial color="#d0d0d8" transparent opacity={faceOpacity} depthWrite={false} side={THREE.DoubleSide} />
+        </mesh>
+      )}
+
+      {/* ── 球体叠加（内接球/外接球） ── */}
+      {sphereOverlay && (
+        <mesh>
+          <sphereGeometry args={[sphereOverlay.radius, 64, 32]} />
+          <meshBasicMaterial
+            color={sphereOverlay.color || '#4A90E2'}
+            transparent
+            opacity={sphereOverlay.opacity ?? 0.15}
+            depthWrite={false}
+            wireframe={sphereOverlay.wireframe !== false}
+          />
         </mesh>
       )}
 
