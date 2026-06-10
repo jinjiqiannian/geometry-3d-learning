@@ -9,6 +9,33 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="几何维度" />
+
+    <!-- ══════════════════════════════════════════════
+         Security headers (GitHub Pages can't set HTTP headers,
+         so we use <meta> equivalents where supported)
+         ══════════════════════════════════════════════ -->
+
+    <!-- Content Security Policy — prevents XSS, data injection -->
+    <meta http-equiv="Content-Security-Policy"
+          content="
+            default-src 'self';
+            script-src 'self' 'unsafe-inline' https://bhoqcvrqnuujhbortmmn.supabase.co https://js.stripe.com;
+            style-src 'self' 'unsafe-inline';
+            img-src 'self' data: blob: https:;
+            font-src 'self';
+            connect-src 'self' https://bhoqcvrqnuujhbortmmn.supabase.co https://api.stripe.com wss://bhoqcvrqnuujhbortmmn.supabase.co;
+            frame-src 'self' https://js.stripe.com https://hooks.stripe.com;
+            form-action 'self';
+            base-uri 'self';
+            object-src 'none';
+          " />
+
+    <!-- Prevent MIME-type sniffing -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+
+    <!-- Restrict referrer information -->
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='6' y='4' width='16' height='16' fill='none' stroke='%234A90E2' stroke-width='2' opacity='0.5'/><rect x='10' y='8' width='16' height='16' fill='none' stroke='%234A90E2' stroke-width='2.5'/><line x1='6' y1='4' x2='10' y2='8' stroke='%234A90E2' stroke-width='1.5'/><line x1='22' y1='4' x2='26' y2='8' stroke='%234A90E2' stroke-width='1.5'/><line x1='6' y1='20' x2='10' y2='24' stroke='%234A90E2' stroke-width='1.5'/><line x1='22' y1='20' x2='26' y2='24' stroke='%234A90E2' stroke-width='1.5'/></svg>" />
     <style>
       /* ══════════════════════════════════════════════════
