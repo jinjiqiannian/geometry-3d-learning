@@ -38,17 +38,21 @@ export default function AppNavigation() {
           几何维度
         </Link>
 
-        <div className="app-nav-links">
-          {NAV_ITEMS.map(item => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`app-nav-link ${isActive(item.path) ? 'active' : ''}`}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
+        <nav className="app-nav-links" aria-label="主导航">
+          {NAV_ITEMS.map(item => {
+            const active = isActive(item.path)
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`app-nav-link ${active ? 'active' : ''}`}
+                aria-current={active ? 'page' : undefined}
+              >
+                {item.label}
+              </Link>
+            )
+          })}
+        </nav>
       </div>
 
       <div className="app-nav-right">

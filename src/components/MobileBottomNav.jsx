@@ -63,7 +63,7 @@ export default function MobileBottomNav() {
   }
 
   return (
-    <nav className="mobile-bottom-nav">
+    <nav className="mobile-bottom-nav" aria-label="底部导航">
       {NAV_ITEMS.map(item => {
         const active = isActive(item.path)
         const Icon = item.icon
@@ -72,6 +72,8 @@ export default function MobileBottomNav() {
             key={item.path}
             to={item.path}
             className={`mb-nav-item ${active ? 'active' : ''}`}
+            aria-label={item.label}
+            aria-current={active ? 'page' : undefined}
           >
             <Icon active={active} />
             <span className="mb-nav-label">{item.label}</span>

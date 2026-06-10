@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { useSupabase } from '../contexts/SupabaseContext'
 import { PRICING_PLANS } from '../constants'
@@ -11,6 +11,14 @@ export default function PaywallModal() {
   const { showPaywall, setShowPaywall, paywallReason, initiateUpgrade, remaining } = useSubscription()
   const { user } = useSupabase()
   const [yearly, setYearly] = useState(false)
+
+  // Escape key to close
+  useEffect(() => {
+    if (!showPaywall) return
+    const onKey = (e) => { if (e.key === 'Escape') setShowPaywall(false) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [showPaywall, setShowPaywall])
 
   if (!showPaywall) return null
 

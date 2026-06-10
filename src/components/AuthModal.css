@@ -262,6 +262,44 @@
   margin-top: 16px;
 }
 
+/* ── 验证码输入 ── */
+.auth-code-input {
+  text-align: center;
+  font-size: var(--text-xl) !important;
+  font-weight: 600;
+  letter-spacing: 12px;
+  font-family: "SF Mono", "Consolas", "Courier New", monospace;
+}
+
+.auth-link-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 8px;
+  font-family: inherit;
+  transition: color var(--transition-fast);
+}
+
+.auth-link-btn:hover:not(:disabled) {
+  color: var(--text-secondary);
+}
+
+.auth-link-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.auth-check-badge {
+  display: inline-block;
+  font-size: var(--text-xs);
+  color: var(--color-success);
+  background: rgba(86, 204, 73, 0.1);
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
 @keyframes authFadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes authSlideUp {
   from { opacity: 0; transform: translateY(16px) scale(0.98); }

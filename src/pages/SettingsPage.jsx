@@ -307,7 +307,10 @@ export default function SettingsPage() {
                       localStorage.removeItem(STORAGE_KEYS.openaiApiKey)
                       setApiKey('')
                       window.location.reload()
-                    } catch { /* */ }
+                    } catch (err) {
+                      console.warn('SettingsPage: Failed to clear local data', err)
+                      alert('清除失败，请手动清理浏览器数据。')
+                    }
                   }
                 }}
               >

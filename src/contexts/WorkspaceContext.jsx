@@ -6,7 +6,7 @@ const WorkspaceContext = createContext(null)
 
 export function WorkspaceProvider({ children }) {
   const { supabase, user, connected } = useSupabase()
-  const { checkCanGenerate, checkCanAiExplain, recordUsage, apiKey } = { checkCanGenerate: () => true, recordUsage: () => {}, apiKey: '' }
+  const { checkCanGenerate, checkCanAiExplain, recordUsage } = useSubscription()
 
   const [workspace, setWorkspace] = useState({
     id: null,
@@ -156,7 +156,9 @@ export function WorkspaceProvider({ children }) {
         const saved = JSON.parse(localStorage.getItem('mathviz_workspaces') || '[]')
         saved.unshift({ ...workspace, savedAt: new Date().toISOString() })
         localStorage.setItem('mathviz_workspaces', JSON.stringify(saved.slice(0, 20)))
-      } catch { /* */ }
+      } catch (err) {
+        console.warn('WorkspaceContext: Failed to save workspace to localStorage', err)
+      }
       return
     }
 

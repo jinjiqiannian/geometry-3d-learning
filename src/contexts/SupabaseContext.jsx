@@ -101,7 +101,8 @@ export function SupabaseProvider({ children }) {
         displayName: data?.full_name || authUser?.user_metadata?.display_name || '',
       }
       setProfile(enriched)
-    } catch {
+    } catch (err) {
+      console.warn('SupabaseContext: Profile fetch failed, attempting upsert', err.message)
       // Profile may not exist yet — trigger creation
       try {
         const userData = authUser || {}

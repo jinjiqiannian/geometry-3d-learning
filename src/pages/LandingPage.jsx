@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAppContext } from '../contexts/AppContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { EXAMPLES, GEOMETRY_NAMES } from '../constants'
 import { recommendProblems } from '../engines/difficultyEngine'

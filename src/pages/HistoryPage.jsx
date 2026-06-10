@@ -15,7 +15,9 @@ export default function HistoryPage() {
     try {
       const saved = JSON.parse(localStorage.getItem('mathviz_history') || '[]')
       setHistory(saved)
-    } catch { /* */ }
+    } catch (err) {
+      console.warn('HistoryPage: Failed to load history from localStorage', err)
+    }
   }, [])
 
   const formatDate = (dateStr) => {
@@ -42,7 +44,9 @@ export default function HistoryPage() {
       try {
         sessionStorage.setItem('mathviz_replay_steps', JSON.stringify(item.steps))
         sessionStorage.setItem('mathviz_replay_parsed', JSON.stringify(item.parsedData || null))
-      } catch { /* */ }
+      } catch (err) {
+        console.warn('HistoryPage: Failed to save replay to sessionStorage', err)
+      }
       navigate(`/workspace?q=${encodeURIComponent(item.text)}&replay=1`)
     } else {
       navigate(`/workspace?q=${encodeURIComponent(item.text)}`)
@@ -53,7 +57,9 @@ export default function HistoryPage() {
     try {
       localStorage.removeItem('mathviz_history')
       setHistory([])
-    } catch { /* */ }
+    } catch (err) {
+      console.warn('HistoryPage: Failed to clear history', err)
+    }
   }
 
   const handleDeleteOne = (index) => {
@@ -62,7 +68,9 @@ export default function HistoryPage() {
       localStorage.setItem('mathviz_history', JSON.stringify(updated))
       setHistory(updated)
       setDeleteConfirm(null)
-    } catch { /* */ }
+    } catch (err) {
+      console.warn('HistoryPage: Failed to delete history item', err)
+    }
   }
 
   // ── 提取所有出现过的类型 ──

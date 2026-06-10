@@ -165,12 +165,18 @@ export function SubscriptionProvider({ children }) {
     }
 
     const priceMap = {
-      'pro_monthly': import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY || 'pro_monthly',
-      'pro_yearly': import.meta.env.VITE_STRIPE_PRICE_PRO_YEARLY || 'pro_yearly',
-      'teacher_monthly': import.meta.env.VITE_STRIPE_PRICE_TEACHER_MONTHLY || 'teacher_monthly',
-      'teacher_yearly': import.meta.env.VITE_STRIPE_PRICE_TEACHER_YEARLY || 'teacher_yearly',
+      'pro_monthly': import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY,
+      'pro_yearly': import.meta.env.VITE_STRIPE_PRICE_PRO_YEARLY,
+      'teacher_monthly': import.meta.env.VITE_STRIPE_PRICE_TEACHER_MONTHLY,
+      'teacher_yearly': import.meta.env.VITE_STRIPE_PRICE_TEACHER_YEARLY,
     }
     const priceId = priceMap[`${targetPlan}_${interval}`]
+
+    // Validate that actual Stripe price IDs are configured
+    if (!priceId || !priceId.startsWith('price_')) {
+      console.warn('Stripe price IDs not configured — upgrade disabled')
+      return { needsConfig: true, message: '支付功能尚未配置，请联系管理员。' }
+    }
 
     const { data, error } = await supabase.functions.invoke('stripe-checkout', {
       body: {

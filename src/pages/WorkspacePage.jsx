@@ -64,13 +64,25 @@ export default function WorkspacePage() {
   const [shareToast, setShareToast] = useState('')
 
   // ── Mobile ──────────────────────────────────────
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 767)
+  // Debounced resize to prevent Canvas remount on orientation change
+  const [isMobile, setIsMobile] = useState(() => {
+    try { return window.innerWidth <= 767 } catch { return false }
+  })
   const [show3D, setShow3D] = useState(true)
 
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth <= 767)
+    let timer = null
+    const onResize = () => {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        setIsMobile(window.innerWidth <= 767)
+      }, 500)
+    }
     window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      clearTimeout(timer)
+    }
   }, [])
 
   // ── Auto-parse from URL query / share link ────────
@@ -244,7 +256,9 @@ export default function WorkspacePage() {
         // 最多保存 50 条
         if (saved.length > 50) saved.length = 50
         localStorage.setItem('mathviz_history', JSON.stringify(saved))
-      } catch { /* */ }
+      } catch (err) {
+        console.warn('WorkspacePage: Failed to save parse result to history', err)
+      }
 
       // 短暂延迟让"构建3D可视化"阶段真实可见
       await new Promise(r => setTimeout(r, 350))
@@ -293,8 +307,13 @@ export default function WorkspacePage() {
           })
           if (saved.length > 50) saved.length = 50
           localStorage.setItem('mathviz_history', JSON.stringify(saved))
-        } catch { /* */ }
-      } catch { /* */ }
+        } catch (err) {
+          console.warn('WorkspacePage: Failed to save fallback result to history', err)
+        }
+      } catch (fallbackErr) {
+        console.warn('WorkspacePage: Fallback parse also failed', fallbackErr)
+        setError('题目解析失败，请尝试不同的描述方式。')
+      }
     } finally {
       setLoading(false)
       setLoadingStage('idle')
