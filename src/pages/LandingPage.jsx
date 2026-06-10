@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../contexts/AppContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
-import { EXAMPLES } from '../constants'
+import { EXAMPLES, GEOMETRY_NAMES } from '../constants'
 import { recommendProblems } from '../engines/difficultyEngine'
 import CameraCapture from '../features/solid-geometry/CameraCapture'
 import './LandingPage.css'
@@ -20,6 +20,10 @@ function GeometryLogo() {
   )
 }
 
+// ── 从 EXAMPLES 提取分类和类型 ──
+const ALL_CATEGORIES = ['全部', ...new Set(EXAMPLES.map(e => e.category))]
+const ALL_GEOMETRY_TYPES = [...new Set(EXAMPLES.map(e => e.geometryType))]
+
 export default function LandingPage() {
   const navigate = useNavigate()
   const { isPro } = useSubscription()
@@ -36,6 +40,11 @@ export default function LandingPage() {
     catch { /* */ }
   }, [])
 
+  // ── 筛选状态 ──
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeCategory, setActiveCategory] = useState('全部')
+  const [activeGeoType, setActiveGeoType] = useState(null) // null = 全部类型
+
   // ── 历史记录（localStorage） ──
   const [history, setHistory] = useState([])
   const [recommended, setRecommended] = useState(null)
@@ -44,7 +53,6 @@ export default function LandingPage() {
     try {
       const saved = JSON.parse(localStorage.getItem('mathviz_history') || '[]')
       setHistory(saved.slice(0, 5))
-      // 自适应推荐
       if (saved.length > 0) {
         const recs = recommendProblems(saved)
         setRecommended(recs)
@@ -52,15 +60,40 @@ export default function LandingPage() {
     } catch { /* */ }
   }, [])
 
+  // ── 过滤例题 ──
+  const filteredExamples = useMemo(() => {
+    let results = EXAMPLES
+
+    // 分类筛选
+    if (activeCategory !== '全部') {
+      results = results.filter(e => e.category === activeCategory)
+    }
+
+    // 几何体类型筛选
+    if (activeGeoType) {
+      results = results.filter(e => e.geometryType === activeGeoType)
+    }
+
+    // 搜索筛选
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase()
+      results = results.filter(e =>
+        e.title.toLowerCase().includes(q) ||
+        e.text.toLowerCase().includes(q) ||
+        e.category.toLowerCase().includes(q) ||
+        (GEOMETRY_NAMES[e.geometryType] || '').includes(q)
+      )
+    }
+
+    return results
+  }, [searchQuery, activeCategory, activeGeoType])
+
   // ── Handle generate ──
   const handleGenerate = useCallback(async (text) => {
     const trimmed = text.trim()
     if (trimmed.length < 3) return
-
     setLoading(true)
     setError(null)
-
-    // 导航到工作台，附带题目
     navigate(`/workspace?q=${encodeURIComponent(trimmed)}`)
   }, [navigate])
 
@@ -84,7 +117,6 @@ export default function LandingPage() {
 
   // ── 最近学习记录 ──
   const handleContinue = (item) => {
-    // 如果有已保存的步骤，通过 sessionStorage 传递，避免重复 AI 请求
     if (item.steps && item.steps.length > 0) {
       try {
         sessionStorage.setItem('mathviz_replay_steps', JSON.stringify(item.steps))
@@ -189,24 +221,94 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── 热门例题 ──────────────────────────── */}
+      {/* ── 例题浏览器 ──────────────────────────── */}
       <section className="landing-section">
         <div className="landing-section-header">
-          <h2 className="landing-section-title">热门例题</h2>
+          <h2 className="landing-section-title">例题浏览</h2>
+          <span className="landing-section-count">{filteredExamples.length} 道</span>
         </div>
-        <div className="landing-examples-grid">
-          {EXAMPLES.slice(0, 6).map((ex) => (
+
+        {/* ── 搜索 + 筛选栏 ── */}
+        <div className="landing-filter-bar">
+          {/* 搜索框 */}
+          <div className="landing-search-wrap">
+            <svg className="landing-search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
+              <circle cx="7" cy="7" r="5.5" />
+              <line x1="11" y1="11" x2="14" y2="14" />
+            </svg>
+            <input
+              className="landing-search-input"
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜索例题…"
+              spellCheck={false}
+            />
+            {searchQuery && (
+              <button className="landing-search-clear" onClick={() => setSearchQuery('')}>×</button>
+            )}
+          </div>
+
+          {/* 分类标签 */}
+          <div className="landing-filter-tabs">
+            {ALL_CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                className={`landing-filter-tab ${activeCategory === cat ? 'active' : ''}`}
+                onClick={() => setActiveCategory(cat)}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* 几何体类型标签 */}
+          <div className="landing-filter-tags">
             <button
-              key={ex.id}
-              className="landing-example-card"
-              onClick={() => handleExample(ex.text)}
+              className={`landing-filter-tag ${!activeGeoType ? 'active' : ''}`}
+              onClick={() => setActiveGeoType(null)}
             >
-              <span className="landing-example-category">{ex.category}</span>
-              <span className="landing-example-title">{ex.title}</span>
-              <span className="landing-example-desc">{ex.text.slice(0, 40)}…</span>
+              全部类型
             </button>
-          ))}
+            {ALL_GEOMETRY_TYPES.map(gt => (
+              <button
+                key={gt}
+                className={`landing-filter-tag ${activeGeoType === gt ? 'active' : ''}`}
+                onClick={() => setActiveGeoType(activeGeoType === gt ? null : gt)}
+              >
+                {GEOMETRY_NAMES[gt] || gt}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* ── 例题网格 ── */}
+        {filteredExamples.length > 0 ? (
+          <div className="landing-examples-grid">
+            {filteredExamples.map((ex) => (
+              <button
+                key={ex.id}
+                className="landing-example-card"
+                onClick={() => handleExample(ex.text)}
+              >
+                <span className="landing-example-category">{ex.category}</span>
+                <span className="landing-example-title">
+                  {searchQuery ? highlightMatch(ex.title, searchQuery) : ex.title}
+                </span>
+                <span className="landing-example-desc">
+                  {ex.text.slice(0, 50)}{ex.text.length > 50 ? '…' : ''}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="landing-no-results">
+            <p>没有匹配的例题</p>
+            <button className="landing-reset-filter" onClick={() => { setSearchQuery(''); setActiveCategory('全部'); setActiveGeoType(null); }}>
+              清除筛选
+            </button>
+          </div>
+        )}
       </section>
 
       {/* ── 为你推荐（自适应） ───────────────── */}
@@ -277,5 +379,17 @@ export default function LandingPage() {
         )}
       </section>
     </div>
+  )
+}
+
+// ── 搜索关键词高亮 ──
+function highlightMatch(text, query) {
+  if (!query.trim()) return text
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'))
+  return parts.map((part, i) =>
+    part.toLowerCase() === query.toLowerCase()
+      ? <mark key={i} className="landing-highlight">{part}</mark>
+      : part
   )
 }

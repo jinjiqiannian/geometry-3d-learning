@@ -67,7 +67,8 @@ export default function UserMenu() {
   }
 
   // Logged in — show avatar + dropdown
-  const initial = (user.email?.[0] || '?').toUpperCase()
+  const displayName = displayPhone || user?.email || '?'
+  const initial = (displayPhone?.slice(-1) || user?.email?.[0] || '?').toUpperCase()
 
   const menuItems = [
     {
@@ -131,7 +132,7 @@ export default function UserMenu() {
       <button
         className={`um-avatar-btn ${open ? 'active' : ''}`}
         onClick={() => setOpen(!open)}
-        title={user.email}
+        title={displayName}
       >
         <span className="um-avatar">{initial}</span>
         <svg className={`um-chevron ${open ? 'open' : ''}`} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -142,7 +143,7 @@ export default function UserMenu() {
       {open && (
         <div className="um-dropdown">
           <div className="um-dropdown-header">
-            <span className="um-dropdown-email">{user.email}</span>
+            <span className="um-dropdown-email">{displayName}</span>
             <span className={`um-dropdown-plan ${badge.className}`}>{badge.label}</span>
           </div>
           <div className="um-dropdown-divider" />
