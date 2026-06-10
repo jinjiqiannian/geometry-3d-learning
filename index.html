@@ -52,7 +52,13 @@
         background: #f8f9ff;
         z-index: 99999;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        transition: opacity 0.3s;
+        opacity: 0;
+        transition: opacity 0.2s;
+        pointer-events: none;
+      }
+      #mathviz-boot-loader.visible {
+        opacity: 1;
+        pointer-events: auto;
       }
       #mathviz-boot-loader.hidden {
         opacity: 0;
@@ -153,51 +159,65 @@
       // ══════════════════════════════════════════════════
       (function() {
         var ROOT_ID = 'root';
-        var DEADLINE = 15000; // 15s timeout
+        var DEADLINE = 15000; // 15s hard timeout
+        var SHOW_LOADER_DELAY = 400; // Only show loader after 400ms (no flash for fast loads)
         var loaderEl = null;
         var errorEl = null;
+        var loaderTimer = null;
+        var loaderVisible = false;
         var mounted = false;
         var errored = false;
+        var pollInterval = null;
 
         // React sets this when it successfully mounts
         window.__MATHVIZ_MOUNTED__ = false;
 
-        // Check every 500ms if root has meaningful children
         function checkMounted() {
           if (window.__MATHVIZ_MOUNTED__) {
             mounted = true;
-            hideLoader();
+            cleanup();
             return;
           }
-          // Also check if root has any elements (non-text nodes)
           var root = document.getElementById(ROOT_ID);
           if (root && root.childElementCount > 0) {
             mounted = true;
             window.__MATHVIZ_MOUNTED__ = true;
-            hideLoader();
+            cleanup();
             return;
+          }
+        }
+
+        function showLoader() {
+          if (loaderEl && !loaderVisible) {
+            loaderVisible = true;
+            loaderEl.classList.add('visible');
           }
         }
 
         function hideLoader() {
           if (loaderEl) {
+            loaderEl.classList.remove('visible');
             loaderEl.classList.add('hidden');
-            setTimeout(function() { if (loaderEl) loaderEl.remove(); }, 400);
+            setTimeout(function() { if (loaderEl) loaderEl.remove(); loaderEl = null; }, 400);
           }
           if (errorEl) {
             errorEl.classList.remove('show');
           }
         }
 
+        function cleanup() {
+          if (loaderTimer) { clearTimeout(loaderTimer); loaderTimer = null; }
+          if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+          hideLoader();
+        }
+
         function showError(msg) {
           if (errored) return;
           errored = true;
+          cleanup();
           if (loaderEl) loaderEl.style.display = 'none';
           if (errorEl) {
             errorEl.classList.add('show');
-          } else {
-            // If error element wasn't created yet (very early failure)
-            buildErrorUI(msg);
           }
         }
 
@@ -222,34 +242,25 @@
             '</div>';
           document.body.appendChild(div);
           errorEl = div;
-          // Show immediately since we only call this on error
           div.classList.add('show');
         }
 
-        // ── Init ──
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', function() {
-            buildLoader();
-            buildErrorUI();
-            // Start polling
-            var interval = setInterval(function() {
-              checkMounted();
-              if (mounted || errored) clearInterval(interval);
-            }, 500);
-            // Deadline
-            setTimeout(function() {
-              if (!mounted && !errored) {
-                showError('应用加载超时，可能是网络问题或资源不可用。');
-              }
-            }, DEADLINE);
-          });
-        } else {
+        function init() {
           buildLoader();
           buildErrorUI();
-          var interval = setInterval(function() {
+
+          // Only show loader after delay — fast loads never flash
+          loaderTimer = setTimeout(showLoader, SHOW_LOADER_DELAY);
+
+          // Poll for React mount
+          pollInterval = setInterval(function() {
             checkMounted();
-            if (mounted || errored) clearInterval(interval);
+            if (mounted || errored) {
+              if (pollInterval) clearInterval(pollInterval);
+            }
           }, 500);
+
+          // Hard deadline
           setTimeout(function() {
             if (!mounted && !errored) {
               showError('应用加载超时，可能是网络问题或资源不可用。');
@@ -257,10 +268,17 @@
           }, DEADLINE);
         }
 
+        // ── Start ──
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', init);
+        } else {
+          init();
+        }
+
         // Catch script load errors (e.g. 404 on main JS bundle)
         window.addEventListener('error', function(e) {
           if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
-            showError('核心资源加载失败（' + (e.target.src || e.target.href || '未知文件') + '），请刷新重试。');
+            showError('核心资源加载失败，请刷新重试。');
           }
         }, true);
       })();
