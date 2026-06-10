@@ -326,6 +326,42 @@ export const EXAMPLES = [
     geometryType: 'tetrahedron',
     params: { size: 2 },
   },
+
+  // ═══════════════════════════════════════════════════════
+  //  拓展 · 正八面体
+  // ═══════════════════════════════════════════════════════
+  {
+    id: 'ex39',
+    title: '正八面体体积',
+    category: '拓展',
+    text: '正八面体棱长为3，求它的体积。',
+    geometryType: 'octahedron',
+    params: { size: 3 },
+  },
+  {
+    id: 'ex40',
+    title: '正八面体表面积',
+    category: '拓展',
+    text: '正八面体棱长为2，求它的表面积。',
+    geometryType: 'octahedron',
+    params: { size: 2 },
+  },
+  {
+    id: 'ex41',
+    title: '正八面体体对角线',
+    category: '拓展',
+    text: '正八面体棱长为4，求它的体对角线长（对顶点距离）。',
+    geometryType: 'octahedron',
+    params: { size: 4 },
+  },
+  {
+    id: 'ex42',
+    title: '正八面体截面',
+    category: '拓展',
+    text: '正八面体棱长为2，过赤道四边形作截面，求截面面积。',
+    geometryType: 'octahedron',
+    params: { size: 2 },
+  },
 ]
 
 export const PRICING_PLANS = [
@@ -395,6 +431,7 @@ export const GEOMETRY_NAMES = {
   circularFrustum: '圆台',
   cuboid: '长方体',
   tetrahedron: '正四面体',
+  octahedron: '正八面体',
 }
 
 export const GEOMETRIES = [
@@ -408,6 +445,7 @@ export const GEOMETRIES = [
   { id: 'circularFrustum', name: '圆台' },
   { id: 'cuboid', name: '长方体' },
   { id: 'tetrahedron', name: '正四面体' },
+  { id: 'octahedron', name: '正八面体' },
 ]
 
 export const FORMULAS = {
@@ -421,4 +459,5 @@ export const FORMULAS = {
   circularFrustum: { volume: 'V = πh/3·(R²+r²+Rr)', surface: 'S = π(R+r)l+π(R²+r²)' },
   cuboid: { volume: 'V = abc', surface: 'S = 2(ab+bc+ac)' },
   tetrahedron: { volume: 'V = a³√2/12', surface: 'S = √3·a²' },
+  octahedron: { volume: 'V = a³√2/3', surface: 'S = 2√3·a²' },
 }

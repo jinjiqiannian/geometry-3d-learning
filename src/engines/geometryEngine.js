@@ -129,6 +129,21 @@ export function getVertexAndEdgeInfo(type, params, customVertices, customLabels)
       const labels = customLabels || ['A','B','C','D']
       return { vertices: v, edges: e, labels }
     },
+    octahedron: () => {
+      // 正八面体 — 6个顶点在坐标轴上，12条等长棱
+      // 顶点到中心距离 a = size/√2（棱长=size）
+      const a = size / Math.sqrt(2)
+      const v = [
+        [0, a, 0], [a, 0, 0], [0, 0, a], [-a, 0, 0], [0, 0, -a], [0, -a, 0],
+      ]
+      const e = [
+        [0,1],[0,2],[0,3],[0,4],  // 上顶点→赤道
+        [5,1],[5,2],[5,3],[5,4],  // 下顶点→赤道
+        [1,2],[2,3],[3,4],[4,1],  // 赤道四边形
+      ]
+      const labels = customLabels || ['T','R','F','L','B','D']
+      return { vertices: v, edges: e, labels }
+    },
   }
 
   return maps[type]?.() || { vertices: [], edges: [], labels: [] }
@@ -194,6 +209,18 @@ export function createGeometry(type, params, customVertices) {
       ]
       const indices = [
         0,1,2, 0,3,1, 0,2,3, 1,3,2,
+      ]
+      return createFromArrays(verts, indices)
+    }
+    case 'octahedron': {
+      // 正八面体 — 8个三角形面，12条等长棱
+      const a = size / Math.sqrt(2)
+      const verts = [
+        0,a,0,  a,0,0,  0,0,a,  -a,0,0,  0,0,-a,  0,-a,0,
+      ]
+      const indices = [
+        0,1,2, 0,2,3, 0,3,4, 0,4,1,  // 上四面
+        5,1,2, 5,2,3, 5,3,4, 5,4,1,  // 下四面
       ]
       return createFromArrays(verts, indices)
     }
@@ -293,7 +320,7 @@ function getFaceIndices(type) {
 
 // 判断是否为棱柱形几何体（可以单独画棱边）
 export function isPolyhedral(type) {
-  return ['cube', 'prism', 'pyramid', 'squareFrustum', 'cuboid', 'tetrahedron'].includes(type)
+  return ['cube', 'prism', 'pyramid', 'squareFrustum', 'cuboid', 'tetrahedron', 'octahedron'].includes(type)
 }
 
 export function calculateVolume(type, params) {
@@ -316,6 +343,7 @@ export function calculateVolume(type, params) {
     },
     cuboid: () => size * size * (size * 0.6),  // V = a·b·c
     tetrahedron: () => Math.pow(size, 3) * Math.SQRT2 / 12,  // V = a³√2/12
+    octahedron: () => Math.pow(size, 3) * Math.SQRT2 / 3,     // V = a³√2/3
   }
   return formulas[type]?.() || 0
 }
@@ -345,6 +373,7 @@ export function calculateSurfaceArea(type, params) {
       return 2 * (a * b + b * c + a * c)  // S = 2(ab+bc+ac)
     },
     tetrahedron: () => Math.sqrt(3) * Math.pow(size, 2),  // S = √3·a²
+    octahedron: () => 2 * Math.sqrt(3) * Math.pow(size, 2),  // S = 2√3·a²
   }
   return formulas[type]?.() || 0
 }

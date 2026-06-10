@@ -5,7 +5,7 @@ import { useSubscription } from '../contexts/SubscriptionContext'
 import './UserMenu.css'
 
 export default function UserMenu() {
-  const { user, signOut } = useSupabase()
+  const { user, signOut, displayPhone, profile } = useSupabase()
   const { isPro, isTeacher, plan } = useSubscription()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)

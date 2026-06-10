@@ -181,6 +181,39 @@
 
 .auth-switch-btn:hover { color: var(--text-primary); }
 
+/* ── 手机号/邮箱图标 ── */
+.auth-icon-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.auth-icon-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
+/* ── 输入框 + 类型提示 ── */
+.auth-input-wrapper {
+  position: relative;
+}
+
+.auth-input-hint {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
 /* ── Offline mode ── */
 .auth-offline-icon {
   display: flex;

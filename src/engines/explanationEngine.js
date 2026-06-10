@@ -207,6 +207,16 @@ const TEMPLATES = {
     ],
   },
 
+  octahedron: {
+    default: [
+      { step: 1, title: '识别几何体', content: '正八面体，8个面均为全等的等边三角形，6个顶点，12条棱长相等（棱长 {size}）。可看作两个全等正四棱锥底面重合而成。', type: 'observation' },
+      { step: 2, title: '分析题目条件', content: '已知正八面体棱长 {size}。8个面全等，3条体对角线互相垂直且相等。体对角线长 = a√2。', type: 'observation' },
+      { step: 3, title: '应用正八面体公式', content: '体积 V = a³√2/3（= 2个正四棱锥体积之和），表面积 S = 2√3·a²。外接球半径 = a/√2，内切球半径 = a/√6。', type: 'calculation' },
+      { step: 4, title: '代入计算', content: '将棱长 {size} 代入相应公式进行计算。注意√2≈1.414，√3≈1.732，√6≈2.449。', type: 'calculation' },
+      { step: 5, title: '得出结论', content: '正八面体可分解为两个底面对底面的正四棱锥。它的3条体对角线恰为三维坐标轴，这一对称性使得所有度量都可解析表达。', type: 'conclusion' },
+    ],
+  },
+
   tetrahedron: {
     default: [
       { step: 1, title: '识别几何体', content: '正四面体，4个面均为全等的等边三角形，6条棱长相等（棱长 {size}），是最简单的正多面体。', type: 'observation' },

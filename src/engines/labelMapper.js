@@ -26,6 +26,7 @@ export const INTERNAL_LABELS = {
   prism: ['A', 'B', 'C', "A'", "B'", "C'"],
   squareFrustum: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
   tetrahedron: ['A', 'B', 'C', 'D'],
+  octahedron: ['T', 'R', 'F', 'L', 'B', 'D'],
   sphere: ['S', 'N', 'E', 'W', 'F', 'B'],
   cylinder: ['O', "O'", 'A', 'B', 'C', 'D', "A'", "B'", "C'", "D'"],
   cone: ['O', 'P', 'A', 'B', 'C', 'D'],

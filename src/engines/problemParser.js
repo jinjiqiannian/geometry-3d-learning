@@ -475,6 +475,25 @@ export function quickMatch(text) {
     }
   }
 
+  // 正八面体
+  const octaMatch = t.match(/正八面体|八面体|octahedron/)
+  if (octaMatch) {
+    const sizeMatch = t.match(/(?:棱长|边长)[为是]?\s*(\d+(?:\.\d+)?)/)
+    const size = sizeMatch ? parseFloat(sizeMatch[1]) : 2
+    return {
+      type: 'octahedron',
+      size,
+      subType: detectSubType(text, 'octahedron'),
+      labels: ['T', 'R', 'F', 'L', 'B', 'D'],
+      vertices: ['T', 'R', 'F', 'L', 'B', 'D'],
+      highlightLines: [],
+      params: { size },
+      annotations: [],
+      explanation: sizeMatch ? `正八面体，棱长 ${size}` : '正八面体（参数来自快速匹配）',
+      confidence: sizeMatch ? 0.9 : 0.75,
+    }
+  }
+
   // 正四面体
   const tetraMatch = t.match(/正四面体|四面体|tetrahedron/)
   if (tetraMatch) {

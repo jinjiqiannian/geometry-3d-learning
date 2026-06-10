@@ -13,6 +13,30 @@ function getSupabase() {
   return supabaseInstance
 }
 
+// ── 手机号工具函数 ─────────────────────────────────
+
+/** 规范化手机号：去除非数字，自动补 +86 */
+function normalizePhone(input) {
+  let digits = input.replace(/\D/g, '')
+  // 11位国内手机号自动加 +86
+  if (digits.length === 11 && digits.startsWith('1')) {
+    digits = '86' + digits
+  }
+  return digits
+}
+
+/** 手机号 → 内部邮箱 */
+function phoneToEmail(phone) {
+  const norm = normalizePhone(phone)
+  return `phone_${norm}@phone.mathviz`
+}
+
+/** 检查输入是否像手机号（纯数字或带+号） */
+export function isPhoneLike(input) {
+  const cleaned = input.replace(/[\s\-()+]/g, '')
+  return /^\+?\d{5,15}$/.test(cleaned)
+}
+
 const SupabaseContext = createContext(null)
 
 export function SupabaseProvider({ children }) {
@@ -40,7 +64,7 @@ export function SupabaseProvider({ children }) {
       setSession(session)
       setUser(session?.user ?? null)
       if (session?.user) {
-        fetchProfile(session.user.id)
+        fetchProfile(session.user.id, session.user)
       } else {
         setLoading(false)
       }
@@ -51,7 +75,7 @@ export function SupabaseProvider({ children }) {
       setSession(session)
       setUser(session?.user ?? null)
       if (session?.user) {
-        fetchProfile(session.user.id)
+        fetchProfile(session.user.id, session.user)
       } else {
         setProfile(null)
         setLoading(false)
@@ -61,7 +85,7 @@ export function SupabaseProvider({ children }) {
     return () => subscription?.unsubscribe()
   }, [supabase])
 
-  const fetchProfile = useCallback(async (userId) => {
+  const fetchProfile = useCallback(async (userId, authUser) => {
     if (!supabase) return
     try {
       const { data } = await supabase
@@ -69,16 +93,30 @@ export function SupabaseProvider({ children }) {
         .select('*')
         .eq('id', userId)
         .single()
-      setProfile(data)
+
+      // 合并 profile 数据和 auth user metadata
+      const enriched = {
+        ...(data || {}),
+        phone: data?.phone || authUser?.user_metadata?.phone || null,
+        displayName: data?.full_name || authUser?.user_metadata?.display_name || '',
+      }
+      setProfile(enriched)
     } catch {
       // Profile may not exist yet — trigger creation
       try {
+        const userData = authUser || {}
+        const phone = userData.user_metadata?.phone || null
         const { data } = await supabase
           .from('profiles')
-          .upsert({ id: userId, email: supabase.auth.getUser()?.email })
+          .upsert({
+            id: userId,
+            email: userData.email || '',
+            phone,
+            full_name: userData.user_metadata?.display_name || '',
+          })
           .select('*')
           .single()
-        setProfile(data)
+        setProfile({ ...(data || {}), phone, displayName: data?.full_name || '' })
       } catch {
         // ignore
       }
@@ -86,6 +124,8 @@ export function SupabaseProvider({ children }) {
       setLoading(false)
     }
   }, [supabase])
+
+  // ── 邮箱注册/登录 ──────────────────────────────
 
   const signUp = useCallback(async (email, password) => {
     if (!supabase) throw new Error('Supabase not configured')
@@ -98,6 +138,60 @@ export function SupabaseProvider({ children }) {
     if (!supabase) throw new Error('Supabase not configured')
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
+    return data
+  }, [supabase])
+
+  // ── 手机号注册/登录 ────────────────────────────
+
+  /**
+   * 手机号注册
+   * 底层用 phone_xxx@phone.mathviz 作邮箱，手机号存 user_metadata
+   */
+  const signUpWithPhone = useCallback(async (phone, password) => {
+    if (!supabase) throw new Error('Supabase not configured')
+    const norm = normalizePhone(phone)
+    const email = phoneToEmail(phone)
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          phone: norm,
+          phone_raw: phone,
+          display_name: phone,
+        },
+      },
+    })
+    if (error) throw error
+
+    // 立即更新 profiles 写入手机号
+    if (data?.user) {
+      try {
+        await supabase.from('profiles').upsert({
+          id: data.user.id,
+          email,
+          phone: norm,
+        })
+      } catch { /* non-critical */ }
+    }
+
+    return data
+  }, [supabase])
+
+  /**
+   * 手机号登录
+   */
+  const signInWithPhone = useCallback(async (phone, password) => {
+    if (!supabase) throw new Error('Supabase not configured')
+    const email = phoneToEmail(phone)
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      // 翻译常见错误
+      if (error.message?.includes('Invalid login credentials')) {
+        throw new Error('手机号或密码错误，请重试。')
+      }
+      throw error
+    }
     return data
   }, [supabase])
 
@@ -117,6 +211,18 @@ export function SupabaseProvider({ children }) {
     if (error) throw error
   }, [supabase])
 
+  /**
+   * 从 profile / user metadata 提取显示用的手机号
+   */
+  const phoneNumber = profile?.phone || user?.user_metadata?.phone || null
+
+  /**
+   * 格式化手机号显示（国内：138****0000）
+   */
+  const displayPhone = phoneNumber
+    ? phoneNumber.replace(/^86/, '').replace(/^(\d{3})\d{4}(\d{4})$/, '$1****$2')
+    : null
+
   return (
     <SupabaseContext.Provider value={{
       supabase,
@@ -127,8 +233,12 @@ export function SupabaseProvider({ children }) {
       loading,
       signUp,
       signIn,
+      signUpWithPhone,
+      signInWithPhone,
       signInWithGoogle,
       signOut,
+      phoneNumber,
+      displayPhone,
     }}>
       {children}
     </SupabaseContext.Provider>

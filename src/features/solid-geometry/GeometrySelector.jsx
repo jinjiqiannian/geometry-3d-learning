@@ -121,6 +121,23 @@ function GeoIcon({ type }) {
         </svg>
       )
 
+    // ── 正八面体：上下双金字塔 ──
+    case 'octahedron':
+      return (
+        <svg width={s} height={s} viewBox="0 0 28 28">
+          {/* 赤道四边形（低透明度） */}
+          <polygon points="6,14 14,8 22,14 14,20" fill="none" stroke={stroke} strokeWidth={sw} opacity="0.3" />
+          {/* 上金字塔 */}
+          <polygon points="14,4 6,14 14,20" fill="none" stroke={stroke} strokeWidth={sw + 0.3} />
+          {/* 下金字塔 */}
+          <polygon points="6,14 14,24 22,14 14,20" fill="none" stroke={stroke} strokeWidth={sw + 0.2} opacity="0.7" />
+          {/* 右前棱 */}
+          <line x1="14" y1="4" x2="22" y2="14" stroke={stroke} strokeWidth={sw} opacity="0.5" />
+          {/* 右后棱 */}
+          <line x1="14" y1="4" x2="14" y2="20" stroke={stroke} strokeWidth={sw} opacity="0.4" />
+        </svg>
+      )
+
     // ── 正四面体：三角形投影 ──
     case 'tetrahedron':
       return (

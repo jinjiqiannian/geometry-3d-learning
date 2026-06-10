@@ -50,6 +50,12 @@ function computeCentersFromVertices(type, vertices, defaultPts) {
       c.face023 = avg([0, 2, 3])
       c.face123 = avg([1, 2, 3])
       break
+    case 'octahedron':
+      c.body = avg([0, 1, 2, 3, 4, 5])
+      c.top = v[0]
+      c.bottom = v[5]
+      c.equator = avg([1, 2, 3, 4])
+      break
     default:
       break
   }
@@ -214,6 +220,22 @@ function getPoints(type, params, customVertices, customLabels) {
         face012, face013, face023, face123,
       }
       const labels = customLabels || 'ABCD'.split('')
+      return { vertices: v, centers: c, labels }
+    }
+
+    case 'octahedron': {
+      // 正八面体 — 6个顶点在坐标轴上
+      const a = size / Math.sqrt(2)
+      const v = [
+        [0, a, 0], [a, 0, 0], [0, 0, a], [-a, 0, 0], [0, 0, -a], [0, -a, 0],
+      ]
+      const c = {
+        body: [0, 0, 0],
+        top: [0, a, 0],
+        bottom: [0, -a, 0],
+        equator: [0, 0, 0],
+      }
+      const labels = customLabels || ['T','R','F','L','B','D']
       return { vertices: v, centers: c, labels }
     }
 
@@ -394,6 +416,22 @@ export function getLineDefinitions(type, params, customVertices, customLabels) {
       def('DE', '面对角线', 3, 4, true); def('AH', '面对角线', 0, 7, true)
       // 高线（底面中心 → 顶面中心）
       def('h', '高线', 'bottom', 'top', true)
+      break
+    }
+
+    // ─── 正八面体（6个顶点，12条等长棱，8个面）───
+    case 'octahedron': {
+      // 12条棱：上顶点→赤道4条 + 下顶点→赤道4条 + 赤道四边形4条
+      def('TR', '棱', 0, 1); def('TF', '棱', 0, 2)
+      def('TL', '棱', 0, 3); def('TB', '棱', 0, 4)
+      def('DR', '棱', 5, 1); def('DF', '棱', 5, 2)
+      def('DL', '棱', 5, 3); def('DB', '棱', 5, 4)
+      def('RF', '棱', 1, 2); def('FL', '棱', 2, 3)
+      def('LB', '棱', 3, 4); def('BR', '棱', 4, 1)
+      // 体对角线（3条，互相垂直）
+      def('TD', '体对角线', 0, 5, true)
+      def('RL', '体对角线', 1, 3, true)
+      def('FB', '体对角线', 2, 4, true)
       break
     }
 

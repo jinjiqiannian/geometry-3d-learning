@@ -99,6 +99,10 @@ const GEOMETRY_EDGES = {
   tetrahedron: [
     'AB','AC','AD','BC','BD','CD',
   ],
+  octahedron: [
+    'TR','TF','TL','TB','DR','DF','DL','DB',
+    'RF','FL','LB','BR',
+  ],
 }
 
 // ── Keyword patterns for edge extraction ─────────────
