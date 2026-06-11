@@ -302,6 +302,23 @@ input, textarea {
   color: inherit;
 }
 
+/* ── Layout Utilities ──────────────────────────────── */
+.app-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-left: 24px;
+  padding-right: 24px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+  .app-container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
 /* ── Dark mode: Landing page ─────────────────────── */
 [data-theme="dark"] .landing {
   background: linear-gradient(180deg, var(--bg-base) 0%, var(--bg-deep) 40%);

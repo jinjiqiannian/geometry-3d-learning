@@ -36,6 +36,7 @@ export default function PricingPage() {
 
   return (
     <div className="pricing-page">
+      <div className="app-container">
       {/* ── Hero ── */}
       <section className="pp-hero">
         <Link to="/" className="pp-back-link">← 返回首页</Link>
@@ -134,7 +135,7 @@ export default function PricingPage() {
           开始使用
         </Link>
       </section>
-
+      </div>
     </div>
   )
 }

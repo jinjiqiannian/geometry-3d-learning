@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════
    LandingPage — ChatGPT × Photomath 风格首页
-   品牌感 · 简洁 · 引导式
+   布局由 .app-container 统一居中
    ═══════════════════════════════════════════════════════ */
 
 .landing {
@@ -9,16 +9,13 @@
   align-items: center;
   min-height: calc(100vh - 52px);
   background: linear-gradient(180deg, #f8f9ff 0%, #ffffff 40%);
-  padding: 0 16px 48px;
-  margin: 0 auto;
+  padding-bottom: 48px;
   width: 100%;
-  box-sizing: border-box;
 }
 
 /* ── Hero ─────────────────────────────────────────── */
 .landing-hero {
   width: 100%;
-  max-width: 640px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -28,6 +25,8 @@
 
 .landing-hero-inner {
   width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -231,13 +230,7 @@
 /* ── Sections ────────────────────────────────────── */
 .landing-section {
   width: 100%;
-  max-width: 640px;
   margin-bottom: 28px;
-  margin-left: auto;
-  margin-right: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 .landing-section-header {
@@ -269,6 +262,7 @@
 
 /* ── Filter bar ──────────────────────────────────── */
 .landing-filter-bar {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -278,6 +272,8 @@
 
 /* Search */
 .landing-search-wrap {
+  width: 100%;
+  max-width: 480px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -286,6 +282,7 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   transition: border-color 0.15s ease;
+  box-sizing: border-box;
 }
 
 .landing-search-wrap:focus-within {
@@ -340,6 +337,7 @@
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .landing-filter-tab {
@@ -371,6 +369,7 @@
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .landing-filter-tag {
@@ -553,7 +552,6 @@
 /* ── Footer ──────────────────────────────────────── */
 .landing-footer {
   width: 100%;
-  max-width: 640px;
   margin-top: 16px;
   padding: 24px 0;
   border-top: 1px solid var(--border-subtle);
@@ -606,7 +604,7 @@
 @media (max-width: 767px) {
   .landing {
     min-height: calc(100vh - 48px - 64px);
-    padding: 0 12px 32px;
+    padding-bottom: 32px;
   }
 
   .landing-hero {

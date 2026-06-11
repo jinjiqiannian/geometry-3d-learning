@@ -91,6 +91,7 @@ export default function HistoryPage() {
 
   return (
     <div className="history-page">
+      <div className="app-container">
       <div className="history-header">
         <Link to="/" className="history-back">← 返回首页</Link>
         <h1 className="history-title">学习记录</h1>
@@ -183,6 +184,7 @@ export default function HistoryPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   )
 }

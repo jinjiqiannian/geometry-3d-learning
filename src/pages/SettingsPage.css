@@ -16,10 +16,13 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px 24px;
+  padding: 16px 0;
   border-bottom: 1px solid var(--border-subtle);
   background: var(--bg-base);
   flex-shrink: 0;
+  max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .settings-back {
@@ -50,11 +53,13 @@
 .settings-content {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 24px 0;
   display: flex;
   flex-direction: column;
   gap: 20px;
   max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* ── Card ────────────────────────────────────────── */
@@ -332,11 +337,11 @@
 /* ── Mobile ──────────────────────────────────────── */
 @media (max-width: 767px) {
   .settings-header {
-    padding: 10px 14px;
+    padding: 10px 0;
   }
 
   .settings-content {
-    padding: 16px 12px 80px;
+    padding: 16px 0 80px;
     gap: 14px;
   }
 

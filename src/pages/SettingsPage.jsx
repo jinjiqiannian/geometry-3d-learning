@@ -108,6 +108,7 @@ export default function SettingsPage() {
 
   return (
     <div className="settings-page">
+      <div className="app-container">
       {/* ── Header ── */}
       <div className="settings-header">
         <Link to="/" className="settings-back">← 返回首页</Link>
@@ -319,6 +320,7 @@ export default function SettingsPage() {
             </div>
           </div>
         </section>
+      </div>
       </div>
     </div>
   )

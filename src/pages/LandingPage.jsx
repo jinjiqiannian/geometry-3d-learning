@@ -148,6 +148,7 @@ export default function LandingPage() {
 
   return (
     <div className="landing">
+      <div className="app-container">
       {/* ── Hero ─────────────────────────────────── */}
       <section className="landing-hero">
         <div className="landing-hero-inner">
@@ -377,6 +378,7 @@ export default function LandingPage() {
           </button>
         )}
       </section>
+      </div>
     </div>
   )
 }

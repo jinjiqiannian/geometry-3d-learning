@@ -78,6 +78,7 @@ export default function ProfilePage() {
 
   return (
     <div className="profile-page">
+      <div className="app-container">
       <div className="profile-header">
         <Link to="/" className="profile-back">← 返回首页</Link>
         <h1 className="profile-title">个人中心</h1>
@@ -217,6 +218,7 @@ export default function ProfilePage() {
             </Link>
           </div>
         </section>
+      </div>
       </div>
     </div>
   )
