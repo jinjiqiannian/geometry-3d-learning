@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { Canvas } from '@react-three/fiber'
 import Canvas3D from '../features/solid-geometry/Canvas3D'
@@ -9,7 +9,7 @@ import { getLineDefinitions } from '../engines/lineDefinitions'
 import { isPolyhedral } from '../engines/geometryEngine'
 import { computeVerticesFromParams } from '../engines/constraintSolver'
 import { aiAPI } from '../services/api'
-import { computeVisualIntent } from '../engines/visualIntent'
+import { computeVisualIntent, CAMERA_PRESETS } from '../engines/visualIntent'
 import { createLabelMap, INTERNAL_LABELS } from '../engines/labelMapper'
 import { generateShareUrl, detectShareParam, decodeShare } from '../engines/shareUtils'
 import { useSubscription } from '../contexts/SubscriptionContext'
@@ -64,13 +64,19 @@ export default function WorkspacePage() {
   const [shareToast, setShareToast] = useState('')
 
   // ── WebGL 支持检测 ─────────────────────────────
-  const [hasWebGL, setHasWebGL] = useState(true) // 默认 true 避免闪烁
-  useEffect(() => {
+  // null=检测中 true=支持 false=不支持
+  // 初值必须为 null —— Canvas 在检测完成前渲染会导致
+  // @react-three/fiber 的 WebGL 上下文创建在 React 渲染周期外抛异常，
+  // ErrorBoundary 无法捕获 → 整页白屏崩溃
+  const [hasWebGL, setHasWebGL] = useState(null)
+  useLayoutEffect(() => {
+    let ok = false
     try {
       const c = document.createElement('canvas')
       const gl = c.getContext('webgl') || c.getContext('experimental-webgl')
-      if (!gl) setHasWebGL(false)
-    } catch { setHasWebGL(false) }
+      ok = !!gl
+    } catch { /* ok stays false */ }
+    setHasWebGL(ok)
   }, [])
 
   // ── Mobile ──────────────────────────────────────
@@ -79,6 +85,14 @@ export default function WorkspacePage() {
     try { return window.innerWidth <= 767 } catch { return false }
   })
   const [show3D, setShow3D] = useState(true)
+  // 移动端加载完成后默认折叠 3D，让学生先看讲解
+  const [mobile3DAutoCollapsed, setMobile3DAutoCollapsed] = useState(false)
+  useEffect(() => {
+    if (isMobile && loadingStage === 'done' && steps.length > 0 && !mobile3DAutoCollapsed) {
+      setShow3D(false)
+      setMobile3DAutoCollapsed(true)
+    }
+  }, [isMobile, loadingStage, steps.length, mobile3DAutoCollapsed])
 
   useEffect(() => {
     let timer = null
@@ -374,6 +388,24 @@ export default function WorkspacePage() {
     if (!step || !parsedData) return null
     return computeVisualIntent(step, parsedData, problemText, labelMap)
   }, [currentStep, steps, parsedData, problemText, labelMap])
+
+  // ── (3b) 有效标签显示 — 渐进披露：第一步隐藏标签 ──
+  const effectiveShowLabels = useMemo(() => {
+    if (visualIntent?.hideLabels) return false
+    return showLabels
+  }, [visualIntent?.hideLabels, showLabels])
+
+  // ── (3c) cameraHint — 推荐视角中文提示（仅提示，不自动切换）──
+  const cameraHint = useMemo(() => {
+    const preset = visualIntent?.cameraPreset
+    if (!preset || preset === 'overview') return null
+    const hints = {
+      front: '正面看', top: '俯视', side: '侧面看', diagonal: '对角看',
+      base: '底面看', apex: '顶点看', closeUp: '近看', bottomUp: '仰视',
+      corner: '角点看', section: '截面看', projection: '投影看',
+    }
+    return hints[preset] || null
+  }, [visualIntent])
 
   // ── (4) mergedLines — 合并的边定义 ─────────────────
   //  依赖: geometry, customVertices, vertexLabels, customLines, edgeColorOverrides
@@ -671,7 +703,7 @@ export default function WorkspacePage() {
                   <Canvas3D
                     geometry={geometry}
                     showFaces={showFaces}
-                    showLabels={showLabels}
+                    showLabels={effectiveShowLabels}
                     visibleLines={visibleLines}
                     hoveredLine={hoveredLine}
                     setHoveredLine={setHoveredLine}
@@ -708,6 +740,7 @@ export default function WorkspacePage() {
                 showLabels={showLabels}
                 onToggleLabels={() => setShowLabels(prev => !prev)}
                 onResetCamera={handleResetCamera}
+                cameraHint={cameraHint}
                 onScreenshot={handleScreenshot}
                 onShare={handleShare}
               />
@@ -766,7 +799,7 @@ export default function WorkspacePage() {
                 <Canvas3D
                   geometry={geometry}
                   showFaces={showFaces}
-                  showLabels={showLabels}
+                  showLabels={effectiveShowLabels}
                   visibleLines={visibleLines}
                   hoveredLine={hoveredLine}
                   setHoveredLine={setHoveredLine}
@@ -799,7 +832,7 @@ export default function WorkspacePage() {
               onGeometryChange={handleGeometryChange}
               showFaces={showFaces}
               onToggleFaces={() => setShowFaces(prev => !prev)}
-              showLabels={showLabels}
+              showLabels={effectiveShowLabels}
               onToggleLabels={() => setShowLabels(prev => !prev)}
             />
           </div>

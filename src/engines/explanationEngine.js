@@ -345,16 +345,80 @@ export function generateLocalSteps(problemText, parsedData) {
 
 /**
  * 将模板步骤中的占位符替换为实际数值
+ * 同时将模板式标题改写为老师讲题风格
  */
 function interpolateSteps(steps, ctx) {
   return steps.map(step => ({
     ...step,
+    title: makeTeacherTitle(step, ctx),
     content: step.content
       .replace(/\{typeName\}/g, ctx.typeName)
       .replace(/\{size\}/g, ctx.size != null ? String(ctx.size) : '')
       .replace(/\{labels\}/g, ctx.labelStr)
       .replace(/\{label\}/g, ctx.firstLabel),
   }))
+}
+
+/**
+ * 将模板标题改写为老师讲课风格
+ * 基于 step.type 和 ctx 生成具体、可操作的标题
+ */
+function makeTeacherTitle(step, ctx) {
+  const t = step.type
+  const geo = ctx.typeName
+
+  // 按步骤类型生成老师口吻标题
+  const titles = {
+    observation: [
+      `先来看看这个${geo}`,
+      `看看题目给的${geo}是什么样的`,
+      `${geo}的基本特征`,
+      `把题目里的条件理清楚`,
+      `找到题目要我们求什么`,
+      `先确定题目中的关键信息`,
+      `看清楚题目里提到的线和面`,
+      `这个${geo}里有什么已知条件`,
+      `搞清楚题目问的是什么`,
+    ],
+    construction: [
+      `为了方便计算，我们加一条辅助线`,
+      `现在把空间问题变到平面上来`,
+      `把其中一条线平移过来`,
+      `连结这两个点，画一条辅助线`,
+      `我们作一条辅助线`,
+      `现在用平移法把两条线放到同一个平面`,
+      `建立一个坐标系，把点表示出来`,
+      `这里需要一条辅助线来连接`,
+      `把需要的截面画出来`,
+    ],
+    calculation: [
+      `现在可以开始算了`,
+      `代入公式，一步一步来`,
+      `用学过的公式代入数值`,
+      `具体算一下这个数值`,
+      `把已知条件代入公式`,
+      `接下来就是计算了`,
+      `先求这个长度，再求最终结果`,
+      `一步步推导出来`,
+      `用勾股定理（或其他公式）来算`,
+    ],
+    conclusion: [
+      `这样就算出来了`,
+      `所有的步骤串起来，得到最终答案`,
+      `回过头来看，这道题的思路是这样的`,
+      `就得到了最终的结果`,
+      `所以答案是`,
+      `整理一下，整个解题过程就是这样`,
+      `这样我们就求出了题目要的结果`,
+      `把刚才的推导总结一下`,
+      `所以最终结论是`,
+    ],
+  }
+
+  const pool = titles[t] || titles.observation
+  // 用步骤序号在候选标题池中选一个（循环使用）
+  const idx = ((step.step || 1) - 1) % pool.length
+  return pool[idx]
 }
 
 const GEOMETRY_NAMES = {
@@ -368,20 +432,21 @@ const GEOMETRY_NAMES = {
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages'
 const MODEL = 'claude-sonnet-4-6'
 
-const EXPLAIN_SYSTEM_PROMPT = `你是一个中学数学老师，擅长用简洁清晰的语言讲解立体几何题。
+const EXPLAIN_SYSTEM_PROMPT = `你是一个中学数学老师，正在给一个学生讲解立体几何题。你的讲解要像真人老师一样自然、具体、有步骤感。
 
-请为以下题目生成分步解题讲解。严格输出 JSON 数组（不要 markdown 代码块）：
+请为这道题生成分步讲解。严格输出 JSON 数组（不要 markdown 代码块）：
 
 [
-  { "step": 1, "title": "步骤标题", "content": "这一步的详细讲解（2-4句话）", "type": "observation|construction|calculation|conclusion" },
+  { "step": 1, "title": "这步做什么", "content": "详细讲解（2-4句话）", "type": "observation|construction|calculation|conclusion" },
   ...
 ]
 
 要求：
 1. 3-5 个步骤
 2. type: observation=观察分析, construction=作图构造, calculation=计算推导, conclusion=结论
-3. 每步 content 2-4 句话，使用中文
-4. 只输出 JSON 数组`
+3. title 必须是具体的、像老师说的话，比如"先找出题目中的两条异面直线"，禁止使用"观察""分析""计算""结论"这些抽象词
+4. content 每步 2-4 句话，用自然的中文数学老师口吻
+5. 只输出 JSON 数组`
 
 /**
  * 调用 Claude API 生成详细解题讲解

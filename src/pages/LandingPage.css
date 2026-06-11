@@ -235,12 +235,16 @@
   margin-bottom: 28px;
   margin-left: auto;
   margin-right: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .landing-section-header {
   margin-bottom: 12px;
   display: flex;
   align-items: baseline;
+  justify-content: center;
   gap: 8px;
 }
 
@@ -267,6 +271,7 @@
 .landing-filter-bar {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 8px;
   margin-bottom: 12px;
 }
@@ -430,11 +435,14 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
 @media (max-width: 480px) {
   .landing-examples-grid {
     grid-template-columns: 1fr;
+    max-width: 100%;
   }
 }
 
@@ -487,6 +495,8 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
 .landing-history-item {

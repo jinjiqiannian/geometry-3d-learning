@@ -39,33 +39,39 @@ export function enforceProgression(sceneState, stepIndex, stepType, problemEdgeI
   const allowedHighlights = computeAllowedHighlights(stepIndex, stepType, problemEdgeIds)
   result.highlightEdgeIds = allowedHighlights
 
-  // 步骤类型默认配置
+  // 步骤类型默认配置 — 严格渐进披露
+  // Step 0: 仅显示几何体轮廓（所有边极淡），让学生先看到几何体形状
   const typeConfigs = {
     observation: {
-      faceOpacity: stepIndex === 0 ? 0.42 : 0.35,
-      nonHighlightOpacity: stepIndex === 0 ? 1.0 : 0.85,
-      cameraPreset: stepIndex === 0 ? 'overview' : (result.cameraPreset || 'overview'),
+      faceOpacity: stepIndex === 0 ? 0.35 : 0.38,
+      nonHighlightOpacity: stepIndex === 0 ? 0.06 : 0.12,
+      hideLabels: stepIndex === 0,   // 第一步不显示标签，让学生先看几何体
+      cameraPreset: 'overview',
     },
     construction: {
-      faceOpacity: 0.30,
-      nonHighlightOpacity: 0.35,
-      cameraPreset: result.cameraPreset || 'diagonal',
+      faceOpacity: 0.28,
+      nonHighlightOpacity: 0.08,
+      hideLabels: false,
+      cameraPreset: 'diagonal',
     },
     calculation: {
-      faceOpacity: 0.25,
-      nonHighlightOpacity: 0.20,
-      cameraPreset: result.cameraPreset || 'closeUp',
+      faceOpacity: 0.22,
+      nonHighlightOpacity: 0.05,     // 计算步骤极度聚焦
+      hideLabels: false,
+      cameraPreset: 'closeUp',
     },
     conclusion: {
-      faceOpacity: 0.42,
-      nonHighlightOpacity: 1.0,
-      cameraPreset: result.cameraPreset || 'overview',
+      faceOpacity: 0.40,
+      nonHighlightOpacity: 1.0,      // 结论步骤显示全貌
+      hideLabels: false,
+      cameraPreset: 'overview',
     },
   }
 
   const config = typeConfigs[stepType] || typeConfigs.observation
   if (result.faceOpacity == null) result.faceOpacity = config.faceOpacity
   if (result.nonHighlightOpacity == null) result.nonHighlightOpacity = config.nonHighlightOpacity
+  if (result.hideLabels == null) result.hideLabels = config.hideLabels
   if (!result.cameraPreset) result.cameraPreset = config.cameraPreset
 
   return result

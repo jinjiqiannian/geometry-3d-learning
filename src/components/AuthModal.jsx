@@ -299,7 +299,8 @@ export default function AuthModal() {
                 placeholder={placeholder}
                 value={account}
                 onChange={(e) => { setAccount(e.target.value); setError('') }}
-                autoComplete="username"
+                autoComplete="off"
+                name="mathviz-account"
                 required
               />
               {account && (

@@ -224,9 +224,8 @@ const Canvas3D = memo(function Canvas3D({
     }).filter(Boolean)
   }, [auxLines, pts])
 
-  // ── Camera preset lerp ──
+  // ── 相机系统（仅手动重置，禁止自动切换）──
   const cameraRef = useRef(null)
-  const targetCamPos = useRef(null)
   const { camera } = useThree()
 
   // Keep cameraRef in sync
@@ -234,16 +233,7 @@ const Canvas3D = memo(function Canvas3D({
     cameraRef.current = camera
   }, [camera])
 
-  // Update target when preset changes
-  useEffect(() => {
-    if (cameraPreset && CAMERA_PRESETS[cameraPreset]) {
-      targetCamPos.current = CAMERA_PRESETS[cameraPreset]
-    } else {
-      targetCamPos.current = null
-    }
-  }, [cameraPreset])
-
-  // Reset camera on demand (jump immediately, no lerp)
+  // 仅响应用户手动"推荐视角"按钮（cameraResetKey 递增）
   useEffect(() => {
     const preset = cameraPreset || 'overview'
     const target = CAMERA_PRESETS[preset] || CAMERA_PRESETS.overview
@@ -251,31 +241,7 @@ const Canvas3D = memo(function Canvas3D({
       cameraRef.current.position.set(target[0], target[1], target[2])
       cameraRef.current.lookAt(0, 0, 0)
     }
-    targetCamPos.current = null  // stop any ongoing lerp
   }, [cameraResetKey]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Smooth camera lerp
-  useFrame((_, delta) => {
-    if (!targetCamPos.current || !cameraRef.current) return
-    const target = targetCamPos.current
-    const cam = cameraRef.current
-    const lerpFactor = 1 - Math.exp(-4 * delta) // smooth exponential decay
-
-    cam.position.x += (target[0] - cam.position.x) * lerpFactor
-    cam.position.y += (target[1] - cam.position.y) * lerpFactor
-    cam.position.z += (target[2] - cam.position.z) * lerpFactor
-
-    // Stop lerping when close enough
-    const dist = Math.hypot(
-      target[0] - cam.position.x,
-      target[1] - cam.position.y,
-      target[2] - cam.position.z
-    )
-    if (dist < 0.02) {
-      cam.position.set(target[0], target[1], target[2])
-      targetCamPos.current = null
-    }
-  })
 
   // ── 解析线段坐标 + 预计算 BufferGeometry ──
   const resolvedLines = useMemo(() => (allLines || []).map(l => {

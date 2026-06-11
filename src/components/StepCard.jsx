@@ -1,14 +1,15 @@
 import './StepCard.css'
 
-const TYPE_CONFIG = {
-  observation:  { label: '观察', color: '#6366f1', icon: '◈' },
-  construction: { label: '作图', color: '#8b5cf6', icon: '◇' },
-  calculation:  { label: '计算', color: '#d97706', icon: '△' },
-  conclusion:   { label: '结论', color: '#16a34a', icon: '▣' },
+// type 色值仅用于时间线圆点（内部逻辑），不再向用户展示标签
+const TYPE_COLORS = {
+  observation:  '#6366f1',
+  construction: '#8b5cf6',
+  calculation:  '#d97706',
+  conclusion:   '#16a34a',
 }
 
 export default function StepCard({ step, index, isCurrent, locked, onClick, onUpgrade }) {
-  const config = TYPE_CONFIG[step.type] || TYPE_CONFIG.observation
+  const dotColor = TYPE_COLORS[step.type] || TYPE_COLORS.observation
 
   return (
     <div
@@ -19,23 +20,13 @@ export default function StepCard({ step, index, isCurrent, locked, onClick, onUp
       <div className="step-timeline">
         <div
           className="step-dot"
-          style={{ backgroundColor: isCurrent ? config.color : undefined }}
+          style={{ backgroundColor: isCurrent ? dotColor : undefined }}
         />
         {index > 0 && <div className="step-line" />}
       </div>
 
       {/* 卡片主体 */}
       <div className="step-body">
-        <div className="step-header">
-          <span
-            className="step-type-badge"
-            style={{ backgroundColor: `${config.color}14`, color: config.color }}
-          >
-            {config.icon} {config.label}
-          </span>
-          <span className="step-number">第{index + 1}步</span>
-        </div>
-
         <h4 className="step-title">{step.title}</h4>
         <p className="step-content">{step.content}</p>
       </div>

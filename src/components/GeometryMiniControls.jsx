@@ -10,6 +10,7 @@ const GeometryMiniControls = memo(function GeometryMiniControls({
   showLabels,
   onToggleLabels,
   onResetCamera,
+  cameraHint,
   onScreenshot,
   onShare,
 }) {
@@ -42,8 +43,8 @@ const GeometryMiniControls = memo(function GeometryMiniControls({
         </button>
 
         {onResetCamera && (
-          <button className="gmc-btn" onClick={onResetCamera} title="重置视角">
-            重置
+          <button className="gmc-btn gmc-btn-hint" onClick={onResetCamera} title={cameraHint || '推荐视角'}>
+            {cameraHint || '重置'}
           </button>
         )}
 
