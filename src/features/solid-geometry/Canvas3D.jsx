@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useRef, useEffect, useState } from 'react'
+import { useMemo, useCallback, useRef, useEffect, useState, memo } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Text, Line, Billboard } from '@react-three/drei'
@@ -105,7 +105,7 @@ function EdgeHitbox({ from, to, lineData, lineKey, visible, selected, hovered,
 
 // ══════════════════ 主组件 ═══════════════════════════
 
-export default function Canvas3D({
+const Canvas3D = memo(function Canvas3D({
   geometry, showFaces = true, showLabels = true,
   visibleLines, hoveredLine, setHoveredLine,
   allLines, shownLengthLabels, searchedLine,
@@ -160,6 +160,12 @@ export default function Canvas3D({
 
   const hasHighlights = highlightEdgeIds.length > 0
 
+  // ── 球体叠加层几何体缓存 ──
+  const sphereGeo = useMemo(() => {
+    if (!sphereOverlay) return null
+    return new THREE.SphereGeometry(sphereOverlay.radius, 64, 32)
+  }, [sphereOverlay?.radius])
+
   // ── Highlight fade-in transition ──────────────────
   const prevHighlights = useRef(new Set())
   const highlightStartTimes = useRef(new Map())  // edgeId → performance.now()
@@ -186,7 +192,8 @@ export default function Canvas3D({
     if (hasNew) animating.current = true
   }, [highlightEdgeIds])
 
-  // Drive transition animation frames
+  // Drive transition animation frames — throttled to ~20fps
+  const frameSkip = useRef(0)
   useFrame(() => {
     if (!animating.current) return
     const now = performance.now()
@@ -195,9 +202,14 @@ export default function Canvas3D({
       if (now - startTime < 500) anyActive = true
     })
     if (anyActive) {
-      setTransitionTick(t => t + 1)
+      frameSkip.current++
+      // 每 3 帧触发一次 React re-render（~20fps），减少 60fps 下的不必要渲染
+      if (frameSkip.current % 3 === 0) {
+        setTransitionTick(t => t + 1)
+      }
     } else {
       animating.current = false
+      frameSkip.current = 0
     }
   })
 
@@ -265,14 +277,19 @@ export default function Canvas3D({
     }
   })
 
-  // ── 解析线段坐标 ──
+  // ── 解析线段坐标 + 预计算 BufferGeometry ──
   const resolvedLines = useMemo(() => (allLines || []).map(l => {
     const from = resolvePoint(l.from, pts)
     const to = resolvePoint(l.to, pts)
     if (!from || !to) return null
     const mid = [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2, (from[2] + to[2]) / 2]
     const len = Math.hypot(from[0] - to[0], from[1] - to[1], from[2] - to[2])
-    return { ...l, from, to, mid, length: len }
+    // 预计算 BufferGeometry，避免每帧 renderLine 中重复创建
+    const geometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(from[0], from[1], from[2]),
+      new THREE.Vector3(to[0], to[1], to[2]),
+    ])
+    return { ...l, from, to, mid, length: len, _geo: geometry }
   }).filter(Boolean), [allLines, pts])
 
   const lineKey = (l) => `${l.id}|${l.category}`
@@ -341,18 +358,13 @@ export default function Canvas3D({
       opacity *= nonHighlightOpacity
     }
 
-    const geo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(l.from[0], l.from[1], l.from[2]),
-      new THREE.Vector3(l.to[0], l.to[1], l.to[2]),
-    ])
-
     // 仅棱和自定义边有碰撞体（对角线和辅助线太细不需要）
     const isEdge = ['棱', '底面边', '顶面边', '侧棱'].includes(l.category) || l.custom
 
     return (
       <group key={key}>
-        {/* 可见线段 */}
-        <line geometry={geo} visible={opacity > 0} raycast={() => {}}>
+        {/* 可见线段 — 复用预计算的 geometry */}
+        <line geometry={l._geo} visible={opacity > 0} raycast={() => {}}>
           <lineBasicMaterial
             color={color}
             transparent
@@ -405,9 +417,9 @@ export default function Canvas3D({
       )}
 
       {/* ── 球体叠加（内接球/外接球） ── */}
-      {sphereOverlay && (
+      {sphereOverlay && sphereGeo && (
         <mesh>
-          <sphereGeometry args={[sphereOverlay.radius, 64, 32]} />
+          <primitive attach="geometry" object={sphereGeo} />
           <meshBasicMaterial
             color={sphereOverlay.color || '#4A90E2'}
             transparent
@@ -460,4 +472,5 @@ export default function Canvas3D({
       <OrbitControls enableZoom enablePan enableRotate />
     </>
   )
-}
+})
+export default Canvas3D

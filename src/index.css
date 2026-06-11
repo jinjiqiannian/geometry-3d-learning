@@ -106,6 +106,7 @@
   /* ── Text ── */
   --text-primary: #f0f0f5;
   --text-secondary: #a0a0b0;
+  --text-muted: #8e8e9c;
   --text-inverse: #1d1d1f;
 
   /* ── Accent (brand) ── */
@@ -236,7 +237,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background: var(--bg-deep);
   color: var(--text-primary);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   line-height: 1.5;
   letter-spacing: -0.01em;
 }

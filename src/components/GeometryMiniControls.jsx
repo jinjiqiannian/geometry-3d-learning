@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { GEOMETRIES } from '../constants'
 import './GeometryMiniControls.css'
 
-export default function GeometryMiniControls({
+const GeometryMiniControls = memo(function GeometryMiniControls({
   geometry,
   onGeometryChange,
   showFaces,
@@ -75,4 +75,5 @@ export default function GeometryMiniControls({
       )}
     </div>
   )
-}
+})
+export default GeometryMiniControls

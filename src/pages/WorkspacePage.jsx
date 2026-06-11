@@ -63,6 +63,16 @@ export default function WorkspacePage() {
   const playTimerRef = useRef(null)
   const [shareToast, setShareToast] = useState('')
 
+  // ── WebGL 支持检测 ─────────────────────────────
+  const [hasWebGL, setHasWebGL] = useState(true) // 默认 true 避免闪烁
+  useEffect(() => {
+    try {
+      const c = document.createElement('canvas')
+      const gl = c.getContext('webgl') || c.getContext('experimental-webgl')
+      if (!gl) setHasWebGL(false)
+    } catch { setHasWebGL(false) }
+  }, [])
+
   // ── Mobile ──────────────────────────────────────
   // Debounced resize to prevent Canvas remount on orientation change
   const [isMobile, setIsMobile] = useState(() => {
@@ -189,6 +199,10 @@ export default function WorkspacePage() {
     setLoadingStage('parsing')
     setError(null)
 
+    // 在 try 块外层声明，确保作用域可达
+    let mergedSteps = null
+    let parsedResult = null
+
     try {
       // Stage 1: Call AI solve endpoint
       setLoadingStage('reasoning')
@@ -196,9 +210,10 @@ export default function WorkspacePage() {
 
       if (result?.data) {
         const { parsed, steps, visualStates } = result.data
+        parsedResult = parsed
         setParsedData(parsed)
 
-        const mergedSteps = steps.map((step, i) => ({
+        mergedSteps = steps.map((step, i) => ({
           ...step,
           sceneState: visualStates?.[i] || null,
         }))
@@ -249,9 +264,9 @@ export default function WorkspacePage() {
         saved.unshift({
           date: new Date().toISOString(),
           text,
-          type: parsed?.type || 'cube',
-          steps: mergedSteps,  // 保存步骤避免重复AI请求
-          parsedData: parsed,  // 保存解析结果
+          type: parsedResult?.type || 'cube',
+          steps: mergedSteps || [],
+          parsedData: parsedResult,
         })
         // 最多保存 50 条
         if (saved.length > 50) saved.length = 50
@@ -651,32 +666,40 @@ export default function WorkspacePage() {
           {/* 3D 场景（可折叠） */}
           {show3D && (
             <div className="wp-canvas-mobile" ref={canvasRef}>
-              <Canvas style={{ width: '100%', height: '100%' }}>
-                <Canvas3D
-                  geometry={geometry}
-                  showFaces={showFaces}
-                  showLabels={showLabels}
-                  visibleLines={visibleLines}
-                  hoveredLine={hoveredLine}
-                  setHoveredLine={setHoveredLine}
-                  allLines={mergedLines}
-                  shownLengthLabels={shownLengthLabels}
-                  searchedLine={searchedLine}
-                  selectedEdge={selectedEdge}
-                  onEdgeClick={setSelectedEdge}
-                  edgeColorOverrides={edgeColorOverrides}
-                  customVertices={customVertices}
-                  highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
-                  highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
-                  auxLines={visualIntent?.auxLines || []}
-                  cameraPreset={visualIntent?.cameraPreset || null}
-                  faceOpacity={visualIntent?.faceOpacity ?? 0.42}
-                  nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
-                  vertexLabels={vertexLabels}
-                  cameraResetKey={cameraResetKey}
-                  sphereOverlay={visualIntent?.sphereOverlay || null}
-                />
-              </Canvas>
+              {hasWebGL ? (
+                <Canvas style={{ width: '100%', height: '100%' }}>
+                  <Canvas3D
+                    geometry={geometry}
+                    showFaces={showFaces}
+                    showLabels={showLabels}
+                    visibleLines={visibleLines}
+                    hoveredLine={hoveredLine}
+                    setHoveredLine={setHoveredLine}
+                    allLines={mergedLines}
+                    shownLengthLabels={shownLengthLabels}
+                    searchedLine={searchedLine}
+                    selectedEdge={selectedEdge}
+                    onEdgeClick={setSelectedEdge}
+                    edgeColorOverrides={edgeColorOverrides}
+                    customVertices={customVertices}
+                    highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
+                    highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
+                    auxLines={visualIntent?.auxLines || []}
+                    cameraPreset={visualIntent?.cameraPreset || null}
+                    faceOpacity={visualIntent?.faceOpacity ?? 0.42}
+                    nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
+                    vertexLabels={vertexLabels}
+                    cameraResetKey={cameraResetKey}
+                    sphereOverlay={visualIntent?.sphereOverlay || null}
+                  />
+                </Canvas>
+              ) : (
+                <div className="wp-webgl-fallback">
+                  <span className="wp-webgl-fallback-icon">⚠️</span>
+                  <p>您的浏览器不支持 WebGL，无法显示 3D 场景</p>
+                  <p className="wp-webgl-fallback-hint">请使用最新版 Chrome、Edge 或 Firefox</p>
+                </div>
+              )}
               <GeometryMiniControls
                 geometry={geometry}
                 onGeometryChange={handleGeometryChange}
@@ -738,31 +761,39 @@ export default function WorkspacePage() {
 
           {/* 3D 场景（右侧） */}
           <div className="wp-canvas-col" ref={canvasRef}>
-            <Canvas style={{ width: '100%', height: '100%' }}>
-              <Canvas3D
-                geometry={geometry}
-                showFaces={showFaces}
-                showLabels={showLabels}
-                visibleLines={visibleLines}
-                hoveredLine={hoveredLine}
-                setHoveredLine={setHoveredLine}
-                allLines={mergedLines}
-                shownLengthLabels={shownLengthLabels}
-                searchedLine={searchedLine}
-                selectedEdge={selectedEdge}
-                onEdgeClick={setSelectedEdge}
-                edgeColorOverrides={edgeColorOverrides}
-                customVertices={customVertices}
-                highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
-                highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
-                auxLines={visualIntent?.auxLines || []}
-                cameraPreset={visualIntent?.cameraPreset || null}
-                faceOpacity={visualIntent?.faceOpacity ?? 0.42}
-                nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
-                vertexLabels={vertexLabels}
-                sphereOverlay={visualIntent?.sphereOverlay || null}
-              />
-            </Canvas>
+            {hasWebGL ? (
+              <Canvas style={{ width: '100%', height: '100%' }}>
+                <Canvas3D
+                  geometry={geometry}
+                  showFaces={showFaces}
+                  showLabels={showLabels}
+                  visibleLines={visibleLines}
+                  hoveredLine={hoveredLine}
+                  setHoveredLine={setHoveredLine}
+                  allLines={mergedLines}
+                  shownLengthLabels={shownLengthLabels}
+                  searchedLine={searchedLine}
+                  selectedEdge={selectedEdge}
+                  onEdgeClick={setSelectedEdge}
+                  edgeColorOverrides={edgeColorOverrides}
+                  customVertices={customVertices}
+                  highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
+                  highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
+                  auxLines={visualIntent?.auxLines || []}
+                  cameraPreset={visualIntent?.cameraPreset || null}
+                  faceOpacity={visualIntent?.faceOpacity ?? 0.42}
+                  nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
+                  vertexLabels={vertexLabels}
+                  sphereOverlay={visualIntent?.sphereOverlay || null}
+                />
+              </Canvas>
+            ) : (
+              <div className="wp-webgl-fallback">
+                <span className="wp-webgl-fallback-icon">⚠️</span>
+                <p>您的浏览器不支持 WebGL，无法显示 3D 场景</p>
+                <p className="wp-webgl-fallback-hint">请使用最新版 Chrome、Edge 或 Firefox</p>
+              </div>
+            )}
             <GeometryMiniControls
               geometry={geometry}
               onGeometryChange={handleGeometryChange}

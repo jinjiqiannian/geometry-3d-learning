@@ -93,6 +93,15 @@
   color: var(--text-muted);
 }
 
+/* ── 覆盖 Chrome 自动填充的浅色背景 ── */
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 30px var(--bg-base) inset !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  caret-color: var(--text-primary);
+}
+
 .auth-error {
   font-size: var(--text-xs);
   color: var(--color-error);

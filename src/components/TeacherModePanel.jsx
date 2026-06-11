@@ -2,11 +2,12 @@
 //  TeacherModePanel — Classroom presentation controls
 //  Fullscreen 3D + auto-play + subtitles + PPT export
 // ═══════════════════════════════════════════════════════
+import { memo } from 'react'
 import { useTeacher } from '../contexts/TeacherContext'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import './TeacherModePanel.css'
 
-export default function TeacherModePanel({
+const TeacherModePanel = memo(function TeacherModePanel({
   totalSteps,
   currentStep,
   onStepChange,
@@ -146,4 +147,5 @@ export default function TeacherModePanel({
       )}
     </>
   )
-}
+})
+export default TeacherModePanel

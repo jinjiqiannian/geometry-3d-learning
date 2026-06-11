@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import ProgressHeader from './ProgressHeader'
 import StepList from './StepList'
 import AnswerPanel from './AnswerPanel'
 import PlaybackControls from './PlaybackControls'
 import './ExplanationPanel.css'
 
-export default function ExplanationPanel({
+const ExplanationPanel = memo(function ExplanationPanel({
   steps = [],
   currentStep = 0,
   onStepClick,
@@ -149,4 +149,5 @@ export default function ExplanationPanel({
       )}
     </div>
   )
-}
+})
+export default ExplanationPanel
