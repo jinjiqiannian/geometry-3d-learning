@@ -65,20 +65,20 @@ const router = createHashRouter([
 
 export default function App() {
   return (
-    <SupabaseProvider>
-      <SubscriptionProvider>
-        <AppProvider>
-          <WorkspaceProvider>
-            <TeacherProvider>
-              <ThemeProvider>
-                <ErrorBoundary>
+    <ErrorBoundary>
+      <SupabaseProvider>
+        <SubscriptionProvider>
+          <AppProvider>
+            <WorkspaceProvider>
+              <TeacherProvider>
+                <ThemeProvider>
                   <RouterProvider router={router} />
-                </ErrorBoundary>
-              </ThemeProvider>
-            </TeacherProvider>
-          </WorkspaceProvider>
-        </AppProvider>
-      </SubscriptionProvider>
-    </SupabaseProvider>
+                </ThemeProvider>
+              </TeacherProvider>
+            </WorkspaceProvider>
+          </AppProvider>
+        </SubscriptionProvider>
+      </SupabaseProvider>
+    </ErrorBoundary>
   )
 }
