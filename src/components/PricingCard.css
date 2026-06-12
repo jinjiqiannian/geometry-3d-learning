@@ -60,21 +60,47 @@
   color: var(--color-success);
 }
 
+/* ── Icon ── */
+.pricing-icon {
+  font-size: 36px;
+  margin-bottom: 6px;
+  line-height: 1;
+}
+
 /* ── Name & desc ── */
 .pricing-name {
   font-size: var(--text-lg);
   font-weight: 650;
   color: var(--text-primary);
-  margin-bottom: 4px;
-  margin-top: 8px;
+  margin-bottom: 2px;
+  margin-top: 0;
   letter-spacing: -0.02em;
+}
+
+.pricing-subtitle {
+  font-size: var(--text-xs);
+  font-weight: 550;
+  color: var(--accent);
+  margin-bottom: 8px;
+  display: block;
 }
 
 .pricing-desc {
   font-size: var(--text-sm);
   color: var(--text-muted);
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   line-height: 1.4;
+}
+
+.pricing-highlight {
+  font-size: var(--text-xs);
+  color: var(--accent);
+  font-weight: 500;
+  margin-bottom: 16px;
+  padding: 6px 12px;
+  background: var(--accent-subtle);
+  border-radius: var(--radius-md);
+  line-height: 1.5;
 }
 
 /* ── Price ── */
@@ -128,7 +154,7 @@
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .pricing-feature {
@@ -136,13 +162,44 @@
   color: var(--text-secondary);
   text-align: left;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
+}
+
+.pricing-feature.star-feature {
+  background: rgba(245, 158, 11, 0.04);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  margin: 0 -10px;
 }
 
 .pricing-check {
   color: var(--color-success);
   flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.pricing-feature-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pricing-feature-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+}
+
+.pricing-feature-star {
+  color: #F59E0B;
+  font-size: 11px;
+}
+
+.pricing-feature-detail {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  line-height: 1.5;
 }
 
 /* ── Usage bar (free tier) ── */

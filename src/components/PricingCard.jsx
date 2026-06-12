@@ -15,15 +15,16 @@ export default function PricingCard({ plan, yearly = false }) {
   const monthlyEquivalent = yearly && price > 0
     ? Math.round(price / 12)
     : null
-
-  // Yearly savings
   const monthlyPrice = plan.price || 0
   const yearlySavings = yearly && monthlyPrice > 0
     ? (monthlyPrice * 12) - price
     : 0
 
   const handleUpgrade = () => {
-    if (plan.id === 'free') return
+    if (plan.id === 'free') {
+      window.location.href = '/#/workspace'
+      return
+    }
     if (!user) {
       document.dispatchEvent(new CustomEvent('mathviz:show-auth'))
       return
@@ -33,11 +34,10 @@ export default function PricingCard({ plan, yearly = false }) {
 
   const ctaLabel = () => {
     if (isCurrent) return '当前方案'
-    if (isFree) return '开始使用'
+    if (isFree) return '免费开始'
     return plan.cta
   }
 
-  // Usage progress for free card
   const usagePercent = dailyLimit > 0 ? Math.round((dailyUsage / dailyLimit) * 100) : 0
 
   return (
@@ -48,9 +48,16 @@ export default function PricingCard({ plan, yearly = false }) {
         <div className="pricing-badge trial-badge">7 天免费试用</div>
       )}
 
-      {/* Plan name + desc */}
+      {/* Plan identity */}
+      <div className="pricing-icon">{plan.icon}</div>
       <h3 className="pricing-name">{plan.name}</h3>
+      {plan.subtitle && <span className="pricing-subtitle">{plan.subtitle}</span>}
       <p className="pricing-desc">{plan.description}</p>
+
+      {/* Highlight message */}
+      {plan.highlight && (
+        <p className="pricing-highlight">{plan.highlight}</p>
+      )}
 
       {/* Price */}
       <div className="pricing-price-wrap">
@@ -73,17 +80,28 @@ export default function PricingCard({ plan, yearly = false }) {
 
       {/* Features */}
       <ul className="pricing-features">
-        {plan.features.map((f, i) => (
-          <li key={i} className="pricing-feature">
-            <svg className="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            {f}
-          </li>
-        ))}
+        {plan.features.map((f, i) => {
+          const text = typeof f === 'string' ? f : f.text
+          const detail = typeof f === 'string' ? null : f.detail
+          const star = typeof f === 'string' ? false : f.star
+          return (
+            <li key={i} className={`pricing-feature ${star ? 'star-feature' : ''}`}>
+              <svg className="pricing-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <div className="pricing-feature-text">
+                <span className="pricing-feature-name">
+                  {star && <span className="pricing-feature-star">★ </span>}
+                  {text}
+                </span>
+                {detail && <span className="pricing-feature-detail">{detail}</span>}
+              </div>
+            </li>
+          )
+        })}
       </ul>
 
-      {/* Free tier: usage bar */}
+      {/* Free tier usage bar */}
       {isFree && (
         <div className="pricing-usage">
           <div className="pricing-usage-header">

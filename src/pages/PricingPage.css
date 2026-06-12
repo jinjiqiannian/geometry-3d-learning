@@ -64,6 +64,15 @@
   font-size: var(--text-lg);
   color: var(--text-muted);
   margin-bottom: 28px;
+  line-height: 1.7;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.pp-hero-subtitle strong {
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 /* ── Toggle ── */
@@ -111,6 +120,68 @@
   gap: 20px;
   position: relative;
   z-index: 1;
+}
+
+/* ── Philosophy Section ── */
+.pp-philosophy {
+  max-width: 760px;
+  margin: 48px auto 0;
+  padding: 0 24px;
+}
+
+.pp-philosophy-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+}
+
+.pp-philosophy-card h3 {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+.pp-philosophy-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pp-philosophy-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.pp-philosophy-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--brand-gradient);
+  color: white;
+  font-size: 13px;
+  font-weight: 650;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pp-philosophy-item strong {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: 3px;
+}
+
+.pp-philosophy-item p {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
 }
 
 /* ── Feature Comparison Table ── */

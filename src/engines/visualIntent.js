@@ -3,13 +3,16 @@
 //
 //  Pure function: step (type, title, content)
 //               + parsedData (type, highlightLines)
-//               → VisualIntent (highlight, aux, camera, opacity)
+//               → VisualIntent (highlight, aux, opacity)
 //
 //  Sparse Visual Mapping (ECC):
-//    observation  → no highlights, camera only
-//    construction → no highlights, 1-2 aux lines
+//    observation  → highlight problem edges
+//    construction → 1-2 aux lines
 //    calculation  → only edges being calculated
 //    conclusion   → result edges, full overview
+//
+//  Camera is NEVER auto-controlled. Users freely orbit.
+//  Step switching only updates: highlight, aux, opacity.
 //
 //  Zero AI dependency. No sceneState. Debuggable.
 // ═══════════════════════════════════════════════════════
@@ -35,31 +38,29 @@ export const CAMERA_PRESETS = {
 }
 
 // ── Step type → visual defaults ──────────────────────
+// NOTE: Camera is NOT auto-controlled. Users freely orbit.
+//       Only highlight, aux lines, and opacity change per step.
 
 const TYPE_DEFAULTS = {
   observation: {
     highlightColor: '#4A90E2',
     faceOpacity: 0.42,
     nonHighlightOpacity: 1.0,
-    cameraPreset: 'overview',
   },
   construction: {
     highlightColor: '#4A90E2',
     faceOpacity: 0.30,
     nonHighlightOpacity: 0.25,
-    cameraPreset: 'diagonal',
   },
   calculation: {
     highlightColor: '#4A90E2',
     faceOpacity: 0.25,
     nonHighlightOpacity: 0.20,
-    cameraPreset: 'closeUp',
   },
   conclusion: {
     highlightColor: '#4A90E2',
     faceOpacity: 0.42,
     nonHighlightOpacity: 1.0,
-    cameraPreset: 'overview',
   },
 }
 
@@ -216,7 +217,6 @@ function resolveWithLabelMap(label, validEdges, labelMap) {
 function sceneStateToIntent(sceneState, labelMap) {
   const highlightEdgeIds = (sceneState.highlightEdges?.map(e => {
     const raw = typeof e === 'string' ? e : `${e.from}${e.to}`
-    // 通过 labelMap 将用户标签转为内部边 ID
     if (labelMap) {
       const resolved = resolveUserEdge(raw, labelMap)
       if (resolved) return resolved
@@ -228,9 +228,6 @@ function sceneStateToIntent(sceneState, labelMap) {
     highlightEdgeIds,
     highlightColor: sceneState.highlightColor || '#FF6B6B',
     auxLines: sceneState.showAuxiliaryLines || [],
-    cameraPreset: sceneState.cameraPosition
-      ? positionToPreset(sceneState.cameraPosition)
-      : 'overview',
     faceOpacity: sceneState.opacity?.faces ?? 0.42,
     nonHighlightOpacity: sceneState.opacity?.nonHighlightedEdges ?? 1.0,
     annotations: sceneState.annotations || [],
@@ -259,35 +256,20 @@ function resolveUserEdge(userEdge, labelMap) {
 }
 
 /**
- * Roughly map [x,y,z] to nearest preset name.
- */
-function positionToPreset(pos) {
-  if (!pos || pos.length < 3) return 'overview'
-  // If y is high → top, if x is high → side, else diagonal/overview
-  if (pos[1] > 5) return 'top'
-  if (pos[0] > 5 && pos[2] > 3) return 'side'
-  if (pos[0] > 3 && pos[1] > 2 && pos[2] > 3) return 'diagonal'
-  return 'overview'
-}
-
-/**
  * Compute visual intent for a step.
  *
  * Priority:
  *   1. step.sceneState (from AI DeepSeek) — constrained by enforceProgression
  *   2. Rule-based fallback (ECC Sparse Visual Mapping)
  *
- * Each step type expresses exactly one cognitive action:
- *   observation  → no highlighted edges (step 1), or only problem lines (step 2+)
- *   construction → no highlighted edges, 1-2 key auxiliary lines
- *   calculation  → only edges being calculated
- *   conclusion   → result edges, full overview
+ * Camera is NEVER auto-controlled — users freely orbit with OrbitControls.
+ * Step switching only updates: highlight, auxLines, opacity.
  *
  * @param {Object} step — { step, title, content, type, sceneState }
  * @param {Object} parsedData — { type, size, labels, highlightLines, explanation }
- * @param {string} [problemText] — original problem text (used for aux line generation)
- * @param {Object} [labelMap] — from createLabelMap() — maps user labels to internal edge IDs
- * @returns {Object} VisualIntent — { highlightEdgeIds, auxLines, cameraPreset, faceOpacity, nonHighlightOpacity }
+ * @param {string} [problemText] — original problem text
+ * @param {Object} [labelMap] — from createLabelMap()
+ * @returns {Object} VisualIntent — { highlightEdgeIds, auxLines, faceOpacity, nonHighlightOpacity, sphereOverlay }
  */
 export function computeVisualIntent(step, parsedData, problemText, labelMap) {
   if (!step || !parsedData) return defaultIntent()
@@ -296,10 +278,9 @@ export function computeVisualIntent(step, parsedData, problemText, labelMap) {
   const validEdges = new Set(GEOMETRY_EDGES[geoType] || GEOMETRY_EDGES.cube)
   const typeDefaults = TYPE_DEFAULTS[step.type] || TYPE_DEFAULTS.observation
 
-  // 解析题目涉及的边（使用 labelMap 将用户标签转内部边 ID）
   const problemEdges = extractEdgesFromParsedData(parsedData, validEdges, geoType, labelMap)
 
-  // ── 检测球体叠加类型 ──
+  // Sphere overlay detection
   const searchText = `${step.title || ''} ${step.content || ''} ${problemText || ''}`
   let sphereOverlay = null
   if (/内接|内切|inscribed/.test(searchText)) {
@@ -308,7 +289,7 @@ export function computeVisualIntent(step, parsedData, problemText, labelMap) {
     sphereOverlay = computeSphereOverlay(geoType, parsedData.size || 2, 'circumscribed')
   }
 
-  // ── Priority 1: AI sceneState (constrained by progression) ──
+  // Priority 1: AI sceneState (constrained by progression)
   if (step.sceneState) {
     const rawIntent = sceneStateToIntent(step.sceneState, labelMap)
     const stepIndex = (step.step || 1) - 1
@@ -317,7 +298,7 @@ export function computeVisualIntent(step, parsedData, problemText, labelMap) {
     return intent
   }
 
-  // ── Priority 2: Rule-based fallback (ECC Sparse Visual Mapping) ──
+  // Priority 2: Rule-based fallback
   const stepIndex = (step.step || 1) - 1
   const rawIntent = computeRuleBasedIntent(step, parsedData, problemText, geoType, typeDefaults, problemEdges, validEdges)
   const intent = enforceProgression(rawIntent, stepIndex, step.type, problemEdges, geoType)
@@ -329,63 +310,21 @@ export function computeVisualIntent(step, parsedData, problemText, labelMap) {
  * Rule-based intent computation (fallback when AI sceneState is not available)
  */
 function computeRuleBasedIntent(step, parsedData, problemText, geoType, typeDefaults, problemEdges, validEdges) {
-  switch (step.type) {
-    case 'observation': {
-      return {
-        highlightEdgeIds: problemEdges,
-        highlightColor: typeDefaults.highlightColor,
-        auxLines: [],
-        cameraPreset: typeDefaults.cameraPreset,
-        faceOpacity: typeDefaults.faceOpacity,
-        nonHighlightOpacity: typeDefaults.nonHighlightOpacity,
-      }
-    }
-
-    case 'construction': {
-      const auxLines = computeAuxLines(step, parsedData, geoType, problemEdges, problemText)
-      return {
-        highlightEdgeIds: [],
-        highlightColor: typeDefaults.highlightColor,
-        auxLines: auxLines.slice(0, 2),
-        cameraPreset: typeDefaults.cameraPreset,
-        faceOpacity: typeDefaults.faceOpacity,
-        nonHighlightOpacity: typeDefaults.nonHighlightOpacity,
-      }
-    }
-
-    case 'calculation': {
-      return {
-        highlightEdgeIds: problemEdges,
-        highlightColor: typeDefaults.highlightColor,
-        auxLines: [],
-        cameraPreset: typeDefaults.cameraPreset,
-        faceOpacity: typeDefaults.faceOpacity,
-        nonHighlightOpacity: typeDefaults.nonHighlightOpacity,
-      }
-    }
-
-    case 'conclusion': {
-      return {
-        highlightEdgeIds: problemEdges,
-        highlightColor: typeDefaults.highlightColor,
-        auxLines: [],
-        cameraPreset: typeDefaults.cameraPreset,
-        faceOpacity: typeDefaults.faceOpacity,
-        nonHighlightOpacity: typeDefaults.nonHighlightOpacity,
-      }
-    }
-
-    default: {
-      return {
-        highlightEdgeIds: problemEdges,
-        highlightColor: typeDefaults.highlightColor,
-        auxLines: [],
-        cameraPreset: typeDefaults.cameraPreset,
-        faceOpacity: typeDefaults.faceOpacity,
-        nonHighlightOpacity: typeDefaults.nonHighlightOpacity,
-      }
-    }
+  const base = {
+    highlightEdgeIds: problemEdges,
+    highlightColor: typeDefaults.highlightColor,
+    auxLines: [],
+    faceOpacity: typeDefaults.faceOpacity,
+    nonHighlightOpacity: typeDefaults.nonHighlightOpacity,
   }
+
+  if (step.type === 'construction') {
+    const auxLines = computeAuxLines(step, parsedData, geoType, problemEdges, problemText)
+    base.highlightEdgeIds = []
+    base.auxLines = auxLines.slice(0, 2)
+  }
+
+  return base
 }
 
 // ── Edge extraction ──────────────────────────────────
@@ -601,82 +540,6 @@ function computeAuxLines(step, parsedData, geoType, highlightEdgeIds, problemTex
   return auxLines
 }
 
-// ── Camera preset selection ──────────────────────────
-
-function determineCameraPreset(step, parsedData, geoType, highlightEdgeIds, problemText) {
-  const text = `${step.title} ${step.content}`
-  const searchText = `${text} ${problemText || ''}`
-  const typeDefault = (TYPE_DEFAULTS[step.type] || TYPE_DEFAULTS.observation).cameraPreset
-
-  // Construction with diagonal → use diagonal view
-  if (step.type === 'construction' && DIAGONAL_KEYWORDS.test(searchText)) {
-    return 'diagonal'
-  }
-
-  // Construction with height/vertical → use side or apex view
-  if (step.type === 'construction' && HEIGHT_KEYWORDS.test(searchText)) {
-    if (['pyramid', 'cone'].includes(geoType)) return 'apex'
-    return 'side'
-  }
-
-  // Looking at base
-  if (/底面/.test(searchText) && !/顶面/.test(searchText)) {
-    return 'base'
-  }
-
-  // Looking at top
-  if (/顶面/.test(searchText) && !/底面/.test(searchText)) {
-    return 'top'
-  }
-
-  // Section view
-  if (/截面/.test(searchText)) {
-    return 'front'
-  }
-
-  // Skew lines → diagonal for 3D perspective
-  if (SKEW_KEYWORDS.test(searchText)) {
-    return 'diagonal'
-  }
-
-  // Dihedral angle → corner view to see both planes clearly
-  if (/二面角|dihedral/.test(searchText)) {
-    return 'corner'
-  }
-
-  // Line-plane angle → projection view
-  if (/线面角|投影/.test(searchText)) {
-    return 'projection'
-  }
-
-  // Point-plane distance → side view for perpendicular
-  if (/点.*到.*(平面|面).*距离|等体积法/.test(searchText)) {
-    return 'side'
-  }
-
-  // Inscribed/circumscribed sphere → overview for spatial relationship
-  if (/内接|外接|内切|外切/.test(searchText)) {
-    return 'overview'
-  }
-
-  // Specific calculation → close up
-  if (step.type === 'calculation' && highlightEdgeIds.length > 0) {
-    return 'closeUp'
-  }
-
-  // Observation of apex geometries
-  if (step.type === 'observation' && ['pyramid', 'cone'].includes(geoType)) {
-    return 'overview'
-  }
-
-  // Sphere → front-ish for better circle visibility
-  if (geoType === 'sphere') {
-    return typeDefault
-  }
-
-  return typeDefault
-}
-
 // ── Default intent (no step selected yet) ────────────
 
 function defaultIntent() {
@@ -684,36 +547,9 @@ function defaultIntent() {
     highlightEdgeIds: [],
     highlightColor: '#4A90E2',
     auxLines: [],
-    cameraPreset: 'overview',
     faceOpacity: 0.42,
     nonHighlightOpacity: 1.0,
   }
-}
-
-// ── Camera preset → position mapping ─────────────────
-
-/**
- * Get camera position for a given preset and geometry type.
- * Tweaks positions slightly based on geometry size.
- */
-export function getCameraPosition(preset, geoType = 'cube') {
-  const base = CAMERA_PRESETS[preset] || CAMERA_PRESETS.overview
-
-  // Adjust for specific geometry types
-  if (geoType === 'pyramid' && preset === 'overview') {
-    return [4, 2.5, 4]
-  }
-  if (geoType === 'cone' && preset === 'overview') {
-    return [3, 3, 4]
-  }
-  if (geoType === 'sphere' && preset === 'overview') {
-    return [0, 4, 0.1]
-  }
-  if ((geoType === 'cylinder' || geoType === 'circularFrustum') && preset === 'overview') {
-    return [3, 2.5, 4]
-  }
-
-  return base
 }
 
 // ── Validation / Debug ───────────────────────────────

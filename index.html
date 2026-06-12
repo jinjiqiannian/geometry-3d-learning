@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>几何维度 — 3D AI 几何解题</title>
     <meta name="description" content="AI 几何讲题助手：输入一道几何题，自动生成 3D 可视化分步讲解。支持正方体、球体、圆柱、圆锥、棱锥、棱柱等所有立体几何题型。" />
-    <meta name="theme-color" content="#4A90E2" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="几何维度" />
@@ -19,12 +18,13 @@
     <meta http-equiv="Content-Security-Policy"
           content="
             default-src 'self';
-            script-src 'self' 'unsafe-inline' https://js.stripe.com;
+            script-src 'self' 'unsafe-inline' blob: https://js.stripe.com;
             style-src 'self' 'unsafe-inline';
             img-src 'self' data: blob: https:;
             font-src 'self';
             connect-src 'self' https: wss: ws: http://localhost:*;
             frame-src 'self' https://js.stripe.com https://hooks.stripe.com;
+            worker-src 'self' blob:;
             form-action 'self';
             base-uri 'self';
             object-src 'none';
@@ -237,10 +237,13 @@
             '<div class="boot-error-icon">!</div>' +
             '<div class="boot-error-title">加载失败</div>' +
             '<div class="boot-error-desc">' + (msg || '资源加载失败，请检查网络后重试。') + '</div>' +
-            '<button class="boot-error-btn" onclick="location.reload()">重新加载</button>' +
+            '<button class="boot-error-btn" id="mathviz-boot-reload-btn">重新加载</button>' +
             '<div class="boot-error-hint">如多次失败，请尝试清除浏览器缓存</div>' +
             '</div>';
           document.body.appendChild(div);
+          // Use addEventListener — inline onclick is blocked by CSP
+          var reloadBtn = div.querySelector('#mathviz-boot-reload-btn');
+          if (reloadBtn) reloadBtn.addEventListener('click', function() { location.reload(); });
           errorEl = div;
           div.classList.add('show');
         }

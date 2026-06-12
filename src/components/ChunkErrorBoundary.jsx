@@ -30,11 +30,9 @@ export default class ChunkErrorBoundary extends Component {
   }
 
   static getDerivedStateFromError(error) {
-    if (isChunkError(error)) {
-      return { hasError: true, error }
-    }
-    // Not a chunk error — let parent ErrorBoundary handle it
-    throw error
+    // Handle ALL errors — never re-throw. React 19 error propagation
+    // from getDerivedStateFromError is unreliable across Suspense boundaries.
+    return { hasError: true, error }
   }
 
   componentDidCatch(error, info) {
@@ -68,7 +66,8 @@ export default class ChunkErrorBoundary extends Component {
 
   render() {
     if (this.state.hasError) {
-      const isRetrying = this.state.retryCount < MAX_AUTO_RETRIES
+      const chunkErr = isChunkError(this.state.error)
+      const isRetrying = chunkErr && this.state.retryCount < MAX_AUTO_RETRIES
 
       return (
         <div className="error-boundary">
@@ -90,9 +89,14 @@ export default class ChunkErrorBoundary extends Component {
             ) : (
               <>
                 <div className="error-boundary-icon">!</div>
-                <h2 className="error-boundary-title">页面加载失败</h2>
+                <h2 className="error-boundary-title">
+                  {chunkErr ? '页面加载失败' : '页面渲染异常'}
+                </h2>
                 <p className="error-boundary-desc">
-                  模块资源加载失败，可能是网络波动或 CDN 缓存更新中。
+                  {chunkErr
+                    ? '模块资源加载失败，可能是网络波动或 CDN 缓存更新中。'
+                    : (this.state.error?.message || '页面渲染时出现错误，请尝试刷新。')
+                  }
                 </p>
                 <div className="error-boundary-actions">
                   <button
@@ -101,12 +105,14 @@ export default class ChunkErrorBoundary extends Component {
                   >
                     刷新页面
                   </button>
-                  <button
-                    className="error-boundary-btn error-boundary-btn-secondary"
-                    onClick={this.handleRetry}
-                  >
-                    重试加载
-                  </button>
+                  {chunkErr && (
+                    <button
+                      className="error-boundary-btn error-boundary-btn-secondary"
+                      onClick={this.handleRetry}
+                    >
+                      重试加载
+                    </button>
+                  )}
                 </div>
               </>
             )}

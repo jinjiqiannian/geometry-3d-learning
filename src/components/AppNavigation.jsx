@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import ThemeToggle from './ThemeToggle'
 import UserMenu from './UserMenu'
+import { useSubscription } from '../contexts/SubscriptionContext'
 import './AppNavigation.css'
 
 const NAV_ITEMS = [
@@ -24,10 +25,17 @@ function LogoIcon() {
 
 export default function AppNavigation() {
   const location = useLocation()
+  const { plan, isPro } = useSubscription()
 
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/'
     return location.pathname.startsWith(path)
+  }
+
+  const planLabel = () => {
+    if (plan === 'teacher') return '教师版'
+    if (plan === 'pro') return 'Pro'
+    return '免费版'
   }
 
   return (
@@ -57,6 +65,13 @@ export default function AppNavigation() {
 
       <div className="app-nav-right">
         <ThemeToggle />
+        <Link
+          to="/pricing"
+          className={`app-nav-pricing ${isPro ? 'is-pro' : ''}`}
+        >
+          {planLabel()}
+          {!isPro && <span className="app-nav-upgrade-dot" />}
+        </Link>
         <UserMenu />
       </div>
     </nav>

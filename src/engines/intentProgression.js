@@ -45,26 +45,22 @@ export function enforceProgression(sceneState, stepIndex, stepType, problemEdgeI
     observation: {
       faceOpacity: stepIndex === 0 ? 0.35 : 0.38,
       nonHighlightOpacity: stepIndex === 0 ? 0.06 : 0.12,
-      hideLabels: stepIndex === 0,   // 第一步不显示标签，让学生先看几何体
-      cameraPreset: 'overview',
+      hideLabels: stepIndex === 0,
     },
     construction: {
       faceOpacity: 0.28,
       nonHighlightOpacity: 0.08,
       hideLabels: false,
-      cameraPreset: 'diagonal',
     },
     calculation: {
       faceOpacity: 0.22,
-      nonHighlightOpacity: 0.05,     // 计算步骤极度聚焦
+      nonHighlightOpacity: 0.05,
       hideLabels: false,
-      cameraPreset: 'closeUp',
     },
     conclusion: {
       faceOpacity: 0.40,
-      nonHighlightOpacity: 1.0,      // 结论步骤显示全貌
+      nonHighlightOpacity: 1.0,
       hideLabels: false,
-      cameraPreset: 'overview',
     },
   }
 
@@ -72,7 +68,6 @@ export function enforceProgression(sceneState, stepIndex, stepType, problemEdgeI
   if (result.faceOpacity == null) result.faceOpacity = config.faceOpacity
   if (result.nonHighlightOpacity == null) result.nonHighlightOpacity = config.nonHighlightOpacity
   if (result.hideLabels == null) result.hideLabels = config.hideLabels
-  if (!result.cameraPreset) result.cameraPreset = config.cameraPreset
 
   return result
 }

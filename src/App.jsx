@@ -8,12 +8,12 @@ import { TeacherProvider } from './contexts/TeacherContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import PageLayout from './layouts/PageLayout'
 import LandingPage from './pages/LandingPage'
+import WorkspacePage from './pages/WorkspacePage'
 import ErrorBoundary from './components/ErrorBoundary'
 import ChunkErrorBoundary from './components/ChunkErrorBoundary'
 
 // ── Route-level code splitting ──
 // Three.js, pptExporter, and heavy engines only load when needed
-const WorkspacePage = lazy(() => import('./pages/WorkspacePage'))
 const PricingPage = lazy(() => import('./pages/PricingPage'))
 const HistoryPage = lazy(() => import('./pages/HistoryPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))

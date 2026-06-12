@@ -1,19 +1,17 @@
-import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { Canvas } from '@react-three/fiber'
 import Canvas3D from '../features/solid-geometry/Canvas3D'
 import GeometryMiniControls from '../components/GeometryMiniControls'
 import ExplanationPanel from '../components/ExplanationPanel'
-import TeacherModePanel from '../components/TeacherModePanel'
 import { getLineDefinitions } from '../engines/lineDefinitions'
 import { isPolyhedral } from '../engines/geometryEngine'
 import { computeVerticesFromParams } from '../engines/constraintSolver'
 import { aiAPI } from '../services/api'
-import { computeVisualIntent, CAMERA_PRESETS } from '../engines/visualIntent'
+import { computeVisualIntent } from '../engines/visualIntent'
 import { createLabelMap, INTERNAL_LABELS } from '../engines/labelMapper'
 import { generateShareUrl, detectShareParam, decodeShare } from '../engines/shareUtils'
 import { useSubscription } from '../contexts/SubscriptionContext'
-import { useTeacher } from '../contexts/TeacherContext'
 import './WorkspacePage.css'
 
 // ── Default constraint params ─────────────────────
@@ -26,7 +24,6 @@ function defaultConstraintParams(type) {
 
 export default function WorkspacePage() {
   const { checkCanGenerate, recordUsage, remaining, isPro, triggerPaywall } = useSubscription()
-  const { setNarration, setCurrentPhrase } = useTeacher()
   const [searchParams] = useSearchParams()
   const canvasRef = useRef(null)
 
@@ -43,8 +40,8 @@ export default function WorkspacePage() {
   const [customLines, setCustomLines] = useState([])
   const [shownLengthLabels, setShownLengthLabels] = useState(() => new Set())
   const [searchedLine, setSearchedLine] = useState('')
-  const [selectedEdge, setSelectedEdge] = useState(null)
   const [edgeColorOverrides, setEdgeColorOverrides] = useState({})
+  const [selectedEdge, setSelectedEdge] = useState(null)
 
   // ── Workspace state ──────────────────────────────
   const [problemText, setProblemText] = useState('')
@@ -63,21 +60,13 @@ export default function WorkspacePage() {
   const playTimerRef = useRef(null)
   const [shareToast, setShareToast] = useState('')
 
-  // ── WebGL 支持检测 ─────────────────────────────
-  // null=检测中 true=支持 false=不支持
-  // 初值必须为 null —— Canvas 在检测完成前渲染会导致
-  // @react-three/fiber 的 WebGL 上下文创建在 React 渲染周期外抛异常，
-  // ErrorBoundary 无法捕获 → 整页白屏崩溃
-  const [hasWebGL, setHasWebGL] = useState(null)
-  useLayoutEffect(() => {
-    let ok = false
+  // ── WebGL 支持检测（同步，无状态切换） ──────────
+  const [hasWebGL] = useState(() => {
     try {
       const c = document.createElement('canvas')
-      const gl = c.getContext('webgl') || c.getContext('experimental-webgl')
-      ok = !!gl
-    } catch { /* ok stays false */ }
-    setHasWebGL(ok)
-  }, [])
+      return !!(c.getContext('webgl') || c.getContext('experimental-webgl'))
+    } catch { return false }
+  })
 
   // ── Mobile ──────────────────────────────────────
   // Debounced resize to prevent Canvas remount on orientation change
@@ -395,18 +384,6 @@ export default function WorkspacePage() {
     return showLabels
   }, [visualIntent?.hideLabels, showLabels])
 
-  // ── (3c) cameraHint — 推荐视角中文提示（仅提示，不自动切换）──
-  const cameraHint = useMemo(() => {
-    const preset = visualIntent?.cameraPreset
-    if (!preset || preset === 'overview') return null
-    const hints = {
-      front: '正面看', top: '俯视', side: '侧面看', diagonal: '对角看',
-      base: '底面看', apex: '顶点看', closeUp: '近看', bottomUp: '仰视',
-      corner: '角点看', section: '截面看', projection: '投影看',
-    }
-    return hints[preset] || null
-  }, [visualIntent])
-
   // ── (4) mergedLines — 合并的边定义 ─────────────────
   //  依赖: geometry, customVertices, vertexLabels, customLines, edgeColorOverrides
   const mergedLines = useMemo(() => {
@@ -420,14 +397,6 @@ export default function WorkspacePage() {
     }
     return merged
   }, [geometry.type, geometry.params.size, customLines, edgeColorOverrides, customVertices, vertexLabels])
-
-  // ── (5) selectedEdgeData — 选中边的详细信息 ─────────
-  //  依赖: selectedEdge, geometry, vertexLabels, customLines
-  const selectedEdgeData = useMemo(() => {
-    if (!selectedEdge) return null
-    const { lines } = getLineDefinitions(geometry.type, geometry.params, customVertices, vertexLabels)
-    return [...lines, ...customLines].find(l => `${l.id}|${l.category}` === selectedEdge) || null
-  }, [selectedEdge, geometry.type, geometry.params, customLines, customVertices, vertexLabels])
 
   // ── Step navigation ──────────────────────────────
   const handleStepClick = useCallback((index) => {
@@ -455,25 +424,6 @@ export default function WorkspacePage() {
       handleQuickSubmit()
     }
   }, [handleQuickSubmit])
-
-  // ── 生成教师讲稿（从步骤内容） ─────────────────
-  useEffect(() => {
-    if (steps.length === 0) return
-    const narration = steps.map((s, i) => ({
-      step: i,
-      text: `${s.title}。${s.content}`,
-      delay: Math.max(3000, s.content.length * 40),
-    }))
-    setNarration(narration)
-    setCurrentPhrase(narration[0]?.text || '')
-  }, [steps, setNarration, setCurrentPhrase])
-
-  // 当前步骤切换时更新字幕
-  useEffect(() => {
-    if (steps.length === 0) return
-    const phrase = `${steps[currentStep]?.title || ''}。${steps[currentStep]?.content || ''}`
-    setCurrentPhrase(phrase)
-  }, [currentStep, steps, setCurrentPhrase])
 
   // ── PPT 导出 ───────────────────────────────────
   const handleExportPPT = useCallback(async () => {
@@ -692,152 +642,85 @@ export default function WorkspacePage() {
         </div>
       )}
 
-      {isMobile ? (
-        /* ── Mobile: 上下布局 ── */
-        <div className="wp-main-mobile">
-          {/* 3D 场景（可折叠） */}
-          {show3D && (
-            <div className="wp-canvas-mobile" ref={canvasRef}>
-              {hasWebGL ? (
-                <Canvas style={{ width: '100%', height: '100%' }}>
-                  <Canvas3D
-                    geometry={geometry}
-                    showFaces={showFaces}
-                    showLabels={effectiveShowLabels}
-                    visibleLines={visibleLines}
-                    hoveredLine={hoveredLine}
-                    setHoveredLine={setHoveredLine}
-                    allLines={mergedLines}
-                    shownLengthLabels={shownLengthLabels}
-                    searchedLine={searchedLine}
-                    selectedEdge={selectedEdge}
-                    onEdgeClick={setSelectedEdge}
-                    edgeColorOverrides={edgeColorOverrides}
-                    customVertices={customVertices}
-                    highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
-                    highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
-                    auxLines={visualIntent?.auxLines || []}
-                    cameraPreset={visualIntent?.cameraPreset || null}
-                    faceOpacity={visualIntent?.faceOpacity ?? 0.42}
-                    nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
-                    vertexLabels={vertexLabels}
-                    cameraResetKey={cameraResetKey}
-                    sphereOverlay={visualIntent?.sphereOverlay || null}
-                  />
-                </Canvas>
-              ) : (
-                <div className="wp-webgl-fallback">
-                  <span className="wp-webgl-fallback-icon">⚠️</span>
-                  <p>您的浏览器不支持 WebGL，无法显示 3D 场景</p>
-                  <p className="wp-webgl-fallback-hint">请使用最新版 Chrome、Edge 或 Firefox</p>
-                </div>
-              )}
-              <GeometryMiniControls
+      {/* ── Unified layout: single Canvas, CSS-driven responsive ── */}
+      <div className={`wp-main ${isMobile ? 'wp-main--mobile' : ''}`}>
+        {/* 讲解面板（左侧/上方） */}
+        <div className="wp-explain-col">
+          <ExplanationPanel
+            steps={steps}
+            currentStep={currentStep}
+            onStepClick={handleStepClick}
+            onNext={handleNextStep}
+            onPrev={handlePrevStep}
+            loading={loading}
+            loadingStage={loadingStage}
+            parsedData={parsedData}
+            problemText={problemText}
+            error={error}
+            onRetry={handleRetry}
+            onAskFollowUp={handleAskFollowUp}
+            followUpLoading={followUpLoading}
+            followUpAnswer={followUpAnswer}
+            onPlay={steps.length > 0 ? handleTogglePlay : undefined}
+            isPlaying={isPlaying}
+          />
+        </div>
+
+        {/* 3D 场景（右侧/下方）— 全生命周期只 mount 一次，用 CSS display 控制显隐 */}
+        <div
+          className={`wp-canvas-col ${isMobile && !show3D ? 'wp-canvas--hidden' : ''}`}
+          ref={canvasRef}
+        >
+          {hasWebGL ? (
+            <Canvas
+              style={{ width: '100%', height: '100%' }}
+              gl={{ preserveDrawingBuffer: true, antialias: true, powerPreference: 'high-performance' }}
+              dpr={[1, 2]}
+            >
+              <Canvas3D
                 geometry={geometry}
-                onGeometryChange={handleGeometryChange}
                 showFaces={showFaces}
-                onToggleFaces={() => setShowFaces(prev => !prev)}
-                showLabels={showLabels}
-                onToggleLabels={() => setShowLabels(prev => !prev)}
-                onResetCamera={handleResetCamera}
-                cameraHint={cameraHint}
-                onScreenshot={handleScreenshot}
-                onShare={handleShare}
+                showLabels={effectiveShowLabels}
+                visibleLines={visibleLines}
+                hoveredLine={hoveredLine}
+                setHoveredLine={setHoveredLine}
+                allLines={mergedLines}
+                shownLengthLabels={shownLengthLabels}
+                searchedLine={searchedLine}
+                selectedEdge={selectedEdge}
+                onEdgeClick={setSelectedEdge}
+                edgeColorOverrides={edgeColorOverrides}
+                customVertices={customVertices}
+                highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
+                highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
+                auxLines={visualIntent?.auxLines || []}
+                faceOpacity={visualIntent?.faceOpacity ?? 0.42}
+                nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
+                vertexLabels={vertexLabels}
+                cameraResetKey={cameraResetKey}
+                sphereOverlay={visualIntent?.sphereOverlay || null}
               />
+            </Canvas>
+          ) : (
+            <div className="wp-webgl-fallback">
+              <span className="wp-webgl-fallback-icon">⚠️</span>
+              <p>您的浏览器不支持 WebGL，无法显示 3D 场景</p>
+              <p className="wp-webgl-fallback-hint">请使用最新版 Chrome、Edge 或 Firefox</p>
             </div>
           )}
-
-          {/* 讲解面板（优先） */}
-          <div className="wp-explain-mobile">
-            <ExplanationPanel
-              steps={steps}
-              currentStep={currentStep}
-              onStepClick={handleStepClick}
-              onNext={handleNextStep}
-              onPrev={handlePrevStep}
-              loading={loading}
-              loadingStage={loadingStage}
-              parsedData={parsedData}
-              problemText={problemText}
-              error={error}
-              onRetry={handleRetry}
-              onAskFollowUp={handleAskFollowUp}
-              followUpLoading={followUpLoading}
-              followUpAnswer={followUpAnswer}
-              onPlay={steps.length > 0 ? handleTogglePlay : undefined}
-              isPlaying={isPlaying}
-            />
-          </div>
+          <GeometryMiniControls
+            geometry={geometry}
+            onGeometryChange={handleGeometryChange}
+            showFaces={showFaces}
+            onToggleFaces={() => setShowFaces(prev => !prev)}
+            showLabels={effectiveShowLabels}
+            onToggleLabels={() => setShowLabels(prev => !prev)}
+            onResetCamera={handleResetCamera}
+            onScreenshot={handleScreenshot}
+            onShare={handleShare}
+          />
         </div>
-      ) : (
-        /* ── Desktop: 左右布局 ── */
-        <div className="wp-main">
-          {/* 讲解面板（左侧，优先） */}
-          <div className="wp-explain-col">
-            <ExplanationPanel
-              steps={steps}
-              currentStep={currentStep}
-              onStepClick={handleStepClick}
-              onNext={handleNextStep}
-              onPrev={handlePrevStep}
-              loading={loading}
-              loadingStage={loadingStage}
-              parsedData={parsedData}
-              problemText={problemText}
-              error={error}
-              onRetry={handleRetry}
-              onAskFollowUp={handleAskFollowUp}
-              followUpLoading={followUpLoading}
-              followUpAnswer={followUpAnswer}
-            />
-          </div>
-
-          {/* 3D 场景（右侧） */}
-          <div className="wp-canvas-col" ref={canvasRef}>
-            {hasWebGL ? (
-              <Canvas style={{ width: '100%', height: '100%' }}>
-                <Canvas3D
-                  geometry={geometry}
-                  showFaces={showFaces}
-                  showLabels={effectiveShowLabels}
-                  visibleLines={visibleLines}
-                  hoveredLine={hoveredLine}
-                  setHoveredLine={setHoveredLine}
-                  allLines={mergedLines}
-                  shownLengthLabels={shownLengthLabels}
-                  searchedLine={searchedLine}
-                  selectedEdge={selectedEdge}
-                  onEdgeClick={setSelectedEdge}
-                  edgeColorOverrides={edgeColorOverrides}
-                  customVertices={customVertices}
-                  highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
-                  highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
-                  auxLines={visualIntent?.auxLines || []}
-                  cameraPreset={visualIntent?.cameraPreset || null}
-                  faceOpacity={visualIntent?.faceOpacity ?? 0.42}
-                  nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
-                  vertexLabels={vertexLabels}
-                  sphereOverlay={visualIntent?.sphereOverlay || null}
-                />
-              </Canvas>
-            ) : (
-              <div className="wp-webgl-fallback">
-                <span className="wp-webgl-fallback-icon">⚠️</span>
-                <p>您的浏览器不支持 WebGL，无法显示 3D 场景</p>
-                <p className="wp-webgl-fallback-hint">请使用最新版 Chrome、Edge 或 Firefox</p>
-              </div>
-            )}
-            <GeometryMiniControls
-              geometry={geometry}
-              onGeometryChange={handleGeometryChange}
-              showFaces={showFaces}
-              onToggleFaces={() => setShowFaces(prev => !prev)}
-              showLabels={effectiveShowLabels}
-              onToggleLabels={() => setShowLabels(prev => !prev)}
-            />
-          </div>
-        </div>
-      )}
+      </div>
 
       <TeacherModePanel
         totalSteps={steps.length}

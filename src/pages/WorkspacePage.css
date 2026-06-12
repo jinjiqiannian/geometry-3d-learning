@@ -71,7 +71,7 @@
   color: var(--text-primary);
 }
 
-/* ── Desktop: 左右布局 ────────────────────────────── */
+/* ── Unified layout (CSS-driven responsive, single Canvas) ── */
 .wp-main {
   flex: 1;
   display: flex;
@@ -89,7 +89,7 @@
   background: var(--bg-surface);
 }
 
-/* 右侧：3D 场景 */
+/* 右侧：3D 场景 — 全生命周期只 mount 一次 */
 .wp-canvas-col {
   flex: 1;
   position: relative;
@@ -97,26 +97,36 @@
   overflow: hidden;
 }
 
-/* ── Mobile: 上下布局 ─────────────────────────────── */
-.wp-main-mobile {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+/* 移动端折叠 3D — 用 CSS display 代替 unmount，保护 WebGL context */
+.wp-canvas--hidden {
+  display: none;
 }
 
-.wp-canvas-mobile {
+/* ── Mobile: 上下布局 (CSS class toggle, no re-mount) ── */
+.wp-main--mobile {
+  flex-direction: column;
+}
+
+.wp-main--mobile .wp-explain-col {
+  width: 100%;
+  min-width: unset;
+  max-width: unset;
+  border-right: none;
+  border-bottom: 1px solid var(--border-subtle);
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.wp-main--mobile .wp-canvas-col {
   width: 100%;
   height: 40vh;
   min-height: 260px;
   max-height: 50vh;
-  position: relative;
-  background: var(--bg-deep);
-  overflow: hidden;
   flex-shrink: 0;
 }
 
-.wp-canvas-mobile::after {
+.wp-main--mobile .wp-canvas-col::after {
   content: '双指缩放 · 单指旋转';
   position: absolute;
   bottom: 8px;
@@ -127,12 +137,6 @@
   opacity: 0.5;
   pointer-events: none;
   z-index: 10;
-}
-
-.wp-explain-mobile {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 /* ── Upgrade banner ────────────────────────────────── */

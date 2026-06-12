@@ -115,12 +115,11 @@ const Canvas3D = memo(function Canvas3D({
   highlightEdgeIds = [],
   highlightColor = '#FF6B6B',
   auxLines = [],
-  cameraPreset = null,
   faceOpacity = 0.42,
   nonHighlightOpacity = 0.25,
   // ── 自定义标签（从题目解析而来） ──
   vertexLabels = null,
-  // ── 相机重置 ──
+  // ── 相机手动重置（用户点击"推荐视角"按钮） ──
   cameraResetKey = 0,
   // ── 球体叠加（内接球/外接球） ──
   sphereOverlay = null,
@@ -224,7 +223,7 @@ const Canvas3D = memo(function Canvas3D({
     }).filter(Boolean)
   }, [auxLines, pts])
 
-  // ── 相机系统（仅手动重置，禁止自动切换）──
+  // ── 相机系统（仅手动重置，不自动飞行） ──
   const cameraRef = useRef(null)
   const { camera } = useThree()
 
@@ -233,15 +232,14 @@ const Canvas3D = memo(function Canvas3D({
     cameraRef.current = camera
   }, [camera])
 
-  // 仅响应用户手动"推荐视角"按钮（cameraResetKey 递增）
+  // 仅响应用户"推荐视角"按钮（cameraResetKey 递增触发）
   useEffect(() => {
-    const preset = cameraPreset || 'overview'
-    const target = CAMERA_PRESETS[preset] || CAMERA_PRESETS.overview
+    const target = CAMERA_PRESETS.overview
     if (cameraRef.current) {
       cameraRef.current.position.set(target[0], target[1], target[2])
       cameraRef.current.lookAt(0, 0, 0)
     }
-  }, [cameraResetKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cameraResetKey])
 
   // ── 解析线段坐标 + 预计算 BufferGeometry ──
   const resolvedLines = useMemo(() => (allLines || []).map(l => {
