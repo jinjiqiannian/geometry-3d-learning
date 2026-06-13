@@ -723,13 +723,15 @@ export default function WorkspacePage() {
         </div>
       </div>
 
-      <TeacherModePanel
-        totalSteps={steps.length}
-        currentStep={currentStep}
-        onStepChange={handleStepClick}
-        onExportPPT={handleExportPPT}
-        pptLoading={pptLoading}
-      />
+      {typeof TeacherModePanel !== 'undefined' ? (
+        <TeacherModePanel
+          totalSteps={steps.length}
+          currentStep={currentStep}
+          onStepChange={handleStepClick}
+          onExportPPT={handleExportPPT}
+          pptLoading={pptLoading}
+        />
+      ) : null}
       {/* ── Share toast ── */}
       {shareToast && (
         <div className="wp-share-toast">
