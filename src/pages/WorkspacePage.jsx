@@ -50,7 +50,7 @@ export default function WorkspacePage() {
   const [steps, setSteps] = useState([])
   const [currentStep, setCurrentStep] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [loadingStage, setLoadingStage] = useState('idle') // idle|parsing|reasoning|visualizing|done
+  const [loadingStage, setLoadingStage] = useState('idle') // idle|preview|parsing|reasoning|done
   const [error, setError] = useState(null)
   const [pptLoading, setPptLoading] = useState(false)
   const [quickInput, setQuickInput] = useState('')
@@ -203,40 +203,60 @@ export default function WorkspacePage() {
     setLoadingStage('parsing')
     setError(null)
 
-    // 在 try 块外层声明，确保作用域可达
-    let mergedSteps = null
     let parsedResult = null
+    let resultSteps = []
+    let succeeded = false
 
     try {
-      // Stage 1: Call AI solve endpoint
-      setLoadingStage('reasoning')
-      const result = await aiAPI.solve(text)
+      // ── Phase 0: Quick Match — instant geometry (no API) ──
+      let quickTime = performance.now()
+      try {
+        const { quickMatch } = await import('../engines/problemParser')
+        const quick = quickMatch(text)
+        if (quick) {
+          setGeometry({
+            type: quick.type || 'cube',
+            params: { size: quick.size || 2 },
+            ...defaultConstraintParams(quick.type || 'cube'),
+          })
+          setLoadingStage('preview')
+        }
+      } catch (e) { /* quick match fail silently */ }
+      console.log(`[perf] quickMatch: ${(performance.now() - quickTime).toFixed(0)}ms`)
 
-      if (result?.data) {
-        const { parsed, steps, visualStates } = result.data
-        parsedResult = parsed
-        setParsedData(parsed)
-
-        mergedSteps = steps.map((step, i) => ({
-          ...step,
-          sceneState: visualStates?.[i] || null,
-        }))
-        setSteps(mergedSteps)
-        setCurrentStep(0)
-        setLoadingStage('visualizing')
-
-        // Stage 2: Set up geometry
+      // ── Phase 1: Deep Parse — geometry via AI ──
+      setLoadingStage('parsing')
+      let parseTime = performance.now()
+      const parseRes = await aiAPI.parse(text)
+      if (parseRes?.data) {
+        parsedResult = parseRes.data
+        setParsedData(parsedResult)
         setGeometry({
-          type: parsed?.type || 'cube',
-          params: { size: parsed?.size || 2 },
-          ...defaultConstraintParams(parsed?.type || 'cube'),
+          type: parsedResult.type || 'cube',
+          params: { size: parsedResult.size || 2 },
+          ...defaultConstraintParams(parsedResult.type || 'cube'),
         })
+      }
+      console.log(`[perf] AI parse: ${(performance.now() - parseTime).toFixed(0)}ms`)
 
-        // Handle highlight lines from AI
-        if (parsed?.highlightLines?.length > 0) {
-          const { lines: predefinedLines } = getLineDefinitions(parsed.type || 'cube', { size: parsed.size || 2 })
+      // ── Phase 2: Reasoning — steps via AI Pro model ──
+      setLoadingStage('reasoning')
+      let reasonTime = performance.now()
+      const reasonRes = await aiAPI.reason(text, parsedResult || { type: 'cube', size: 2 })
+      if (reasonRes?.data) {
+        resultSteps = reasonRes.data
+        // Visual states 由客户端 computeVisualIntent() 即时计算，无需 AI
+        setSteps(resultSteps)
+        setCurrentStep(0)
+
+        // Handle highlight lines from parse data
+        if (parsedResult?.highlightLines?.length > 0) {
+          const { lines: predefinedLines } = getLineDefinitions(
+            parsedResult.type || 'cube',
+            { size: parsedResult.size || 2 }
+          )
           const newCustomLines = []
-          parsed.highlightLines.forEach(hl => {
+          parsedResult.highlightLines.forEach(hl => {
             const exists = predefinedLines.some(l => l.id === hl.label && l.category === 'AI高亮')
             if (!exists) {
               newCustomLines.push({
@@ -260,7 +280,10 @@ export default function WorkspacePage() {
         }
       }
 
+      succeeded = true
       await recordUsage('generate', text)
+      console.log(`[perf] AI reason: ${(performance.now() - reasonTime).toFixed(0)}ms`)
+      console.log(`[perf] Total solve: ${(performance.now() - totalStart).toFixed(0)}ms`)
 
       // 保存到学习记录（含步骤，支持历史回放）
       try {
@@ -269,21 +292,17 @@ export default function WorkspacePage() {
           date: new Date().toISOString(),
           text,
           type: parsedResult?.type || 'cube',
-          steps: mergedSteps || [],
+          steps: resultSteps || [],
           parsedData: parsedResult,
         })
-        // 最多保存 50 条
         if (saved.length > 50) saved.length = 50
         localStorage.setItem('mathviz_history', JSON.stringify(saved))
       } catch (err) {
         console.warn('WorkspacePage: Failed to save parse result to history', err)
       }
 
-      // 短暂延迟让"构建3D可视化"阶段真实可见
-      await new Promise(r => setTimeout(r, 350))
       setLoadingStage('done')
     } catch (err) {
-      // 错误分类：区分网络问题 / AI超时 / 题目无法识别
       const msg = err.message || ''
       let userError = '解析失败，请重试'
       if (msg.includes('fetch') || msg.includes('network') || msg.includes('Network')) {
@@ -314,7 +333,6 @@ export default function WorkspacePage() {
         })
         setError(null)
 
-        // 保存到学习记录（本地回退也保存）
         try {
           const saved = JSON.parse(localStorage.getItem('mathviz_history') || '[]')
           saved.unshift({
@@ -335,7 +353,7 @@ export default function WorkspacePage() {
       }
     } finally {
       setLoading(false)
-      setLoadingStage('idle')
+      if (!succeeded) setLoadingStage('idle')
     }
   }, [checkCanGenerate, recordUsage])
 

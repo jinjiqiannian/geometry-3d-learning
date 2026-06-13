@@ -551,7 +551,6 @@ export async function generateNarration(
 export interface CompleteSolution {
   parsed: ParsedProblem
   steps: Step[]
-  visualStates: SceneState[]
 }
 
 export async function solveComplete(
@@ -563,19 +562,10 @@ export async function solveComplete(
   const parsed = await parseProblem(text, userId)
 
   // Layer 2: Reasoning — 所有用户走 DeepSeek V4 Pro 推理
-  let steps: Step[]
-  steps = await generateReasoning(text, parsed, userId)
+  const steps = await generateReasoning(text, parsed, userId)
 
-  // Layer 3: Visual states
-  const visualStates = await generateVisualStates(parsed, steps, userId)
-
-  // Merge visual states into steps
-  steps = steps.map((step, i) => ({
-    ...step,
-    sceneState: visualStates[i] || visualStates[visualStates.length - 1] || undefined,
-  }))
-
-  return { parsed, steps, visualStates }
+  // Visual states 完全由客户端 computeVisualIntent() 确定性计算，无需 AI 调用
+  return { parsed, steps }
 }
 
 // ═══════════════════════════════════════════════════════

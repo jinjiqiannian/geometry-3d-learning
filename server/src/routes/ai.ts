@@ -73,12 +73,12 @@ aiRouter.post(
 )
 
 // ═══════════════════════════════════════════════════════
-//  POST /api/ai/reason — 解题推理（Pro+）
+//  POST /api/ai/reason — 解题推理（所有用户，与 solve 相同限制）
 // ═══════════════════════════════════════════════════════
 aiRouter.post(
   '/reason',
-  requireAuth,
-  requirePlan('pro'),
+  optionalAuth,
+  dailyLimit('generate'),
   async (req: Request, res: Response) => {
     try {
       const body = reasonSchema.parse(req.body)
@@ -88,7 +88,9 @@ aiRouter.post(
         req.userId
       )
 
-      await recordUsage(req.userId!, 'ai_explain', body.problemText)
+      if (req.userId) {
+        await recordUsage(req.userId, 'ai_explain', body.problemText)
+      }
 
       res.json({ success: true, data: steps })
     } catch (err: any) {
@@ -148,7 +150,6 @@ aiRouter.post(
         data: {
           parsed: solution.parsed,
           steps: solution.steps,
-          visualStates: solution.visualStates,
         },
       })
     } catch (err: any) {

@@ -3,9 +3,9 @@ import './ProgressHeader.css'
 // ── Stage config ──────────────────────────────────────
 const STAGES = {
   idle: { label: '输入题目开始', icon: '○' },
-  parsing: { label: '识别题目结构…', icon: '◌' },
+  preview: { label: '识别几何体…', icon: '◌' },
+  parsing: { label: '解析题目结构…', icon: '◌' },
   reasoning: { label: '生成推导步骤…', icon: '◌' },
-  visualizing: { label: '构建3D可视化…', icon: '◌' },
   done: { label: '解析完成', icon: '●' },
 }
 
