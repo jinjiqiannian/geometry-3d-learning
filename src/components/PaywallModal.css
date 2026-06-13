@@ -79,6 +79,13 @@
   letter-spacing: -0.02em;
 }
 
+.paywall-subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
 .paywall-reason {
   font-size: var(--text-sm);
   color: var(--color-warning);

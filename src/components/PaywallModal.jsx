@@ -52,7 +52,10 @@ export default function PaywallModal() {
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </svg>
           </div>
-          <h2 className="paywall-title">升级解锁更多功能</h2>
+          <h2 className="paywall-title">支持开发者 · 解锁高级功能</h2>
+          <p className="paywall-subtitle">
+            Pro 会员不是买答案，是对产品持续开发的支持
+          </p>
           {paywallReason && (
             <p className="paywall-reason">{paywallReason}</p>
           )}
@@ -88,13 +91,15 @@ export default function PaywallModal() {
             </div>
             <p className="paywall-plan-equiv">{proMonthly}{yearly ? '（年付）' : ''}</p>
             <ul className="paywall-plan-features">
-              <li>不限次数 AI 深度讲解</li>
-              <li>3D 场景逐步骤展示</li>
-              <li>云端同步解题记录</li>
-              <li>高清图片导出</li>
+              <li>★ 无限额度 — 取消每日限制</li>
+              <li>★ 高级教师模式 — 自动讲课</li>
+              <li>★ 错题本 — 自动收集管理</li>
+              <li>★ 学习分析 — 掌握度统计</li>
+              <li>PPT/PDF/图片导出</li>
+              <li>云端同步 · 高级分享</li>
             </ul>
             <button className="paywall-plan-btn" onClick={() => handleUpgrade('pro')}>
-              升级专业版
+              升级 Pro
             </button>
           </div>
 
@@ -111,10 +116,12 @@ export default function PaywallModal() {
             </div>
             <p className="paywall-plan-equiv">{teacherMonthly}{yearly ? '（年付）' : ''}</p>
             <ul className="paywall-plan-features">
-              <li>专业版全部功能</li>
-              <li>PPT 课件一键导出</li>
-              <li>课堂演示模式</li>
-              <li>批量生成题目 + 讲稿</li>
+              <li>Pro 全部功能</li>
+              <li>★ 班级管理 — 创建班级</li>
+              <li>★ 批量生成课件</li>
+              <li>★ 学生学习统计</li>
+              <li>作业布置与自动批改</li>
+              <li>全班学习数据仪表盘</li>
             </ul>
             <button className="paywall-plan-btn teacher-btn" onClick={() => handleUpgrade('teacher')}>
               升级教师版
@@ -128,7 +135,7 @@ export default function PaywallModal() {
             {remaining > 0 ? '继续免费使用' : '关闭'}
           </button>
           <p className="paywall-footer-note">
-            7 天无理由退款 · 随时取消
+            7 天无理由退款 · 随时取消 · 不是买答案，是支持开发者
           </p>
         </div>
       </div>
