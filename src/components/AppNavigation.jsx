@@ -32,12 +32,6 @@ export default function AppNavigation() {
     return location.pathname.startsWith(path)
   }
 
-  const planLabel = () => {
-    if (plan === 'teacher') return '教师版'
-    if (plan === 'pro') return 'Pro'
-    return '免费版'
-  }
-
   return (
     <nav className="app-nav">
       <div className="app-nav-left">
@@ -69,7 +63,7 @@ export default function AppNavigation() {
           to="/pricing"
           className={`app-nav-pricing ${isPro ? 'is-pro' : ''}`}
         >
-          {planLabel()}
+          {isPro ? (plan === 'teacher' ? '教师版' : 'Pro') : ''}
           {!isPro && <span className="app-nav-upgrade-dot" />}
         </Link>
         <UserMenu />

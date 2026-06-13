@@ -541,7 +541,7 @@ export default function LandingPage() {
               <div className="landing-plan-header">
                 <h3 className="landing-plan-name">Pro</h3>
                 <p className="landing-plan-price">
-                  <span className="landing-plan-amount">¥29</span>
+                  <span className="landing-plan-amount">¥19</span>
                   <span className="landing-plan-period">/月</span>
                 </p>
               </div>
