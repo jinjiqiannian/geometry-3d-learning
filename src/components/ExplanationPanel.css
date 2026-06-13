@@ -1,0 +1,200 @@
+/* ═══════════════════════════════════════════════════════
+   ExplanationPanel — Container layout
+   Composes: ProgressHeader + StepList + AnswerPanel + PlaybackControls
+   ═══════════════════════════════════════════════════════ */
+
+.explanation-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-base);
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── 题目 ─────────────────────────────────────────── */
+.ep-problem {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+}
+
+.ep-problem-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.ep-problem-text {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+/* ── 解析 ─────────────────────────────────────────── */
+.ep-steps-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.ep-steps-label {
+  padding: 12px 16px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ── Follow-up Q&A ───────────────────────────────── */
+.ep-follow-up {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 4px;
+}
+
+.ep-follow-up-toggle {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+
+.ep-follow-up-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-subtle);
+}
+
+.ep-follow-up-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ep-follow-up-input-row {
+  display: flex;
+  gap: 6px;
+}
+
+.ep-follow-up-input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  outline: none;
+  min-width: 0;
+  transition: border-color var(--transition-fast);
+}
+
+.ep-follow-up-input:focus {
+  border-color: var(--border-focus);
+}
+
+.ep-follow-up-input::placeholder {
+  color: var(--text-muted);
+}
+
+.ep-follow-up-submit {
+  padding: 7px 14px;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: white;
+  font-size: var(--text-xs);
+  font-weight: 550;
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.ep-follow-up-submit:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.ep-follow-up-submit:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ep-follow-up-answer {
+  padding: 10px 12px;
+  background: rgba(99, 102, 241, 0.04);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.ep-follow-up-answer-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.03em;
+  margin-bottom: 4px;
+}
+
+.ep-follow-up-answer-text {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.ep-follow-up-close {
+  align-self: flex-end;
+  padding: 3px 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  background: transparent;
+  transition: color var(--transition-fast);
+}
+
+.ep-follow-up-close:hover {
+  color: var(--text-primary);
+}
+
+/* ── Empty steps ──────────────────────────────────── */
+.ep-empty-steps {
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.ep-empty-text {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .explanation-panel {
+    width: 100%;
+    flex-shrink: 0;
+    max-height: 50vh;
+    border-left: none;
+    border-top: 1px solid var(--border-subtle);
+  }
+}

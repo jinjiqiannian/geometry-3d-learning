@@ -1,0 +1,121 @@
+/* ═══════════════════════════════════════════════════════
+   StepCard — 解题步骤卡片 · 时间线风格 · 教学友好
+   ═══════════════════════════════════════════════════════ */
+
+.step-card {
+  display: flex;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+  position: relative;
+  border-left: 2px solid transparent;
+}
+
+.step-card:hover {
+  background: var(--accent-subtle);
+}
+
+.step-card.current {
+  background: var(--accent-subtle);
+  border-left-color: var(--accent);
+  animation: stepActivate 0.3s ease;
+}
+
+@keyframes stepActivate {
+  from { background: var(--accent-pressed); }
+  to { background: var(--accent-subtle); }
+}
+
+.step-card.locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.step-card.locked:hover {
+  background: transparent;
+}
+
+/* ── 左侧时间线 ────────────────────────────────── */
+.step-timeline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 12px;
+  flex-shrink: 0;
+  padding-top: 4px;
+  position: relative;
+}
+
+.step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border-default);
+  flex-shrink: 0;
+  z-index: 1;
+  transition: all 0.2s ease;
+}
+
+.step-card.current .step-dot {
+  width: 12px;
+  height: 12px;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.step-line {
+  width: 1.5px;
+  flex: 1;
+  background: var(--border-subtle);
+  min-height: 16px;
+  margin-top: 2px;
+}
+
+/* ── 卡片主体 ──────────────────────────────────── */
+.step-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.step-card:not(.current) .step-body > .step-content,
+.step-card:not(.current) .step-body > .step-title {
+  opacity: 0.65;
+}
+
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.step-type-badge {
+  font-size: 10px;
+  font-weight: 550;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.step-number {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 450;
+}
+
+.step-title {
+  font-size: var(--text-sm);
+  font-weight: 550;
+  color: var(--text-primary);
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+
+.step-content {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-top: 2px;
+}

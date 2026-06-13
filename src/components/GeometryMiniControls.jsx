@@ -1,0 +1,80 @@
+import { useState, memo } from 'react'
+import { GEOMETRIES } from '../constants'
+import './GeometryMiniControls.css'
+
+const GeometryMiniControls = memo(function GeometryMiniControls({
+  geometry,
+  onGeometryChange,
+  showFaces,
+  onToggleFaces,
+  showLabels,
+  onToggleLabels,
+  onResetCamera,
+  cameraHint,
+  onScreenshot,
+  onShare,
+}) {
+  const [open, setOpen] = useState(false)
+
+  const currentGeo = GEOMETRIES.find(g => g.id === geometry?.type) || GEOMETRIES[0]
+
+  return (
+    <div className="geo-mini-controls">
+      <div className="gmc-bar">
+        <button
+          className="gmc-btn"
+          onClick={() => setOpen(!open)}
+        >
+          {currentGeo.name} {open ? '▲' : '▼'}
+        </button>
+
+        <button
+          className={`gmc-btn ${showFaces ? 'active' : ''}`}
+          onClick={onToggleFaces}
+        >
+          {showFaces ? '实体' : '线框'}
+        </button>
+
+        <button
+          className={`gmc-btn ${showLabels ? 'active' : ''}`}
+          onClick={onToggleLabels}
+        >
+          标签
+        </button>
+
+        {onResetCamera && (
+          <button className="gmc-btn gmc-btn-hint" onClick={onResetCamera} title={cameraHint || '推荐视角'}>
+            {cameraHint || '重置'}
+          </button>
+        )}
+
+        {onScreenshot && (
+          <button className="gmc-btn" onClick={onScreenshot} title="截图保存">
+            截图
+          </button>
+        )}
+
+        {onShare && (
+          <button className="gmc-btn" onClick={onShare} title="分享链接">
+            分享
+          </button>
+        )}
+      </div>
+
+      {open && (
+        <div className="gmc-dropdown">
+          {GEOMETRIES.map(geo => (
+            <button
+              key={geo.id}
+              className={`gmc-dropdown-item ${geo.id === geometry?.type ? 'active' : ''}`}
+              onClick={() => { onGeometryChange?.(geo.id, { size: geometry?.params?.size || 2 }); setOpen(false) }}
+            >
+              <span className="gmc-geo-name">{geo.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+})
+export default GeometryMiniControls

@@ -1,18 +1,227 @@
-﻿* {
+/* ═══════════════════════════════════════════════════════
+   几何维度 Design System — Dark-first, minimal, premium
+   Inspired by Linear · Perplexity · Vercel · Raycast
+   ═══════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Brand ── */
+  --brand-blue: #6366f1;
+  --brand-purple: #8b5cf6;
+  --brand-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+
+  /* ── Background ── */
+  --bg-deep: #ffffff;
+  --bg-base: #f8f9ff;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f0f0f6;
+  --bg-overlay: rgba(15, 23, 42, 0.35);
+  --bg-glass: rgba(255, 255, 255, 0.72);
+
+  /* ── Border ── */
+  --border-subtle: #e8e8ee;
+  --border-default: #d0d0d8;
+  --border-emphasis: #a0a0b0;
+  --border-focus: #6366f1;
+
+  /* ── Text ── */
+  --text-primary: #1d1d1f;
+  --text-secondary: #444456;
+  --text-muted: #555562;
+  --text-inverse: #ffffff;
+
+  /* ── Accent (brand) ── */
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-subtle: rgba(99, 102, 241, 0.06);
+  --accent-pressed: rgba(99, 102, 241, 0.12);
+
+  /* ── Semantic ── */
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-error: #dc2626;
+  --color-info: #6366f1;
+
+  /* ── Shadows ── */
+  --shadow-xs: 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.1);
+
+  /* ── Radius ── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ── Spacing ── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
+  --space-4xl: 64px;
+
+  /* ── Transition ── */
+  --transition-fast: 0.12s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.3s ease;
+
+  /* ── Typography ── */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter',
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'SF Mono', 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+  --font-math: 'Cambria Math', 'Georgia', 'Times New Roman', serif;
+
+  /* ── Type scale ── */
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+  --text-3xl: 36px;
+  --text-4xl: 48px;
+  --text-5xl: 60px;
+}
+
+/* ── Dark theme ─────────────────────────────────────── */
+[data-theme="dark"] {
+  /* ── Background ── */
+  --bg-deep: #0f0f13;
+  --bg-base: #131318;
+  --bg-surface: #1a1a22;
+  --bg-elevated: #22222b;
+  --bg-overlay: rgba(0, 0, 0, 0.55);
+  --bg-glass: rgba(26, 26, 34, 0.72);
+
+  /* ── Border ── */
+  --border-subtle: #252530;
+  --border-default: #333340;
+  --border-emphasis: #555568;
+
+  /* ── Text ── */
+  --text-primary: #f0f0f5;
+  --text-secondary: #a0a0b0;
+  --text-muted: #8e8e9c;
+  --text-inverse: #1d1d1f;
+
+  /* ── Accent (brand) ── */
+  --accent-subtle: rgba(99, 102, 241, 0.1);
+  --accent-pressed: rgba(99, 102, 241, 0.18);
+
+  /* ── Semantic ── */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+
+  /* ── Shadows ── */
+  --shadow-xs: 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.4);
+
+  /* ── Legacy compat overrides ── */
+  --color-primary-light: rgba(99, 102, 241, 0.1);
+  --color-primary-glow: rgba(99, 102, 241, 0.06);
+  --color-success-light: rgba(34, 197, 94, 0.1);
+  --color-warning-light: rgba(245, 158, 11, 0.1);
+  --color-error-light: rgba(239, 68, 68, 0.1);
+  --color-gold-light: rgba(245, 158, 11, 0.1);
+  --color-pro-light: rgba(99, 102, 241, 0.1);
+  --color-teacher-light: rgba(245, 158, 11, 0.1);
+  --color-free-light: rgba(255, 255, 255, 0.03);
+  --color-bg-hover: rgba(99, 102, 241, 0.08);
+  --badge-pro-bg: rgba(99, 102, 241, 0.15);
+  --badge-teacher-bg: rgba(245, 158, 11, 0.15);
+}
+
+/* Dark: glassmorphism adjustment */
+[data-theme="dark"] .glass {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .glass-strong {
+  background: rgba(26, 26, 34, 0.85);
+}
+
+/* Dark: scrollbar */
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] * {
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+/* Dark: selection */
+[data-theme="dark"] ::selection {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+}
+
+/* ── Glassmorphism utility ───────────────────────────── */
+.glass {
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-subtle);
+}
+
+/* ── Legacy alias — backwards compat for feature files ── */
+:root {
+  --color-primary: var(--text-primary);
+  --color-primary-dark: var(--text-secondary);
+  --color-primary-light: rgba(99, 102, 241, 0.06);
+  --color-primary-glow: rgba(99, 102, 241, 0.03);
+  --color-success-light: rgba(22, 163, 74, 0.08);
+  --color-warning-light: rgba(217, 119, 6, 0.08);
+  --color-error-light: rgba(220, 38, 38, 0.08);
+  --color-gold: var(--color-warning);
+  --color-gold-light: rgba(217, 119, 6, 0.08);
+  --color-gold-dark: #b45309;
+  --color-pro: #6366f1;
+  --color-pro-light: rgba(99, 102, 241, 0.08);
+  --color-pro-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+  --color-teacher: #f59e0b;
+  --color-teacher-light: rgba(245, 158, 11, 0.08);
+  --color-teacher-gradient: linear-gradient(135deg, #f59e0b, #d97706);
+  --color-free: var(--text-muted);
+  --color-free-light: rgba(0, 0, 0, 0.02);
+  --color-text: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border-default);
+  --color-border-light: var(--border-subtle);
+  --color-bg: var(--bg-deep);
+  --color-bg-alt: var(--bg-surface);
+  --color-bg-hover: rgba(99, 102, 241, 0.04);
+  --badge-pro-bg: rgba(99, 102, 241, 0.1);
+  --badge-pro-text: #6366f1;
+  --badge-teacher-bg: rgba(245, 158, 11, 0.1);
+  --badge-teacher-text: #f59e0b;
+}
+
+/* ── Reset ─────────────────────────────────────────── */
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
-  color: #2c3e50;
-  overflow: hidden;
 }
 
 html, body, #root {
@@ -22,27 +231,281 @@ html, body, #root {
   padding: 0;
 }
 
-/* Custom scrollbar */
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  overflow-y: auto;
+  overflow-x: hidden;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text-primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+a:hover {
+  color: var(--text-primary);
+}
+
+/* ── Scrollbar ─────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(74, 144, 226, 0.4);
-  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(74, 144, 226, 0.6);
+  background: rgba(0, 0, 0, 0.2);
 }
 
-/* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(74, 144, 226, 0.4) rgba(0, 0, 0, 0.05);
+  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
 }
 
+/* ── Button reset ──────────────────────────────────── */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+input, textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+/* ── Layout Utilities ──────────────────────────────── */
+.app-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-left: 24px;
+  padding-right: 24px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+  .app-container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* ── Dark mode: Landing page ─────────────────────── */
+[data-theme="dark"] .landing {
+  background: linear-gradient(180deg, var(--bg-base) 0%, var(--bg-deep) 40%);
+}
+
+[data-theme="dark"] .landing-title {
+  background: linear-gradient(135deg, #f0f0f5 0%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Dark mode: Legacy feature components ────────── */
+/* CameraCapture */
+[data-theme="dark"] .cc-capture-btn,
+[data-theme="dark"] .pi-textarea,
+[data-theme="dark"] .ac-input,
+[data-theme="dark"] .pi-example-btn {
+  background: var(--bg-elevated);
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .cc-capture-btn:hover,
+[data-theme="dark"] .pi-example-btn:hover {
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+}
+
+[data-theme="dark"] .cc-capture-text,
+[data-theme="dark"] .pi-example-btn {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .cc-capture-hint,
+[data-theme="dark"] .pi-hint,
+[data-theme="dark"] .ac-input::placeholder,
+[data-theme="dark"] .pi-textarea::placeholder,
+[data-theme="dark"] .ac-sug-type {
+  color: var(--text-muted);
+}
+
+[data-theme="dark"] .cc-preview,
+[data-theme="dark"] .ac-suggestions {
+  border-color: var(--border-default);
+}
+
+[data-theme="dark"] .cc-preview-img {
+  background: var(--bg-elevated);
+}
+
+[data-theme="dark"] .cc-preview-actions,
+[data-theme="dark"] .cc-btn-ghost {
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+}
+
+[data-theme="dark"] .cc-btn-ghost {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .cc-btn-ghost:hover:not(:disabled) {
+  background: var(--bg-elevated);
+}
+
+[data-theme="dark"] .cc-error,
+[data-theme="dark"] .pi-error,
+[data-theme="dark"] .ac-message.error {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.15);
+}
+
+[data-theme="dark"] .cc-status,
+[data-theme="dark"] .pi-success,
+[data-theme="dark"] .ac-message.success {
+  background: rgba(34, 197, 94, 0.08);
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.15);
+}
+
+[data-theme="dark"] .cc-title,
+[data-theme="dark"] .pi-title,
+[data-theme="dark"] .ac-suggestion-item {
+  color: var(--text-primary);
+}
+
+/* AutoConnect */
+[data-theme="dark"] .ac-input:focus {
+  background: var(--bg-surface);
+}
+
+[data-theme="dark"] .ac-btn {
+  background: var(--bg-elevated);
+  border-color: var(--border-default);
+}
+
+[data-theme="dark"] .ac-btn:hover,
+[data-theme="dark"] .ac-suggestion-item:hover,
+[data-theme="dark"] .ac-suggestion-item.active {
+  background: var(--accent-subtle);
+  color: var(--text-primary);
+}
+
+/* ProblemInput */
+[data-theme="dark"] .pi-textarea:focus {
+  background: var(--bg-surface);
+}
+
+[data-theme="dark"] .pi-examples {
+  border-top-color: var(--border-subtle);
+}
+
+[data-theme="dark"] .pi-examples h4 {
+  color: var(--text-muted);
+}
+
+/* GeometryMiniControls — already uses vars for bg now */
+
+/* LineControlPanel */
+[data-theme="dark"] .len-toggle,
+[data-theme="dark"] .line-remove {
+  background: var(--bg-elevated);
+  border-color: var(--border-default);
+}
+
+/* EdgePropertyPanel */
+[data-theme="dark"] .edge-property-panel {
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+}
+
+/* AppNavigation badge free */
+[data-theme="dark"] .app-nav-plan-badge.free {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Pricing page toggle */
+[data-theme="dark"] .pp-toggle {
+  background: var(--bg-elevated);
+}
+
+/* Settings page */
+[data-theme="dark"] .settings-key-toggle {
+  color: var(--text-secondary);
+}
+[data-theme="dark"] .settings-key-toggle:hover {
+  color: var(--text-primary);
+}
+
+/* Workspace page quick input */
+[data-theme="dark"] .wp-quick-input {
+  background: var(--bg-elevated);
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+/* ControlPanel mobile overlay */
+[data-theme="dark"] .control-panel-mobile {
+  background: var(--bg-surface);
+}
+
+/* PricingCard */
+[data-theme="dark"] .pricing-card {
+  background: var(--bg-surface);
+}
+
+/* EdgePropertyPanel — white shadow fix */
+[data-theme="dark"] .ep-color-input {
+  box-shadow: 0 0 0 2px var(--bg-surface), 0 0 0 3px var(--border-emphasis);
+}
+
+/* LineControlPanel — white shadow fix */
+[data-theme="dark"] .lc-len-input {
+  box-shadow: 0 0 0 2px var(--bg-surface), 0 0 0 3px var(--accent);
+}
+
+/* ── Mobile ────────────────────────────────────────── */
+@media (max-width: 767px) {
+  body {
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  html, body, #root {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}

@@ -1,0 +1,622 @@
+// ═══════════════════════════════════════════════════════
+//  线段定义系统 — 每种几何体的所有重要线段
+//  id 格式: "顶点标签-顶点标签" 或 "名称"
+// ═══════════════════════════════════════════════════════
+
+// ── 从自定义顶点重新计算中心点 ────────────────────────
+function computeCentersFromVertices(type, vertices, defaultPts) {
+  const c = { ...defaultPts.centers }  // 先拷贝默认值作为回退
+  const v = vertices
+
+  const avg = (indices) => {
+    const sum = [0, 0, 0]
+    indices.forEach(i => {
+      if (i < v.length) { sum[0] += v[i][0]; sum[1] += v[i][1]; sum[2] += v[i][2] }
+    })
+    const n = indices.length
+    return [sum[0] / n, sum[1] / n, sum[2] / n]
+  }
+
+  switch (type) {
+    case 'cube':
+    case 'cuboid':
+      c.body = avg([0, 1, 2, 3, 4, 5, 6, 7])
+      c.bottom = avg([0, 1, 2, 3])
+      c.top = avg([4, 5, 6, 7])
+      c.front = avg([2, 3, 6, 7])
+      c.back = avg([0, 1, 4, 5])
+      c.left = avg([0, 3, 4, 7])
+      c.right = avg([1, 2, 5, 6])
+      break
+    case 'pyramid':
+      c.body = avg([0, 1, 2, 3, 4])
+      c.base = avg([0, 1, 2, 3])
+      c.apex = v[4]
+      break
+    case 'prism':
+      c.body = avg([0, 1, 2, 3, 4, 5])
+      c.baseBottom = avg([0, 1, 2])
+      c.baseTop = avg([3, 4, 5])
+      break
+    case 'squareFrustum':
+      c.body = avg([0, 1, 2, 3, 4, 5, 6, 7])
+      c.bottom = avg([0, 1, 2, 3])
+      c.top = avg([4, 5, 6, 7])
+      break
+    case 'tetrahedron':
+      c.body = avg([0, 1, 2, 3])
+      c.face012 = avg([0, 1, 2])
+      c.face013 = avg([0, 1, 3])
+      c.face023 = avg([0, 2, 3])
+      c.face123 = avg([1, 2, 3])
+      break
+    case 'octahedron':
+      c.body = avg([0, 1, 2, 3, 4, 5])
+      c.top = v[0]
+      c.bottom = v[5]
+      c.equator = avg([1, 2, 3, 4])
+      break
+    default:
+      break
+  }
+
+  return c
+}
+
+/** 根据 size 参数计算所有顶点和参考点 */
+// customVertices: 自由模式下由约束求解器提供的顶点（覆盖模板计算）
+// customLabels: 题目解析后提供的自定义标签（覆盖默认标签）
+function getPoints(type, params, customVertices, customLabels) {
+  const { size = 2 } = params
+
+  // 自由模式：用自定义顶点覆盖模板顶点，中心点从实际顶点计算
+  if (customVertices && customVertices.length > 0) {
+    const defaultPts = getPoints(type, params)
+    // 从自定义顶点重新计算中心点
+    const centers = computeCentersFromVertices(type, customVertices, defaultPts)
+    return { vertices: customVertices, centers, labels: defaultPts.labels }
+  }
+
+  const s = size / 2
+
+  switch (type) {
+    case 'cube': {
+      // 底面→顶面：ABCD 底面，EFGH 顶面
+      const v = [
+        [-s, -s, -s], [s, -s, -s], [s, -s, s], [-s, -s, s],  // 0-3 底面
+        [-s, s, -s], [s, s, -s], [s, s, s], [-s, s, s],        // 4-7 顶面
+      ]
+      const c = {
+        body: [0, 0, 0],
+        front: [0, 0, s], back: [0, 0, -s],
+        left: [-s, 0, 0], right: [s, 0, 0],
+        top: [0, s, 0], bottom: [0, -s, 0],
+      }
+      const labels = customLabels || 'ABCDEFGH'.split('')
+      return { vertices: v, centers: c, labels }
+    }
+
+    case 'pyramid': {
+      const v = [
+        [-s, -s, -s], [s, -s, -s], [s, -s, s], [-s, -s, s],
+        [0, s, 0],
+      ]
+      const baseCenter = [0, -s, 0]
+      const c = { body: [0, 0, 0], base: baseCenter, apex: [0, s, 0] }
+      const labels = customLabels || 'ABCDP'.split('')
+      return { vertices: v, centers: c, labels }
+    }
+
+    case 'prism': {
+      const v = [
+        [-s, -s, -s], [s, -s, -s], [-s, -s, s],
+        [-s, s, -s], [s, s, -s], [-s, s, s],
+      ]
+      const c = {
+        body: [-s / 3, 0, -s / 3],
+        baseBottom: [-s / 3, -s, -s / 3],
+        baseTop: [-s / 3, s, -s / 3],
+      }
+      const labels = customLabels || "ABC A'B'C'".match(/[A-C]'?/g)
+      return { vertices: v, centers: c, labels }
+    }
+
+    case 'sphere': {
+      const v = [
+        [0, -s, 0], [0, s, 0], [s, 0, 0],
+        [-s, 0, 0], [0, 0, s], [0, 0, -s],
+      ]
+      const labels = customLabels || 'SNEWFB'.split('')
+      return { vertices: v, centers: { body: [0, 0, 0] }, labels }
+    }
+
+    case 'cylinder': {
+      const v = [
+        [0, -s, 0], [0, s, 0],
+        [s, -s, 0], [-s, -s, 0], [0, -s, s], [0, -s, -s],
+        [s, s, 0], [-s, s, 0], [0, s, s], [0, s, -s],
+      ]
+      const labels = customLabels || "OO'ABCDA'B'C'D'".match(/[A-O]'?/g)
+      return { vertices: v, centers: { body: [0, 0, 0], top: [0, s, 0], bottom: [0, -s, 0] }, labels }
+    }
+
+    case 'cone': {
+      const v = [
+        [0, -s, 0], [0, s, 0],
+        [s, -s, 0], [-s, -s, 0], [0, -s, s], [0, -s, -s],
+      ]
+      const labels = customLabels || 'OPABCD'.split('')
+      return { vertices: v, centers: { base: [0, -s, 0], apex: [0, s, 0] }, labels }
+    }
+
+    case 'squareFrustum': {
+      // 底面正方形(边长size) + 顶面正方形(边长size/2)，高=size，中心对齐
+      const topS = s / 2
+      const v = [
+        [-s, -s, -s], [s, -s, -s], [s, -s, s], [-s, -s, s],     // 底面 ABCD (0-3)
+        [-topS, s, -topS], [topS, s, -topS], [topS, s, topS], [-topS, s, topS],  // 顶面 EFGH (4-7)
+      ]
+      const c = {
+        body: [0, 0, 0],
+        bottom: [0, -s, 0],
+        top: [0, s, 0],
+      }
+      const labels = customLabels || 'ABCDEFGH'.split('')
+      return { vertices: v, centers: c, labels }
+    }
+
+    case 'circularFrustum': {
+      const v = [
+        [0, -s, 0], [0, s, 0],                                     // O(0) 底面圆心, O'(1) 顶面圆心
+        [s, -s, 0], [-s, -s, 0], [0, -s, s], [0, -s, -s],          // 底面标记 A-D (2-5)
+        [s / 2, s, 0], [-s / 2, s, 0], [0, s, s / 2], [0, s, -s / 2],  // 顶面标记 A'-D' (6-9)
+      ]
+      const labels = customLabels || "OO'ABCDA'B'C'D'".match(/[A-O]'?/g)
+      return { vertices: v, centers: { body: [0, 0, 0], top: [0, s, 0], bottom: [0, -s, 0] }, labels }
+    }
+
+    case 'cuboid': {
+      // 长(size)×宽(0.6size)×高(size)，底面→顶面
+      const a = s          // 半长 (x)
+      const c = s          // 半高 (y)
+      const b = s * 0.6    // 半宽 (z)
+      const v = [
+        [-a, -c, -b], [ a, -c, -b], [ a, -c,  b], [-a, -c,  b],  // 底面 ABCD (0-3)
+        [-a,  c, -b], [ a,  c, -b], [ a,  c,  b], [-a,  c,  b],  // 顶面 EFGH (4-7)
+      ]
+      const centers = {
+        body: [0, 0, 0],
+        front: [0, 0, b], back: [0, 0, -b],
+        left: [-a, 0, 0], right: [a, 0, 0],
+        top: [0, c, 0], bottom: [0, -c, 0],
+      }
+      const labels = customLabels || 'ABCDEFGH'.split('')
+      return { vertices: v, centers, labels }
+    }
+
+    case 'tetrahedron': {
+      // 正四面体 — 4个顶点取自正方体的4个对角顶点
+      // 正方体边长 L = size/√2
+      const L = size / Math.sqrt(2)
+      const h = L / 2
+      const v = [
+        [-h, -h, -h], [ h,  h, -h], [ h, -h,  h], [-h,  h,  h],
+      ]
+      // 中点
+      const mid01 = [(v[0][0]+v[1][0])/2, (v[0][1]+v[1][1])/2, (v[0][2]+v[1][2])/2]
+      const mid23 = [(v[2][0]+v[3][0])/2, (v[2][1]+v[3][1])/2, (v[2][2]+v[3][2])/2]
+      const mid02 = [(v[0][0]+v[2][0])/2, (v[0][1]+v[2][1])/2, (v[0][2]+v[2][2])/2]
+      const mid13 = [(v[1][0]+v[3][0])/2, (v[1][1]+v[3][1])/2, (v[1][2]+v[3][2])/2]
+      const mid03 = [(v[0][0]+v[3][0])/2, (v[0][1]+v[3][1])/2, (v[0][2]+v[3][2])/2]
+      const mid12 = [(v[1][0]+v[2][0])/2, (v[1][1]+v[2][1])/2, (v[1][2]+v[2][2])/2]
+      // 面重心
+      const face012 = [(v[0][0]+v[1][0]+v[2][0])/3, (v[0][1]+v[1][1]+v[2][1])/3, (v[0][2]+v[1][2]+v[2][2])/3]
+      const face013 = [(v[0][0]+v[1][0]+v[3][0])/3, (v[0][1]+v[1][1]+v[3][1])/3, (v[0][2]+v[1][2]+v[3][2])/3]
+      const face023 = [(v[0][0]+v[2][0]+v[3][0])/3, (v[0][1]+v[2][1]+v[3][1])/3, (v[0][2]+v[2][2]+v[3][2])/3]
+      const face123 = [(v[1][0]+v[2][0]+v[3][0])/3, (v[1][1]+v[2][1]+v[3][1])/3, (v[1][2]+v[2][2]+v[3][2])/3]
+      const c = {
+        body: [0, 0, 0],
+        mid01, mid23, mid02, mid13, mid03, mid12,
+        face012, face013, face023, face123,
+      }
+      const labels = customLabels || 'ABCD'.split('')
+      return { vertices: v, centers: c, labels }
+    }
+
+    case 'octahedron': {
+      // 正八面体 — 6个顶点在坐标轴上
+      const a = size / Math.sqrt(2)
+      const v = [
+        [0, a, 0], [a, 0, 0], [0, 0, a], [-a, 0, 0], [0, 0, -a], [0, -a, 0],
+      ]
+      const c = {
+        body: [0, 0, 0],
+        top: [0, a, 0],
+        bottom: [0, -a, 0],
+        equator: [0, 0, 0],
+      }
+      const labels = customLabels || ['T','R','F','L','B','D']
+      return { vertices: v, centers: c, labels }
+    }
+
+    default:
+      return { vertices: [], centers: {}, labels: [] }
+  }
+}
+
+// ── 线段定义工厂 ────────────────────────────────────
+
+/**
+ * 返回格式:
+ * {
+ *   points: { [label]: [x,y,z] },       // 所有顶点 + 参考点
+ *   lines: [{ id, category, from, to, dashed?, label? }]
+ * }
+ */
+export function getLineDefinitions(type, params, customVertices, customLabels) {
+  const { size = 2 } = params
+  const s = size / 2
+  const pts = getPoints(type, params, customVertices, customLabels)
+  const v = pts.vertices
+  const L = pts.labels
+  const lines = []
+
+  const def = (id, category, from, to, dashed = false) =>
+    lines.push({ id, category, from, to, dashed })
+
+  switch (type) {
+
+    // ─── 正方体（底面 ABCD → 顶面 EFGH）───
+    case 'cube': {
+      // 12 棱
+      def('AB', '棱', 0, 1); def('BC', '棱', 1, 2)
+      def('CD', '棱', 2, 3); def('DA', '棱', 3, 0)
+      def('EF', '棱', 4, 5); def('FG', '棱', 5, 6)
+      def('GH', '棱', 6, 7); def('HE', '棱', 7, 4)
+      def('AE', '棱', 0, 4); def('BF', '棱', 1, 5)
+      def('CG', '棱', 2, 6); def('DH', '棱', 3, 7)
+
+      // 底面边
+      def('AB', '底面边', 0, 1); def('BC', '底面边', 1, 2)
+      def('CD', '底面边', 2, 3); def('DA', '底面边', 3, 0)
+      // 顶面边
+      def('EF', '顶面边', 4, 5); def('FG', '顶面边', 5, 6)
+      def('GH', '顶面边', 6, 7); def('HE', '顶面边', 7, 4)
+      // 侧棱
+      def('AE', '侧棱', 0, 4); def('BF', '侧棱', 1, 5)
+      def('CG', '侧棱', 2, 6); def('DH', '侧棱', 3, 7)
+
+      // 面对角线（6面 × 2 = 12条）
+      def('AC', '面对角线', 0, 2, true); def('BD', '面对角线', 1, 3, true)  // 底面
+      def('EG', '面对角线', 4, 6, true); def('FH', '面对角线', 5, 7, true)  // 顶面
+      def('AF', '面对角线', 0, 5, true); def('BE', '面对角线', 1, 4, true)  // 后面
+      def('DG', '面对角线', 3, 6, true); def('CH', '面对角线', 2, 7, true)  // 前面
+      def('AH', '面对角线', 0, 7, true); def('DE', '面对角线', 3, 4, true)  // 左面
+      def('BG', '面对角线', 1, 6, true); def('CF', '面对角线', 2, 5, true)  // 右面
+
+      // 空间对角线
+      def('AG', '空间对角线', 0, 6, true); def('BH', '空间对角线', 1, 7, true)
+      def('CE', '空间对角线', 2, 4, true); def('DF', '空间对角线', 3, 5, true)
+
+      break
+    }
+
+    // ─── 正四棱锥 ───
+    case 'pyramid': {
+      // 底面边 4条
+      def('AB', '底面边', 0, 1)
+      def('BC', '底面边', 1, 2)
+      def('CD', '底面边', 2, 3)
+      def('DA', '底面边', 3, 0)
+      // 侧棱 4条
+      def('PA', '侧棱', 4, 0)
+      def('PB', '侧棱', 4, 1)
+      def('PC', '侧棱', 4, 2)
+      def('PD', '侧棱', 4, 3)
+      // 棱（全部）
+      def('AB', '棱', 0, 1)
+      def('BC', '棱', 1, 2)
+      def('CD', '棱', 2, 3)
+      def('DA', '棱', 3, 0)
+      def('PA', '棱', 4, 0)
+      def('PB', '棱', 4, 1)
+      def('PC', '棱', 4, 2)
+      def('PD', '棱', 4, 3)
+      // 底面面对角线
+      def('AC', '面对角线', 0, 2, true)
+      def('BD', '面对角线', 1, 3, true)
+      // 高线（P 到底面中心 O）
+      def('PO', '高线', 4, 'base', true)
+      break
+    }
+
+    // ─── 直角三棱柱 ───
+    case 'prism': {
+      // 底面边
+      def('AB', '底面边', 0, 1)
+      def('BC', '底面边', 1, 2)
+      def('CA', '底面边', 2, 0)
+      // 顶面边
+      def("A'B'", '顶面边', 3, 4)
+      def("B'C'", '顶面边', 4, 5)
+      def("C'A'", '顶面边', 5, 3)
+      // 侧棱
+      def("AA'", '侧棱', 0, 3)
+      def("BB'", '侧棱', 1, 4)
+      def("CC'", '侧棱', 2, 5)
+      // 棱（全部9条）
+      def('AB', '棱', 0, 1)
+      def('BC', '棱', 1, 2)
+      def('CA', '棱', 2, 0)
+      def("A'B'", '棱', 3, 4)
+      def("B'C'", '棱', 4, 5)
+      def("C'A'", '棱', 5, 3)
+      def("AA'", '棱', 0, 3)
+      def("BB'", '棱', 1, 4)
+      def("CC'", '棱', 2, 5)
+      // 高线：底面中心 → 顶面中心
+      def('h1', '高线', 'baseBottom', 'baseTop', true)
+      break
+    }
+
+    // ─── 球体 ───
+    case 'sphere': {
+      def('NS', '高线', 1, 0)      // 南北极轴
+      def('EW', '高线', 3, 2, true) // 赤道直径
+      def('FB', '高线', 5, 4, true) // 前后直径
+      def('NO', '辅助构造线', 1, 'body', true)
+      def('SO', '辅助构造线', 0, 'body', true)
+      break
+    }
+
+    // ─── 圆柱 ───
+    case 'cylinder': {
+      def("OO'", '高线', 0, 1, true)     // 中心轴
+      def('h1', '侧棱', 2, 6, true)      // 右母线
+      def('h2', '侧棱', 3, 7, true)      // 左母线
+      break
+    }
+
+    // ─── 圆锥 ───
+    case 'cone': {
+      def('OP', '高线', 0, 1, true)      // 中心轴
+      def('h1', '侧棱', 2, 1, true)      // 母线
+      def('h2', '侧棱', 3, 1, true)
+      def('h3', '侧棱', 4, 1, true)
+      def('h4', '侧棱', 5, 1, true)
+      break
+    }
+
+    // ─── 四棱台（底面 ABCD → 顶面 EFGH）───
+    case 'squareFrustum': {
+      // 底面边 4条
+      def('AB', '底面边', 0, 1); def('BC', '底面边', 1, 2)
+      def('CD', '底面边', 2, 3); def('DA', '底面边', 3, 0)
+      // 顶面边 4条
+      def('EF', '顶面边', 4, 5); def('FG', '顶面边', 5, 6)
+      def('GH', '顶面边', 6, 7); def('HE', '顶面边', 7, 4)
+      // 侧棱 4条
+      def('AE', '侧棱', 0, 4); def('BF', '侧棱', 1, 5)
+      def('CG', '侧棱', 2, 6); def('DH', '侧棱', 3, 7)
+      // 棱（全部12条）
+      def('AB', '棱', 0, 1); def('BC', '棱', 1, 2)
+      def('CD', '棱', 2, 3); def('DA', '棱', 3, 0)
+      def('EF', '棱', 4, 5); def('FG', '棱', 5, 6)
+      def('GH', '棱', 6, 7); def('HE', '棱', 7, 4)
+      def('AE', '棱', 0, 4); def('BF', '棱', 1, 5)
+      def('CG', '棱', 2, 6); def('DH', '棱', 3, 7)
+      // 底面面对角线 2条
+      def('AC', '面对角线', 0, 2, true); def('BD', '面对角线', 1, 3, true)
+      // 顶面面对角线 2条
+      def('EG', '面对角线', 4, 6, true); def('FH', '面对角线', 5, 7, true)
+      // 侧面对角线（梯形对角线）4条
+      def('AF', '面对角线', 0, 5, true); def('BE', '面对角线', 1, 4, true)
+      def('BG', '面对角线', 1, 6, true); def('CF', '面对角线', 2, 5, true)
+      def('CH', '面对角线', 2, 7, true); def('DG', '面对角线', 3, 6, true)
+      def('DE', '面对角线', 3, 4, true); def('AH', '面对角线', 0, 7, true)
+      // 高线（底面中心 → 顶面中心）
+      def('h', '高线', 'bottom', 'top', true)
+      break
+    }
+
+    // ─── 正八面体（6个顶点，12条等长棱，8个面）───
+    case 'octahedron': {
+      // 12条棱：上顶点→赤道4条 + 下顶点→赤道4条 + 赤道四边形4条
+      def('TR', '棱', 0, 1); def('TF', '棱', 0, 2)
+      def('TL', '棱', 0, 3); def('TB', '棱', 0, 4)
+      def('DR', '棱', 5, 1); def('DF', '棱', 5, 2)
+      def('DL', '棱', 5, 3); def('DB', '棱', 5, 4)
+      def('RF', '棱', 1, 2); def('FL', '棱', 2, 3)
+      def('LB', '棱', 3, 4); def('BR', '棱', 4, 1)
+      // 体对角线（3条，互相垂直）
+      def('TD', '体对角线', 0, 5, true)
+      def('RL', '体对角线', 1, 3, true)
+      def('FB', '体对角线', 2, 4, true)
+      break
+    }
+
+    // ─── 正四面体（4个顶点，6条等长棱）───
+    case 'tetrahedron': {
+      // 6条棱
+      def('AB', '棱', 0, 1); def('AC', '棱', 0, 2)
+      def('AD', '棱', 0, 3); def('BC', '棱', 1, 2)
+      def('BD', '棱', 1, 3); def('CD', '棱', 2, 3)
+      // 高线（顶点到对面重心）
+      def('hA', '高线', 0, 'face123', true)
+      def('hB', '高线', 1, 'face023', true)
+      def('hC', '高线', 2, 'face013', true)
+      def('hD', '高线', 3, 'face012', true)
+      // 对棱中点连线
+      def('MN', '对棱连线', 'mid01', 'mid23', true)
+      def('PQ', '对棱连线', 'mid02', 'mid13', true)
+      def('RS', '对棱连线', 'mid03', 'mid12', true)
+      break
+    }
+
+    // ─── 长方体（底面 ABCD → 顶面 EFGH，长宽高不同）───
+    case 'cuboid': {
+      // 12 棱：底面边+顶面边+侧棱
+      def('AB', '底面边', 0, 1); def('BC', '底面边', 1, 2)
+      def('CD', '底面边', 2, 3); def('DA', '底面边', 3, 0)
+      def('EF', '顶面边', 4, 5); def('FG', '顶面边', 5, 6)
+      def('GH', '顶面边', 6, 7); def('HE', '顶面边', 7, 4)
+      def('AE', '侧棱', 0, 4); def('BF', '侧棱', 1, 5)
+      def('CG', '侧棱', 2, 6); def('DH', '侧棱', 3, 7)
+      // 棱（全部）
+      def('AB', '棱', 0, 1); def('BC', '棱', 1, 2)
+      def('CD', '棱', 2, 3); def('DA', '棱', 3, 0)
+      def('EF', '棱', 4, 5); def('FG', '棱', 5, 6)
+      def('GH', '棱', 6, 7); def('HE', '棱', 7, 4)
+      def('AE', '棱', 0, 4); def('BF', '棱', 1, 5)
+      def('CG', '棱', 2, 6); def('DH', '棱', 3, 7)
+      // 面对角线（6面 × 2 = 12条）
+      def('AC', '面对角线', 0, 2, true); def('BD', '面对角线', 1, 3, true)  // 底面
+      def('EG', '面对角线', 4, 6, true); def('FH', '面对角线', 5, 7, true)  // 顶面
+      def('AF', '面对角线', 0, 5, true); def('BE', '面对角线', 1, 4, true)  // 后面
+      def('DG', '面对角线', 3, 6, true); def('CH', '面对角线', 2, 7, true)  // 前面
+      def('AH', '面对角线', 0, 7, true); def('DE', '面对角线', 3, 4, true)  // 左面
+      def('BG', '面对角线', 1, 6, true); def('CF', '面对角线', 2, 5, true)  // 右面
+      // 空间对角线（4条）
+      def('AG', '空间对角线', 0, 6, true); def('BH', '空间对角线', 1, 7, true)
+      def('CE', '空间对角线', 2, 4, true); def('DF', '空间对角线', 3, 5, true)
+      // 高线（3条：x轴、y轴、z轴方向）
+      def('h_x', '高线', 'left', 'right', true)
+      def('h_y', '高线', 'bottom', 'top', true)
+      def('h_z', '高线', 'back', 'front', true)
+      break
+    }
+
+    // ─── 圆台（类似圆柱）───
+    case 'circularFrustum': {
+      def("OO'", '高线', 0, 1, true)     // 中心轴
+      def('h1', '侧棱', 2, 6, true)      // 右母线
+      def('h2', '侧棱', 3, 7, true)      // 左母线
+      def('h3', '侧棱', 4, 8, true)      // 前母线
+      def('h4', '侧棱', 5, 9, true)      // 后母线
+      break
+    }
+
+    default:
+      break
+  }
+
+  // 去重：同一 id + category 只保留一条（category 不同的保留多条）
+  const seen = new Set()
+  const deduped = []
+  lines.forEach(l => {
+    const key = `${l.id}|${l.category}`
+    if (!seen.has(key)) { seen.add(key); deduped.push(l) }
+  })
+
+  return { points: pts, lines: deduped }
+}
+
+// ── 将点标签解析为坐标 ───────────────────────────────
+export function resolvePoint(label, points) {
+  // 如果已是坐标数组，直接返回
+  if (Array.isArray(label)) return label
+  const { vertices, centers, labels } = points
+  // 先查标签
+  const idx = labels.indexOf(label)
+  if (idx >= 0 && idx < vertices.length) return vertices[idx]
+  // 再查参考点
+  if (centers[label] != null) return centers[label]
+  // 数字索引
+  const n = parseInt(label)
+  if (!isNaN(n) && n < vertices.length) return vertices[n]
+  return null
+}
+
+// ── 教材模式默认可见线段 ─────────────────────────────
+export function textbookDefaults(type) {
+  const defaults = {
+    cube: ['棱'],
+    cuboid: ['棱'],
+    pyramid: ['棱'],
+    prism: ['棱'],
+    squareFrustum: ['棱'],
+    sphere: ['高线'],
+    cylinder: [],
+    cone: [],
+    circularFrustum: [],
+  }
+  return new Set(defaults[type] || [])
+}
+
+// ── 分类中文名 ──────────────────────────────────────
+export const CATEGORY_NAMES = {
+  '棱': '所有棱',
+  '底面边': '底面边',
+  '顶面边': '顶面边',
+  '侧棱': '侧棱',
+  '空间对角线': '空间对角线',
+  '面对角线': '面对角线',
+  '高线': '高线',
+  '辅助构造线': '辅助构造线',
+}
+
+// ── 分类排序权重 ────────────────────────────────────
+export const CATEGORY_ORDER = [
+  '棱', '底面边', '顶面边', '侧棱',
+  '空间对角线', '面对角线',
+  '高线', '辅助构造线',
+]
+
+// ── 线段样式映射 ────────────────────────────────────
+/** category → { color, dash, opacity }
+ *  WebGL lineWidth 在 Windows 上限 1px，通过颜色+透明度区分粗细感
+ */
+export const CATEGORY_STYLES = {
+  '棱':       { color: '#1a1a1a', dash: false, opacity: 1.0 },
+  '底面边':   { color: '#1a1a1a', dash: false, opacity: 1.0 },
+  '顶面边':   { color: '#1a1a1a', dash: false, opacity: 1.0 },
+  '侧棱':     { color: '#1a1a1a', dash: false, opacity: 1.0 },
+  '空间对角线': { color: '#888888', dash: true, opacity: 0.65 },
+  '面对角线': { color: '#888888', dash: true, opacity: 0.65 },
+  '高线':     { color: '#666666', dash: true, opacity: 0.55 },
+  '辅助构造线': { color: '#aaaaaa', dash: true, opacity: 0.45 },
+}
+
+/** 返回样式对象，未匹配的返回默认样式 */
+export function getLineStyle(category) {
+  return CATEGORY_STYLES[category] || { color: '#888888', dash: true, opacity: 0.5 }
+}
+
+// ── 获取所有可能的顶点对（用于自动补全）───────────────
+export function getAllVertexPairs(type) {
+  const { labels } = getPoints(type, { size: 2 })
+  const pairs = []
+  for (let i = 0; i < labels.length; i++) {
+    for (let j = i + 1; j < labels.length; j++) {
+      pairs.push({ label: labels[i] + labels[j], i, j })
+    }
+  }
+  return pairs
+}
+
+// ── 一键操作预设 ────────────────────────────────────
+export const PRESETS = {
+  '显示全部': (type) => {
+    const { lines } = getLineDefinitions(type, { size: 2 })
+    return new Set(lines.map(l => `${l.id}|${l.category}`))
+  },
+  '隐藏全部': () => new Set(),
+  '教材模式': (type) => {
+    const { lines } = getLineDefinitions(type, { size: 2 })
+    return new Set(
+      lines.filter(l => ['棱', '底面边', '顶面边', '侧棱', '高线'].includes(l.category) && !l.dashed)
+        .map(l => `${l.id}|${l.category}`)
+    )
+  },
+  '仅显示棱': (type) => {
+    const { lines } = getLineDefinitions(type, { size: 2 })
+    return new Set(lines.filter(l => l.category === '棱').map(l => `${l.id}|${l.category}`))
+  },
+  '含对角线': (type) => {
+    const { lines } = getLineDefinitions(type, { size: 2 })
+    return new Set(
+      lines.filter(l => ['棱', '空间对角线', '面对角线'].includes(l.category))
+        .map(l => `${l.id}|${l.category}`)
+    )
+  },
+}

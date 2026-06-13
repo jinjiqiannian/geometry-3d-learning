@@ -1,0 +1,100 @@
+/* ═══════════════════════════════════════════════════════
+   GeometryMiniControls — Canvas overlay · Light theme
+   ═══════════════════════════════════════════════════════ */
+
+.geo-mini-controls {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gmc-bar {
+  display: flex;
+  gap: 6px;
+}
+
+.gmc-btn {
+  padding: 5px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  font-family: inherit;
+  letter-spacing: -0.01em;
+  box-shadow: var(--shadow-sm);
+}
+
+.gmc-btn:hover {
+  border-color: var(--border-emphasis);
+  background: var(--bg-elevated);
+}
+
+.gmc-btn.active {
+  background: var(--bg-base);
+  border-color: var(--border-focus);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
+}
+
+.gmc-dropdown {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  max-height: 280px;
+  overflow-y: auto;
+  min-width: 140px;
+}
+
+.gmc-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  text-align: left;
+  font-family: inherit;
+}
+
+.gmc-dropdown-item:hover {
+  background: var(--accent-subtle);
+  color: var(--text-primary);
+}
+
+.gmc-dropdown-item.active {
+  background: var(--accent-subtle);
+  color: var(--text-primary);
+  font-weight: 550;
+}
+
+.gmc-geo-name {
+  font-size: var(--text-sm);
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .geo-mini-controls {
+    top: 8px;
+    left: 8px;
+  }
+
+  .gmc-btn {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+}

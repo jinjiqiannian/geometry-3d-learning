@@ -1,0 +1,115 @@
+/* ── 自动连线 ─────────────────────────────────────── */
+.auto-connect {
+  margin-bottom: 14px;
+}
+
+.ac-input-row {
+  display: flex;
+  gap: 4px;
+}
+
+.ac-input {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #d0d2d8;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'Cambria Math', 'Segoe UI', serif;
+  color: #333;
+  background: #fafbfc;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.ac-input:focus {
+  border-color: #4A90E2;
+  background: #fff;
+}
+
+.ac-input::placeholder {
+  color: #bbb;
+  font-style: italic;
+}
+
+.ac-btn {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #d0d2d8;
+  border-radius: 4px;
+  background: #f8f9fb;
+  cursor: pointer;
+  font-size: 16px;
+  color: #4A90E2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+}
+
+.ac-btn:hover {
+  background: #e8f0fc;
+  border-color: #4A90E2;
+}
+
+/* ── 建议下拉 ────────────────────────────────────── */
+.ac-suggestions {
+  list-style: none;
+  margin: 2px 0 0 0;
+  padding: 4px 0;
+  border: 1px solid #e0e3e8;
+  border-radius: 4px;
+  background: #fff;
+  max-height: 180px;
+  overflow-y: auto;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.ac-suggestion-item {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-family: 'Cambria Math', 'Segoe UI', serif;
+  color: #444;
+  cursor: pointer;
+  transition: background 0.1s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ac-suggestion-item:hover,
+.ac-suggestion-item.active {
+  background: #e8f0fc;
+  color: #2c3e50;
+}
+
+.ac-sug-label {
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+.ac-sug-type {
+  font-size: 10px;
+  color: #999;
+  margin-left: auto;
+}
+
+/* ── 消息提示 ────────────────────────────────────── */
+.ac-message {
+  margin-top: 6px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.ac-message.success {
+  background: #eaf7ea;
+  color: #2e7d32;
+}
+
+.ac-message.error {
+  background: #fef0ef;
+  color: #c62828;
+}

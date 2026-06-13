@@ -1,0 +1,93 @@
+/* ═══════════════════════════════════════════════════════
+   ErrorBoundary — 友好错误提示
+   ═══════════════════════════════════════════════════════ */
+
+.error-boundary {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 32px;
+  background: var(--bg-deep);
+}
+
+.error-boundary-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 400px;
+  padding: 40px 32px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.error-boundary-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(248, 81, 73, 0.1);
+  color: var(--color-error);
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.error-boundary-title {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.error-boundary-desc {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.error-boundary-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.error-boundary-btn {
+  padding: 8px 20px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.error-boundary-btn-primary {
+  background: var(--accent);
+  color: var(--text-inverse);
+  border: none;
+}
+
+.error-boundary-btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.error-boundary-btn-secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+}
+
+.error-boundary-btn-secondary:hover {
+  border-color: var(--border-emphasis);
+  color: var(--text-primary);
+}

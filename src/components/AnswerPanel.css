@@ -1,0 +1,77 @@
+/* ═══════════════════════════════════════════════════════
+   AnswerPanel — Final answer: formula + result + summary
+   ═══════════════════════════════════════════════════════ */
+
+.answer-panel {
+  padding: 0 14px 14px;
+  flex-shrink: 0;
+}
+
+.ap-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin-bottom: 12px;
+}
+
+.ap-section {
+  margin-bottom: 10px;
+}
+
+.ap-section:last-child {
+  margin-bottom: 0;
+}
+
+.ap-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.ap-formula-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ap-formula {
+  font-family: var(--font-math);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  background: var(--accent-subtle);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.02em;
+}
+
+.ap-result {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.ap-result-highlight {
+  font-family: var(--font-math);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 4px;
+  padding: 4px 0;
+}
+
+.ap-summary {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .answer-panel {
+    padding: 0 10px 10px;
+  }
+}
