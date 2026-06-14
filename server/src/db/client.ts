@@ -1,11 +1,18 @@
 // ═══════════════════════════════════════════════════════
-//  Supabase Client (service_role — 后端最高权限)
+//  Supabase 双客户端模式
+//    getSupabase()     — service_role（管理操作，绕过 RLS）
+//    getAnonClient()   — anon key（用户数据操作，受 RLS 保护）
 // ═══════════════════════════════════════════════════════
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { env } from '../config/env.js'
 
 let supabaseInstance: SupabaseClient | null = null
+let anonInstance: SupabaseClient | null = null
 
+/**
+ * service_role 客户端 — 仅用于管理操作（创建用户、内部查询等）
+ * 绕过 RLS，谨慎使用
+ */
 export function getSupabase(): SupabaseClient {
   if (!supabaseInstance) {
     supabaseInstance = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
@@ -16,6 +23,22 @@ export function getSupabase(): SupabaseClient {
     })
   }
   return supabaseInstance
+}
+
+/**
+ * anon key 客户端 — 用于用户数据操作
+ * 受 RLS 保护，每个查询仅返回当前用户有权限的数据
+ */
+export function getAnonClient(): SupabaseClient {
+  if (!anonInstance) {
+    anonInstance = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
+  }
+  return anonInstance
 }
 
 // ── 便捷查询方法 ──────────────────────────────────

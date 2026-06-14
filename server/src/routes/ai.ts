@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 import { Router, Request, Response } from 'express'
 import { z } from 'zod'
-import { requireAuth, optionalAuth } from '../middleware/auth.js'
+import { requireAuth } from '../middleware/auth.js'
 import { requirePlan } from '../middleware/requirePlan.js'
 import { dailyLimit, recordUsage } from '../middleware/rateLimit.js'
 import * as aiService from '../services/ai.service.js'
@@ -12,12 +12,12 @@ export const aiRouter = Router()
 
 // ── Validation ─────────────────────────────────────
 const parseSchema = z.object({
-  problemText: z.string().min(3, '题目至少3个字符'),
+  problemText: z.string().min(3, '题目至少3个字符').max(2000, '题目最多2000个字符'),
   imageBase64: z.string().optional(),
 })
 
 const reasonSchema = z.object({
-  problemText: z.string().min(3),
+  problemText: z.string().min(3).max(2000),
   parsedData: z.object({
     type: z.string(),
     size: z.number().optional(),
@@ -47,20 +47,18 @@ const narrateSchema = z.object({
 })
 
 // ═══════════════════════════════════════════════════════
-//  POST /api/ai/parse — 题目解析（所有人）
+//  POST /api/ai/parse — 题目解析（需登录）
 // ═══════════════════════════════════════════════════════
 aiRouter.post(
   '/parse',
-  optionalAuth,
+  requireAuth,
   dailyLimit('generate'),
   async (req: Request, res: Response) => {
     try {
       const body = parseSchema.parse(req.body)
       const parsed = await aiService.parseProblem(body.problemText, req.userId)
 
-      if (req.userId) {
-        await recordUsage(req.userId, 'generate', body.problemText)
-      }
+      await recordUsage(req.userId!, 'generate', body.problemText)
 
       res.json({ success: true, data: parsed })
     } catch (err: any) {
@@ -73,11 +71,11 @@ aiRouter.post(
 )
 
 // ═══════════════════════════════════════════════════════
-//  POST /api/ai/reason — 解题推理（所有用户，与 solve 相同限制）
+//  POST /api/ai/reason — 解题推理（需登录）
 // ═══════════════════════════════════════════════════════
 aiRouter.post(
   '/reason',
-  optionalAuth,
+  requireAuth,
   dailyLimit('generate'),
   async (req: Request, res: Response) => {
     try {
@@ -88,9 +86,7 @@ aiRouter.post(
         req.userId
       )
 
-      if (req.userId) {
-        await recordUsage(req.userId, 'ai_explain', body.problemText)
-      }
+      await recordUsage(req.userId!, 'ai_explain', body.problemText)
 
       res.json({ success: true, data: steps })
     } catch (err: any) {
@@ -103,11 +99,12 @@ aiRouter.post(
 )
 
 // ═══════════════════════════════════════════════════════
-//  POST /api/ai/visualize — 3D可视化状态（所有人）
+//  POST /api/ai/visualize — 3D可视化状态（需登录）
 // ═══════════════════════════════════════════════════════
 aiRouter.post(
   '/visualize',
-  optionalAuth,
+  requireAuth,
+  dailyLimit('generate'),
   async (req: Request, res: Response) => {
     try {
       const body = visualizeSchema.parse(req.body)
@@ -128,22 +125,19 @@ aiRouter.post(
 )
 
 // ═══════════════════════════════════════════════════════
-//  POST /api/ai/solve — 一站式解决 ★主入口
+//  POST /api/ai/solve — 一站式解决（需登录）
 // ═══════════════════════════════════════════════════════
 aiRouter.post(
   '/solve',
-  optionalAuth,
+  requireAuth,
   dailyLimit('generate'),
   async (req: Request, res: Response) => {
     try {
       const body = parseSchema.parse(req.body)
-      const plan = req.userPlan || 'pro'     // 临时：未登录用户也走 AI
 
-      const solution = await aiService.solveComplete(body.problemText, plan, req.userId)
+      const solution = await aiService.solveComplete(body.problemText, req.userPlan!, req.userId)
 
-      if (req.userId) {
-        await recordUsage(req.userId, 'generate', body.problemText)
-      }
+      await recordUsage(req.userId!, 'generate', body.problemText)
 
       res.json({
         success: true,
@@ -173,8 +167,8 @@ aiRouter.post(
       const body = narrateSchema.parse(req.body)
 
       // Load workspace to get steps
-      const { getSupabase } = await import('../db/client.js')
-      const supabase = getSupabase()
+      const { getAnonClient } = await import('../db/client.js')
+      const supabase = getAnonClient()
       const { data: workspace, error } = await supabase
         .from('workspaces')
         .select('*')

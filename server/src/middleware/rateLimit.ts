@@ -2,7 +2,7 @@
 //  频率限制中间件 — 基于用户plan的差异化限制
 // ═══════════════════════════════════════════════════════
 import { Request, Response, NextFunction } from 'express'
-import { getSupabase } from '../db/client.js'
+import { getAnonClient } from '../db/client.js'
 
 const DAILY_LIMITS: Record<string, number> = {
   free: 3,
@@ -17,8 +17,11 @@ const DAILY_LIMITS: Record<string, number> = {
 export function dailyLimit(action: string) {
   return async (req: Request, res: Response, next: NextFunction) => {
     if (!req.userId || !req.userPlan) {
-      // No auth — skip rate limiting (auth middleware will handle)
-      return next()
+      return res.status(401).json({
+        success: false,
+        error: '请先登录后使用',
+        code: 'AUTH_REQUIRED',
+      })
     }
 
     const plan = req.userPlan
@@ -29,7 +32,7 @@ export function dailyLimit(action: string) {
     }
 
     try {
-      const supabase = getSupabase()
+      const supabase = getAnonClient()
       const today = new Date().toISOString().slice(0, 10)
 
       const { count, error } = await supabase
@@ -41,7 +44,11 @@ export function dailyLimit(action: string) {
 
       if (error) {
         console.warn('Rate limit check failed:', error.message)
-        return next() // Fail open
+        return res.status(429).json({
+          success: false,
+          error: '服务繁忙，请稍后再试',
+          code: 'RATE_LIMIT_CHECK_FAILED',
+        })
       }
 
       const usage = count || 0
@@ -57,12 +64,14 @@ export function dailyLimit(action: string) {
         })
       }
 
-      // Attach usage info to request for logging
-      ;(req as any)._usageCount = usage
       next()
     } catch (err) {
       console.error('Rate limit error:', err)
-      next() // Fail open
+      return res.status(500).json({
+        success: false,
+        error: '服务异常，请稍后再试',
+        code: 'RATE_LIMIT_ERROR',
+      })
     }
   }
 }
@@ -77,7 +86,7 @@ export async function recordUsage(
   workspaceId?: string
 ): Promise<void> {
   try {
-    const supabase = getSupabase()
+    const supabase = getAnonClient()
     await supabase.from('usage_records').insert({
       user_id: userId,
       action,

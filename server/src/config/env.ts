@@ -3,8 +3,8 @@
 // ═══════════════════════════════════════════════════════
 import 'dotenv/config'
 
-function requireEnv(key: string, defaultValue?: string): string {
-  const value = process.env[key] || defaultValue
+function requireEnv(key: string): string {
+  const value = process.env[key]
   if (!value) {
     console.error(`❌ Missing required environment variable: ${key}`)
     process.exit(1)
@@ -12,28 +12,40 @@ function requireEnv(key: string, defaultValue?: string): string {
   return value
 }
 
+function optionalEnv(key: string, defaultValue: string): string {
+  return process.env[key] || defaultValue
+}
+
 export const env = {
   PORT: parseInt(process.env.PORT || '3001', 10),
   NODE_ENV: process.env.NODE_ENV || 'development',
   IS_DEV: (process.env.NODE_ENV || 'development') === 'development',
 
-  // Supabase (开发模式可选，生产模式必须)
-  SUPABASE_URL: process.env.SUPABASE_URL || '',
-  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+  // Supabase
+  SUPABASE_URL: optionalEnv('SUPABASE_URL', ''),
+  SUPABASE_SERVICE_ROLE_KEY: optionalEnv('SUPABASE_SERVICE_ROLE_KEY', ''),
+  SUPABASE_ANON_KEY: optionalEnv('SUPABASE_ANON_KEY', ''),
 
-  // JWT
-  JWT_SECRET: requireEnv('JWT_SECRET', 'dev-secret-change-in-production-' + Date.now()),
-  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
+  // JWT — 所有环境都必须设置 JWT_SECRET
+  JWT_SECRET: (() => {
+    const secret = process.env.JWT_SECRET
+    if (!secret) {
+      console.error('❌ Fatal: JWT_SECRET is required. Use: openssl rand -hex 64')
+      process.exit(1)
+    }
+    return secret
+  })(),
+  JWT_EXPIRES_IN: optionalEnv('JWT_EXPIRES_IN', '7d'),
 
   // DeepSeek AI
-  DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || '',
+  DEEPSEEK_API_KEY: optionalEnv('DEEPSEEK_API_KEY', ''),
 
   // Stripe
-  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
-  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
+  STRIPE_SECRET_KEY: optionalEnv('STRIPE_SECRET_KEY', ''),
+  STRIPE_WEBHOOK_SECRET: optionalEnv('STRIPE_WEBHOOK_SECRET', ''),
 
   // Frontend
-  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5179',
+  FRONTEND_URL: optionalEnv('FRONTEND_URL', 'http://localhost:5179'),
 }
 
 // Print startup info (hide secrets)

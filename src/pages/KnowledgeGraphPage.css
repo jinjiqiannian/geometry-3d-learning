@@ -1,0 +1,152 @@
+/* ═══════════════════════════════════════════════════════
+   KnowledgeGraphPage — 知识图谱样式
+   ═══════════════════════════════════════════════════════ */
+
+.kg-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-lg);
+}
+
+.kg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-xl);
+}
+
+.kg-header h1 {
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.kg-controls select {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+}
+
+.kg-loading,
+.kg-error {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--text-muted);
+}
+
+.kg-error {
+  color: var(--color-danger);
+}
+
+/* ── 树形结构 ─────────────────────────────── */
+
+.kg-tree {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.kg-level {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  background: var(--bg-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.kg-level::before {
+  content: attr(data-level);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  width: 100%;
+}
+
+.kg-node {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  font-family: inherit;
+  opacity: calc(0.5 + var(--importance, 3) * 0.1);
+}
+
+.kg-node:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-alpha);
+}
+
+.kg-node.active {
+  border-color: var(--color-accent);
+  background: var(--color-accent-alpha);
+}
+
+.kg-node-name {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.kg-node-sub {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* ── 详情面板 ─────────────────────────────── */
+
+.kg-detail {
+  margin-top: var(--space-xl);
+  padding: var(--space-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.kg-detail h2 {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.kg-detail-desc {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  margin-bottom: var(--space-lg);
+}
+
+.kg-rel-section {
+  margin-bottom: var(--space-md);
+}
+
+.kg-rel-section h3 {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: var(--space-xs);
+}
+
+.kg-rel-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.kg-rel-tag {
+  padding: 4px 12px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}

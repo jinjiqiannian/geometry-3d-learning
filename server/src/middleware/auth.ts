@@ -4,7 +4,7 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import { env } from '../config/env.js'
-import { getSupabase } from '../db/client.js'
+import { getAnonClient } from '../db/client.js'
 
 export interface JwtPayload {
   userId: string

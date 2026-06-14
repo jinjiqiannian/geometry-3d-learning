@@ -3,31 +3,49 @@
 // ═══════════════════════════════════════════════════════
 import express from 'express'
 import cors from 'cors'
+import rateLimit from 'express-rate-limit'
 import { env } from './config/env.js'
 import { authRouter } from './routes/auth.js'
 import { workspaceRouter } from './routes/workspace.js'
 import { aiRouter } from './routes/ai.js'
 import { exportRouter } from './routes/export.js'
 import { billingRouter } from './routes/billing.js'
+import { knowledgeRouter } from './routes/knowledge.js'
 
 const app = express()
 
-// ── 基础中间件 ────────────────────────────────────
-const allowedOrigins = [
-  env.FRONTEND_URL,
-  // 开发环境所有端口
-  ...Array.from({ length: 100 }, (_, i) => `http://localhost:${5173 + i}`),
-]
+// ── CORS — 生产环境仅允许白名单域名 ─────────────────
+const allowedOrigins: string[] = [env.FRONTEND_URL]
+if (env.IS_DEV) {
+  for (let i = 0; i < 100; i++) {
+    allowedOrigins.push(`http://localhost:${5173 + i}`)
+  }
+}
 app.use(cors({
   origin: (origin, cb) => {
-    // 允许无 origin 的请求（如 curl）
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true)
-    cb(null, true) // 开发阶段放行所有 origin
+    // 允许无 origin 请求（curl / server-to-server）
+    if (!origin) return cb(null, true)
+    // 白名单内放行
+    if (allowedOrigins.includes(origin)) return cb(null, true)
+    // 开发环境放行所有
+    if (env.IS_DEV) return cb(null, true)
+    // 生产环境阻止 — 不设 ACAO header，浏览器拒绝
+    console.warn(`CORS blocked origin: ${origin}`)
+    cb(null, false)
   },
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }))
+
+// ── 登录频率限制 ─────────────────────────────────
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15分钟
+  max: 10,                   // 每个IP最多10次（含成功和失败）
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: '尝试次数过多，请15分钟后再试' },
+})
 
 // Stripe webhook needs raw body — must be before JSON parser
 app.use('/api/billing/webhook', express.raw({ type: 'application/json' }))
@@ -63,11 +81,14 @@ app.get('/health', (_req, res) => {
 })
 
 // ── API Routes ────────────────────────────────────
+app.use('/api/auth/login', authLimiter)
+app.use('/api/auth/register', authLimiter)
 app.use('/api/auth', authRouter)
 app.use('/api/workspace', workspaceRouter)
 app.use('/api/ai', aiRouter)
 app.use('/api/export', exportRouter)
 app.use('/api/billing', billingRouter)
+app.use('/api/knowledge', knowledgeRouter)
 
 // ── 404 Handler ───────────────────────────────────
 app.use((_req, res) => {

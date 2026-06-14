@@ -168,6 +168,28 @@ export interface PPTExportOptions {
   includeNarration?: boolean
 }
 
+// ── Knowledge Graph ────────────────────────────────
+export interface KnowledgePoint {
+  id: string
+  code: string
+  name: string
+  category: string
+  sub_category: string | null
+  description: string | null
+  importance: number
+  lft: number
+  rgt: number
+  depth: number
+  created_at: string
+}
+
+export interface KnowledgePrerequisite {
+  id: string
+  knowledge_id: string
+  prerequisite_id: string
+  created_at: string
+}
+
 // ── Billing ───────────────────────────────────────
 export interface BillingStatus {
   plan: 'free' | 'pro' | 'teacher'

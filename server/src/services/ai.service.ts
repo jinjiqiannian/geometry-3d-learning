@@ -94,6 +94,19 @@ function normalizeText(text: string): string {
   return text.trim().toLowerCase().replace(/\s+/g, ' ')
 }
 
+/**
+ * 用户输入消毒 — 防止 Prompt Injection
+ * 1. 截断到最大长度
+ * 2. 用分隔符包裹，与系统指令隔离
+ */
+function sanitizeInput(text: string, maxLength = 2000): string {
+  const cleaned = text
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '') // 移除控制字符
+    .trim()
+    .slice(0, maxLength)
+  return `【题目开始】\n${cleaned}\n【题目结束】`
+}
+
 // ── Core API Call ──────────────────────────────────
 
 interface DeepSeekCallOptions {
@@ -300,7 +313,7 @@ export async function parseProblem(
   const { text: responseText, tokensIn, tokensOut } = await callDeepSeek({
     model: FLASH_MODEL,
     system: PARSE_SYSTEM_PROMPT,
-    user: `请解析以下几何题目：\n\n${text}`,
+    user: sanitizeInput(text) + `\n\n请严格按 JSON 格式输出解析结果。`,
     maxTokens: 800,
     temperature: 0.1,
   })
@@ -386,7 +399,7 @@ export async function generateReasoning(
 
   console.log('  🧠 AI reason: calling DeepSeek Pro...')
 
-  const prompt = `题目：${text}\n\n几何体类型：${parsed.type}\n已知参数：${JSON.stringify({ size: parsed.size, labels: parsed.labels, highlightLines: parsed.highlightLines, extraParams: parsed.extraParams })}\n\n请为这道题生成分步解题讲解。`
+  const prompt = `题目：${sanitizeInput(text)}\n\n几何体类型：${parsed.type}\n已知参数：${JSON.stringify({ size: parsed.size, labels: parsed.labels, highlightLines: parsed.highlightLines, extraParams: parsed.extraParams })}\n\n请为这道题生成分步解题讲解。`
 
   const { text: responseText, tokensIn, tokensOut } = await callDeepSeek({
     model: PRO_MODEL,
@@ -525,7 +538,7 @@ export async function generateNarration(
 
   console.log('  🎤 AI narrate: calling DeepSeek Pro...')
 
-  const prompt = `题目：${problemText}\n\n解题步骤：\n${steps.map(s => `步骤${s.step}: ${s.title}\n内容：${s.content}`).join('\n\n')}`
+  const prompt = `题目：${sanitizeInput(problemText)}\n\n解题步骤：\n${steps.map(s => `步骤${s.step}: ${s.title}\n内容：${s.content}`).join('\n\n')}`
 
   const { text: responseText, tokensIn, tokensOut } = await callDeepSeek({
     model: FLASH_MODEL, // Use Flash for narration (cheaper, faster)
@@ -558,14 +571,47 @@ export async function solveComplete(
   plan: 'free' | 'pro' | 'teacher',
   userId?: string
 ): Promise<CompleteSolution> {
+  // Layer 0: 缓存检查 — 相同题目直接命中
+  const normalized = normalizeText(text)
+  const solveCacheKey = `solve_${hashText(normalized)}`
+  const cached = cache.get(solveCacheKey)
+  if (cached) {
+    console.log('  📦 solveComplete: cache hit')
+    return cached
+  }
+
   // Layer 1: Parse (always available)
   const parsed = await parseProblem(text, userId)
 
-  // Layer 2: Reasoning — 所有用户走 DeepSeek V4 Pro 推理
-  const steps = await generateReasoning(text, parsed, userId)
+  // Layer 2: Reasoning — 按 plan 路由模型
+  let steps: Step[]
 
-  // Visual states 完全由客户端 computeVisualIntent() 确定性计算，无需 AI 调用
-  return { parsed, steps }
+  switch (plan) {
+    case 'free':
+      // Free 用户走本地模板（零 AI 成本）
+      steps = generateLocalTemplateSteps(parsed)
+      console.log('  🏗️ Free user: using local template steps (zero AI cost)')
+      break
+
+    case 'pro':
+      // Pro 用户走 Flash（低成本）
+      steps = await generateReasoning(text, parsed, userId)
+      console.log('  ⚡ Pro user: using Flash reasoning')
+      break
+
+    case 'teacher':
+      // Teacher 走 Pro（高质量，课堂场景）
+      steps = await generateReasoning(text, parsed, userId)
+      console.log('  🧠 Teacher user: using Pro reasoning')
+      break
+
+    default:
+      steps = generateLocalTemplateSteps(parsed)
+  }
+
+  const result: CompleteSolution = { parsed, steps }
+  cache.set(solveCacheKey, result)
+  return result
 }
 
 // ═══════════════════════════════════════════════════════

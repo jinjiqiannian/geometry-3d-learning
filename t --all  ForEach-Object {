@@ -1,0 +1,44 @@
+[33mcommit 401a97dc4a02ae75bc0ac510230edd199d42a4f2[m	refs/heads/main[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Yu Guan <yy2221816415u@gmail.com>
+Date:   Sun Jun 14 01:07:09 2026 +0800
+
+    全量更新: 几何维度 3D 几何学习平台完整功能
+
+[33mcommit 6ea6c217136aaddc83f0eb8929a2f467c1b5d9dc[m	refs/heads/feature/geometry-engine
+Author: Yu Guan <yy2221816415u@gmail.com>
+Date:   Wed Jun 10 22:28:26 2026 +0800
+
+    @ feat: 安全机制加固 — CSP头 + CORS限制 + 速率限制 + .env脱敏 + 输入验证
+    
+    - CSP: script-src/style-src/connect-src 白名单，object-src:none，base-uri:self
+    - 安全headers: X-Content-Type-Options, Referrer-Policy
+    - Edge Functions: CORS限制到jiheweidu.cn + stripe-portal增加auth验证 + 速率限制(10req/60s)
+    - Stripe webhook: 幂等性检查防重放 + 事件类型白名单
+    - shareUtils: 输入长度限制 + 结构白名单验证 + 文本截断
+    - .env 从git移除 + .env.example 模板
+    
+    Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+
+[33mcommit 9b964312a62a9401a7b7fb3715e81ce6a1a56e92[m	refs/heads/feature/geometry-engine
+Author: Yu Guan <yy2221816415u@gmail.com>
+Date:   Tue Jun 9 02:13:22 2026 +0800
+
+    feat: 全栈后端系统 — Node.js/Express + DeepSeek AI + JWT + Stripe + 教师模式
+    
+    后端 (server/):
+    - Express + TypeScript API 服务器
+    - Auth系统: 注册/登录/JWT签发/refresh (兼容Supabase JWT)
+    - AI Engine: DeepSeek Flash/Pro 三层路由 + LRU缓存 + retry + cost tracking
+    - Workspace系统: CRUD + SSE回放 + fork + publish + search
+    - PPT导出: 服务端PptxGenJS 5张幻灯片
+    - Billing: Stripe Checkout/Portal/Webhook
+    - 教师模式: 讲稿生成 + 课程集管理
+    - 中间件: JWT验证, 可选认证, 频率限制(3/day), 等级门控(Pro/Teacher)
+    
+    前端 (src/):
+    - API客户端: 统一auth/ai/workspace/export/billing调用层
+    - TeacherContext: 课堂模式/自动播放/讲稿字幕/键盘快捷键
+    - TeacherModePanel: 全屏演示控制栏
+    - App.jsx: 集成TeacherProvider
+    
+    Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
