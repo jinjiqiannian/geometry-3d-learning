@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || ''
@@ -46,6 +46,20 @@ export function SupabaseProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [connected, setConnected] = useState(false)
+
+  // ── Guest identity (anonymous user ID, stored in localStorage) ──
+  const guestId = useMemo(() => {
+    try {
+      let id = localStorage.getItem('mathviz_guest_id')
+      if (!id) {
+        id = 'guest_' + crypto.randomUUID()
+        localStorage.setItem('mathviz_guest_id', id)
+      }
+      return id
+    } catch {
+      return 'guest_' + Math.random().toString(36).slice(2, 10)
+    }
+  }, [])
 
   // Check if Supabase is configured
   useEffect(() => {
@@ -230,6 +244,8 @@ export function SupabaseProvider({ children }) {
       connected,
       session,
       user,
+      isGuest: !user,
+      guestId,
       profile,
       loading,
       signUp,

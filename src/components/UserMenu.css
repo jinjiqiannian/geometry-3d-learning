@@ -29,6 +29,28 @@
   background: var(--accent-subtle);
 }
 
+/* ── Feedback icon button (guest state) ── */
+.um-feedback-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  cursor: pointer;
+  background: none;
+  border: 1px solid transparent;
+  font-family: inherit;
+  transition: all var(--transition-fast);
+}
+
+.um-feedback-icon-btn:hover {
+  color: var(--text-primary);
+  background: var(--accent-subtle);
+  border-color: var(--border-subtle);
+}
+
 /* ── Plan badge ── */
 .um-plan-badge {
   display: inline-flex;

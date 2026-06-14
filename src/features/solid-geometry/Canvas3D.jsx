@@ -111,7 +111,9 @@ const Canvas3D = memo(function Canvas3D({
   allLines, shownLengthLabels, searchedLine,
   selectedEdge, onEdgeClick, edgeColorOverrides,
   customVertices,
-  // ── VisualIntent-driven props ──
+  // ── SceneIR — 单一真相源（优先使用）──
+  sceneIR = null,
+  // ── VisualIntent-driven props（sceneIR 为空时回退） ──
   highlightEdgeIds = [],
   highlightColor = '#FF6B6B',
   auxLines = [],
@@ -124,6 +126,38 @@ const Canvas3D = memo(function Canvas3D({
   // ── 球体叠加（内接球/外接球） ──
   sphereOverlay = null,
 }) {
+  // ── 从 SceneIR 推导视觉状态（优先使用） ──────────
+  const sceneDerived = useMemo(() => {
+    if (!sceneIR) return null
+    const hlEdges = sceneIR.lines
+      ?.filter(l => l.highlighted)
+      .map(l => l.label || l.id) || []
+    const auxLinesList = sceneIR.lines
+      ?.filter(l => l.category === '辅助线')
+      .map(l => ({
+        from: l.from, to: l.to, dashed: l.dashed, color: l.color || '#8b5cf6',
+      })) || []
+    const faceOp = sceneIR.faces?.length > 0
+      ? sceneIR.faces[0].opacity ?? 0.42
+      : 0.42
+    const labelVis = sceneIR.labelVisibility || {}
+    const showLabs = Object.keys(labelVis).length > 0 ? labelVis : null
+    return {
+      highlightEdgeIds: hlEdges,
+      auxLines: auxLinesList,
+      faceOpacity: faceOp,
+      nonHighlightOpacity: hlEdges.length > 0 ? 1.0 : 0.25,
+      showLabels: showLabs,
+    }
+  }, [sceneIR])
+
+  // 合并：SceneIR 优先，否则用传入的 props
+  const effectiveHighlights = sceneDerived ? sceneDerived.highlightEdgeIds : highlightEdgeIds
+  const effectiveAuxLines = sceneDerived ? sceneDerived.auxLines : auxLines
+  const effectiveFaceOpacity = sceneDerived ? sceneDerived.faceOpacity : faceOpacity
+  const effectiveNonHL = sceneDerived ? sceneDerived.nonHighlightOpacity : nonHighlightOpacity
+  const effectiveShowLabels = sceneDerived?.showLabels || null
+
   const { type, params } = geometry
   const size = params.size ?? 2
   const s = size / 2
@@ -152,12 +186,12 @@ const Canvas3D = memo(function Canvas3D({
     return new Set(matches)
   }, [searchedLine, allLines])
 
-  // ── VisualIntent highlight set ──
+  // ── VisualIntent / SceneIR highlight set ──
   const highlightSet = useMemo(() => {
-    return new Set(highlightEdgeIds)
-  }, [highlightEdgeIds])
+    return new Set(effectiveHighlights)
+  }, [effectiveHighlights])
 
-  const hasHighlights = highlightEdgeIds.length > 0
+  const hasHighlights = effectiveHighlights.length > 0
 
   // ── 球体叠加层几何体缓存 ──
   const sphereGeo = useMemo(() => {
@@ -173,7 +207,7 @@ const Canvas3D = memo(function Canvas3D({
 
   // Detect new highlights and start transitions
   useEffect(() => {
-    const newSet = new Set(highlightEdgeIds)
+    const newSet = new Set(effectiveHighlights)
     const oldSet = prevHighlights.current
     const now = performance.now()
     let hasNew = false
@@ -189,7 +223,7 @@ const Canvas3D = memo(function Canvas3D({
     })
     prevHighlights.current = newSet
     if (hasNew) animating.current = true
-  }, [highlightEdgeIds])
+  }, [effectiveHighlights])
 
   // Drive transition animation frames — throttled to ~20fps
   const frameSkip = useRef(0)
@@ -214,14 +248,14 @@ const Canvas3D = memo(function Canvas3D({
 
   // ── Aux lines (resolved from vertex labels) ──
   const resolvedAuxLines = useMemo(() => {
-    if (!auxLines || auxLines.length === 0) return []
-    return auxLines.map(al => {
+    if (!effectiveAuxLines || effectiveAuxLines.length === 0) return []
+    return effectiveAuxLines.map(al => {
       const from = resolvePoint(al.from, pts)
       const to = resolvePoint(al.to, pts)
       if (!from || !to) return null
       return { ...al, from, to }
     }).filter(Boolean)
-  }, [auxLines, pts])
+  }, [effectiveAuxLines, pts])
 
   // ── 相机系统（仅手动重置，不自动飞行） ──
   const cameraRef = useRef(null)
@@ -282,8 +316,10 @@ const Canvas3D = memo(function Canvas3D({
 
     const style = getLineStyle(l.category)
 
-    // Determine if this edge is highlighted via VisualIntent
-    const isVisualHighlight = hasHighlights && highlightSet.has(l.id)
+    // Determine if this edge is highlighted via SceneIR / VisualIntent
+    const isVisualHighlight = hasHighlights && (
+      highlightSet.has(l.id) || (l.label && highlightSet.has(l.label))
+    )
 
     let color, opacity
     if (selected) {
@@ -317,9 +353,9 @@ const Canvas3D = memo(function Canvas3D({
       color = style.color; opacity = 0
     }
 
-    // 全局调光：无高亮时 nonHighlightOpacity 控制整体明暗（观察/构造步骤聚焦效果）
-    if (!hasHighlights && !selected && !hovered && !searched && nonHighlightOpacity < 1.0) {
-      opacity *= nonHighlightOpacity
+    // 全局调光：无高亮时 effectiveNonHL 控制整体明暗（观察/构造步骤聚焦效果）
+    if (!hasHighlights && !selected && !hovered && !searched && effectiveNonHL < 1.0) {
+      opacity *= effectiveNonHL
     }
 
     // 仅棱和自定义边有碰撞体（对角线和辅助线太细不需要）
@@ -372,11 +408,11 @@ const Canvas3D = memo(function Canvas3D({
 
       <perspectiveCamera makeDefault fov={50} position={[4, 4, 6]} />
 
-      {/* 半透明灰色面 — opacity driven by VisualIntent */}
+      {/* 半透明灰色面 — opacity driven by SceneIR / VisualIntent */}
       {showFaces && (
         <mesh>
           <primitive attach="geometry" object={geoData} />
-          <meshBasicMaterial color="#d0d0d8" transparent opacity={faceOpacity} depthWrite={false} side={THREE.DoubleSide} />
+          <meshBasicMaterial color="#d0d0d8" transparent opacity={effectiveFaceOpacity} depthWrite={false} side={THREE.DoubleSide} />
         </mesh>
       )}
 
@@ -424,14 +460,22 @@ const Canvas3D = memo(function Canvas3D({
       {/* ── 曲面体线段 ── */}
       {isCurved && resolvedLines.map(l => renderLine(l, lineKey(l)))}
 
-      {/* ── 顶点标签 ── */}
-      {showLabels && edgeInfo.vertices.map((v, i) => (
-        <Billboard key={`v-${i}`} position={v} follow>
-          <Text fontSize={0.28} color="#1d1d1f" anchorX="center" anchorY="middle">
-            {edgeInfo.labels[i] || String.fromCharCode(65 + i)}
-          </Text>
-        </Billboard>
-      ))}
+      {/* ── 顶点标签 — SceneIR 驱动显示/隐藏 ── */}
+      {edgeInfo.vertices.map((v, i) => {
+        const label = edgeInfo.labels[i] || String.fromCharCode(65 + i)
+        // 如果 SceneIR 控制了标签可见性，按它来；否则用 showLabels 开关
+        const visible = effectiveShowLabels
+          ? !!effectiveShowLabels[label]
+          : showLabels
+        if (!visible) return null
+        return (
+          <Billboard key={`v-${i}`} position={v} follow>
+            <Text fontSize={0.28} color="#1d1d1f" anchorX="center" anchorY="middle">
+              {label}
+            </Text>
+          </Billboard>
+        )
+      })}
 
       <OrbitControls enableZoom enablePan enableRotate />
     </>
