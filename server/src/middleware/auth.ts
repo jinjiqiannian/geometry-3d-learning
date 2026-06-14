@@ -69,7 +69,7 @@ async function verifyToken(req: Request): Promise<JwtPayload> {
 
   // 2) 尝试用Supabase验证（使用Supabase auth.getUser）
   try {
-    const supabase = getSupabase()
+    const supabase = getAnonClient()
     const { data, error } = await supabase.auth.getUser(token)
     if (error || !data.user) {
       throw new Error('Invalid token')

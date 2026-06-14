@@ -26,7 +26,8 @@ modelRouter.get('/', async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════
 modelRouter.get('/:id', async (req: Request, res: Response) => {
   try {
-    const result = await modelService.getModel(req.params.id)
+    const id = req.params.id as string
+    const result = await modelService.getModel(id)
     if (!result.model) {
       return res.status(404).json({ success: false, error: '模型不存在' })
     }

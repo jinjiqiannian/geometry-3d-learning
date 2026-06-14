@@ -96,7 +96,8 @@ mistakeRouter.get('/analyze', requireAuth, requirePlan('pro'), async (req: Reque
 // ═══════════════════════════════════════════════════════
 mistakeRouter.get('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
-    const mistake = await mistakeService.getMistake(req.params.id, req.userId!)
+    const id = req.params.id as string
+    const mistake = await mistakeService.getMistake(id, req.userId!)
     if (!mistake) {
       return res.status(404).json({ success: false, error: '错题不存在' })
     }
@@ -127,8 +128,9 @@ mistakeRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════
 mistakeRouter.patch('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
+    const id = req.params.id as string
     const body = updateSchema.parse(req.body)
-    const mistake = await mistakeService.updateMistake(req.params.id, req.userId!, body)
+    const mistake = await mistakeService.updateMistake(id, req.userId!, body)
     res.json({ success: true, data: mistake })
   } catch (err: any) {
     if (err instanceof z.ZodError) {
@@ -143,7 +145,8 @@ mistakeRouter.patch('/:id', requireAuth, async (req: Request, res: Response) => 
 // ═══════════════════════════════════════════════════════
 mistakeRouter.delete('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
-    await mistakeService.deleteMistake(req.params.id, req.userId!)
+    const id = req.params.id as string
+    await mistakeService.deleteMistake(id, req.userId!)
     res.json({ success: true, data: { deleted: true } })
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message })

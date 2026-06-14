@@ -26,7 +26,8 @@ knowledgeRouter.get('/nodes', async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════
 knowledgeRouter.get('/nodes/:id', async (req: Request, res: Response) => {
   try {
-    const result = await knowledgeService.getKnowledgePoint(req.params.id)
+    const id = req.params.id as string
+    const result = await knowledgeService.getKnowledgePoint(id)
     if (!result.point) {
       return res.status(404).json({ success: false, error: '知识点不存在' })
     }
