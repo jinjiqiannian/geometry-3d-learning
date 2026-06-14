@@ -11,6 +11,8 @@ import { aiRouter } from './routes/ai.js'
 import { exportRouter } from './routes/export.js'
 import { billingRouter } from './routes/billing.js'
 import { knowledgeRouter } from './routes/knowledge.js'
+import { modelRouter as mathModelRouter } from './routes/models.js'
+import { trainingRouter } from './routes/training.js'
 
 const app = express()
 
@@ -89,6 +91,8 @@ app.use('/api/ai', aiRouter)
 app.use('/api/export', exportRouter)
 app.use('/api/billing', billingRouter)
 app.use('/api/knowledge', knowledgeRouter)
+app.use('/api/models', mathModelRouter)
+app.use('/api/training', trainingRouter)
 
 // ── 404 Handler ───────────────────────────────────
 app.use((_req, res) => {
