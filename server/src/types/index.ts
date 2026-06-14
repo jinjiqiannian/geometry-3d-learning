@@ -44,6 +44,32 @@ export type GeometryType =
   | 'cone' | 'pyramid' | 'prism'
   | 'squareFrustum' | 'circularFrustum'
 
+// ── Problem Type Classification ─────────────────
+export type ProblemSubType =
+  | 'skew_lines'
+  | 'dihedral_angle'
+  | 'line_plane_angle'
+  | 'section'
+  | 'shortest_distance'
+  | 'volume'
+  | 'spatial_vector'
+  | 'distance_point_plane'
+  | 'inscribed_circumscribed'
+  | 'general'
+
+export const PROBLEM_SUBTYPE_NAMES: Record<ProblemSubType, string> = {
+  skew_lines: '异面直线夹角',
+  dihedral_angle: '二面角',
+  line_plane_angle: '线面角',
+  section: '截面',
+  shortest_distance: '最短距离',
+  volume: '体积计算',
+  spatial_vector: '空间向量',
+  distance_point_plane: '点到平面距离',
+  inscribed_circumscribed: '内切外接',
+  general: '综合题',
+}
+
 export interface ParsedProblem {
   type: GeometryType
   size: number
@@ -52,6 +78,7 @@ export interface ParsedProblem {
   annotations: Annotation[]
   explanation: string
   extraParams?: Record<string, number>  // e.g. { height: 4, radius2: 3 }
+  problemType?: ProblemSubType  // AI 识别的题型（唯一权威来源）
 }
 
 export interface HighlightLine {
@@ -67,7 +94,17 @@ export interface Annotation {
 }
 
 // ── Steps ─────────────────────────────────────────
-export type StepType = 'observation' | 'construction' | 'calculation' | 'conclusion'
+export type StepType = 'conceptual' | 'construction' | 'calculation' | 'validation'
+
+export interface WhyExplain {
+  intuition: string   // 直觉理解（生活类比）
+  math_reason: string // 数学原理
+}
+
+export interface StuckExplain {
+  misconception: string // 学生常见错误理解
+  correction: string    // 正确理解
+}
 
 export interface AuxLine {
   from: string
@@ -94,6 +131,8 @@ export interface Step {
   title: string
   content: string
   type: StepType
+  why?: WhyExplain
+  stuck?: StuckExplain
   sceneState?: SceneState
   locked?: boolean  // Free用户锁定
 }
