@@ -450,3 +450,110 @@ src/
 ---
 
 *最后更新：2026-06-08*
+
+---
+
+## 2026-06-14（周日）— 全面重构：安全+架构+模型库
+
+> 当日 commit: 13 个，+3624 / -3594 行
+> 产品形态: 从「AI 几何演示工具」升级为「高中数学 AI 老师」
+
+### 🔒 安全修复
+
+**commit:** `a9524a0`
+
+- **AI 端点**: `optionalAuth` → `requireAuth`，匿名调用全部封堵
+- **/visualize**: 补上 `dailyLimit` 中间件（原本缺失）
+- **rateLimit**: 匿名绕过移除 + fail-open → fail-closed
+- **JWT_SECRET**: 所有环境强制要求，移除 `Date.now()` 弱回退
+- **CORS**: 生产环境仅允许白名单域名，不再放行所有 origin
+- **requirePlan**: 每次请求从数据库实时查询 plan，不信任 JWT payload
+- **登录限流**: 添加 `express-rate-limit`（15分钟/10次，含成功+失败）
+- **RefreshToken**: 轮换机制 + 重复检测 + 有效期 30d → 7d
+- 涉及文件: `server/src/config/env.ts`, `server/src/index.ts`, `server/src/middleware/rateLimit.ts`, `server/src/middleware/requirePlan.ts`, `server/src/routes/ai.ts`, `server/src/services/auth.service.ts`
+
+### 🧹 死代码清理
+
+**commit:** `5c07705`
+
+- 删除 `src/components/` 中 9 个未使用组件（Canvas3D 旧版、ControlPanel 旧版、WorkspaceToolbar 等）
+- 删除 `src/features/solid-geometry/` 中 16 个未使用文件（ControlPanel、LineControlPanel、ParamEditor、ProblemInput 等）
+- 保留: CameraCapture、Canvas3D（被引用）
+- **-3330 行**, +330 行
+
+### 💰 AI 成本控制
+
+**commit:** `5c07705`
+
+- `DAILY_AI_COST_LIMIT` 环境变量（默认 $5/天，全局硬上限）
+- `USER_DAILY_AI_COST_LIMIT`（默认 $0.50/天/用户）
+- 每次 `callDeepSeek` 前自动检查，超限抛错
+- Token 用量按 DeepSeek 公开定价实时换算 USD
+
+### 🏗️ 数学模型架构
+
+**commit:** `8605508`
+
+- 新增 `MathModel` 接口（10 种分类 × 5 级难度）
+- 创建 `/content/` 目录作为模型源文件的真相来源
+- `model-schema.json` JSON Schema 验证
+- `modelLoader.ts`: 启动时递归加载所有 JSON，支持关键词+正则匹配
+- `matchProblem()`: 按置信度排序返回匹配结果
+- 首个模型: `geometry-cube-skew-lines`
+
+### 🧩 题型匹配引擎
+
+**commit:** `60c8534`
+
+- `solveComplete` 流程: **先匹配模型 → 命中则走本地模板（零 AI 成本）→ 未命中再调 LLM**
+- 新增 4 个几何模型: 二面角、线面角、截面、距离
+- 响应中返回 `matchedModel` 信息供前端展示
+- 匹配命中不再调用 DeepSeek
+
+### 📝 错题本系统
+
+**commit:** `9b72bee`
+
+- **后端**: 完整 CRUD（list/get/create/update/delete + 按 type/knowledge/resolved 过滤）
+- **AI 错因分析**: 调用 DeepSeek Flash 自动分类错误类型（概念/计算/审题）
+- **统计**: 按错误类型和知识点分布
+- **前端 MistakeCenter**: 统计卡片、展开详情、标记已掌握/删除、状态过滤、空状态引导
+- 导航新增「错题本」入口
+
+### 📊 学习进度
+
+**commit:** `42bd74a`
+
+- 概览卡片（总模型/学习中/已掌握/掌握率）
+- 按分类分组网格展示
+- 每种模型显示: 状态圆点(○◐●) + 难度星级 + 掌握度进度条
+- 数据源: `/api/models` + `/api/training/progress`
+- 路由 `/progress`
+
+### 📈 函数导数模型库
+
+**commit:** `5e1005a`
+
+- **8 个函数模型**: 一次、二次、幂、指数、对数、复合、分段、函数性质
+- **7 个导数模型**: 定义、切线、单调性、极值、最值、图像、综合
+- 每模型含识别规则、两种解法、常见陷阱、前置/后置模型
+- `ParsedProblem` 新增 `category` 字段，非几何不再硬编码 `type: 'cube'`
+- 前端条件渲染: 函数/导数题隐藏 Canvas3D，显示文字提示
+- 快速体验新增 3 个函数/导数示例按钮
+
+### 🧪 测试
+
+`91 tests passed`（贯穿所有变更，无回归）
+
+### 📦 模型库状态
+
+| 类别 | 数量 | 内容 |
+|------|------|------|
+| 立体几何 | 5 | 异面直线、二面角、线面角、截面、距离 |
+| 函数 | 8 | 一次/二次/幂/指/对/复合/分段/性质 |
+| 导数 | 7 | 定义/切线/单调性/极值/最值/图像/综合 |
+| **合计** | **20** | 覆盖高考函数导数+立体几何核心题型 |
+
+---
+
+*最后更新：2026-06-14*
