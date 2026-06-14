@@ -32,7 +32,6 @@ export function dailyLimit(action: string) {
     }
 
     try {
-      supabase
       const today = new Date().toISOString().slice(0, 10)
 
       const { count, error } = await supabase
@@ -86,7 +85,6 @@ export async function recordUsage(
   workspaceId?: string
 ): Promise<void> {
   try {
-    supabase
     await supabase.from('usage_records').insert({
       user_id: userId,
       action,

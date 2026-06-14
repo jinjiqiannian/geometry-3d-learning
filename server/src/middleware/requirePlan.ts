@@ -29,7 +29,6 @@ export function requirePlan(minimumPlan: PlanLevel) {
 
     // 从数据库实时查询当前用户的实际 plan
     try {
-      supabase
       const { data: sub } = await supabase
         .from('subscriptions')
         .select('plan, status')
