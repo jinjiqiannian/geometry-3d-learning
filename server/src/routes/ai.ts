@@ -27,21 +27,6 @@ const reasonSchema = z.object({
   }),
 })
 
-const visualizeSchema = z.object({
-  parsedData: z.object({
-    type: z.string(),
-    size: z.number().optional(),
-    labels: z.array(z.string()).optional(),
-    highlightLines: z.array(z.any()).optional(),
-  }),
-  steps: z.array(z.object({
-    step: z.number(),
-    title: z.string(),
-    content: z.string(),
-    type: z.string(),
-  })),
-})
-
 const narrateSchema = z.object({
   workspaceId: z.string().uuid('无效的workspace ID'),
 })
@@ -89,32 +74,6 @@ aiRouter.post(
       await recordUsage(req.userId!, 'ai_explain', body.problemText)
 
       res.json({ success: true, data: steps })
-    } catch (err: any) {
-      if (err instanceof z.ZodError) {
-        return res.status(400).json({ success: false, error: err.errors[0]?.message })
-      }
-      res.status(500).json({ success: false, error: err.message })
-    }
-  }
-)
-
-// ═══════════════════════════════════════════════════════
-//  POST /api/ai/visualize — 3D可视化状态（需登录）
-// ═══════════════════════════════════════════════════════
-aiRouter.post(
-  '/visualize',
-  requireAuth,
-  dailyLimit('generate'),
-  async (req: Request, res: Response) => {
-    try {
-      const body = visualizeSchema.parse(req.body)
-      const states = await aiService.generateVisualStates(
-        body.parsedData as any,
-        body.steps as any,
-        req.userId
-      )
-
-      res.json({ success: true, data: states })
     } catch (err: any) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ success: false, error: err.errors[0]?.message })

@@ -226,12 +226,14 @@ export default function WorkspacePage() {
       } catch (e) { /* quick match fail silently */ }
       console.log(`[perf] quickMatch: ${(performance.now() - quickTime).toFixed(0)}ms`)
 
-      // ── Phase 1: Deep Parse — geometry via AI ──
-      setLoadingStage('parsing')
-      let parseTime = performance.now()
-      const parseRes = await aiAPI.parse(text)
-      if (parseRes?.data) {
-        parsedResult = parseRes.data
+      // ── Phase 1: AI 一站式解决（含模型匹配 + plan 路由）──
+      // 替代旧的 parse + reason 两段式调用
+      setLoadingStage('reasoning')
+      let solveTime = performance.now()
+      const solveRes = await aiAPI.solve(text)
+      if (solveRes?.data) {
+        parsedResult = solveRes.data.parsed
+        resultSteps = solveRes.data.steps
 
         // Fallback: 如果 AI 没有返回 problemType，用前端关键词检测兜底
         if (!parsedResult.problemType) {
@@ -247,15 +249,7 @@ export default function WorkspacePage() {
           params: { size: parsedResult.size || 2 },
           ...defaultConstraintParams(parsedResult.type || 'cube'),
         })
-      }
-      console.log(`[perf] AI parse: ${(performance.now() - parseTime).toFixed(0)}ms`)
 
-      // ── Phase 2: Reasoning — steps via AI Pro model ──
-      setLoadingStage('reasoning')
-      let reasonTime = performance.now()
-      const reasonRes = await aiAPI.reason(text, parsedResult || { type: 'cube', size: 2 })
-      if (reasonRes?.data) {
-        resultSteps = reasonRes.data
         // Visual states 由客户端 computeVisualIntent() 即时计算，无需 AI
         setSteps(resultSteps)
         setCurrentStep(0)
@@ -293,7 +287,7 @@ export default function WorkspacePage() {
 
       succeeded = true
       await recordUsage('generate', text)
-      console.log(`[perf] AI reason: ${(performance.now() - reasonTime).toFixed(0)}ms`)
+      console.log(`[perf] AI solve: ${(performance.now() - solveTime).toFixed(0)}ms`)
       console.log(`[perf] Total solve: ${(performance.now() - totalStart).toFixed(0)}ms`)
 
       // 保存到学习记录（含步骤，支持历史回放）
