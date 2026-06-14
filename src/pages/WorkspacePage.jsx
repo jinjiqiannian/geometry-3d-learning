@@ -230,6 +230,15 @@ export default function WorkspacePage() {
       const parseRes = await aiAPI.parse(text)
       if (parseRes?.data) {
         parsedResult = parseRes.data
+
+        // Fallback: 如果 AI 没有返回 problemType，用前端关键词检测兜底
+        if (!parsedResult.problemType) {
+          try {
+            const { detectProblemType } = await import('../engines/explanationEngine')
+            parsedResult.problemType = detectProblemType(parsedResult.type, text)
+          } catch { /* fallback silent fail */ }
+        }
+
         setParsedData(parsedResult)
         setGeometry({
           type: parsedResult.type || 'cube',

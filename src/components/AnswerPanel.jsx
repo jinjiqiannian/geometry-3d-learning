@@ -61,8 +61,8 @@ function extractResult(content) {
 }
 
 export default function AnswerPanel({ step, parsedData, steps }) {
-  // Only show when we're on the conclusion step
-  if (!step || step.type !== 'conclusion') return null
+  // Only show when we're on the validation step
+  if (!step || step.type !== 'validation') return null
 
   // 从步骤中提取实际使用的公式
   const formulaUsed = extractFormulaFromSteps(steps || [])

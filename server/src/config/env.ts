@@ -40,6 +40,10 @@ export const env = {
   // DeepSeek AI
   DEEPSEEK_API_KEY: optionalEnv('DEEPSEEK_API_KEY', ''),
 
+  // AI Cost 控制
+  DAILY_AI_COST_LIMIT: parseFloat(process.env.DAILY_AI_COST_LIMIT || '5'),    // 全局每日 AI 成本上限（USD）
+  USER_DAILY_AI_COST_LIMIT: parseFloat(process.env.USER_DAILY_AI_COST_LIMIT || '0.5'), // 单用户每日上限（USD）
+
   // Stripe
   STRIPE_SECRET_KEY: optionalEnv('STRIPE_SECRET_KEY', ''),
   STRIPE_WEBHOOK_SECRET: optionalEnv('STRIPE_WEBHOOK_SECRET', ''),

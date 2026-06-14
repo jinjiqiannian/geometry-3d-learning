@@ -1,4 +1,17 @@
 import { useState, memo } from 'react'
+
+// 题型名称映射
+const PROBLEM_TYPE_NAMES = {
+  skew_lines: '异面直线夹角',
+  dihedral_angle: '二面角',
+  line_plane_angle: '线面角',
+  section: '截面问题',
+  shortest_distance: '最短距离',
+  volume: '体积计算',
+  spatial_vector: '空间向量',
+  distance_point_plane: '点到平面距离',
+  inscribed_circumscribed: '内切外接',
+}
 import ProgressHeader from './ProgressHeader'
 import StepList from './StepList'
 import AnswerPanel from './AnswerPanel'
@@ -26,7 +39,7 @@ const ExplanationPanel = memo(function ExplanationPanel({
   isPlaying = false,
 }) {
   const currentStepData = steps[currentStep]
-  const showAnswer = currentStepData?.type === 'conclusion' && !loading
+  const showAnswer = currentStepData?.type === 'validation' && !loading
   const [followUpInput, setFollowUpInput] = useState('')
   const [showFollowUp, setShowFollowUp] = useState(false)
 
@@ -60,6 +73,17 @@ const ExplanationPanel = memo(function ExplanationPanel({
         <div className="ep-problem">
           <div className="ep-problem-label">题目</div>
           <p className="ep-problem-text">{problemText}</p>
+        </div>
+      )}
+
+      {/* ── 题型识别徽标 ── */}
+      {parsedData?.problemType && parsedData.problemType !== 'general' && (
+        <div className="ep-type-badge">
+          <span className="ep-type-icon">📐</span>
+          <span className="ep-type-label">识别题型</span>
+          <span className="ep-type-name">
+            {PROBLEM_TYPE_NAMES[parsedData.problemType] || parsedData.problemType}
+          </span>
         </div>
       )}
 

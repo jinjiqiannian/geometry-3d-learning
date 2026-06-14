@@ -239,11 +239,14 @@ interface DeepSeekCallOptions {
   temperature?: number
 }
 
-async function callDeepSeek(options: DeepSeekCallOptions): Promise<{
+async function callDeepSeek(options: DeepSeekCallOptions, userId?: string): Promise<{
   text: string
   tokensIn: number
   tokensOut: number
 }> {
+  // 每日成本上限检查
+  checkCostLimit(userId)
+
   if (!env.DEEPSEEK_API_KEY) {
     throw new Error('AI引擎未配置：缺少 DEEPSEEK_API_KEY 环境变量')
   }
@@ -343,9 +346,49 @@ function extractJSON(text: string): any {
   throw new Error('无法解析AI返回的JSON格式')
 }
 
-// ── Token cost tracking ────────────────────────────
+// ── Token cost tracking + 每日上限 ────────────────
 
 const tokenCosts: { userId: string; tokensIn: number; tokensOut: number; model: string; timestamp: number }[] = []
+
+// 默认每日硬上限（USD），可通过环境变量覆盖
+const DAILY_COST_LIMIT = env.DAILY_AI_COST_LIMIT
+const USER_DAILY_COST_LIMIT = env.USER_DAILY_AI_COST_LIMIT
+
+function getTodayCosts(userId?: string): { total: number; userTotal: number } {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const cutoff = today.getTime()
+
+  const todayCosts = tokenCosts.filter(t => t.timestamp >= cutoff)
+
+  const total = todayCosts.reduce((sum, t) => {
+    const price = t.model === PRO_MODEL ? { in: 0.55, out: 2.19 } : { in: 0.14, out: 0.28 }
+    return sum + (t.tokensIn / 1_000_000) * price.in + (t.tokensOut / 1_000_000) * price.out
+  }, 0)
+
+  const userTotal = userId
+    ? todayCosts.filter(t => t.userId === userId).reduce((sum, t) => {
+        const price = t.model === PRO_MODEL ? { in: 0.55, out: 2.19 } : { in: 0.14, out: 0.28 }
+        return sum + (t.tokensIn / 1_000_000) * price.in + (t.tokensOut / 1_000_000) * price.out
+      }, 0)
+    : 0
+
+  return { total, userTotal }
+}
+
+function checkCostLimit(userId?: string): void {
+  const { total, userTotal } = getTodayCosts(userId)
+
+  if (total > DAILY_COST_LIMIT) {
+    console.error(`❌ Daily AI cost limit reached: $${total.toFixed(4)} / $${DAILY_COST_LIMIT}`)
+    throw new Error(`AI 服务每日预算已超限（$${total.toFixed(2)} / $${DAILY_COST_LIMIT}），请明天再试`)
+  }
+
+  if (userId && userTotal > USER_DAILY_COST_LIMIT) {
+    console.warn(`⚠️ User ${userId.slice(0, 8)} daily AI cost limit reached: $${userTotal.toFixed(4)} / $${USER_DAILY_COST_LIMIT}`)
+    throw new Error('您的 AI 使用量已达每日上限')
+  }
+}
 
 function trackCost(userId: string, model: string, tokensIn: number, tokensOut: number): void {
   tokenCosts.push({
@@ -450,7 +493,7 @@ export async function parseProblem(
     user: sanitizeInput(text) + `\n\n请严格按 JSON 格式输出解析结果。`,
     maxTokens: 800,
     temperature: 0.1,
-  })
+  }, userId)
 
   const parsed = extractJSON(responseText) as ParsedProblem
 
@@ -579,7 +622,7 @@ export async function generateReasoning(
     user: prompt,
     maxTokens: 3000,
     temperature: 0.3,
-  })
+  }, userId)
 
   const aiSteps = extractJSON(responseText) as any[]
 
@@ -654,7 +697,7 @@ export async function generateVisualStates(
     user: prompt,
     maxTokens: 2000,
     temperature: 0.2,
-  })
+  }, userId)
 
   const states = extractJSON(responseText) as SceneState[]
 
@@ -712,7 +755,7 @@ export async function generateNarration(
     user: prompt,
     maxTokens: 2000,
     temperature: 0.5,
-  })
+  }, userId)
 
   const narration = extractJSON(responseText) as NarrationPhrase[]
 

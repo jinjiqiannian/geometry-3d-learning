@@ -42,7 +42,7 @@ export const CAMERA_PRESETS = {
 //       Only highlight, aux lines, and opacity change per step.
 
 const TYPE_DEFAULTS = {
-  observation: {
+  conceptual: {
     highlightColor: '#4A90E2',
     faceOpacity: 0.42,
     nonHighlightOpacity: 1.0,
@@ -57,7 +57,7 @@ const TYPE_DEFAULTS = {
     faceOpacity: 0.25,
     nonHighlightOpacity: 0.20,
   },
-  conclusion: {
+  validation: {
     highlightColor: '#4A90E2',
     faceOpacity: 0.42,
     nonHighlightOpacity: 1.0,
@@ -276,7 +276,7 @@ export function computeVisualIntent(step, parsedData, problemText, labelMap) {
 
   const geoType = parsedData.type || 'cube'
   const validEdges = new Set(GEOMETRY_EDGES[geoType] || GEOMETRY_EDGES.cube)
-  const typeDefaults = TYPE_DEFAULTS[step.type] || TYPE_DEFAULTS.observation
+  const typeDefaults = TYPE_DEFAULTS[step.type] || TYPE_DEFAULTS.conceptual
 
   const problemEdges = extractEdgesFromParsedData(parsedData, validEdges, geoType, labelMap)
 
@@ -427,8 +427,8 @@ function extractHighlightEdges(step, parsedData, validEdges, geoType, problemTex
   }
 
   // D) Step type heuristics — add complementary edges
-  if (step.type === 'observation') {
-    // Observation: highlight edges mentioned in the problem
+  if (step.type === 'conceptual') {
+    // Conceptual: highlight edges mentioned in the problem
     // If we found edges from problem text, keep them
   }
 
@@ -467,8 +467,8 @@ function extractHighlightEdges(step, parsedData, validEdges, geoType, problemTex
     // If we have edges from problem text, those ARE the edges being calculated
   }
 
-  if (step.type === 'conclusion') {
-    // Conclusion: keep all existing highlights, show the result edges
+  if (step.type === 'validation') {
+    // Validation: keep all existing highlights, show the result edges
   }
 
   return [...ids]
