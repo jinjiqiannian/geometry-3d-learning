@@ -20,6 +20,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 const KnowledgeGraphPage = lazy(() => import('./pages/KnowledgeGraphPage'))
 const MistakeBookPage = lazy(() => import('./pages/MistakeBookPage'))
+const ProgressPage = lazy(() => import('./pages/ProgressPage'))
 
 // ── Suspense fallback ──
 function PageLoader() {
@@ -63,6 +64,7 @@ const router = createHashRouter([
       { path: 'profile', element: <WrappedRoute><ProfilePage /></WrappedRoute> },
       { path: 'knowledge', element: <WrappedRoute><KnowledgeGraphPage /></WrappedRoute> },
       { path: 'mistakes', element: <WrappedRoute><MistakeBookPage /></WrappedRoute> },
+      { path: 'progress', element: <WrappedRoute><ProgressPage /></WrappedRoute> },
     ],
   },
 ])
