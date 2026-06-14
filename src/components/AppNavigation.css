@@ -153,53 +153,6 @@
   background: var(--accent-subtle);
 }
 
-/* ── Pricing / Plan badge in nav ── */
-.app-nav-pricing {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: 550;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  font-family: inherit;
-  background: rgba(0, 0, 0, 0.04);
-  color: var(--text-muted);
-  border: 1px solid var(--border-subtle);
-  position: relative;
-}
-
-.app-nav-pricing:hover {
-  background: rgba(99, 102, 241, 0.08);
-  color: var(--accent);
-  border-color: rgba(99, 102, 241, 0.3);
-}
-
-.app-nav-pricing.is-pro {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.12));
-  color: #6366f1;
-  border-color: rgba(99, 102, 241, 0.25);
-}
-
-.app-nav-pricing.is-pro:hover {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(139, 92, 246, 0.16));
-}
-
-.app-nav-upgrade-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: upgrade-pulse 2s ease-in-out infinite;
-}
-
-@keyframes upgrade-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
 
 /* Mobile — hide nav links, show compact version */
 @media (max-width: 767px) {

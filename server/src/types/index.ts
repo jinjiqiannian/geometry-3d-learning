@@ -93,6 +93,89 @@ export interface Annotation {
   position: 'top' | 'bottom' | 'left' | 'right'
 }
 
+// ── Scene IR (Scene Intermediate Representation) ──
+// 唯一的事实源：AI Steps → SceneIR → 3D Renderer
+
+export interface ScenePoint {
+  id: string           // 唯一标识，如 "A"、"A1"、"M_AB"
+  label: string        // 显示标签，如 "A₁"
+  position: [number, number, number]  // 3D 坐标
+  color?: string
+  visible?: boolean
+}
+
+export interface SceneLine {
+  id: string           // 唯一标识，如 "AB"
+  from: string         // 起点 ScenePoint.id
+  to: string           // 终点 ScenePoint.id
+  category: string     // '棱' | '底面边' | '顶面边' | '侧棱' | '对角线' | '辅助线' | '高线'
+  dashed?: boolean
+  color?: string
+  visible?: boolean
+  highlighted?: boolean
+}
+
+export interface SceneFace {
+  id: string
+  vertices: string[]   // ScenePoint.id 列表
+  opacity?: number
+  visible?: boolean
+  color?: string
+}
+
+export interface SceneSection {
+  id: string
+  type: 'plane' | 'polygon'
+  points: string[]     // 截面经过的 ScenePoint.id
+  visible?: boolean
+}
+
+export interface SceneIR {
+  points: ScenePoint[]
+  lines: SceneLine[]
+  faces?: SceneFace[]
+  sections?: SceneSection[]
+  labelVisibility?: Record<string, boolean>
+  annotations?: { text: string; position: string }[]
+}
+
+export interface ScenePointRef {
+  pointId: string
+  position: [number, number, number]
+  label: string
+}
+
+export interface SceneOps {
+  highlightPoints?: string[]
+  highlightLines?: string[]
+  addAuxLines?: {
+    from: ScenePointRef
+    to: ScenePointRef
+    label?: string
+    dashed?: boolean
+    color?: string
+  }[]
+  addAuxPoints?: {
+    id: string
+    label: string
+    position: 'midpoint' | 'intersection' | 'projection'
+    refs: string[]
+  }[]
+  fadeLines?: string[]
+  focusPoints?: string[]
+  showLabels?: string[]
+  planeHighlight?: {
+    vertices: string[]
+    color?: string
+    opacity?: number
+  }
+  sectionCut?: {
+    plane: string[]
+    showSection?: boolean
+    opacity?: number
+  }
+}
+
 // ── Steps ─────────────────────────────────────────
 export type StepType = 'conceptual' | 'construction' | 'calculation' | 'validation'
 
@@ -134,6 +217,7 @@ export interface Step {
   why?: WhyExplain
   stuck?: StuckExplain
   sceneState?: SceneState
+  sceneOps?: SceneOps  // 结构化场景操作指令（SceneIR 驱动）
   locked?: boolean  // Free用户锁定
 }
 

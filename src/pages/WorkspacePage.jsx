@@ -10,6 +10,7 @@ import { isPolyhedral } from '../engines/geometryEngine'
 import { computeVerticesFromParams } from '../engines/constraintSolver'
 import { aiAPI } from '../services/api'
 import { computeVisualIntent } from '../engines/visualIntent'
+import { buildBaseSceneIR, applyStepToSceneIR } from '../engines/sceneIRBuilder'
 import { createLabelMap, INTERNAL_LABELS } from '../engines/labelMapper'
 import { generateShareUrl, detectShareParam, decodeShare } from '../engines/shareUtils'
 import { useSubscription } from '../contexts/SubscriptionContext'
@@ -405,6 +406,22 @@ export default function WorkspacePage() {
     if (!step || !parsedData) return null
     return computeVisualIntent(step, parsedData, problemText, labelMap)
   }, [currentStep, steps, parsedData, problemText, labelMap])
+
+  // ── (3a) sceneIR — 确定性场景中间表示 ──────────────
+  //  依赖: parsedData, steps, currentStep
+  //  SceneIR 是 AI Steps → 3D 渲染之间的唯一数据层
+  //  当 steps 或 currentStep 变化时自动重新计算
+  const sceneIR = useMemo(() => {
+    if (!parsedData || steps.length === 0) return null
+    const base = buildBaseSceneIR(
+      parsedData.type,
+      { size: parsedData.size },
+      parsedData.labels || undefined
+    )
+    const step = steps[currentStep]
+    if (!step) return base
+    return applyStepToSceneIR(currentStep, step.type, step.sceneOps, currentStep === 0 ? base : undefined)
+  }, [currentStep, steps, parsedData])
 
   // ── (3b) 有效标签显示 — 渐进披露：第一步隐藏标签 ──
   const effectiveShowLabels = useMemo(() => {
