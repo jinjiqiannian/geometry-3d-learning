@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════
 //  Teacher Service — 教师模式：讲稿 + 课程管理
 // ═══════════════════════════════════════════════════════
-import { getAnonClient } from '../db/client.js'
+import { supabase } from '../lib/supabase.js'
 import { v4 as uuidv4 } from 'uuid'
 import * as aiService from './ai.service.js'
 import * as workspaceService from './workspace.service.js'
@@ -24,7 +24,7 @@ export async function createTeacherScript(
     userId
   )
 
-  const supabase = getAnonClient()
+  supabase
   const id = uuidv4()
 
   const { data, error } = await supabase
@@ -49,7 +49,7 @@ export async function getTeacherScript(
   scriptId: string,
   userId?: string
 ): Promise<TeacherScript | null> {
-  const supabase = getAnonClient()
+  supabase
 
   const { data, error } = await supabase
     .from('teacher_scripts')
@@ -70,7 +70,7 @@ export async function getTeacherScript(
 export async function listTeacherScripts(
   userId: string
 ): Promise<TeacherScript[]> {
-  const supabase = getAnonClient()
+  supabase
 
   const { data, error } = await supabase
     .from('teacher_scripts')
@@ -86,7 +86,7 @@ export async function publishScript(
   scriptId: string,
   userId: string
 ): Promise<TeacherScript> {
-  const supabase = getAnonClient()
+  supabase
 
   const { data, error } = await supabase
     .from('teacher_scripts')
@@ -104,7 +104,7 @@ export async function deleteTeacherScript(
   scriptId: string,
   userId: string
 ): Promise<void> {
-  const supabase = getAnonClient()
+  supabase
 
   const { error } = await supabase
     .from('teacher_scripts')
@@ -123,7 +123,7 @@ export async function createCollection(
   description?: string,
   workspaceIds?: string[]
 ): Promise<CourseCollection> {
-  const supabase = getAnonClient()
+  supabase
   const id = uuidv4()
 
   const { data, error } = await supabase
@@ -145,7 +145,7 @@ export async function createCollection(
 export async function listCollections(
   userId: string
 ): Promise<CourseCollection[]> {
-  const supabase = getAnonClient()
+  supabase
 
   const { data, error } = await supabase
     .from('course_collections')
@@ -162,7 +162,7 @@ export async function addToCollection(
   userId: string,
   workspaceId: string
 ): Promise<CourseCollection> {
-  const supabase = getAnonClient()
+  supabase
 
   const { data: coll, error: getErr } = await supabase
     .from('course_collections')

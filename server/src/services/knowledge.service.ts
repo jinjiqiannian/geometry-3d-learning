@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════
 //  Knowledge Service — 知识图谱 CRUD + 查询
 // ═══════════════════════════════════════════════════════
-import { getAnonClient } from '../db/client.js'
+import { supabase } from '../lib/supabase.js'
 import type { KnowledgePoint, KnowledgePrerequisite } from '../types/index.js'
 
 // ── 查询 ──────────────────────────────────────────
@@ -10,7 +10,7 @@ import type { KnowledgePoint, KnowledgePrerequisite } from '../types/index.js'
  * 获取全部知识点（树形结构，按 lft 排序）
  */
 export async function listKnowledgePoints(category?: string): Promise<KnowledgePoint[]> {
-  const supabase = getAnonClient()
+  supabase
 
   let query = supabase
     .from('knowledge_points')
@@ -34,7 +34,7 @@ export async function getKnowledgePoint(id: string): Promise<{
   prerequisites: KnowledgePoint[]
   children: KnowledgePoint[]
 }> {
-  const supabase = getAnonClient()
+  supabase
 
   // 当前节点
   const { data: point } = await supabase
@@ -82,7 +82,7 @@ export async function getKnowledgePoint(id: string): Promise<{
  * 获取学习路径（从根基到目标知识点）
  */
 export async function getLearningPath(targetId: string): Promise<KnowledgePoint[]> {
-  const supabase = getAnonClient()
+  supabase
 
   const { data: target } = await supabase
     .from('knowledge_points')
@@ -114,7 +114,7 @@ export async function analyzeWeaknesses(
   masteredCount: number
   totalCount: number
 }> {
-  const supabase = getAnonClient()
+  supabase
 
   // 获取用户错题关联的知识点
   const { data: errorPoints } = await supabase

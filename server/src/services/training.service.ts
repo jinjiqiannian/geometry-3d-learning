@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════
 //  Training Service — EduMind 自适应训练引擎
 // ═══════════════════════════════════════════════════════
-import { getAnonClient } from '../db/client.js'
+import { supabase } from '../lib/supabase.js'
 
 export interface TrainingRecord {
   id: string
@@ -32,7 +32,7 @@ export async function submitTraining(
   modelId: string,
   data: { score: number; timeSpent: number; isCorrect: boolean; level: number }
 ): Promise<TrainingRecord> {
-  const supabase = getAnonClient()
+  supabase
 
   const { data: record, error } = await supabase
     .from('training_records')
@@ -57,7 +57,7 @@ export async function submitTraining(
 }
 
 async function updateMastery(userId: string, modelId: string): Promise<void> {
-  const supabase = getAnonClient()
+  supabase
 
   // 统计该模型的历史训练数据
   const { data: records } = await supabase
@@ -109,7 +109,7 @@ export async function getTrainingProgress(userId: string): Promise<{
   records: TrainingRecord[]
   mastery: ModelMastery[]
 }> {
-  const supabase = getAnonClient()
+  supabase
 
   const [{ data: records }, { data: mastery }] = await Promise.all([
     supabase.from('training_records').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(50),
@@ -126,7 +126,7 @@ export async function getNextRecommendedModel(userId: string): Promise<{
   modelId: string | null
   reason: string
 }> {
-  const supabase = getAnonClient()
+  supabase
 
   // 获取用户薄弱项
   const { data: mastery } = await supabase

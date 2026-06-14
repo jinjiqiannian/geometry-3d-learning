@@ -420,6 +420,8 @@ declare global {
       userId?: string
       userPlan?: 'free' | 'pro' | 'teacher'
       userRole?: 'student' | 'teacher'
+      query: Record<string, any>
+      params: Record<string, any>
     }
   }
 }

@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════
 //  Mistake Service — 错题本 CRUD + AI 分析
 // ═══════════════════════════════════════════════════════
-import { getAnonClient } from '../db/client.js'
+import { supabase } from '../lib/supabase.js'
 
 export interface MistakeRecord {
   id: string
@@ -53,7 +53,7 @@ export async function listMistakes(
     offset?: number
   }
 ): Promise<{ items: MistakeRecord[]; total: number }> {
-  const supabase = getAnonClient()
+  supabase
 
   let query = supabase
     .from('error_book')
@@ -73,7 +73,7 @@ export async function listMistakes(
 }
 
 export async function getMistake(id: string, userId: string): Promise<MistakeRecord | null> {
-  const supabase = getAnonClient()
+  supabase
 
   const { data, error } = await supabase
     .from('error_book')
@@ -87,7 +87,7 @@ export async function getMistake(id: string, userId: string): Promise<MistakeRec
 }
 
 export async function createMistake(userId: string, input: CreateMistakeInput): Promise<MistakeRecord> {
-  const supabase = getAnonClient()
+  supabase
 
   const { data, error } = await supabase
     .from('error_book')
@@ -123,7 +123,7 @@ export async function updateMistake(
     tags: string[]
   }>
 ): Promise<MistakeRecord> {
-  const supabase = getAnonClient()
+  supabase
 
   const payload: any = { ...updates }
   if (updates.resolved === true) payload.resolved_at = new Date().toISOString()
@@ -141,7 +141,7 @@ export async function updateMistake(
 }
 
 export async function deleteMistake(id: string, userId: string): Promise<void> {
-  const supabase = getAnonClient()
+  supabase
 
   const { error } = await supabase
     .from('error_book')

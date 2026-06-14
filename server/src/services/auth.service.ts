@@ -5,7 +5,7 @@ import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { v4 as uuidv4 } from 'uuid'
-import { getAnonClient, getSupabase } from '../db/client.js'
+import { supabase, supabaseAdmin } from '../lib/supabase.js'
 import { env } from '../config/env.js'
 import type { AuthUser, AuthTokens, UserProfile, Subscription } from '../types/index.js'
 
@@ -20,7 +20,7 @@ function hashToken(token: string): string {
 // 启动时从 DB 加载最近的黑名单（仅清理过期，不阻塞启动）
 async function loadRevokedTokens(): Promise<void> {
   try {
-    const supabase = getAnonClient()
+    supabase
     const { data } = await supabase
       .from('revoked_tokens')
       .select('token_hash')
@@ -41,7 +41,7 @@ loadRevokedTokens()
 // 每小时清理过期记录
 setInterval(async () => {
   try {
-    const supabase = getAnonClient()
+    supabase
     await supabase
       .from('revoked_tokens')
       .delete()
@@ -83,7 +83,7 @@ export async function registerUser(
   password: string,
   fullName?: string
 ): Promise<{ user: AuthUser; tokens: AuthTokens }> {
-  const supabase = getSupabase()
+  supabaseAdmin
 
   // 1) Check if user exists
   const { data: existing } = await supabase
@@ -141,7 +141,7 @@ export async function loginUser(
   email: string,
   password: string
 ): Promise<{ user: AuthUser; tokens: AuthTokens }> {
-  const supabase = getAnonClient()
+  supabase
 
   // 1) Authenticate via Supabase
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -195,7 +195,7 @@ export async function getUserProfile(userId: string): Promise<{
   profile: UserProfile | null
   subscription: Subscription | null
 }> {
-  const supabase = getAnonClient()
+  supabase
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -230,7 +230,7 @@ export async function refreshUserToken(refreshToken: string): Promise<AuthTokens
 
   // 检查 DB 黑名单（持久化路径，重启后保护）
   try {
-    const supabase = getAnonClient()
+    supabase
     const { data: revoked } = await supabase
       .from('revoked_tokens')
       .select('id')
@@ -261,7 +261,7 @@ export async function refreshUserToken(refreshToken: string): Promise<AuthTokens
 
   // 异步写入 DB（不阻塞响应）
   try {
-    const supabase = getAnonClient()
+    supabase
     await supabase.from('revoked_tokens').insert({
       token_hash: tokenHash,
       user_id: payload.userId,
@@ -277,7 +277,7 @@ export async function refreshUserToken(refreshToken: string): Promise<AuthTokens
     if (firstItem) usedRefreshTokens.delete(firstItem)
   }
 
-  const supabase = getAnonClient()
+  supabase
 
   // Get current plan
   const { data: sub } = await supabase

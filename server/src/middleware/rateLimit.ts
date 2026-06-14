@@ -2,7 +2,7 @@
 //  频率限制中间件 — 基于用户plan的差异化限制
 // ═══════════════════════════════════════════════════════
 import { Request, Response, NextFunction } from 'express'
-import { getAnonClient } from '../db/client.js'
+import { supabase } from '../lib/supabase.js'
 
 const DAILY_LIMITS: Record<string, number> = {
   free: 3,
@@ -32,7 +32,7 @@ export function dailyLimit(action: string) {
     }
 
     try {
-      const supabase = getAnonClient()
+      supabase
       const today = new Date().toISOString().slice(0, 10)
 
       const { count, error } = await supabase
@@ -86,7 +86,7 @@ export async function recordUsage(
   workspaceId?: string
 ): Promise<void> {
   try {
-    const supabase = getAnonClient()
+    supabase
     await supabase.from('usage_records').insert({
       user_id: userId,
       action,

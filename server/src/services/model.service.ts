@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════
 //  Model Service — 数学模型库
 // ═══════════════════════════════════════════════════════
-import { getAnonClient } from '../db/client.js'
+import { supabase } from '../lib/supabase.js'
 
 export interface MathModel {
   id: string
@@ -32,7 +32,7 @@ export interface ProblemBankItem {
 // ── 查询 ──────────────────────────────────────────
 
 export async function listModels(category?: string): Promise<MathModel[]> {
-  const supabase = getAnonClient()
+  supabase
   let query = supabase.from('math_models').select('*').order('difficulty', { ascending: true })
 
   if (category) query = query.eq('category', category)
@@ -46,7 +46,7 @@ export async function getModel(id: string): Promise<{
   model: MathModel | null
   examples: ProblemBankItem[]
 }> {
-  const supabase = getAnonClient()
+  supabase
 
   const { data: model } = await supabase
     .from('math_models')

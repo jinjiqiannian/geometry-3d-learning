@@ -22,8 +22,7 @@ billingRouter.post('/create-checkout', requireAuth, async (req: Request, res: Re
     const body = checkoutSchema.parse(req.body)
 
     // Get user email
-    const { getAnonClient } = await import('../db/client.js')
-    const supabase = getAnonClient()
+    const { supabase } = await import('../lib/supabase.js')
     const { data: profile } = await supabase
       .from('profiles')
       .select('email')

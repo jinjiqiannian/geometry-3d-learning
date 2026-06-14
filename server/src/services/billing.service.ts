@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 import Stripe from 'stripe'
 import { env } from '../config/env.js'
-import { getAnonClient, getSupabase } from '../db/client.js'
+import { supabase, supabaseAdmin } from '../lib/supabase.js'
 import type { BillingStatus } from '../types/index.js'
 
 let stripe: Stripe | null = null
@@ -37,7 +37,7 @@ export async function createCheckoutSession(
   interval: 'monthly' | 'yearly'
 ): Promise<{ url: string }> {
   const stripe = getStripe()
-  const supabase = getAnonClient()
+  supabase
 
   const priceKey = `${plan}_${interval}`
   const priceId = PRICE_IDS[priceKey]
@@ -105,7 +105,7 @@ export async function createPortalSession(
   userId: string
 ): Promise<{ url: string }> {
   const stripe = getStripe()
-  const supabase = getAnonClient()
+  supabase
 
   const { data: sub } = await supabase
     .from('subscriptions')
@@ -128,7 +128,7 @@ export async function createPortalSession(
 // ── Get Billing Status ─────────────────────────────
 
 export async function getBillingStatus(userId: string): Promise<BillingStatus> {
-  const supabase = getAnonClient()
+  supabase
 
   const { data: sub } = await supabase
     .from('subscriptions')
@@ -179,7 +179,7 @@ export async function handleWebhook(
     throw new Error(`Webhook signature verification failed: ${(err as Error).message}`)
   }
 
-  const supabase = getSupabase()
+  supabaseAdmin
 
   switch (event.type) {
     case 'checkout.session.completed': {

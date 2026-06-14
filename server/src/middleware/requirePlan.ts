@@ -2,7 +2,7 @@
 //  付费等级门控中间件
 // ═══════════════════════════════════════════════════════
 import { Request, Response, NextFunction } from 'express'
-import { getAnonClient } from '../db/client.js'
+import { supabase } from '../lib/supabase.js'
 
 type PlanLevel = 'free' | 'pro' | 'teacher'
 
@@ -29,7 +29,7 @@ export function requirePlan(minimumPlan: PlanLevel) {
 
     // 从数据库实时查询当前用户的实际 plan
     try {
-      const supabase = getAnonClient()
+      supabase
       const { data: sub } = await supabase
         .from('subscriptions')
         .select('plan, status')

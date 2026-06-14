@@ -4,7 +4,7 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import { env } from '../config/env.js'
-import { getAnonClient } from '../db/client.js'
+import { supabase } from '../lib/supabase.js'
 
 export interface JwtPayload {
   userId: string
@@ -69,7 +69,6 @@ async function verifyToken(req: Request): Promise<JwtPayload> {
 
   // 2) 尝试用Supabase验证（使用Supabase auth.getUser）
   try {
-    const supabase = getAnonClient()
     const { data, error } = await supabase.auth.getUser(token)
     if (error || !data.user) {
       throw new Error('Invalid token')

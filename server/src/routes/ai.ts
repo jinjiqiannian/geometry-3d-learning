@@ -168,8 +168,7 @@ aiRouter.post(
       const body = narrateSchema.parse(req.body)
 
       // Load workspace to get steps
-      const { getAnonClient } = await import('../db/client.js')
-      const supabase = getAnonClient()
+      const { supabase } = await import('../lib/supabase.js')
       const { data: workspace, error } = await supabase
         .from('workspaces')
         .select('*')
