@@ -1,0 +1,54 @@
+{
+  "id": "geometry-cube-section",
+  "title": "正方体截面问题",
+  "category": "geometry-3d",
+  "difficulty": 4,
+  "recognition": {
+    "keywords": ["截面", "截平面", "截正方体"],
+    "patterns": ["截面|截平面"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "交点连线法",
+      "description": "找截面与棱的交点，依次连接得到截面多边形",
+      "steps": [
+        "确定截面经过的已知点",
+        "利用"两点确定一条直线"找截面与棱的交点",
+        "依次连接各交点得到闭合多边形",
+        "判断截面形状，计算面积或周长"
+      ],
+      "formula": "截面最多为六边形（正方体）"
+    },
+    {
+      "name": "坐标法",
+      "description": "用解析几何求各交点坐标",
+      "steps": [
+        "建立坐标系",
+        "写出截面方程",
+        "求截面与各棱的交点",
+        "计算多边形面积"
+      ]
+    }
+  ],
+  "traps": [
+    "截面多边形顶点顺序连错",
+    "忘记截面与平行平面的交线互相平行",
+    "截面超出正方体范围",
+    "忽略截面与棱可能不相交"
+  ],
+  "prerequisites": ["geometry-cube-basics"],
+  "nextModels": ["geometry-pyramid-section"],
+  "examples": [
+    {
+      "id": "geometry-cube-section-001",
+      "title": "正方体棱长为2，过A、C、A₁三点的平面截正方体，求截面面积",
+      "difficulty": 4
+    },
+    {
+      "id": "geometry-cube-section-002",
+      "title": "正方体中，过A₁B和C₁D的中点作截面，判断截面形状",
+      "difficulty": 3
+    }
+  ]
+}

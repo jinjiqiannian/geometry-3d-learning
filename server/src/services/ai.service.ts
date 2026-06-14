@@ -15,7 +15,8 @@
 //    - Step Schema Registry（结构由代码决定，prompt只填充内容）
 // ═══════════════════════════════════════════════════════
 import { env } from '../config/env.js'
-import type { ParsedProblem, Step, SceneState, NarrationPhrase, ProblemSubType, StepType } from '../types/index.js'
+import type { ParsedProblem, Step, SceneState, NarrationPhrase, ProblemSubType, StepType, MathModel } from '../types/index.js'
+import { matchProblem } from '../content/modelLoader.js'
 
 // ── Constants ──────────────────────────────────────
 const DEEPSEEK_BASE = 'https://api.deepseek.com/v1'
@@ -773,6 +774,13 @@ export async function generateNarration(
 export interface CompleteSolution {
   parsed: ParsedProblem
   steps: Step[]
+  matchedModel?: {
+    id: string
+    title: string
+    category: string
+    difficulty: number
+    confidence: 'high' | 'medium' | 'low'
+  }
 }
 
 export async function solveComplete(
@@ -789,7 +797,43 @@ export async function solveComplete(
     return cached
   }
 
-  // Layer 1: Parse (always available) — 同时输出题型
+  // Layer 0.5: 模型匹配 — 先匹配再AI
+  const matches = matchProblem(text)
+  const bestMatch = matches[0] // 按置信度排序，取最高
+  const matchedModel = bestMatch ? {
+    id: bestMatch.model.id,
+    title: bestMatch.model.title,
+    category: bestMatch.model.category,
+    difficulty: bestMatch.model.difficulty,
+    confidence: bestMatch.confidence,
+  } : undefined
+
+  // 高置信度匹配 → 使用本地模板（零 AI 成本）
+  if (bestMatch?.confidence === 'high' || bestMatch?.confidence === 'medium') {
+    console.log(`  🎯 Model matched: ${bestMatch.model.title} (${bestMatch.confidence})`)
+
+    // 匹配到对应的题型 key
+    const problemType = mapModelToProblemType(bestMatch.model.id)
+    const parsed: ParsedProblem = {
+      type: 'cube',  // 默认几何体
+      size: 2,
+      labels: [],
+      highlightLines: [],
+      annotations: [],
+      explanation: bestMatch.model.title,
+      problemType,
+    }
+
+    const steps = generateLocalTemplateSteps(parsed)
+    const result: CompleteSolution = { parsed, steps, matchedModel }
+    cache.set(solveCacheKey, result)
+    return result
+  }
+
+  // 低置信度或无匹配 → 走 AI 流程
+  console.log(`  🤖 No model match (${matches.length} low-confidence), falling back to AI...`)
+
+  // Layer 1: Parse
   const parsed = await parseProblem(text, userId)
 
   // Layer 2: Reasoning — 按 plan 路由模型
@@ -821,6 +865,28 @@ export async function solveComplete(
   const result: CompleteSolution = { parsed, steps }
   cache.set(solveCacheKey, result)
   return result
+}
+
+// ── Model ID → ProblemType 映射 ──────────────────
+// 将 /content/models/ 中的模型 ID 转换为 LOCAL_CONTENT 的 key
+function mapModelToProblemType(modelId: string): string {
+  const map: Record<string, string> = {
+    'geometry-cube-skew-lines': 'skew_lines',
+    'geometry-cuboid-skew-lines': 'skew_lines',
+    'geometry-pyramid-skew-lines': 'skew_lines',
+    'geometry-cube-dihedral': 'dihedral_angle',
+    'geometry-cuboid-dihedral': 'dihedral_angle',
+    'geometry-cube-line-plane-angle': 'line_plane_angle',
+    'geometry-cuboid-line-plane-angle': 'line_plane_angle',
+    'geometry-cube-section': 'section',
+    'geometry-cube-volume': 'volume',
+    'geometry-sphere-volume': 'volume',
+    'geometry-cylinder-volume': 'volume',
+    'geometry-cone-volume': 'volume',
+    'geometry-cube-distance': 'shortest_distance',
+    'geometry-cuboid-distance': 'shortest_distance',
+  }
+  return map[modelId] || 'general'
 }
 
 // ═══════════════════════════════════════════════════════

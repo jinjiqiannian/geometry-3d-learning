@@ -1,0 +1,54 @@
+{
+  "id": "geometry-cube-dihedral",
+  "title": "正方体二面角",
+  "category": "geometry-3d",
+  "difficulty": 3,
+  "recognition": {
+    "keywords": ["二面角", "平面角", "正方体"],
+    "patterns": ["二面角|dihedral"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "定义法",
+      "description": "在交线上取点，分别在两面内作垂线",
+      "steps": [
+        "确定两个平面及交线",
+        "在交线上取一点",
+        "分别在两个平面内作交线的垂线",
+        "计算两条垂线的夹角"
+      ],
+      "formula": "二面角 = arccos(|n₁·n₂|/(|n₁|·|n₂|))"
+    },
+    {
+      "name": "向量法",
+      "description": "求两个平面的法向量，计算法向量夹角",
+      "steps": [
+        "建立空间直角坐标系",
+        "求两个平面的法向量",
+        "用法向量夹角公式计算",
+        "判断锐角还是钝角"
+      ]
+    }
+  ],
+  "traps": [
+    "误将两平面夹角当作二面角（两者互余或相等）",
+    "忘记判断二面角是锐角还是钝角",
+    "垂线未严格在平面内作",
+    "法向量方向取反导致角度错误"
+  ],
+  "prerequisites": ["geometry-cube-basics", "geometry-vector-basics"],
+  "nextModels": ["geometry-cuboid-dihedral"],
+  "examples": [
+    {
+      "id": "geometry-cube-dihedral-001",
+      "title": "正方体ABCD-A₁B₁C₁D₁中，求平面A₁BD与底面ABCD所成二面角的大小",
+      "difficulty": 3
+    },
+    {
+      "id": "geometry-cube-dihedral-002",
+      "title": "正方体中，求平面A₁BC₁与平面ABCD所成二面角的余弦值",
+      "difficulty": 3
+    }
+  ]
+}

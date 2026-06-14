@@ -144,6 +144,7 @@ aiRouter.post(
         data: {
           parsed: solution.parsed,
           steps: solution.steps,
+          matchedModel: solution.matchedModel,
         },
       })
     } catch (err: any) {

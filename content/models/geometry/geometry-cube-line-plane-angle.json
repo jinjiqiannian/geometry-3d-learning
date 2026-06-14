@@ -1,0 +1,54 @@
+{
+  "id": "geometry-cube-line-plane-angle",
+  "title": "正方体线面角",
+  "category": "geometry-3d",
+  "difficulty": 2,
+  "recognition": {
+    "keywords": ["线面角", "直线与平面", "所成角"],
+    "patterns": ["线面角|直线.*平面.*角|直线与平面所成"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "定义法",
+      "description": "作直线在平面上的投影，直线与投影的夹角即为线面角",
+      "steps": [
+        "确定直线与平面的交点",
+        "过直线上一点作平面的垂线",
+        "连接垂足与交点得到投影线",
+        "计算直线与投影线的夹角"
+      ],
+      "formula": "sinθ = |方向向量·法向量|/(|方向向量|·|法向量|)"
+    },
+    {
+      "name": "向量法",
+      "description": "用方向向量和法向量的点积求正弦值",
+      "steps": [
+        "建立坐标系，写出直线方向向量",
+        "求平面的法向量",
+        "代入公式求 sinθ",
+        "由正弦值得出角度"
+      ]
+    }
+  ],
+  "traps": [
+    "误用余弦公式（线面角用正弦，不是余弦）",
+    "直线与平面平行时误认为夹角为0°",
+    "忘记线面角范围是[0°, 90°]",
+    "垂足位置找错"
+  ],
+  "prerequisites": ["geometry-cube-basics"],
+  "nextModels": ["geometry-cuboid-line-plane-angle"],
+  "examples": [
+    {
+      "id": "geometry-cube-line-plane-angle-001",
+      "title": "正方体ABCD-A₁B₁C₁D₁中，求A₁B与平面ABCD所成角的正弦值",
+      "difficulty": 2
+    },
+    {
+      "id": "geometry-cube-line-plane-angle-002",
+      "title": "正方体中，求对角线A₁C与底面ABCD所成角的正切值",
+      "difficulty": 3
+    }
+  ]
+}

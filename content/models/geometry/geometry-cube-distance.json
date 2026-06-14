@@ -1,0 +1,55 @@
+{
+  "id": "geometry-cube-distance",
+  "title": "正方体距离问题",
+  "category": "geometry-3d",
+  "difficulty": 3,
+  "recognition": {
+    "keywords": ["距离", "最短距离", "点到平面", "点到直线"],
+    "patterns": ["最短距离|最小值|最短路|点到.*(平面|面).*距离|点面距离|等体积法"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "等体积法",
+      "description": "利用体积相等求点到平面的距离",
+      "steps": [
+        "确定点和平面",
+        "构造一个以该点为顶点的棱锥",
+        "用两种方式计算棱锥体积",
+        "由体积相等解出距离"
+      ],
+      "formula": "d = 3V/S（V为棱锥体积，S为底面面积）"
+    },
+    {
+      "name": "向量法",
+      "description": "用向量投影求点到平面的距离",
+      "steps": [
+        "建立坐标系",
+        "求平面的法向量",
+        "求点到平面上任一点的向量",
+        "距离 = 向量在法向量上的投影长度"
+      ],
+      "formula": "d = |AP·n|/|n|（n为法向量，A为平面上任一点，P为目标点）"
+    }
+  ],
+  "traps": [
+    "等体积法找错棱锥的顶点和底面",
+    "点到直线的距离与点到平面的距离混淆",
+    "投影公式符号搞错",
+    "未考虑垂足是否在线段上（点到线段距离）"
+  ],
+  "prerequisites": ["geometry-cube-basics", "geometry-vector-basics"],
+  "nextModels": ["geometry-cuboid-distance"],
+  "examples": [
+    {
+      "id": "geometry-cube-distance-001",
+      "title": "正方体棱长为2，求A₁到平面AB₁D₁的距离",
+      "difficulty": 3
+    },
+    {
+      "id": "geometry-cube-distance-002",
+      "title": "正方体中，求异面直线A₁B与B₁C的公垂线段长度",
+      "difficulty": 4
+    }
+  ]
+}
