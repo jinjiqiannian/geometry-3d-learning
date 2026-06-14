@@ -1,0 +1,55 @@
+{
+  "id": "derivative-max-min",
+  "title": "最值问题",
+  "category": "derivative",
+  "difficulty": 4,
+  "recognition": {
+    "keywords": ["最值", "最大值", "最小值", "取值范围"],
+    "patterns": ["最值|最大值|最小值|取值范围|值域"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "闭区间最值法",
+      "description": "求闭区间上连续函数的最大最小值",
+      "steps": [
+        "求导函数 f'(x) 并解 f'(x)=0",
+        "找出所有在区间内的驻点",
+        "计算驻点和区间端点的函数值",
+        "比较所有函数值得出最大最小值"
+      ],
+      "formula": "max{f(a), f(x₁), ..., f(xₙ), f(b)}"
+    },
+    {
+      "name": "恒成立问题转化法",
+      "description": "将恒成立问题转化为最值问题",
+      "steps": [
+        "将不等式转化为 f(x)>c 或 f(x)<c 的形式",
+        "f(x)>c 恒成立 ⇒ f(x)最小值 > c",
+        "f(x)<c 恒成立 ⇒ f(x)最大值 < c",
+        "求函数在给定区间上的最值"
+      ],
+      "formula": "∀x∈D, f(x)≥c ⇔ min f(x) ≥ c；∀x∈D, f(x)≤c ⇔ max f(x) ≤ c"
+    }
+  ],
+  "traps": [
+    "闭区间最值必须考虑端点值",
+    "开区间上最值可能取不到（为极限值）",
+    "恒成立问题中等号是否可取需单独验证",
+    "含参最值问题需要对参数分类讨论"
+  ],
+  "prerequisites": ["derivative-extremum"],
+  "nextModels": ["derivative-comprehensive"],
+  "examples": [
+    {
+      "id": "derivative-max-min-001",
+      "title": "求函数 f(x)=x³-3x 在区间 [0,2] 上的最大值和最小值",
+      "difficulty": 2
+    },
+    {
+      "id": "derivative-max-min-002",
+      "title": "已知 f(x)=x²-2ax+1 在 [0,2] 上的最小值为 -1，求 a",
+      "difficulty": 4
+    }
+  ]
+}

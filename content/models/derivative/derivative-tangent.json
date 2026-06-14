@@ -1,0 +1,54 @@
+{
+  "id": "derivative-tangent",
+  "title": "切线问题",
+  "category": "derivative",
+  "difficulty": 3,
+  "recognition": {
+    "keywords": ["切线", "切点", "斜率", "导数", "相切"],
+    "patterns": ["切线|切点|斜率|相切|导数.*切线"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "求切线方程法",
+      "description": "利用导数求曲线在某点的切线方程",
+      "steps": [
+        "求函数 f(x) 的导函数 f'(x)",
+        "计算切点处的导数 f'(x₀) 得到切线斜率",
+        "利用点斜式 y-y₀ = k(x-x₀) 写出切线方程",
+        "化成一般式 ax+by+c=0"
+      ],
+      "formula": "y - f(x₀) = f'(x₀)(x - x₀)"
+    },
+    {
+      "name": "求切点坐标法",
+      "description": "已知切线过某点（不一定在曲线上），求切点",
+      "steps": [
+        "设切点为 (x₀, f(x₀))",
+        "写出切线方程 y - f(x₀) = f'(x₀)(x - x₀)",
+        "代入已知点坐标得到关于 x₀ 的方程",
+        "解方程求 x₀，得到切点"
+      ]
+    }
+  ],
+  "traps": [
+    "混淆"过某点的切线"和"在某点的切线"",
+    "已知点不一定在曲线上",
+    "切线斜率不存在时（垂直切线）漏解",
+    "切线与曲线只有一个交点，但反过来不成立"
+  ],
+  "prerequisites": ["derivative-definition"],
+  "nextModels": ["derivative-monotonicity", "derivative-extremum"],
+  "examples": [
+    {
+      "id": "derivative-tangent-001",
+      "title": "求曲线 y=x² 在点 (1,1) 处的切线方程",
+      "difficulty": 1
+    },
+    {
+      "id": "derivative-tangent-002",
+      "title": "已知曲线 y=x³-3x 的一条切线过点 (2,2)，求切线方程",
+      "difficulty": 4
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "id": "derivative-monotonicity",
+  "title": "导数与单调性",
+  "category": "derivative",
+  "difficulty": 3,
+  "recognition": {
+    "keywords": ["单调", "单调性", "增减区间", "递增", "递减"],
+    "patterns": ["单调|递增|递减|增减区间|单调区间"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "导数法判断单调性",
+      "description": "利用导数的正负判断函数的单调区间",
+      "steps": [
+        "求函数的导函数 f'(x)",
+        "解不等式 f'(x)>0 得递增区间",
+        "解不等式 f'(x)<0 得递减区间",
+        "确定单调区间边界（临界点是否包含由定义域决定）"
+      ],
+      "formula": "f'(x)>0 ⇒ f(x)递增；f'(x)<0 ⇒ f(x)递减"
+    },
+    {
+      "name": "含参单调性讨论",
+      "description": "对含参数的函数分类讨论单调性",
+      "steps": [
+        "求导后对参数分类讨论",
+        "确定临界点（使导数为 0 的点）",
+        "分区间讨论导数的符号",
+        "综合各区间得到完整单调性"
+      ]
+    }
+  ],
+  "traps": [
+    "f'(x₀)=0 不一定是极值点（还需变号）",
+    "单调区间不能用"∪"连接，需用"和"或"，"",
+    "导数为 0 的点不一定是单调区间的分界点",
+    "定义域对单调区间的限制容易被忽略"
+  ],
+  "prerequisites": ["derivative-definition"],
+  "nextModels": ["derivative-extremum", "derivative-image"],
+  "examples": [
+    {
+      "id": "derivative-monotonicity-001",
+      "title": "求函数 f(x)=x³-3x 的单调区间",
+      "difficulty": 2
+    },
+    {
+      "id": "derivative-monotonicity-002",
+      "title": "已知函数 f(x)=x³-3ax+1 在 R 上单调递增，求 a 的取值范围",
+      "difficulty": 3
+    }
+  ]
+}

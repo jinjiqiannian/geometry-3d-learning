@@ -1,0 +1,55 @@
+{
+  "id": "function-exponential",
+  "title": "指数函数",
+  "category": "function",
+  "difficulty": 2,
+  "recognition": {
+    "keywords": ["指数函数", "y=a^x", "指数"],
+    "patterns": ["指数函数|y\\s*=\\s*\\d+\\^x|a\\^x|e\\^x"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "指数函数图像法",
+      "description": "根据底数 a 判断指数函数的图像特征和性质",
+      "steps": [
+        "确定指数函数形式 y = a^x (a>0, a≠1)",
+        "判断底数 a 与 1 的关系",
+        "a>1 时递增，0<a<1 时递减",
+        "所有指数函数过定点 (0,1)"
+      ],
+      "formula": "y = a^x，a>0 且 a≠1"
+    },
+    {
+      "name": "换元法解指数方程",
+      "description": "通过换元将指数方程转化为代数方程",
+      "steps": [
+        "识别指数结构，令 t = a^x (t>0)",
+        "将原方程转化为关于 t 的方程",
+        "解出 t 后再回代求 x",
+        "验证解是否满足定义域"
+      ],
+      "formula": "令 t = a^x，则 a^(2x) = t²"
+    }
+  ],
+  "traps": [
+    "忘记底数 a 必须大于 0 且不等于 1",
+    "忽略指数函数值域为 (0,+∞)",
+    "指数运算法则记错：a^(m+n) = a^m · a^n",
+    "0<a<1 时认为递减就忽略比较方向"
+  ],
+  "prerequisites": ["function-power"],
+  "nextModels": ["function-logarithmic", "function-composite"],
+  "examples": [
+    {
+      "id": "function-exponential-001",
+      "title": "比较 2^1.5 和 2^2 的大小，说明理由",
+      "difficulty": 1
+    },
+    {
+      "id": "function-exponential-002",
+      "title": "解方程 4^x - 2^x - 2 = 0",
+      "difficulty": 3
+    }
+  ]
+}

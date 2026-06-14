@@ -12,6 +12,7 @@ import { aiAPI } from '../services/api'
 import { computeVisualIntent } from '../engines/visualIntent'
 import { buildBaseSceneIR, applyStepToSceneIR } from '../engines/sceneIRBuilder'
 import { createLabelMap, INTERNAL_LABELS } from '../engines/labelMapper'
+import { getStableIdMap } from '../engines/sceneIRTemplate'
 import { generateShareUrl, detectShareParam, decodeShare } from '../engines/shareUtils'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import './WorkspacePage.css'
@@ -78,6 +79,9 @@ export default function WorkspacePage() {
   const [show3D, setShow3D] = useState(true)
   // 移动端加载完成后默认折叠 3D，让学生先看讲解
   const [mobile3DAutoCollapsed, setMobile3DAutoCollapsed] = useState(false)
+
+  // ── Category check — 非几何体问题不渲染 3D Canvas ──
+  const isGeometryProblem = !parsedData?.category || parsedData.category === 'geometry-3d'
   useEffect(() => {
     if (isMobile && loadingStage === 'done' && steps.length > 0 && !mobile3DAutoCollapsed) {
       setShow3D(false)
@@ -389,7 +393,8 @@ export default function WorkspacePage() {
     if (!parsedData?.vertices && !parsedData?.labels) return null
     const userLabels = parsedData.vertices || parsedData.labels || null
     const internalLabels = INTERNAL_LABELS[parsedData.type] || INTERNAL_LABELS.cube
-    return createLabelMap(userLabels, internalLabels)
+    const stableIds = parsedData.type ? getStableIdMap(parsedData.type) : undefined
+    return createLabelMap(userLabels, internalLabels, stableIds)
   }, [parsedData])
 
   // ── (2) vertexLabels — 自定义顶点标签（从题目解析）──
@@ -683,6 +688,21 @@ export default function WorkspacePage() {
                 </button>
               ))}
             </div>
+            <div className="wp-empty-examples-row" style={{ marginTop: 8 }}>
+              {[
+                { text: '求函数 f(x)=x²-4x+3 的顶点坐标和对称轴', label: '二次函数' },
+                { text: '求函数 f(x)=x³-3x 的单调区间和极值', label: '导数单调性' },
+                { text: '求曲线 y=x² 在点 (1,1) 处的切线方程', label: '切线方程' },
+              ].map((ex) => (
+                <button
+                  key={ex.label}
+                  className="wp-empty-example-btn"
+                  onClick={() => handleParseProblem(ex.text)}
+                >
+                  {ex.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -716,13 +736,14 @@ export default function WorkspacePage() {
           className={`wp-canvas-col ${isMobile && !show3D ? 'wp-canvas--hidden' : ''}`}
           ref={canvasRef}
         >
-          {hasWebGL ? (
-            <Canvas
-              style={{ width: '100%', height: '100%' }}
-              gl={{ preserveDrawingBuffer: true, antialias: true, powerPreference: 'high-performance' }}
-              dpr={[1, 2]}
-            >
-              <Canvas3D
+          {isGeometryProblem ? (
+            hasWebGL ? (
+              <Canvas
+                style={{ width: '100%', height: '100%' }}
+                gl={{ preserveDrawingBuffer: true, antialias: true, powerPreference: 'high-performance' }}
+                dpr={[1, 2]}
+              >
+                <Canvas3D
                 geometry={geometry}
                 showFaces={showFaces}
                 showLabels={effectiveShowLabels}
@@ -736,6 +757,7 @@ export default function WorkspacePage() {
                 onEdgeClick={setSelectedEdge}
                 edgeColorOverrides={edgeColorOverrides}
                 customVertices={customVertices}
+                sceneIR={sceneIR}
                 highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
                 highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
                 auxLines={visualIntent?.auxLines || []}
@@ -753,7 +775,16 @@ export default function WorkspacePage() {
               <p className="wp-webgl-fallback-hint">请使用最新版 Chrome、Edge 或 Firefox</p>
             </div>
           )}
-          <GeometryMiniControls
+        ) : (
+          <div className="wp-canvas-fallback">
+            <div className="wp-canvas-fallback-content">
+              <span className="wp-canvas-fallback-icon">📐</span>
+              <p>当前题目类型不需要 3D 可视化</p>
+              <p className="wp-canvas-fallback-hint">函数/导数题请参考左侧解题步骤</p>
+            </div>
+          </div>
+        )}
+          {isGeometryProblem && <GeometryMiniControls
             geometry={geometry}
             onGeometryChange={handleGeometryChange}
             showFaces={showFaces}

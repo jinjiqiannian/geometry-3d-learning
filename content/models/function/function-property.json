@@ -1,0 +1,55 @@
+{
+  "id": "function-property",
+  "title": "函数性质（奇偶性与周期性）",
+  "category": "function",
+  "difficulty": 3,
+  "recognition": {
+    "keywords": ["奇函数", "偶函数", "奇偶性", "周期性", "周期函数"],
+    "patterns": ["奇函数|偶函数|周期|奇偶性|f\\(-x\\)|f\\(x\\+T\\)"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "奇偶性判断法",
+      "description": "利用定义判断函数的奇偶性",
+      "steps": [
+        "检查定义域是否关于原点对称",
+        "计算 f(-x) 并与 f(x) 比较",
+        "f(-x)=f(x) 为偶函数，图像关于 y 轴对称",
+        "f(-x)=-f(x) 为奇函数，图像关于原点对称"
+      ],
+      "formula": "偶函数：f(-x)=f(x)；奇函数：f(-x)=-f(x)"
+    },
+    {
+      "name": "周期性判断法",
+      "description": "利用定义判断周期并求周期函数值",
+      "steps": [
+        "寻找最小正周期 T 使 f(x+T)=f(x)",
+        "利用周期性将自变量转换到已知区间",
+        "f(x+kT)=f(x) 对任意整数 k 成立",
+        "在已知区间内计算函数值"
+      ],
+      "formula": "f(x+T)=f(x)，T 为周期"
+    }
+  ],
+  "traps": [
+    "判断奇偶性前忘记检查定义域对称性",
+    "f(0)=0 是奇函数的必要条件但不充分",
+    "周期函数一定有最小正周期（常函数除外）",
+    "两个周期函数的和不一定有周期"
+  ],
+  "prerequisites": ["function-quadratic", "function-power"],
+  "nextModels": ["derivative-definition"],
+  "examples": [
+    {
+      "id": "function-property-001",
+      "title": "判断函数 f(x)=x³+x 的奇偶性",
+      "difficulty": 1
+    },
+    {
+      "id": "function-property-002",
+      "title": "已知 f(x) 是周期为 3 的奇函数，且 f(1)=2，求 f(7) 的值",
+      "difficulty": 3
+    }
+  ]
+}

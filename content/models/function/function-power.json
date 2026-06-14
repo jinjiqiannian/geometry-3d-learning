@@ -1,0 +1,54 @@
+{
+  "id": "function-power",
+  "title": "幂函数",
+  "category": "function",
+  "difficulty": 2,
+  "recognition": {
+    "keywords": ["幂函数", "y=x^a", "指数函数", "幂"],
+    "patterns": ["幂函数|y\\s*=\\s*x\\^"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "幂函数图像法",
+      "description": "根据指数 a 判断幂函数的图像特征和性质",
+      "steps": [
+        "确定幂函数形式 y = x^a",
+        "判断 a 的正负",
+        "判断 a 的奇偶性",
+        "根据 a 值确定单调区间和定义域"
+      ],
+      "formula": "y = x^a，定义域由 a 决定"
+    },
+    {
+      "name": "比较大小法",
+      "description": "利用幂函数单调性比较函数值大小",
+      "steps": [
+        "确定自变量在定义域内的位置",
+        "利用单调性判断函数值大小",
+        "a>0 时在 (0,+∞) 上递增",
+        "a<0 时在 (0,+∞) 上递减"
+      ]
+    }
+  ],
+  "traps": [
+    "a 为分数时，误认为定义域为 R",
+    "a 为负分数时忽略奇偶性和定义域限制",
+    "幂函数与指数函数混淆",
+    "奇偶性判断错误"
+  ],
+  "prerequisites": ["function-quadratic"],
+  "nextModels": ["function-exponential", "function-logarithmic"],
+  "examples": [
+    {
+      "id": "function-power-001",
+      "title": "比较 2^0.5 和 3^0.5 的大小",
+      "difficulty": 1
+    },
+    {
+      "id": "function-power-002",
+      "title": "已知幂函数 f(x) = x^a 的图像过点 (4,2)，求 a 的值",
+      "difficulty": 2
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "id": "function-composite",
+  "title": "复合函数",
+  "category": "function",
+  "difficulty": 3,
+  "recognition": {
+    "keywords": ["复合函数", "f(g(x))", "内层函数", "外层函数"],
+    "patterns": ["f\\(g\\(|复合函数|f\\s*∘\\s*g"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "换元法求复合函数",
+      "description": "由内到外逐层分析复合函数的结构和性质",
+      "steps": [
+        "确定内层函数 u=g(x) 和外层函数 y=f(u)",
+        "求内层函数定义域和值域",
+        "外层函数对内层函数值域运算",
+        "逐层求值或求定义域"
+      ],
+      "formula": "f(g(x)) = f∘g(x)，先算 g(x) 再算 f(g(x))"
+    },
+    {
+      "name": "复合函数单调性",
+      "description": "利用"同增异减"判断复合函数单调性",
+      "steps": [
+        "分别判断内层函数和外层函数的单调性",
+        "同增异减：内外层单调性相同则复合函数递增，不同则递减",
+        "确定单调区间",
+        "注意定义域对单调区间的影响"
+      ],
+      "formula": "同增异减：f↑,g↑→f∘g↑；f↑,g↓→f∘g↓"
+    }
+  ],
+  "traps": [
+    "忽略复合函数的定义域由内外层共同决定",
+    "误认为 f(g(x)) = g(f(x))",
+    "判断单调性时忘记先确定定义域",
+    "换元时忘记新元的取值范围"
+  ],
+  "prerequisites": ["function-quadratic", "function-exponential"],
+  "nextModels": ["function-piecewise", "derivative-definition"],
+  "examples": [
+    {
+      "id": "function-composite-001",
+      "title": "已知 f(x)=x²+1, g(x)=2x-1，求 f(g(2)) 的值",
+      "difficulty": 1
+    },
+    {
+      "id": "function-composite-002",
+      "title": "判断函数 f(x)=log₂(x²-2x-3) 的单调区间",
+      "difficulty": 4
+    }
+  ]
+}

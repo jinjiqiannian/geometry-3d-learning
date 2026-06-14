@@ -126,6 +126,90 @@ const STEP_SCHEMA_REGISTRY: Record<string, StepSchema> = {
       { step: 4, type: 'validation',   title: '得出结论' },
     ],
   },
+
+  // ── Function ──────────────────────────────────
+  function_general: {
+    steps: [
+      { step: 1, type: 'conceptual',   title: '确定函数类型和已知条件' },
+      { step: 2, type: 'calculation',  title: '写出函数表达式' },
+      { step: 3, type: 'calculation',  title: '代入已知数据求解' },
+      { step: 4, type: 'validation',   title: '验证结果是否符合函数性质' },
+    ],
+  },
+  function_property: {
+    steps: [
+      { step: 1, type: 'conceptual',   title: '明确要判断的函数性质' },
+      { step: 2, type: 'calculation',  title: '验证定义域的对称性' },
+      { step: 3, type: 'calculation',  title: '通过定义计算 f(-x) 或 f(x+T)' },
+      { step: 4, type: 'validation',   title: '得出结论（奇/偶/周期）' },
+    ],
+  },
+  function_composite: {
+    steps: [
+      { step: 1, type: 'conceptual',   title: '拆分内层和外层函数' },
+      { step: 2, type: 'construction', title: '逐层分析定义域和值域' },
+      { step: 3, type: 'calculation',  title: '代值计算或判断单调性' },
+      { step: 4, type: 'validation',   title: '验证复合结果' },
+    ],
+  },
+
+  // ── Derivative ───────────────────────────────
+  derivative_definition: {
+    steps: [
+      { step: 1, type: 'conceptual',   title: '确定求导方法（定义或公式）' },
+      { step: 2, type: 'calculation',  title: '应用求导法则' },
+      { step: 3, type: 'calculation',  title: '化简导函数' },
+      { step: 4, type: 'validation',   title: '检查求导结果' },
+    ],
+  },
+  derivative_tangent: {
+    steps: [
+      { step: 1, type: 'conceptual',   title: '确认切点位置（在曲线上或过曲线外一点）' },
+      { step: 2, type: 'calculation',  title: '求导数得到切线斜率' },
+      { step: 3, type: 'calculation',  title: '写出切线方程' },
+      { step: 4, type: 'validation',   title: '验证切线与曲线的位置关系' },
+    ],
+  },
+  derivative_monotonicity: {
+    steps: [
+      { step: 1, type: 'conceptual',   title: '确定研究单调性的区间' },
+      { step: 2, type: 'calculation',  title: '求导并解不等式 f\'(x)>0 和 f\'(x)<0' },
+      { step: 3, type: 'calculation',  title: '确定递增和递减区间' },
+      { step: 4, type: 'validation',   title: '检查单调区间边界是否合理' },
+    ],
+  },
+  derivative_extremum: {
+    steps: [
+      { step: 1, type: 'conceptual',   title: '求导并解方程 f\'(x)=0 找驻点' },
+      { step: 2, type: 'conceptual',   title: '判断驻点左右导数的符号变化' },
+      { step: 3, type: 'calculation',  title: '计算极值' },
+      { step: 4, type: 'validation',   title: '判断是极大值还是极小值' },
+    ],
+  },
+  derivative_max_min: {
+    steps: [
+      { step: 1, type: 'conceptual',   title: '确定研究区间和边界' },
+      { step: 2, type: 'calculation',  title: '求区间内所有驻点和不可导点' },
+      { step: 3, type: 'calculation',  title: '比较驻点和端点函数值' },
+      { step: 4, type: 'validation',   title: '确定最大值和最小值' },
+    ],
+  },
+  derivative_image: {
+    steps: [
+      { step: 1, type: 'conceptual',   title: '分析导数 f\'(x) 的符号' },
+      { step: 2, type: 'construction', title: '绘制导数符号表' },
+      { step: 3, type: 'calculation',  title: '推断原函数的增减区间' },
+      { step: 4, type: 'validation',   title: '得到原函数的大致图像特征' },
+    ],
+  },
+  derivative_comprehensive: {
+    steps: [
+      { step: 1, type: 'conceptual',   title: '分析题目类型（恒成立/零点/证明）' },
+      { step: 2, type: 'construction', title: '构造新函数或转化问题' },
+      { step: 3, type: 'calculation',  title: '求导分析单调性和最值' },
+      { step: 4, type: 'validation',   title: '得出结论并验证' },
+    ],
+  },
 }
 
 function getSchema(problemType?: string): StepSchema {
@@ -829,14 +913,18 @@ export async function solveComplete(
 
     // 匹配到对应的题型 key
     const problemType = mapModelToProblemType(bestMatch.model.id)
+    const category = bestMatch.model.category
+    const isGeometry = !category || category === 'geometry-3d'
+
     const parsed: ParsedProblem = {
-      type: 'cube',  // 默认几何体
-      size: 2,
+      type: isGeometry ? 'cube' : undefined as any,
+      size: isGeometry ? 2 : 0,
       labels: [],
       highlightLines: [],
       annotations: [],
       explanation: bestMatch.model.title,
       problemType: problemType as any,
+      category,
     }
 
     const steps = generateLocalTemplateSteps(parsed)
@@ -900,6 +988,25 @@ function mapModelToProblemType(modelId: string): string {
     'geometry-cone-volume': 'volume',
     'geometry-cube-distance': 'shortest_distance',
     'geometry-cuboid-distance': 'shortest_distance',
+
+    // Function models
+    'function-linear': 'function_general',
+    'function-quadratic': 'function_general',
+    'function-power': 'function_general',
+    'function-exponential': 'function_general',
+    'function-logarithmic': 'function_general',
+    'function-composite': 'function_composite',
+    'function-piecewise': 'function_general',
+    'function-property': 'function_property',
+
+    // Derivative models
+    'derivative-definition': 'derivative_definition',
+    'derivative-tangent': 'derivative_tangent',
+    'derivative-monotonicity': 'derivative_monotonicity',
+    'derivative-extremum': 'derivative_extremum',
+    'derivative-max-min': 'derivative_max_min',
+    'derivative-image': 'derivative_image',
+    'derivative-comprehensive': 'derivative_comprehensive',
   }
   return map[modelId] || 'general'
 }
@@ -949,6 +1056,70 @@ const LOCAL_CONTENT: Record<string, Record<number, string>> = {
     2: '根据需要作辅助线、辅助平面，或将几何体放入坐标系中，使空间问题转化为可计算的形式。',
     3: '选择合适的公式和方法进行计算，写出完整的代入过程。',
     4: '整理计算结果，得出最终答案。回顾解题思路，确认每一步的数学依据。',
+  },
+
+  // ── Function ──────────────────────────────────
+  function_general: {
+    1: '确定函数类型（一次/二次/幂/指/对等），提取已知点和条件。',
+    2: '根据函数类型设出标准表达式（含待定系数）。',
+    3: '代入已知条件，解方程（组）求出待定系数。',
+    4: '写出完整解析式，验证是否符合所有已知条件。',
+  },
+  function_property: {
+    1: '明确要判断的函数的性质（奇偶性/周期性）。',
+    2: '检查定义域是否关于原点对称（奇偶性）或验证 f(x+T)=f(x)（周期性）。',
+    3: '计算 f(-x) 并与 f(x) 比较，或找出最小正周期 T。',
+    4: '根据定义得出结论，注意奇函数过(0,0)点等特殊情况。',
+  },
+  function_composite: {
+    1: '拆分复合函数：确定内层函数 u=g(x) 和外层函数 y=f(u)。',
+    2: '分别求内层函数的值域和外层函数的定义域，取交集。',
+    3: '由内到外逐层计算：先算 g(x)，再算 f(g(x))。',
+    4: '验证复合结果，注意定义域限制。',
+  },
+
+  // ── Derivative ───────────────────────────────
+  derivative_definition: {
+    1: '确定求导方法：用极限定义或基本求导公式。',
+    2: '应用求导公式：(C)\'=0, (xⁿ)\'=nxⁿ⁻¹, (sin x)\'=cos x, (eˣ)\'=eˣ。',
+    3: '使用四则运算法则：(u±v)\'=u\'±v\', (uv)\'=u\'v+uv\', (u/v)\'=(u\'v-uv\')/v²。',
+    4: '化简结果，检查复合函数是否用了链式法则。',
+  },
+  derivative_tangent: {
+    1: '若求在某点的切线：确认切点(x₀,f(x₀))。若过某点：需设切点。',
+    2: '求导得斜率 k=f\'(x₀)。若为过曲线外一点，设切点后列方程求解。',
+    3: '利用点斜式 y-f(x₀)=k(x-x₀) 写出切线方程。',
+    4: '整理为一般式 ax+by+c=0，验证结果。',
+  },
+  derivative_monotonicity: {
+    1: '求导函数 f\'(x)，确定定义域。',
+    2: '解不等式 f\'(x)>0 得到递增区间，解 f\'(x)<0 得到递减区间。',
+    3: '注意：f\'(x)=0 的点为分界点，判断是否包含在单调区间内。',
+    4: '写出完整的单调区间，注意同一区间内单调性一致。',
+  },
+  derivative_extremum: {
+    1: '求导 f\'(x)，解方程 f\'(x)=0 得所有驻点。',
+    2: '用一阶导数符号表判断驻点左右两侧符号变化。',
+    3: '左正右负→极大值，左负右正→极小值，不变号→非极值点。',
+    4: '计算极值：代入原函数求出极大值或极小值。',
+  },
+  derivative_max_min: {
+    1: '确定求最值的闭区间 [a,b]，检查函数在区间内是否连续可导。',
+    2: '求导 f\'(x)=0 解出区间内所有驻点。',
+    3: '比较驻点值和端点值 f(a)、f(b)。',
+    4: '最大者为最大值，最小者为最小值。',
+  },
+  derivative_image: {
+    1: '分析 f\'(x) 的符号：f\'(x)>0 时原函数递增，f\'(x)<0 时递减。',
+    2: '找出 f\'(x)=0 的点，这些点对应原函数的极值点。',
+    3: '结合原函数的特殊点（零点、与y轴交点等）绘制大致图像。',
+    4: '利用二阶导数 f\'\'(x) 的正负判断凹凸性。',
+  },
+  derivative_comprehensive: {
+    1: '识别题型：恒成立问题、零点个数、不等式证明或参数范围。',
+    2: '构造函数或转化问题：将原问题转化为函数最值或零点存在性分析。',
+    3: '求导分析构造函数的单调性和最值，或判断零点个数。',
+    4: '得出结论，注意验证边界情况和取等条件。',
   },
 }
 

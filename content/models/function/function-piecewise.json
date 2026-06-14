@@ -1,0 +1,53 @@
+{
+  "id": "function-piecewise",
+  "title": "分段函数",
+  "category": "function",
+  "difficulty": 3,
+  "recognition": {
+    "keywords": ["分段函数", "分段", "讨论"],
+    "patterns": ["分段|分.*段|不同区间|f\\(x\\)\\s*="],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "分段讨论法",
+      "description": "按自变量取值范围分段讨论函数值",
+      "steps": [
+        "确定分段点（自变量取值范围的分界）",
+        "根据自变量所在区间选择对应表达式",
+        "代入表达式计算函数值",
+        "注意分段点处的函数值是否连续"
+      ]
+    },
+    {
+      "name": "分段函数方程解法",
+      "description": "在每段内分别解方程并验证",
+      "steps": [
+        "根据每段的定义域分类讨论",
+        "在每段内解方程 f(x)=c",
+        "检验解是否在该段的定义域内",
+        "合并所有有效解"
+      ]
+    }
+  ],
+  "traps": [
+    "解分段方程后忘记验证解是否在对应区间内",
+    "分段点处的函数值容易算错（取左区间还是右区间）",
+    "分段函数的连续性判断错误",
+    "多段情况下遗漏某段"
+  ],
+  "prerequisites": ["function-linear", "function-quadratic"],
+  "nextModels": ["function-property"],
+  "examples": [
+    {
+      "id": "function-piecewise-001",
+      "title": "已知分段函数 f(x)={x+1, x<0; x², x≥0}，求 f(-1)+f(2) 的值",
+      "difficulty": 1
+    },
+    {
+      "id": "function-piecewise-002",
+      "title": "已知分段函数 f(x)={x²+1, x≤1; 2x+a, x>1} 在 x=1 处连续，求 a",
+      "difficulty": 3
+    }
+  ]
+}

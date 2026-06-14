@@ -1,0 +1,55 @@
+{
+  "id": "function-quadratic",
+  "title": "二次函数",
+  "category": "function",
+  "difficulty": 2,
+  "recognition": {
+    "keywords": ["二次函数", "抛物线", "y=ax²+bx+c"],
+    "patterns": ["二次函数|抛物线|y\\s*=\\s*[\\d.]*x²|f\\(x\\)\\s*=\\s*[\\d.]*x²"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "配方法",
+      "description": "将一般式化为顶点式，求最值和对称轴",
+      "steps": [
+        "提取二次项系数",
+        "配方：加上再减去一次项系数一半的平方",
+        "化为顶点式 y = a(x-h)² + k",
+        "读出顶点坐标 (h,k) 和对称轴 x=h"
+      ],
+      "formula": "y = a(x + b/2a)² + (4ac-b²)/4a"
+    },
+    {
+      "name": "求根公式法",
+      "description": "利用求根公式解二次方程，求零点",
+      "steps": [
+        "确认判别式 Δ = b²-4ac",
+        "判断根的情况：Δ>0两实根，Δ=0一实根，Δ<0无实根",
+        "代入求根公式 x = (-b±√Δ)/2a",
+        "写出解集"
+      ],
+      "formula": "x = (-b ± √(b²-4ac))/2a"
+    }
+  ],
+  "traps": [
+    "配方法中忘记加括号乘以外面的系数",
+    "Δ<0 时误认为无解（实际是"无实数解"）",
+    "对称轴 x = -b/2a，符号容易搞错",
+    "开口方向由 a 决定：a>0 开口向上，a<0 开口向下"
+  ],
+  "prerequisites": ["function-linear"],
+  "nextModels": ["function-power", "function-property"],
+  "examples": [
+    {
+      "id": "function-quadratic-001",
+      "title": "已知二次函数 f(x) = x²-4x+3，求顶点坐标和对称轴",
+      "difficulty": 1
+    },
+    {
+      "id": "function-quadratic-002",
+      "title": "二次函数 f(x)=ax²+bx+c 的图像过点 (1,0)、(3,0)、(0,3)，求 f(x) 解析式",
+      "difficulty": 2
+    }
+  ]
+}

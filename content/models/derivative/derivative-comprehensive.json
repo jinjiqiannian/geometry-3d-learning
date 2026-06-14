@@ -1,0 +1,54 @@
+{
+  "id": "derivative-comprehensive",
+  "title": "导数综合问题",
+  "category": "derivative",
+  "difficulty": 5,
+  "recognition": {
+    "keywords": ["导数综合", "不等式证明", "恒成立", "存在性", "零点"],
+    "patterns": ["不等式证明|恒成立|存在.*使得|零点.*个数|导数.*综合"],
+    "requiresLLM": true
+  },
+  "methods": [
+    {
+      "name": "构造新函数法",
+      "description": "通过构造函数将不等式问题转化为函数最值问题",
+      "steps": [
+        "将要证明的不等式移项构造新函数 g(x)=f(x)-h(x)",
+        "求 g(x) 的导函数 g'(x)",
+        "判断 g(x) 的单调性和最值",
+        "证明 g(x) ≥ 0 或 g(x) ≤ 0"
+      ],
+      "formula": "f(x) ≥ g(x) ⇔ 令 h(x)=f(x)-g(x)，证明 h(x)min ≥ 0"
+    },
+    {
+      "name": "零点存在性分析法",
+      "description": "利用导数和零点定理分析函数零点的个数",
+      "steps": [
+        "求导分析函数的单调区间",
+        "在每一单调区间上判断端点函数值的符号",
+        "若端点值异号，则该区间内有且只有一个零点",
+        "综合各区间得到零点总数"
+      ]
+    }
+  ],
+  "traps": [
+    "构造新函数后忘记考虑定义域",
+    "零点存在定理要求函数连续且端点值异号",
+    "讨论零点个数时遗漏某些区间",
+    "恒成立问题中参数范围讨论不完整"
+  ],
+  "prerequisites": ["derivative-extremum", "derivative-max-min"],
+  "nextModels": [],
+  "examples": [
+    {
+      "id": "derivative-comprehensive-001",
+      "title": "证明：当 x>0 时，e^x > x+1",
+      "difficulty": 3
+    },
+    {
+      "id": "derivative-comprehensive-002",
+      "title": "讨论函数 f(x)=x³-3x+a 的零点个数",
+      "difficulty": 5
+    }
+  ]
+}

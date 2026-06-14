@@ -79,6 +79,7 @@ export interface ParsedProblem {
   explanation: string
   extraParams?: Record<string, number>  // e.g. { height: 4, radius2: 3 }
   problemType?: ProblemSubType  // AI 识别的题型（唯一权威来源）
+  category?: ModelCategory      // 模型分类，undefined=geometry-3d（向后兼容）
 }
 
 export interface HighlightLine {
@@ -176,6 +177,19 @@ export interface SceneOps {
   }
 }
 
+// ── SceneOp — 原子化场景操作 ──────────────────────
+// 每个 Step 对应一个或多个 SceneOp，按顺序执行
+// 替代旧的 SceneState（含渲染控制字段）
+
+export type SceneOp =
+  | { type: 'highlight'; targets: string[] }
+  | { type: 'addAuxLine'; from: string; to: string; dashed?: boolean; color?: string }
+  | { type: 'addAuxPoint'; id: string; position: 'midpoint' | 'intersection' | 'projection'; refs: string[] }
+  | { type: 'fade'; targets: string[] }
+  | { type: 'setOpacity'; targets: string[]; opacity: number }
+  | { type: 'section'; plane: string[]; showSection?: boolean; opacity?: number }
+  | { type: 'showLabels'; labels: string[] }
+
 // ── Steps ─────────────────────────────────────────
 export type StepType = 'conceptual' | 'construction' | 'calculation' | 'validation'
 
@@ -216,9 +230,10 @@ export interface Step {
   type: StepType
   why?: WhyExplain
   stuck?: StuckExplain
-  sceneState?: SceneState
-  sceneOps?: SceneOps  // 结构化场景操作指令（SceneIR 驱动）
-  locked?: boolean  // Free用户锁定
+  sceneState?: SceneState           // 旧格式 — AI 直接控制渲染（已弃用）
+  sceneOps?: SceneOps               // 中间格式 — 结构化操作指令（兼容）
+  sceneOpSequence?: SceneOp[]       // ✅ 新格式 — 原子操作序列（SceneIR 驱动）
+  locked?: boolean                  // Free用户锁定
 }
 
 // ── Workspace ─────────────────────────────────────

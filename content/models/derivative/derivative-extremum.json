@@ -1,0 +1,55 @@
+{
+  "id": "derivative-extremum",
+  "title": "极值问题",
+  "category": "derivative",
+  "difficulty": 4,
+  "recognition": {
+    "keywords": ["极值", "极大值", "极小值", "极值点"],
+    "patterns": ["极值|极大值|极小值|极值点|f\\'\\s*\\(.*\\)\\s*=\\s*0"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "求极值步骤法",
+      "description": "利用导数求函数的极值点",
+      "steps": [
+        "求导函数 f'(x) 并解方程 f'(x)=0",
+        "找出所有驻点（临界点）",
+        "用第一充分条件：判断驻点左右导数符号变化",
+        "左正右负为极大值，左负右正为极小值"
+      ],
+      "formula": "f'(x)=0 的根为驻点，变号则存在极值"
+    },
+    {
+      "name": "第二充分条件法",
+      "description": "利用二阶导数判断极值类型",
+      "steps": [
+        "求一阶导 f'(x) 和二阶导 f''(x)",
+        "解 f'(x)=0 得驻点 x₀",
+        "若 f''(x₀)<0 则 x₀ 为极大值点",
+        "若 f''(x₀)>0 则 x₀ 为极小值点"
+      ],
+      "formula": "f'(x₀)=0，f''(x₀)<0⇒极大值，f''(x₀)>0⇒极小值"
+    }
+  ],
+  "traps": [
+    "f'(x₀)=0 是极值的必要条件但不是充分条件",
+    "极值点处导数可能不存在（如 |x| 在 x=0）",
+    "混淆极值和最值：极值是局部概念，最值是全局概念",
+    "忽略定义域端点也可能成为最值点"
+  ],
+  "prerequisites": ["derivative-monotonicity"],
+  "nextModels": ["derivative-max-min", "derivative-comprehensive"],
+  "examples": [
+    {
+      "id": "derivative-extremum-001",
+      "title": "求函数 f(x)=x³-3x 的极值",
+      "difficulty": 2
+    },
+    {
+      "id": "derivative-extremum-002",
+      "title": "已知函数 f(x)=x³-3ax²+3x 在 x=1 处取得极值，求 a",
+      "difficulty": 3
+    }
+  ]
+}

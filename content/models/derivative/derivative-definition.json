@@ -1,0 +1,55 @@
+{
+  "id": "derivative-definition",
+  "title": "导数的定义与计算",
+  "category": "derivative",
+  "difficulty": 3,
+  "recognition": {
+    "keywords": ["导数", "求导", "导函数", "f'(x)", "微分"],
+    "patterns": ["导数|求导|导函数|f\\'\\s*\\(|dy/dx|极限.*导数"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "定义法求导数",
+      "description": "利用导数的极限定义求函数在一点的导数",
+      "steps": [
+        "写出导数的极限定义 f'(x₀) = lim(Δx→0) [f(x₀+Δx)-f(x₀)]/Δx",
+        "计算函数增量 f(x₀+Δx)-f(x₀)",
+        "作比值 [f(x₀+Δx)-f(x₀)]/Δx",
+        "取极限得到导数"
+      ],
+      "formula": "f'(x₀) = lim(Δx→0) [f(x₀+Δx)-f(x₀)]/Δx"
+    },
+    {
+      "name": "公式法求导",
+      "description": "利用基本求导公式和运算法则求导函数",
+      "steps": [
+        "识别函数类型（幂函数、指数函数、对数函数等）",
+        "应用基本求导公式",
+        "应用四则运算法则（和差积商）",
+        "化简得到导函数"
+      ],
+      "formula": "(x^n)'=nx^(n-1), (a^x)'=a^x·lna, (log_a x)'=1/(x·lna)"
+    }
+  ],
+  "traps": [
+    "求导时忘记常数导数为 0",
+    "复合函数求导忘记乘以内层函数的导数（链式法则）",
+    "商的导数公式分子减法顺序搞反",
+    "极限定义中 Δx 趋近于 0 的方向理解错误"
+  ],
+  "prerequisites": ["function-composite"],
+  "nextModels": ["derivative-tangent", "derivative-monotonicity"],
+  "examples": [
+    {
+      "id": "derivative-definition-001",
+      "title": "求函数 f(x)=x³ 的导数 f'(x)",
+      "difficulty": 1
+    },
+    {
+      "id": "derivative-definition-002",
+      "title": "求函数 f(x)=x²·e^x 的导数",
+      "difficulty": 2
+    }
+  ]
+}

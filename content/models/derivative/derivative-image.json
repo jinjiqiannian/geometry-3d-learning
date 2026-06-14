@@ -1,0 +1,53 @@
+{
+  "id": "derivative-image",
+  "title": "导数与函数图像",
+  "category": "derivative",
+  "difficulty": 3,
+  "recognition": {
+    "keywords": ["函数图像", "导数图像", "f'(x)图像", "图像分析"],
+    "patterns": ["函数图像|导数图像|f\\'\\s*\\(.*\\)图像|图像.*导数"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "导数符号与图像关系法",
+      "description": "利用导数的符号判断原函数的图像特征",
+      "steps": [
+        "f'(x)>0 的区间对应原函数递增",
+        "f'(x)<0 的区间对应原函数递减",
+        "f'(x)=0 的点对应原函数极值点",
+        "f''(x) 的符号决定凹凸性"
+      ]
+    },
+    {
+      "name": "导数图像反推原函数法",
+      "description": "根据导数图像推断原函数的形状",
+      "steps": [
+        "分析导数图像与 x 轴的交点",
+        "导数在 x 轴上方的区间原函数递增",
+        "导数在 x 轴下方的区间原函数递减",
+        "导数图像从正变负处原函数取极大值，反之取极小值"
+      ]
+    }
+  ],
+  "traps": [
+    "混淆 f(x) 图像和 f'(x) 图像",
+    "认为导数为 0 的点一定是极值点",
+    "f'(x) 的正负与 f(x) 增减对应，不是与 f(x) 正负对应",
+    "二阶导数的符号决定凹凸性而不是单调性"
+  ],
+  "prerequisites": ["derivative-monotonicity"],
+  "nextModels": ["derivative-comprehensive"],
+  "examples": [
+    {
+      "id": "derivative-image-001",
+      "title": "已知函数 f(x) 的导函数 f'(x)=x²-1，判断 f(x) 的单调区间",
+      "difficulty": 2
+    },
+    {
+      "id": "derivative-image-002",
+      "title": "已知 f'(x) 的图像经过点 (-1,0) 和 (2,0)，且开口向上，判断 f(x) 的极值点",
+      "difficulty": 3
+    }
+  ]
+}

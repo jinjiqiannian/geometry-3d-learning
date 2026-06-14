@@ -1,0 +1,55 @@
+{
+  "id": "function-logarithmic",
+  "title": "对数函数",
+  "category": "function",
+  "difficulty": 3,
+  "recognition": {
+    "keywords": ["对数函数", "y=log_a(x)", "对数", "log"],
+    "patterns": ["对数函数|log|ln|lg"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "对数函数图像法",
+      "description": "根据底数 a 判断对数函数的图像特征和性质",
+      "steps": [
+        "确定对数函数形式 y = log_a(x) (a>0, a≠1)",
+        "判断底数 a 与 1 的关系",
+        "a>1 时递增，0<a<1 时递减",
+        "所有对数函数过定点 (1,0)"
+      ],
+      "formula": "y = log_a(x)，定义域 x>0"
+    },
+    {
+      "name": "对数运算法则",
+      "description": "利用对数运算性质化简求值",
+      "steps": [
+        "确认底数是否相同",
+        "应用对数运算法则合并或拆分",
+        "换底公式：log_a(b) = log_c(b)/log_c(a)",
+        "化简求值"
+      ],
+      "formula": "log_a(MN)=log_aM+log_aN, log_a(M/N)=log_aM-log_aN, log_a(M^n)=n·log_aM"
+    }
+  ],
+  "traps": [
+    "忘记对数定义域 x>0",
+    "对数的底数 a>0 且 a≠1 的条件遗漏",
+    "对数运算法则记混（加→乘，减→除）",
+    "换底公式中分子分母位置搞反"
+  ],
+  "prerequisites": ["function-exponential"],
+  "nextModels": ["function-composite"],
+  "examples": [
+    {
+      "id": "function-logarithmic-001",
+      "title": "计算 log₂8 + log₂4 - log₂2 的值",
+      "difficulty": 1
+    },
+    {
+      "id": "function-logarithmic-002",
+      "title": "已知 log₂(x+1) > 1，求 x 的取值范围",
+      "difficulty": 2
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "id": "function-linear",
+  "title": "一次函数",
+  "category": "function",
+  "difficulty": 1,
+  "recognition": {
+    "keywords": ["一次函数", "线性函数", "y=kx+b"],
+    "patterns": ["一次函数|线性|y\\s*=\\s*kx\\s*\\+\\s*b|f\\(x\\)\\s*=\\s*[\\d.]*x"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "待定系数法",
+      "description": "利用已知点坐标确定一次函数表达式",
+      "steps": [
+        "设函数表达式为 y = kx + b",
+        "代入两个已知点坐标建立方程组",
+        "解方程组求出 k 和 b",
+        "写出完整函数表达式"
+      ],
+      "formula": "k = (y₂-y₁)/(x₂-x₁), b = y₁ - kx₁"
+    },
+    {
+      "name": "图像分析法",
+      "description": "根据图像信息确定函数解析式",
+      "steps": [
+        "确定直线经过的已知点",
+        "计算斜率 k = Δy/Δx",
+        "确定截距 b",
+        "写出函数表达式"
+      ]
+    }
+  ],
+  "traps": [
+    "忽略 k≠0 的条件",
+    "代点时 x 和 y 位置搞反",
+    "忘记考虑定义域限制",
+    "混淆一次函数与正比例函数"
+  ],
+  "prerequisites": [],
+  "nextModels": ["function-quadratic", "function-piecewise"],
+  "examples": [
+    {
+      "id": "function-linear-001",
+      "title": "已知一次函数 f(x) 的图像过点 (1,3) 和 (3,7)，求 f(x) 的解析式",
+      "difficulty": 1
+    },
+    {
+      "id": "function-linear-002",
+      "title": "一次函数 y=kx+b 的图像与 x 轴交于点 (2,0)，与 y 轴交于点 (0,4)，求 k 和 b",
+      "difficulty": 2
+    }
+  ]
+}
