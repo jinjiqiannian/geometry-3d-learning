@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "mathviz-model-schema",
+  "title": "MathModel Schema",
+  "description": "数学模型 JSON Schema — 所有 /content/models/ 下的文件必须符合此规范",
+  "type": "object",
+  "required": ["id", "title", "category", "difficulty", "recognition", "methods", "traps", "examples"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z]+(-[a-z]+)+$",
+      "description": "唯一标识，如 'cube-skew-lines'"
+    },
+    "title": {
+      "type": "string",
+      "description": "中文标题，如 '正方体异面直线夹角'"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["geometry-3d", "function", "derivative", "sequence", "conic", "probability", "statistics", "vector", "complex", "inequality"]
+    },
+    "difficulty": {
+      "type": "integer",
+      "enum": [1, 2, 3, 4, 5]
+    },
+    "recognition": {
+      "type": "object",
+      "required": ["keywords", "patterns", "requiresLLM"],
+      "properties": {
+        "keywords": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "关键词匹配，如 ['异面直线', '所成角']"
+        },
+        "patterns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "正则模式，如 ['异面|skew|所成角']"
+        },
+        "requiresLLM": {
+          "type": "boolean",
+          "description": "是否需要 LLM 辅助确认"
+        }
+      }
+    },
+    "methods": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "description", "steps"],
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "steps": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "formula": { "type": "string" }
+        }
+      }
+    },
+    "traps": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "nextModels": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "examples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "difficulty"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "difficulty": { "type": "integer", "enum": [1, 2, 3, 4, 5] }
+        }
+      }
+    }
+  }
+}

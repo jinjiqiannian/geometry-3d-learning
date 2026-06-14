@@ -240,6 +240,64 @@ export interface BillingStatus {
   remaining: number
 }
 
+// ── MathModel 2.0 ──────────────────────────────────
+export type ModelCategory =
+  | 'geometry-3d'
+  | 'function'
+  | 'derivative'
+  | 'sequence'
+  | 'conic'
+  | 'probability'
+  | 'statistics'
+  | 'vector'
+  | 'complex'
+  | 'inequality'
+
+export type DifficultyLevel = 1 | 2 | 3 | 4 | 5
+
+export interface RecognitionRule {
+  keywords: string[]
+  patterns: string[]
+  requiresLLM: boolean
+}
+
+export interface SolutionMethod {
+  name: string
+  description: string
+  steps: string[]
+  formula?: string
+}
+
+export interface ModelPrompts {
+  solve: string
+  tutor: string
+  socratic: string
+  hint: string
+  variant: string
+}
+
+export interface ExampleRef {
+  id: string
+  title: string
+  difficulty: DifficultyLevel
+}
+
+export interface MathModel {
+  id: string
+  title: string
+  category: ModelCategory
+  difficulty: DifficultyLevel
+  recognition: RecognitionRule
+  methods: SolutionMethod[]
+  traps: string[]
+  prerequisites: string[]
+  nextModels: string[]
+  examples: ExampleRef[]
+  aiPrompts: ModelPrompts
+  createdAt: string
+  updatedAt: string
+}
+
 // ── API Responses ─────────────────────────────────
 export interface ApiResponse<T = unknown> {
   success: boolean

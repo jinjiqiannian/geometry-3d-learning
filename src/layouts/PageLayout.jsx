@@ -3,6 +3,7 @@ import AppNavigation from '../components/AppNavigation'
 import MobileBottomNav from '../components/MobileBottomNav'
 import PaywallModal from '../components/PaywallModal'
 import AuthModal from '../components/AuthModal'
+import FeedbackModal from '../components/FeedbackModal'
 import './PageLayout.css'
 
 export default function PageLayout() {
@@ -19,6 +20,7 @@ export default function PageLayout() {
       {/* Global modals — render based on context state */}
       <PaywallModal />
       <AuthModal />
+      <FeedbackModal />
     </div>
   )
 }

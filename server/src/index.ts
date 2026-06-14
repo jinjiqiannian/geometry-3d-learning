@@ -13,8 +13,12 @@ import { billingRouter } from './routes/billing.js'
 import { knowledgeRouter } from './routes/knowledge.js'
 import { modelRouter as mathModelRouter } from './routes/models.js'
 import { trainingRouter } from './routes/training.js'
+import { loadModels } from './content/modelLoader.js'
 
 const app = express()
+
+// ── 启动时加载数学模型库 ──────────────────────────
+loadModels()
 
 // ── CORS — 生产环境仅允许白名单域名 ─────────────────
 const allowedOrigins: string[] = [env.FRONTEND_URL]

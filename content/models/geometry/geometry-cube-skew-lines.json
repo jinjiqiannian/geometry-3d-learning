@@ -1,0 +1,56 @@
+{
+  "id": "geometry-cube-skew-lines",
+  "title": "正方体异面直线夹角",
+  "category": "geometry-3d",
+  "difficulty": 2,
+  "recognition": {
+    "keywords": ["异面直线", "所成角", "夹角", "正方体"],
+    "patterns": ["异面|skew|所成角"],
+    "requiresLLM": false
+  },
+  "methods": [
+    {
+      "name": "平移法",
+      "description": "将其中一条直线沿棱平移到与另一条共面，用余弦定理求夹角",
+      "steps": [
+        "识别正方体及棱长",
+        "定位两条异面直线，确认它们不在同一平面",
+        "选择平移方向，将一条直线平移至与另一条共面",
+        "在共面三角形中用余弦定理计算夹角",
+        "验证角度范围 (0°, 90°]"
+      ],
+      "formula": "cosθ = |a·b|/(|a|·|b|)"
+    },
+    {
+      "name": "向量法",
+      "description": "建立空间直角坐标系，用向量内积求夹角",
+      "steps": [
+        "建立坐标系，写出各点坐标",
+        "求出两条直线的方向向量",
+        "用向量内积公式计算夹角余弦",
+        "取锐角为最终答案"
+      ],
+      "formula": "cosθ = |(x₁x₂ + y₁y₂ + z₁z₂)| / (√(x₁²+y₁²+z₁²) · √(x₂²+y₂²+z₂²))"
+    }
+  ],
+  "traps": [
+    "误用面对角线代替体对角线",
+    "忘记异面直线夹角范围是 (0°, 90°]",
+    "两条直线平移后方向取反",
+    "将钝角的补角当作夹角"
+  ],
+  "prerequisites": ["geometry-cube-basics"],
+  "nextModels": ["geometry-cuboid-skew-lines", "geometry-pyramid-skew-lines"],
+  "examples": [
+    {
+      "id": "geometry-cube-skew-lines-001",
+      "title": "正方体ABCD-A₁B₁C₁D₁中，求A₁B与B₁C的夹角",
+      "difficulty": 2
+    },
+    {
+      "id": "geometry-cube-skew-lines-002",
+      "title": "正方体中，求异面直线AB与B'D的夹角",
+      "difficulty": 3
+    }
+  ]
+}

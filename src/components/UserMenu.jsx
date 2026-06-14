@@ -41,6 +41,10 @@ export default function UserMenu() {
     document.dispatchEvent(new CustomEvent('mathviz:show-paywall'))
   }
 
+  const handleFeedback = () => {
+    document.dispatchEvent(new CustomEvent('mathviz:show-feedback'))
+  }
+
   const planBadge = () => {
     if (isTeacher) return { label: '教师版', className: 'teacher' }
     if (isPro) return { label: '专业版', className: 'pro' }
@@ -90,6 +94,17 @@ export default function UserMenu() {
       ),
       label: '设置',
       onClick: () => { navigate('/settings'); setOpen(false) },
+    },
+    {
+      icon: (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      ),
+      label: '意见反馈',
+      onClick: () => { handleFeedback(); setOpen(false) },
     },
   ]
 
