@@ -48,7 +48,7 @@ export default function UserMenu() {
   const planBadge = () => {
     if (isTeacher) return { label: '教师版', className: 'teacher' }
     if (isPro) return { label: '专业版', className: 'pro' }
-    return { label: '免费版', className: 'free' }
+    return null
   }
 
   const badge = planBadge()
@@ -60,12 +60,14 @@ export default function UserMenu() {
         <button className="um-login-btn" onClick={handleAuth}>
           登录
         </button>
-        <button
-          className={`um-plan-badge ${badge.className}`}
-          onClick={handleUpgrade}
-        >
-          {badge.label}
-        </button>
+        {badge && (
+          <button
+            className={`um-plan-badge ${badge.className}`}
+            onClick={handleUpgrade}
+          >
+            {badge.label}
+          </button>
+        )}
       </div>
     )
   }
@@ -137,12 +139,14 @@ export default function UserMenu() {
 
   return (
     <div className="um-wrap" ref={menuRef}>
-      <button
-        className={`um-plan-badge ${badge.className}`}
-        onClick={handleUpgrade}
-      >
-        {badge.label}
-      </button>
+      {badge && (
+        <button
+          className={`um-plan-badge ${badge.className}`}
+          onClick={handleUpgrade}
+        >
+          {badge.label}
+        </button>
+      )}
 
       <button
         className={`um-avatar-btn ${open ? 'active' : ''}`}
@@ -159,7 +163,9 @@ export default function UserMenu() {
         <div className="um-dropdown">
           <div className="um-dropdown-header">
             <span className="um-dropdown-email">{displayName}</span>
-            <span className={`um-dropdown-plan ${badge.className}`}>{badge.label}</span>
+            {badge && (
+              <span className={`um-dropdown-plan ${badge.className}`}>{badge.label}</span>
+            )}
           </div>
           <div className="um-dropdown-divider" />
           {menuItems.map((item, i) => (
