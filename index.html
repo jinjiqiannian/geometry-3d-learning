@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>几何维度 — 3D AI 几何解题</title>
+    <meta name="description" content="AI 几何讲题助手：输入一道几何题，自动生成 3D 可视化分步讲解。支持正方体、球体、圆柱、圆锥、棱锥、棱柱等所有立体几何题型。" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="几何维度" />
+
+    <!-- ══════════════════════════════════════════════
+         Security headers (GitHub Pages can't set HTTP headers,
+         so we use <meta> equivalents where supported)
+         ══════════════════════════════════════════════ -->
+
+    <!-- Content Security Policy — prevents XSS, data injection -->
+    <meta http-equiv="Content-Security-Policy"
+          content="
+            default-src 'self';
+            script-src 'self' 'unsafe-inline' blob: https://js.stripe.com;
+            style-src 'self' 'unsafe-inline';
+            img-src 'self' data: blob: https:;
+            font-src 'self';
+            connect-src 'self' https: wss: ws: http://localhost:*;
+            frame-src 'self' https://js.stripe.com https://hooks.stripe.com;
+            worker-src 'self' blob:;
+            form-action 'self';
+            base-uri 'self';
+            object-src 'none';
+          " />
+
+    <!-- Prevent MIME-type sniffing -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+
+    <!-- Restrict referrer information -->
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='6' y='4' width='16' height='16' fill='none' stroke='%234A90E2' stroke-width='2' opacity='0.5'/><rect x='10' y='8' width='16' height='16' fill='none' stroke='%234A90E2' stroke-width='2.5'/><line x1='6' y1='4' x2='10' y2='8' stroke='%234A90E2' stroke-width='1.5'/><line x1='22' y1='4' x2='26' y2='8' stroke='%234A90E2' stroke-width='1.5'/><line x1='6' y1='20' x2='10' y2='24' stroke='%234A90E2' stroke-width='1.5'/><line x1='22' y1='20' x2='26' y2='24' stroke='%234A90E2' stroke-width='1.5'/></svg>" />
+    <style>
+      /* ══════════════════════════════════════════════════
+         Critical inline styles — no external CSS needed
+         for the boot fallback UI
+         ══════════════════════════════════════════════════ */
+      #mathviz-boot-loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9ff;
+        z-index: 99999;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        opacity: 0;
+        transition: opacity 0.2s;
+        pointer-events: none;
+      }
+      #mathviz-boot-loader.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      #mathviz-boot-loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .boot-spinner {
+        width: 28px;
+        height: 28px;
+        border: 3px solid #e0e0e8;
+        border-top-color: #6366f1;
+        border-radius: 50%;
+        animation: boot-spin 0.8s linear infinite;
+        margin-bottom: 12px;
+      }
+      @keyframes boot-spin {
+        to { transform: rotate(360deg); }
+      }
+      .boot-text {
+        font-size: 14px;
+        color: #6b6b78;
+      }
+
+      #mathviz-boot-error {
+        display: none;
+        position: fixed;
+        inset: 0;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9ff;
+        z-index: 100000;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      #mathviz-boot-error.show {
+        display: flex;
+      }
+      .boot-error-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        max-width: 380px;
+        padding: 40px 32px;
+        background: #fff;
+        border: 1px solid #e8e8ee;
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      }
+      .boot-error-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(220,38,38,0.08);
+        color: #dc2626;
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 16px;
+      }
+      .boot-error-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1d1d1f;
+        margin-bottom: 8px;
+      }
+      .boot-error-desc {
+        font-size: 14px;
+        color: #6b6b78;
+        line-height: 1.6;
+        margin-bottom: 24px;
+      }
+      .boot-error-btn {
+        padding: 10px 24px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        font-family: inherit;
+        background: #6366f1;
+        color: #fff;
+        transition: background 0.15s;
+      }
+      .boot-error-btn:hover {
+        background: #4f46e5;
+      }
+      .boot-error-hint {
+        font-size: 12px;
+        color: #a0a0b0;
+        margin-top: 16px;
+      }
+    </style>
+    <script>
+      // ══════════════════════════════════════════════════
+      //  Boot watchdog — catches JS bundle 404 / load failure
+      //  Prevents blank white screen when assets fail to load
+      // ══════════════════════════════════════════════════
+      (function() {
+        var ROOT_ID = 'root';
+        var DEADLINE = 15000; // 15s hard timeout
+        var SHOW_LOADER_DELAY = 400; // Only show loader after 400ms (no flash for fast loads)
+        var loaderEl = null;
+        var errorEl = null;
+        var loaderTimer = null;
+        var loaderVisible = false;
+        var mounted = false;
+        var errored = false;
+        var pollInterval = null;
+
+        // React sets this when it successfully mounts
+        window.__MATHVIZ_MOUNTED__ = false;
+
+        function checkMounted() {
+          if (window.__MATHVIZ_MOUNTED__) {
+            mounted = true;
+            cleanup();
+            return;
+          }
+          var root = document.getElementById(ROOT_ID);
+          if (root && root.childElementCount > 0) {
+            mounted = true;
+            window.__MATHVIZ_MOUNTED__ = true;
+            cleanup();
+            return;
+          }
+        }
+
+        function showLoader() {
+          if (loaderEl && !loaderVisible) {
+            loaderVisible = true;
+            loaderEl.classList.add('visible');
+          }
+        }
+
+        function hideLoader() {
+          if (loaderEl) {
+            loaderEl.classList.remove('visible');
+            loaderEl.classList.add('hidden');
+            setTimeout(function() { if (loaderEl) loaderEl.remove(); loaderEl = null; }, 400);
+          }
+          if (errorEl) {
+            errorEl.classList.remove('show');
+          }
+        }
+
+        function cleanup() {
+          if (loaderTimer) { clearTimeout(loaderTimer); loaderTimer = null; }
+          if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+          hideLoader();
+        }
+
+        function showError(msg) {
+          if (errored) return;
+          errored = true;
+          cleanup();
+          if (loaderEl) loaderEl.style.display = 'none';
+          if (errorEl) {
+            errorEl.classList.add('show');
+          }
+        }
+
+        function buildLoader() {
+          var div = document.createElement('div');
+          div.id = 'mathviz-boot-loader';
+          div.innerHTML = '<div class="boot-spinner"></div><div class="boot-text">几何维度加载中…</div>';
+          document.body.appendChild(div);
+          loaderEl = div;
+        }
+
+        function buildErrorUI(msg) {
+          var div = document.createElement('div');
+          div.id = 'mathviz-boot-error';
+          div.innerHTML =
+            '<div class="boot-error-card">' +
+            '<div class="boot-error-icon">!</div>' +
+            '<div class="boot-error-title">加载失败</div>' +
+            '<div class="boot-error-desc">' + (msg || '资源加载失败，请检查网络后重试。') + '</div>' +
+            '<button class="boot-error-btn" id="mathviz-boot-reload-btn">重新加载</button>' +
+            '<div class="boot-error-hint">如多次失败，请尝试清除浏览器缓存</div>' +
+            '</div>';
+          document.body.appendChild(div);
+          // Use addEventListener — inline onclick is blocked by CSP
+          var reloadBtn = div.querySelector('#mathviz-boot-reload-btn');
+          if (reloadBtn) reloadBtn.addEventListener('click', function() { location.reload(); });
+          errorEl = div;
+          div.classList.add('show');
+        }
+
+        function init() {
+          buildLoader();
+          buildErrorUI();
+
+          // Only show loader after delay — fast loads never flash
+          loaderTimer = setTimeout(showLoader, SHOW_LOADER_DELAY);
+
+          // Poll for React mount
+          pollInterval = setInterval(function() {
+            checkMounted();
+            if (mounted || errored) {
+              if (pollInterval) clearInterval(pollInterval);
+            }
+          }, 500);
+
+          // Hard deadline
+          setTimeout(function() {
+            if (!mounted && !errored) {
+              showError('应用加载超时，可能是网络问题或资源不可用。');
+            }
+          }, DEADLINE);
+        }
+
+        // ── Start ──
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', init);
+        } else {
+          init();
+        }
+
+        // Catch script load errors (e.g. 404 on main JS bundle)
+        window.addEventListener('error', function(e) {
+          if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+            showError('核心资源加载失败，请刷新重试。');
+          }
+        }, true);
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-BubNNDB2.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-aKtaBQYM.js">
+    <link rel="modulepreload" crossorigin href="/assets/r3f-drei-BcSZL1dp.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-BwGaLlg2.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
