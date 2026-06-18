@@ -1,0 +1,579 @@
+/* ═══════════════════════════════════════════════════════
+   EduMind — 考试分析系统样式
+   暗色优先，极简排版，大间距
+   ═══════════════════════════════════════════════════════ */
+
+:root {
+  --edumind-bg: #0f1117;
+  --edumind-card-bg: #1a1d27;
+  --edumind-border: #2a2d3a;
+  --edumind-text: #e4e6eb;
+  --edumind-text-secondary: #8b8fa3;
+  --edumind-primary: #6366f1;
+  --edumind-primary-hover: #4f46e5;
+  --edumind-danger: #ef4444;
+  --edumind-warning: #f59e0b;
+  --edumind-success: #22c55e;
+}
+
+.edumind-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  color: var(--edumind-text);
+}
+
+.edumind-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: var(--edumind-text-secondary);
+  font-size: 1.1rem;
+}
+
+.edumind-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--edumind-danger);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: var(--edumind-danger);
+  font-size: 0.9rem;
+}
+
+/* ── Header ── */
+.edumind-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.edumind-header h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.edumind-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--edumind-primary);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.edumind-btn-primary:hover {
+  background: var(--edumind-primary-hover);
+}
+
+/* ── Card ── */
+.edumind-card {
+  background: var(--edumind-card-bg);
+  border: 1px solid var(--edumind-border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.edumind-card h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  color: var(--edumind-text);
+}
+
+/* ── Grid ── */
+.edumind-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 640px) {
+  .edumind-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Reminder ── */
+.edumind-reminder {
+  border-left: 3px solid var(--edumind-primary);
+  margin-bottom: 16px;
+}
+
+.edumind-reminder-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.edumind-reminder-content {
+  color: var(--edumind-text-secondary);
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  margin-bottom: 8px;
+}
+
+/* ── Empty state ── */
+.edumind-empty {
+  color: var(--edumind-text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.edumind-link {
+  color: var(--edumind-primary);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.edumind-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Exam list ── */
+.edumind-exam-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.edumind-exam-list li {
+  border-bottom: 1px solid var(--edumind-border);
+}
+
+.edumind-exam-list li:last-child {
+  border-bottom: none;
+}
+
+.edumind-exam-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  text-decoration: none;
+  color: var(--edumind-text);
+  transition: opacity 0.2s;
+}
+
+.edumind-exam-item:hover {
+  opacity: 0.8;
+}
+
+.edumind-exam-title {
+  font-weight: 500;
+  flex: 1;
+}
+
+.edumind-exam-score {
+  color: var(--edumind-primary);
+  font-weight: 600;
+  margin: 0 12px;
+}
+
+.edumind-exam-date {
+  color: var(--edumind-text-secondary);
+  font-size: 0.8rem;
+}
+
+/* ── Weak list ── */
+.edumind-weak-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.edumind-weak-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--edumind-border);
+  font-size: 0.9rem;
+}
+
+.edumind-weak-list li:last-child {
+  border-bottom: none;
+}
+
+/* ── Actions ── */
+.edumind-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.edumind-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid var(--edumind-border);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--edumind-text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.edumind-action-btn:hover {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: var(--edumind-primary);
+}
+
+/* ═══════════════════════════════════════════════════════
+   上传页面
+   ═══════════════════════════════════════════════════════ */
+
+.edumind-form-group {
+  margin-bottom: 16px;
+}
+
+.edumind-form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--edumind-text);
+}
+
+.edumind-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: #0f1117;
+  border: 1px solid var(--edumind-border);
+  border-radius: 8px;
+  color: var(--edumind-text);
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.edumind-input:focus {
+  outline: none;
+  border-color: var(--edumind-primary);
+}
+
+.edumind-input-short {
+  width: 80px;
+}
+
+.edumind-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px 12px;
+  background: #0f1117;
+  border: 1px solid var(--edumind-border);
+  border-radius: 8px;
+  color: var(--edumind-text);
+  font-size: 0.9rem;
+  resize: vertical;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.edumind-textarea:focus {
+  outline: none;
+  border-color: var(--edumind-primary);
+}
+
+.edumind-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.edumind-select {
+  padding: 10px 12px;
+  background: #0f1117;
+  border: 1px solid var(--edumind-border);
+  border-radius: 8px;
+  color: var(--edumind-text);
+  font-size: 0.9rem;
+}
+
+/* ── 题目表格 ── */
+.edumind-question-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.edumind-question-table th {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 2px solid var(--edumind-border);
+  color: var(--edumind-text-secondary);
+  font-weight: 500;
+}
+
+.edumind-question-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--edumind-border);
+  vertical-align: middle;
+}
+
+.edumind-question-table .edumind-input,
+.edumind-question-table .edumind-select,
+.edumind-question-table .edumind-textarea {
+  background: #0f1117;
+  width: 100%;
+}
+
+/* ── 报告页面 ── */
+.edumind-report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.edumind-report-score {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.edumind-report-score .score-value {
+  color: var(--edumind-primary);
+}
+
+.edumind-report-score .score-total {
+  color: var(--edumind-text-secondary);
+  font-size: 1.4rem;
+}
+
+.edumind-report-grade {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--edumind-success);
+}
+
+.edumind-section {
+  margin-bottom: 24px;
+}
+
+.edumind-section h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--edumind-border);
+}
+
+/* ── 诊断页面 ── */
+.edumind-diagnosis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.edumind-diagnosis-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--edumind-border);
+  border-radius: 8px;
+}
+
+.edumind-diagnosis-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.edumind-diagnosis-importance {
+  font-size: 0.75rem;
+  color: var(--edumind-text-secondary);
+}
+
+/* ── 学习计划 ── */
+.edumind-plan-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.edumind-plan-btn {
+  padding: 8px 16px;
+  background: var(--edumind-card-bg);
+  border: 1px solid var(--edumind-border);
+  border-radius: 8px;
+  color: var(--edumind-text);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.edumind-plan-btn.active {
+  border-color: var(--edumind-primary);
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--edumind-primary);
+}
+
+.edumind-plan-btn:hover {
+  border-color: var(--edumind-primary);
+}
+
+.edumind-timeline {
+  position: relative;
+  padding-left: 24px;
+}
+
+.edumind-timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--edumind-border);
+}
+
+.edumind-timeline-day {
+  position: relative;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--edumind-border);
+  border-radius: 8px;
+}
+
+.edumind-timeline-day::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 18px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--edumind-primary);
+  border: 2px solid var(--edumind-card-bg);
+}
+
+.edumind-timeline-day.completed {
+  opacity: 0.5;
+}
+
+.edumind-timeline-day.completed::before {
+  background: var(--edumind-success);
+}
+
+.edumind-timeline-day h4 {
+  margin: 0 0 4px 0;
+  font-size: 0.95rem;
+}
+
+.edumind-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 0.85rem;
+  color: var(--edumind-text-secondary);
+}
+
+.edumind-task input[type="checkbox"] {
+  margin-top: 2px;
+  accent-color: var(--edumind-primary);
+}
+
+/* ── AI 教练 ── */
+.edumind-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.edumind-chat-message {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.edumind-chat-message.user {
+  align-self: flex-end;
+  background: var(--edumind-primary);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.edumind-chat-message.assistant {
+  align-self: flex-start;
+  background: var(--edumind-card-bg);
+  border: 1px solid var(--edumind-border);
+  border-bottom-left-radius: 4px;
+}
+
+.edumind-chat-input {
+  display: flex;
+  gap: 8px;
+}
+
+.edumind-chat-input .edumind-input {
+  flex: 1;
+}
+
+/* ── Progress ── */
+.edumind-progress-bar {
+  height: 6px;
+  background: var(--edumind-border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.edumind-progress-fill {
+  height: 100%;
+  background: var(--edumind-primary);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.edumind-stage-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.edumind-stage-badge.pending {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+.edumind-stage-badge.processing {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+}
+
+.edumind-stage-badge.completed {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.edumind-stage-badge.failed {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}

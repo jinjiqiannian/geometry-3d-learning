@@ -14,6 +14,7 @@ import { knowledgeRouter } from './routes/knowledge.js'
 import { modelRouter as mathModelRouter } from './routes/models.js'
 import { trainingRouter } from './routes/training.js'
 import { mistakeRouter } from './routes/mistake.js'
+import { edumindRouter } from './routes/edumind.js'
 import { loadModels } from './content/modelLoader.js'
 
 const app = express()
@@ -99,6 +100,7 @@ app.use('/api/knowledge', knowledgeRouter)
 app.use('/api/models', mathModelRouter)
 app.use('/api/training', trainingRouter)
 app.use('/api/mistakes', mistakeRouter)
+app.use('/api/edumind', edumindRouter)
 
 // ── 404 Handler ───────────────────────────────────
 app.use((_req, res) => {

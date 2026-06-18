@@ -325,7 +325,7 @@ interface DeepSeekCallOptions {
   temperature?: number
 }
 
-async function callDeepSeek(options: DeepSeekCallOptions, userId?: string): Promise<{
+export async function callDeepSeek(options: DeepSeekCallOptions, userId?: string): Promise<{
   text: string
   tokensIn: number
   tokensOut: number
@@ -397,7 +397,7 @@ async function callDeepSeek(options: DeepSeekCallOptions, userId?: string): Prom
 
 // ── JSON extraction from AI response ───────────────
 
-function extractJSON(text: string): any {
+export function extractJSON(text: string): any {
   let cleaned = text.trim()
 
   // Remove Markdown code blocks
@@ -476,7 +476,7 @@ function checkCostLimit(userId?: string): void {
   }
 }
 
-function trackCost(userId: string, model: string, tokensIn: number, tokensOut: number): void {
+export function trackCost(userId: string, model: string, tokensIn: number, tokensOut: number): void {
   tokenCosts.push({
     userId,
     tokensIn,

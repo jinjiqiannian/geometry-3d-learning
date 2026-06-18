@@ -21,6 +21,12 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 const KnowledgeGraphPage = lazy(() => import('./pages/KnowledgeGraphPage'))
 const MistakeBookPage = lazy(() => import('./pages/MistakeBookPage'))
 const ProgressPage = lazy(() => import('./pages/ProgressPage'))
+const EduMindPage = lazy(() => import('./pages/EduMindPage'))
+const ExamUploadPage = lazy(() => import('./pages/ExamUploadPage'))
+const ExamReportPage = lazy(() => import('./pages/ExamReportPage'))
+const KnowledgeDiagnosisPage = lazy(() => import('./pages/KnowledgeDiagnosisPage'))
+const LearningPlanPage = lazy(() => import('./pages/LearningPlanPage'))
+const AICoachPage = lazy(() => import('./pages/AICoachPage'))
 
 // ── Suspense fallback ──
 function PageLoader() {
@@ -65,6 +71,12 @@ const router = createHashRouter([
       { path: 'knowledge', element: <WrappedRoute><KnowledgeGraphPage /></WrappedRoute> },
       { path: 'mistakes', element: <WrappedRoute><MistakeBookPage /></WrappedRoute> },
       { path: 'progress', element: <WrappedRoute><ProgressPage /></WrappedRoute> },
+      { path: 'edumind', element: <WrappedRoute><EduMindPage /></WrappedRoute> },
+      { path: 'edumind/upload', element: <WrappedRoute><ExamUploadPage /></WrappedRoute> },
+      { path: 'edumind/report/:id', element: <WrappedRoute><ExamReportPage /></WrappedRoute> },
+      { path: 'edumind/diagnosis', element: <WrappedRoute><KnowledgeDiagnosisPage /></WrappedRoute> },
+      { path: 'edumind/plan', element: <WrappedRoute><LearningPlanPage /></WrappedRoute> },
+      { path: 'edumind/coach', element: <WrappedRoute><AICoachPage /></WrappedRoute> },
     ],
   },
 ])

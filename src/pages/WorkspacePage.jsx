@@ -14,6 +14,9 @@ import { buildBaseSceneIR, applyStepToSceneIR } from '../engines/sceneIRBuilder'
 import { createLabelMap, INTERNAL_LABELS } from '../engines/labelMapper'
 import { generateShareUrl, detectShareParam, decodeShare } from '../engines/shareUtils'
 import { useSubscription } from '../contexts/SubscriptionContext'
+// 静态 import — 消除每次搜题的动态加载延迟
+import { quickMatch } from '../engines/problemParser'
+import { generateLocalSteps, detectProblemType } from '../engines/explanationEngine'
 import './WorkspacePage.css'
 
 // ── Default constraint params ─────────────────────
@@ -213,7 +216,6 @@ export default function WorkspacePage() {
       // ── Phase 0: Quick Match — instant geometry (no API) ──
       let quickTime = performance.now()
       try {
-        const { quickMatch } = await import('../engines/problemParser')
         const quick = quickMatch(text)
         if (quick) {
           setGeometry({
@@ -238,7 +240,6 @@ export default function WorkspacePage() {
         // Fallback: 如果 AI 没有返回 problemType，用前端关键词检测兜底
         if (!parsedResult.problemType) {
           try {
-            const { detectProblemType } = await import('../engines/explanationEngine')
             parsedResult.problemType = detectProblemType(parsedResult.type, text)
           } catch { /* fallback silent fail */ }
         }
@@ -324,8 +325,6 @@ export default function WorkspacePage() {
       setError(userError)
       // Fallback: local template
       try {
-        const { quickMatch } = await import('../engines/problemParser')
-        const { generateLocalSteps } = await import('../engines/explanationEngine')
         const parsed = quickMatch(text) || { type: 'cube', size: 2, labels: [], highlightLines: [], explanation: '' }
         setParsedData(parsed)
         const fallbackSteps = generateLocalSteps(text, parsed)
@@ -738,6 +737,7 @@ export default function WorkspacePage() {
                 onEdgeClick={setSelectedEdge}
                 edgeColorOverrides={edgeColorOverrides}
                 customVertices={customVertices}
+                sceneIR={sceneIR}
                 highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
                 highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
                 auxLines={visualIntent?.auxLines || []}

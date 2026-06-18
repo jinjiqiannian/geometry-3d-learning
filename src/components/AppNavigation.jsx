@@ -9,6 +9,8 @@ const NAV_ITEMS = [
   { path: '/mistakes', label: '错题本' },
   { path: '/progress', label: '进度' },
   { path: '/history', label: '历史' },
+  { path: '/edumind', label: '考试分析' },
+  { path: '/settings', label: '设置' },
 ]
 
 function LogoIcon() {

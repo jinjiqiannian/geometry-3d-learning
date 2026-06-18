@@ -47,9 +47,21 @@ function ProfileIcon({ active }) {
   )
 }
 
+function ExamIcon({ active }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--accent)' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="12" y1="18" x2="12" y2="12" />
+      <line x1="9" y1="15" x2="15" y2="15" />
+    </svg>
+  )
+}
+
 const NAV_ITEMS = [
   { path: '/', label: '首页', icon: HomeIcon },
   { path: '/workspace', label: '工作台', icon: WorkspaceIcon },
+  { path: '/edumind', label: '分析', icon: ExamIcon },
   { path: '/history', label: '历史', icon: HistoryIcon },
   { path: '/settings', label: '我的', icon: ProfileIcon },
 ]
