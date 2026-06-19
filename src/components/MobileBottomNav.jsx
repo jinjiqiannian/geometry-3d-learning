@@ -47,10 +47,21 @@ function ProfileIcon({ active }) {
   )
 }
 
+function BarChartIcon({ active }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--accent)' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="20" x2="12" y2="10" />
+      <line x1="18" y1="20" x2="18" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="16" />
+    </svg>
+  )
+}
+
 const NAV_ITEMS = [
   { path: '/', label: '首页', icon: HomeIcon },
   { path: '/workspace', label: '工作台', icon: WorkspaceIcon },
   { path: '/history', label: '历史', icon: HistoryIcon },
+  { path: '/edumind/profile', label: '分析', icon: BarChartIcon },
   { path: '/settings', label: '我的', icon: ProfileIcon },
 ]
 

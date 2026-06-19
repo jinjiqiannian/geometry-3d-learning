@@ -104,7 +104,7 @@ interface DeepSeekCallOptions {
   temperature?: number
 }
 
-async function callDeepSeek(options: DeepSeekCallOptions): Promise<{
+export async function callDeepSeek(options: DeepSeekCallOptions): Promise<{
   text: string
   tokensIn: number
   tokensOut: number
@@ -173,7 +173,7 @@ async function callDeepSeek(options: DeepSeekCallOptions): Promise<{
 
 // ── JSON extraction from AI response ───────────────
 
-function extractJSON(text: string): any {
+export function extractJSON(text: string): any {
   let cleaned = text.trim()
 
   // Remove Markdown code blocks

@@ -111,7 +111,9 @@ const Canvas3D = memo(function Canvas3D({
   allLines, shownLengthLabels, searchedLine,
   selectedEdge, onEdgeClick, edgeColorOverrides,
   customVertices,
-  // ── VisualIntent-driven props ──
+  // ── SceneIR (优先数据源) ──
+  sceneIR = null,
+  // ── VisualIntent-driven props (sceneIR 为 null 时使用) ──
   highlightEdgeIds = [],
   highlightColor = '#FF6B6B',
   auxLines = [],
@@ -152,12 +154,29 @@ const Canvas3D = memo(function Canvas3D({
     return new Set(matches)
   }, [searchedLine, allLines])
 
-  // ── VisualIntent highlight set ──
-  const highlightSet = useMemo(() => {
-    return new Set(highlightEdgeIds)
-  }, [highlightEdgeIds])
+  // ── VisualIntent / SceneIR highlight set ──
+  const { effectiveHighlightIds, effectiveAuxLines, effectiveFaceOpacity, effectiveNonHighlightOpacity } = useMemo(() => {
+    if (sceneIR) {
+      return {
+        effectiveHighlightIds: sceneIR.highlightEdges || [],
+        effectiveAuxLines: sceneIR.auxLines || [],
+        effectiveFaceOpacity: sceneIR.faceOpacity ?? 0.42,
+        effectiveNonHighlightOpacity: sceneIR.nonHighlightOpacity ?? 0.25,
+      }
+    }
+    return {
+      effectiveHighlightIds: highlightEdgeIds,
+      effectiveAuxLines: auxLines,
+      effectiveFaceOpacity: faceOpacity,
+      effectiveNonHighlightOpacity: nonHighlightOpacity,
+    }
+  }, [sceneIR, highlightEdgeIds, auxLines, faceOpacity, nonHighlightOpacity])
 
-  const hasHighlights = highlightEdgeIds.length > 0
+  const highlightSet = useMemo(() => {
+    return new Set(effectiveHighlightIds)
+  }, [effectiveHighlightIds])
+
+  const hasHighlights = effectiveHighlightIds.length > 0
 
   // ── 球体叠加层几何体缓存 ──
   const sphereGeo = useMemo(() => {
@@ -173,7 +192,7 @@ const Canvas3D = memo(function Canvas3D({
 
   // Detect new highlights and start transitions
   useEffect(() => {
-    const newSet = new Set(highlightEdgeIds)
+    const newSet = new Set(effectiveHighlightIds)
     const oldSet = prevHighlights.current
     const now = performance.now()
     let hasNew = false
@@ -189,7 +208,7 @@ const Canvas3D = memo(function Canvas3D({
     })
     prevHighlights.current = newSet
     if (hasNew) animating.current = true
-  }, [highlightEdgeIds])
+  }, [effectiveHighlightIds])
 
   // Drive transition animation frames — throttled to ~20fps
   const frameSkip = useRef(0)
@@ -214,14 +233,14 @@ const Canvas3D = memo(function Canvas3D({
 
   // ── Aux lines (resolved from vertex labels) ──
   const resolvedAuxLines = useMemo(() => {
-    if (!auxLines || auxLines.length === 0) return []
-    return auxLines.map(al => {
+    if (!effectiveAuxLines || effectiveAuxLines.length === 0) return []
+    return effectiveAuxLines.map(al => {
       const from = resolvePoint(al.from, pts)
       const to = resolvePoint(al.to, pts)
       if (!from || !to) return null
       return { ...al, from, to }
     }).filter(Boolean)
-  }, [auxLines, pts])
+  }, [effectiveAuxLines, pts])
 
   // ── 相机系统（仅手动重置，不自动飞行） ──
   const cameraRef = useRef(null)
@@ -318,8 +337,8 @@ const Canvas3D = memo(function Canvas3D({
     }
 
     // 全局调光：无高亮时 nonHighlightOpacity 控制整体明暗（观察/构造步骤聚焦效果）
-    if (!hasHighlights && !selected && !hovered && !searched && nonHighlightOpacity < 1.0) {
-      opacity *= nonHighlightOpacity
+    if (!hasHighlights && !selected && !hovered && !searched && effectiveNonHighlightOpacity < 1.0) {
+      opacity *= effectiveNonHighlightOpacity
     }
 
     // 仅棱和自定义边有碰撞体（对角线和辅助线太细不需要）
@@ -376,7 +395,7 @@ const Canvas3D = memo(function Canvas3D({
       {showFaces && (
         <mesh>
           <primitive attach="geometry" object={geoData} />
-          <meshBasicMaterial color="#d0d0d8" transparent opacity={faceOpacity} depthWrite={false} side={THREE.DoubleSide} />
+          <meshBasicMaterial color="#d0d0d8" transparent opacity={effectiveFaceOpacity} depthWrite={false} side={THREE.DoubleSide} />
         </mesh>
       )}
 

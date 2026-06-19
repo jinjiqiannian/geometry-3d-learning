@@ -18,6 +18,7 @@ const PricingPage = lazy(() => import('./pages/PricingPage'))
 const HistoryPage = lazy(() => import('./pages/HistoryPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
+const EduMindProfile = lazy(() => import('./pages/edumind/ProfilePage'))
 
 // ── Suspense fallback ──
 function PageLoader() {
@@ -59,6 +60,7 @@ const router = createHashRouter([
       { path: 'history', element: <WrappedRoute><HistoryPage /></WrappedRoute> },
       { path: 'settings', element: <WrappedRoute><SettingsPage /></WrappedRoute> },
       { path: 'profile', element: <WrappedRoute><ProfilePage /></WrappedRoute> },
+      { path: 'edumind/profile', element: <WrappedRoute><EduMindProfile /></WrappedRoute> },
     ],
   },
 ])

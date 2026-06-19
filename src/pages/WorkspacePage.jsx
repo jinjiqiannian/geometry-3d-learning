@@ -13,6 +13,11 @@ import { computeVisualIntent } from '../engines/visualIntent'
 import { createLabelMap, INTERNAL_LABELS } from '../engines/labelMapper'
 import { generateShareUrl, detectShareParam, decodeShare } from '../engines/shareUtils'
 import { useSubscription } from '../contexts/SubscriptionContext'
+// 静态 import — 消除每次搜题的动态加载延迟
+import { quickMatch } from '../engines/problemParser'
+import { generateLocalSteps } from '../engines/explanationEngine'
+// SceneIR — 3D 场景确定性状态机
+import { buildBaseSceneIR, applyStepToSceneIR } from '../engines/sceneIRBuilder'
 import './WorkspacePage.css'
 
 // ── Default constraint params ─────────────────────
@@ -211,7 +216,6 @@ export default function WorkspacePage() {
       // ── Phase 0: Quick Match — instant geometry (no API) ──
       let quickTime = performance.now()
       try {
-        const { quickMatch } = await import('../engines/problemParser')
         const quick = quickMatch(text)
         if (quick) {
           setGeometry({
@@ -319,8 +323,6 @@ export default function WorkspacePage() {
       setError(userError)
       // Fallback: local template
       try {
-        const { quickMatch } = await import('../engines/problemParser')
-        const { generateLocalSteps } = await import('../engines/explanationEngine')
         const parsed = quickMatch(text) || { type: 'cube', size: 2, labels: [], highlightLines: [], explanation: '' }
         setParsedData(parsed)
         const fallbackSteps = generateLocalSteps(text, parsed)
@@ -396,6 +398,23 @@ export default function WorkspacePage() {
     if (!step || !parsedData) return null
     return computeVisualIntent(step, parsedData, problemText, labelMap)
   }, [currentStep, steps, parsedData, problemText, labelMap])
+
+  // ── (3a) sceneIR — Step→3D 场景状态机 ──────────
+  //  依赖: steps, parsedData
+  const sceneIR = useMemo(() => {
+    if (!steps.length || !parsedData?.type) return null
+    const base = buildBaseSceneIR(
+      parsedData.type,
+      { size: parsedData.size || 2 },
+      parsedData.vertices || parsedData.labels || null
+    )
+    // 对当前步骤应用场景操作
+    const step = steps[currentStep]
+    if (step && step.sceneOps) {
+      return applyStepToSceneIR(currentStep, step.type, step.sceneOps, base)
+    }
+    return base
+  }, [steps, currentStep, parsedData])
 
   // ── (3b) 有效标签显示 — 渐进披露：第一步隐藏标签 ──
   const effectiveShowLabels = useMemo(() => {
@@ -710,6 +729,7 @@ export default function WorkspacePage() {
                 onEdgeClick={setSelectedEdge}
                 edgeColorOverrides={edgeColorOverrides}
                 customVertices={customVertices}
+                sceneIR={sceneIR}
                 highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
                 highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
                 auxLines={visualIntent?.auxLines || []}

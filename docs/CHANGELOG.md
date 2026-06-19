@@ -426,7 +426,203 @@ src/
 
 ---
 
-## 技术债务 & 已知问题
+## 2026-06-20（周六）— Geometry P0 + EduMind 合并 + 部署治理
+
+### 状态：已修改，待提交 PR
+
+**分支：** `feature/geometry-engine`
+
+### Geometry P0 — 答案优先 + SceneIR 联动
+
+**目标：学生 15 秒内看到答案，30 秒内理解思路。**
+
+#### 新建文件
+- `src/components/explanation/AnswerBanner.jsx` — 答案横幅，从 steps 最后一步提取答案，大字高亮展示
+- `src/components/explanation/CoreIdeaCard.jsx` — 核心思路卡片，从第一步提取 intuition/content + 知识点标签
+- `src/engines/sceneIRTemplate.js` — 顶点/线/面模板注册表（从 main 迁移，431 行）
+
+#### 修改文件
+- `src/components/ExplanationPanel.jsx` — **重组渲染顺序**：AnswerBanner → CoreIdeaCard → 分步解析(details 折叠) → 追问 AI
+- `src/components/ExplanationPanel.css` — 新增 answer-banner / core-idea-card / ep-details 折叠样式
+- `src/pages/WorkspacePage.jsx` — 静态 import `quickMatch` + `generateLocalSteps`（消除每次搜索 300-500ms 动态加载延迟）；新增 `sceneIR` useMemo 状态机；添加 `sceneIR={sceneIR}` prop 到 Canvas3D
+- `src/features/solid-geometry/Canvas3D.jsx` — 新增 `sceneIR` prop + derived mapping（highlight/aux/opacity 优先从 sceneIR 读取，null 时回退 visualIntent）
+
+#### 修复
+- `src/engines/explanationEngine.js` — 删除重复声明的 `detectProblemType` 函数（内部非导出版本，导致 Rolldown 构建失败）
+- `src/engines/sceneIRBuilder.js` — 依赖 sceneIRTemplate.js，此前缺失，现补全
+
+### EduMind 合并 — 从 standalone 项目迁移
+
+**目标：将 archive/exammind 的 ProfilePage + student API + upload API 合并到主项目。**
+
+#### 新建文件
+- `src/pages/edumind/ProfilePage.jsx` — 学生画像页（考试次数/学习风格/趋势/优势薄弱/掌握度详情/错误模式），使用主项目 CSS 变量体系，无 Tailwind
+- `src/pages/edumind/ProfilePage.css` — 画像页样式
+- `server/src/routes/edumind.ts` — 合并 student.ts + upload.ts，6 个端点
+
+#### 修改文件
+- `src/App.jsx` — 新增 lazy route `/edumind/profile`
+- `src/components/AppNavigation.jsx` — NAV_ITEMS 添加「考试分析」
+- `src/components/MobileBottomNav.jsx` — 新增 BarChartIcon +「分析」Tab
+- `server/src/index.ts` — 导入 edumindRouter，挂载 `/api/edumind`
+- `server/package.json` — 安装 multer（文件上传依赖）
+
+**新增 API 端点：**
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/edumind/student/profile` | 学生画像（掌握度/优势薄弱/趋势） |
+| GET | `/api/edumind/student/mastery` | 知识点掌握度详情 |
+| GET | `/api/edumind/student/trends` | 错题模式趋势 |
+| POST | `/api/edumind/upload` | 文件上传到 Supabase Storage |
+| GET | `/api/edumind/upload/:id/status` | 上传状态查询 |
+
+### 部署治理 — GitHub Pages → Vercel 迁移清理
+
+#### 删除
+- `.github/workflows/deploy.yml` — GitHub Pages 部署工作流（已迁移 Vercel）
+- `package.json` — 删除 `predeploy`/`deploy` scripts，删除 `gh-pages` devDependency
+
+#### 保留
+- `vercel.json` — 以 feature/geometry-engine 版本为准（name: jiheweidu）
+
+#### 修复
+- `.gitignore` — 修复 UTF-8 BOM 导致 `node_modules` pattern 不被 Git 识别的问题
+
+### 发布审计
+
+| 项目 | 结果 |
+|------|------|
+| `npm run build` | ✅ 483ms, 2.0MB dist |
+| `npm test` | ✅ 5 files, 91 tests passed |
+| `npm audit` | ✅ 0 vulnerabilities |
+
+### 当前未提交的变更
+
+```
+20 files modified/added
+  Deleted:  .github/workflows/deploy.yml
+  Modified: package.json, .gitignore, server/src/index.ts, src/App.jsx,
+            src/components/* (4), src/features/.../Canvas3D.jsx,
+            src/pages/WorkspacePage.jsx, server/package.json
+  Added:    server/src/routes/edumind.ts,
+            src/components/explanation/AnswerBanner.jsx,
+            src/components/explanation/CoreIdeaCard.jsx,
+            src/engines/sceneIRBuilder.js, src/engines/sceneIRTemplate.js,
+            src/pages/edumind/ProfilePage.jsx, src/pages/edumind/ProfilePage.css
+```
+
+---
+
+## 2026-06-20 — P0.1 修复：补齐缺失的展示项
+
+**分支：** `feature/geometry-engine`
+**状态：** 已修改，待提交 PR
+
+### 修复内容
+
+#### 1. 知识点标签（新增）
+- 在 CoreIdeaCard 之后、分步解析之前插入 knowledgePoints 区块
+- 数据来源 `parsedData.knowledgePoints`（仅读取已有数据）
+- 使用 `var(--accent)` / `var(--accent-subtle)` CSS token 渲染药丸标签
+
+#### 2. 分步解析默认折叠
+- `<details open>` → `<details>`
+- 学生先看答案和核心思路，按需展开步骤
+
+#### 3. AI 推理过程（新增）
+- 分步解析之后、追问 AI 之前
+- `<details>` 默认折叠，数据来源 `parsedData.aiReasoning`
+- 为空不渲染
+
+### Cleanup — 范围收敛
+
+| 操作 | 文件 | 原因 |
+|------|------|------|
+| 回退 | `src/engines/explanationEngine.js` — `detectProblemType` | 超出范围 |
+| 保留（BLOCKED） | `src/engines/sceneIRBuilder.js` | WorkspacePage 直接依赖 |
+
+### 最终 P0 展示顺序
+
+```
+1. 答案       (AnswerBanner)
+2. 核心思路    (CoreIdeaCard)
+3. 知识点      (knowledgePoints 标签)
+4. 分步解析    (details, 默认折叠)
+5. AI 推理过程 (details, 默认折叠)
+```
+
+### 构建状态
+
+```
+✓ built in 450ms, 706 modules
+```
+
+### Pre-Merge Gate
+
+| 检查 | 结果 |
+|------|------|
+| 范围检查 | ✅ 无意外文件 |
+| 前端路由 | ✅ `/edumind/profile` 正常 |
+| API 路由 | ✅ 6端点已配置，requireAuth 生效 |
+| 展示顺序 | ✅ P0 五级顺序完整 |
+| 构建 | ✅ 450ms |
+
+**合并决策：READY FOR MERGE**
+
+---
+
+## 2026-06-20 — P0 Recovery：EduMind 基础设施恢复
+
+**分支：** `feature/geometry-engine`
+**状态：** 已修改，待提交 PR
+
+### 背景
+EduMind 代码在 working tree 中从未 commit，archive 操作导致部分文件丢失。审计确认混合状态：edumind.ts 存在（186行），但 service/types/migration/前端页面全部缺失。
+
+### P0 Recovery — 基础设施层
+
+#### 恢复文件
+
+| 文件 | 来源 | 说明 |
+|------|------|------|
+| `supabase/migrations/009_edumind.sql` | archive/exammind → 适配 | 6表（exams/questions/mistakes/knowledge_mastery/learning_paths/uploads），FK 指向 auth.users |
+| `server/src/types/edumind.ts` | 从 exam.service.ts 推导 | 5类型（Exam/ExamAnalysis/LearningPlan/CoachMessage/DailyReminder） |
+| `server/src/services/exam.service.ts` | stash@{0} → 适配 | 18函数，640行。import 改为 `getSupabase()` 模式 |
+| `src/services/edumind.js` | archive/api.ts → 适配 | 前端 API 客户端，使用 mathviz_token + `/api/edumind/*` |
+
+#### 副作用修改
+- `server/src/services/ai.service.ts` — 导出 `callDeepSeek` + `extractJSON`（exam.service.ts 依赖）
+- `server/package.json` — 安装 `@types/multer`（edumind.ts 依赖）
+- `server/src/types/edumind.ts` — 补充 `start_date` 字段（LearningPlan 类型缺失）
+
+### P1 Frontend Recovery（进行中）
+
+#### 已完成
+- `src/pages/EduMindPage.jsx` — Dashboard 页面（archive Dashboard.tsx → JSX + edumind.css）
+
+#### 待恢复
+- UploadPage.tsx → ExamUploadPage.jsx
+- AnalysisPage.tsx → ExamReportPage.jsx
+- LearningPlanPage.tsx → LearningPlanPage.jsx
+- MasteryStars.jsx 组件
+- ErrorAttributionChart.jsx 组件
+- App.jsx 路由：/edumind, /edumind/upload, /edumind/report/:id, /edumind/plan
+
+### 创建 Claude Code Skills
+
+| Skill | 用途 |
+|-------|------|
+| `exam-analyzer` | 试卷分析：上传→OCR→解析→错题归因 |
+| `student-model` | 学生画像：掌握度 + 错误模式 + 趋势 |
+| `learning-planner` | 学习计划：7/14/30天路线图 |
+| `self-healing` | 自愈：OCR/AI/空数据降级 |
+
+### 构建验证
+
+| 检查 | 结果 |
+|------|------|
+| Backend `tsc --noEmit` | ✅ PASS |
+| Frontend `vite build` | ✅ PASS (460ms) |
 
 | 问题 | 优先级 | 说明 |
 |------|--------|------|

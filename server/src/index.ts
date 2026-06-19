@@ -9,6 +9,7 @@ import { workspaceRouter } from './routes/workspace.js'
 import { aiRouter } from './routes/ai.js'
 import { exportRouter } from './routes/export.js'
 import { billingRouter } from './routes/billing.js'
+import { edumindRouter } from './routes/edumind.js'
 
 const app = express()
 
@@ -68,6 +69,7 @@ app.use('/api/workspace', workspaceRouter)
 app.use('/api/ai', aiRouter)
 app.use('/api/export', exportRouter)
 app.use('/api/billing', billingRouter)
+app.use('/api/edumind', edumindRouter)
 
 // ── 404 Handler ───────────────────────────────────
 app.use((_req, res) => {

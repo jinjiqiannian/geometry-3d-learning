@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { path: '/', label: '首页' },
   { path: '/workspace', label: '工作台' },
   { path: '/history', label: '历史' },
+  { path: '/edumind/profile', label: '考试分析' },
   { path: '/settings', label: '设置' },
 ]
 
