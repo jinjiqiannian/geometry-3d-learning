@@ -86,6 +86,16 @@
   --text-3xl: 36px;
   --text-4xl: 48px;
   --text-5xl: 60px;
+
+  /* ── Subject Colors ── */
+  --subject-math: #6366f1;
+  --subject-math-light: #eef2ff;
+  --subject-physics: #06b6d4;
+  --subject-physics-light: #e0f2fe;
+  --subject-chemistry: #22c55e;
+  --subject-chemistry-light: #dcfce7;
+  --subject-biology: #f59e0b;
+  --subject-biology-light: #fef3c7;
 }
 
 /* ── Dark theme ─────────────────────────────────────── */
