@@ -1,15 +1,15 @@
-// ═══════════════════════════════════════════════════════
-//  Exam Service — EduMind 考试 CRUD + AI 分析
-// ═══════════════════════════════════════════════════════
-import { supabase } from '../lib/supabase.js'
+// �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
+//  Exam Service �� EduMind ���� CRUD + AI ����
+// �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
+import { getSupabase } from '../db/client.js'
 import type { Exam, ExamAnalysis, LearningPlan, CoachMessage, DailyReminder } from '../types/edumind.js'
-import { callDeepSeek, extractJSON, trackCost } from './ai.service.js'
+import { callDeepSeek, extractJSON } from './ai.service.js'
 
 const FLASH_MODEL = 'deepseek-chat'
 
-// ═══════════════════════════════════════════════════════
+// �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
 //  Exam CRUD
-// ═══════════════════════════════════════════════════════
+// �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
 
 export async function createExam(
   userId: string,
@@ -26,12 +26,12 @@ export async function createExam(
     tags?: string[]
   }
 ): Promise<Exam> {
-  const { data: exam, error } = await supabase
+  const { data: exam, error } = await getSupabase()
     .from('exams')
     .insert({
       user_id: userId,
       title: data.title,
-      subject: data.subject || '数学',
+      subject: data.subject || '��ѧ',
       exam_date: data.exam_date || new Date().toISOString().split('T')[0],
       total_score: data.total_score || null,
       score: data.score || null,
@@ -44,7 +44,7 @@ export async function createExam(
     .select()
     .single()
 
-  if (error) throw new Error(`创建考试失败: ${error.message}`)
+  if (error) throw new Error(`��������ʧ��: ${error.message}`)
   return exam as Exam
 }
 
@@ -56,19 +56,19 @@ export async function listExams(
   const from = (page - 1) * limit
   const to = from + limit - 1
 
-  const { data, error, count } = await supabase
+  const { data, error, count } = await getSupabase()
     .from('exams')
     .select('*', { count: 'exact' })
     .eq('user_id', userId)
     .order('exam_date', { ascending: false })
     .range(from, to)
 
-  if (error) throw new Error(`查询考试列表失败: ${error.message}`)
+  if (error) throw new Error(`��ѯ�����б�ʧ��: ${error.message}`)
   return { items: (data || []) as Exam[], total: count || 0 }
 }
 
 export async function getExam(examId: string, userId: string): Promise<Exam | null> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('exams')
     .select('*')
     .eq('id', examId)
@@ -77,7 +77,7 @@ export async function getExam(examId: string, userId: string): Promise<Exam | nu
 
   if (error) {
     if (error.code === 'PGRST116') return null
-    throw new Error(`查询考试失败: ${error.message}`)
+    throw new Error(`��ѯ����ʧ��: ${error.message}`)
   }
   return data as Exam
 }
@@ -98,7 +98,7 @@ export async function updateExam(
     tags: string[]
   }>
 ): Promise<Exam> {
-  const { data: exam, error } = await supabase
+  const { data: exam, error } = await getSupabase()
     .from('exams')
     .update({ ...data, updated_at: new Date().toISOString() })
     .eq('id', examId)
@@ -106,83 +106,83 @@ export async function updateExam(
     .select()
     .single()
 
-  if (error) throw new Error(`更新考试失败: ${error.message}`)
+  if (error) throw new Error(`���¿���ʧ��: ${error.message}`)
   return exam as Exam
 }
 
 export async function deleteExam(examId: string, userId: string): Promise<void> {
   // Also delete associated analysis
-  await supabase.from('exam_analyses').delete().eq('exam_id', examId)
-  await supabase.from('learning_plans').delete().eq('exam_id', examId)
+  await getSupabase().from('exam_analyses').delete().eq('exam_id', examId)
+  await getSupabase().from('learning_plans').delete().eq('exam_id', examId)
 
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('exams')
     .delete()
     .eq('id', examId)
     .eq('user_id', userId)
 
-  if (error) throw new Error(`删除考试失败: ${error.message}`)
+  if (error) throw new Error(`ɾ������ʧ��: ${error.message}`)
 }
 
-// ═══════════════════════════════════════════════════════
-//  AI 考试分析
-// ═══════════════════════════════════════════════════════
+// �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
+//  AI ���Է���
+// �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
 
-const EXAM_ANALYSIS_SYSTEM_PROMPT = `你是⼀位经验丰富的高中数学老师兼数据分析师。你的任务是分析学生的考试结果，输出结构化的诊断报告。
+const EXAM_ANALYSIS_SYSTEM_PROMPT = `����?λ����ḻ�ĸ�����ѧ��ʦ�����ݷ���ʦ����������Ƿ���ѧ���Ŀ��Խ��������ṹ������ϱ��档
 
-分析以下 JSON 格式的考试数据：
-- questions: 题目数组，每道题包含 content（内容摘要）、score（满分）、earned（得分）、difficulty（难度1-5）、knowledge_points（关联知识点）
-- 计算每道题的得分率和整体得分率
+�������� JSON ��ʽ�Ŀ������ݣ�
+- questions: ��Ŀ���飬ÿ������� content������ժҪ����score�����֣���earned���÷֣���difficulty���Ѷ�1-5����knowledge_points������֪ʶ�㣩
+- ����ÿ����ĵ÷��ʺ�����÷���
 
-严格输出 JSON（不要 markdown 代码块）：
+�ϸ���� JSON����Ҫ markdown ����飩��
 {
-  "overall_summary": "2-3句话的总体评价，包含总分、主要问题和改进方向",
+  "overall_summary": "2-3�仰���������ۣ������ܷ֡���Ҫ����͸Ľ�����",
   "knowledge_mastery": [
     {
-      "knowledge_id": "知识点的ID（从题目中的knowledge_points获取，若题目没有则根据内容推断，以KP-前缀）",
-      "name": "知识点名称（中文，如"异面直线夹角"）",
-      "mastery": 掌握度0-1,
-      "importance": 重要性1-5,
-      "questions_count": 涉及题数,
-      "correct_rate": 正确率0-1
+      "knowledge_id": "֪ʶ���ID������Ŀ�е�knowledge_points��ȡ������Ŀû������������ƶϣ���KP-ǰ׺��",
+      "name": "֪ʶ�����ƣ����ģ���"����ֱ�߼н�"��",
+      "mastery": ���ն�0-1,
+      "importance": ��Ҫ��1-5,
+      "questions_count": �漰����,
+      "correct_rate": ��ȷ��0-1
     }
   ],
   "error_attribution": [
     {
-      "type": "knowledge_gap（知识漏洞）| calculation_error（计算失误）| reading_error（审题错误）| time_pressure（时间压力）| psychological（心理因素）",
-      "percentage": 该类型占比(百分比数字，各类型之和为100),
-      "description": "该类型错误的详细说明"
+      "type": "knowledge_gap��֪ʶ©����| calculation_error������ʧ��| reading_error���������| time_pressure��ʱ��ѹ����| psychological���������أ�",
+      "percentage": ������ռ��(�ٷֱ����֣�������֮��Ϊ100),
+      "description": "�����ʹ������ϸ˵��"
     }
   ],
   "improvement_suggestions": [
     {
-      "knowledge_id": "知识点ID",
-      "priority": 优先级1-5（1最紧急）,
-      "suggestion": "针对性的改进建议和学习方法"
+      "knowledge_id": "֪ʶ��ID",
+      "priority": ���ȼ�1-5��1�������,
+      "suggestion": "����ԵĸĽ������ѧϰ����"
     }
   ]
 }
 
-规则：
-1. knowledge_mastery 中的 mastery 根据得分率计算：正确率 >= 0.9 → 0.9-1.0, 0.7-0.9 → 0.6-0.9, 0.5-0.7 → 0.3-0.6, <0.5 → 0-0.3
-2. error_attribution 中五个类型百分比之和必须为100
-3. improvement_suggestions 按 priority 排序，优先给出最薄弱的知识点
-4. overall_summary 要具体，不要套话
-5. 所有fields都必须填充，不要遗漏`
+����
+1. knowledge_mastery �е� mastery ���ݵ÷��ʼ��㣺��ȷ�� >= 0.9 �� 0.9-1.0, 0.7-0.9 �� 0.6-0.9, 0.5-0.7 �� 0.3-0.6, <0.5 �� 0-0.3
+2. error_attribution ��������Ͱٷֱ�֮�ͱ���Ϊ100
+3. improvement_suggestions �� priority �������ȸ��������֪ʶ��
+4. overall_summary Ҫ���壬��Ҫ�׻�
+5. ����fields��������䣬��Ҫ��©`
 
 export async function analyzeExam(
   examId: string,
   userId: string
 ): Promise<ExamAnalysis> {
-  // 1. 获取考试数据
+  // 1. ��ȡ��������
   const exam = await getExam(examId, userId)
-  if (!exam) throw new Error('考试不存在')
+  if (!exam) throw new Error('���Բ�����')
   if (!exam.questions || exam.questions.length === 0) {
-    throw new Error('考试没有题目数据，请先添加题目')
+    throw new Error('����û����Ŀ���ݣ�����������Ŀ')
   }
 
-  // 2. 标记为 processing
-  const { data: analysis, error: insertError } = await supabase
+  // 2. ���Ϊ processing
+  const { data: analysis, error: insertError } = await getSupabase()
     .from('exam_analyses')
     .insert({
       exam_id: examId,
@@ -192,10 +192,10 @@ export async function analyzeExam(
     .select()
     .single()
 
-  if (insertError) throw new Error(`创建分析记录失败: ${insertError.message}`)
+  if (insertError) throw new Error(`����������¼ʧ��: ${insertError.message}`)
 
   try {
-    // 3. 构建 prompt 给 AI
+    // 3. ���� prompt �� AI
     const examData = {
       title: exam.title,
       total_score: exam.total_score,
@@ -211,16 +211,16 @@ export async function analyzeExam(
       })),
     }
 
-    const userPrompt = `请分析以下考试数据：\n\n${JSON.stringify(examData, null, 2)}`
+    const userPrompt = `��������¿������ݣ�\n\n${JSON.stringify(examData, null, 2)}`
 
-    // 4. 调用 DeepSeek Flash
+    // 4. ���� DeepSeek Flash
     const { text: responseText, tokensIn, tokensOut } = await callDeepSeek({
       model: FLASH_MODEL,
       system: EXAM_ANALYSIS_SYSTEM_PROMPT,
       user: userPrompt,
       maxTokens: 2000,
       temperature: 0.2,
-    }, userId)
+    }, )
 
     const aiResult = extractJSON(responseText) as {
       overall_summary: string
@@ -229,8 +229,8 @@ export async function analyzeExam(
       improvement_suggestions: any[]
     }
 
-    // 5. 保存分析结果
-    const { data: updated, error: updateError } = await supabase
+    // 5. ����������
+    const { data: updated, error: updateError } = await getSupabase()
       .from('exam_analyses')
       .update({
         status: 'completed',
@@ -245,14 +245,12 @@ export async function analyzeExam(
       .select()
       .single()
 
-    if (updateError) throw new Error(`更新分析结果失败: ${updateError.message}`)
-
-    trackCost(userId, FLASH_MODEL, tokensIn, tokensOut)
+    if (updateError) throw new Error(`���·������ʧ��: ${updateError.message}`)
 
     return updated as ExamAnalysis
   } catch (err: any) {
     // Mark as failed
-    await supabase
+    await getSupabase()
       .from('exam_analyses')
       .update({ status: 'failed' })
       .eq('id', analysis.id)
@@ -261,9 +259,9 @@ export async function analyzeExam(
   }
 }
 
-// ── 获取分析结果 ──────────────────────────────────
+// ���� ��ȡ������� ��������������������������������������������������������������������
 export async function getExamAnalysis(examId: string, userId: string): Promise<ExamAnalysis | null> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('exam_analyses')
     .select('*')
     .eq('exam_id', examId)
@@ -272,14 +270,14 @@ export async function getExamAnalysis(examId: string, userId: string): Promise<E
 
   if (error) {
     if (error.code === 'PGRST116') return null
-    throw new Error(`查询分析结果失败: ${error.message}`)
+    throw new Error(`��ѯ�������ʧ��: ${error.message}`)
   }
   return data as ExamAnalysis
 }
 
-// ═══════════════════════════════════════════════════════
-//  综合诊断（桥接知识图谱 + 考试分析）
-// ═══════════════════════════════════════════════════════
+// �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
+//  �ۺ���ϣ��Ž�֪ʶͼ�� + ���Է�����
+// �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
 
 export async function getDiagnosis(userId: string): Promise<{
   allPoints: any[]
@@ -287,8 +285,8 @@ export async function getDiagnosis(userId: string): Promise<{
   masteredCount: number
   totalCount: number
 }> {
-  // 获取用户最近的分析中的知识掌握度
-  const { data: analyses } = await supabase
+  // ��ȡ�û�����ķ����е�֪ʶ���ն�
+  const { data: analyses } = await getSupabase()
     .from('exam_analyses')
     .select('knowledge_mastery, created_at')
     .eq('user_id', userId)
@@ -296,8 +294,8 @@ export async function getDiagnosis(userId: string): Promise<{
     .order('created_at', { ascending: false })
     .limit(5)
 
-  // 获取所有知识点
-  const { data: allPoints } = await supabase
+  // ��ȡ����֪ʶ��
+  const { data: allPoints } = await getSupabase()
     .from('knowledge_points')
     .select('*')
     .order('lft', { ascending: true })
@@ -305,7 +303,7 @@ export async function getDiagnosis(userId: string): Promise<{
   const points = allPoints || []
   const masteries: Record<string, number> = {}
 
-  // 从最近分析中聚合掌握度
+  // ����������оۺ����ն�
   for (const a of analyses || []) {
     const km = a.knowledge_mastery as any[] || []
     for (const k of km) {
@@ -315,16 +313,16 @@ export async function getDiagnosis(userId: string): Promise<{
     }
   }
 
-  // 同时从 user_model_mastery 获取掌握度
-  const { data: modelMasteries } = await supabase
+  // ͬʱ�� user_model_mastery ��ȡ���ն�
+  const { data: modelMasteries } = await getSupabase()
     .from('user_model_mastery')
     .select('model_id, mastery')
     .eq('user_id', userId)
 
-  // 通过 model_knowledge_tags 关联
+  // ͨ�� model_knowledge_tags ����
   if (modelMasteries && modelMasteries.length > 0) {
     const modelIds = modelMasteries.map(m => m.model_id)
-    const { data: tags } = await supabase
+    const { data: tags } = await getSupabase()
       .from('model_knowledge_tags')
       .select('knowledge_id, model_id')
       .in('model_id', modelIds)
@@ -357,45 +355,45 @@ export async function getDiagnosis(userId: string): Promise<{
   }
 }
 
-// ═══════════════════════════════════════════════════════
-//  学习计划
-// ═══════════════════════════════════════════════════════
+// �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
+//  ѧϰ�ƻ�
+// �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
 
-const PLAN_GENERATION_SYSTEM_PROMPT = `你是一位专业的学习规划师。根据学生的考试分析和薄弱知识点，生成个性化的学习计划。
+const PLAN_GENERATION_SYSTEM_PROMPT = `����һλרҵ��ѧϰ�滮ʦ������ѧ���Ŀ��Է����ͱ���֪ʶ�㣬���ɸ��Ի���ѧϰ�ƻ���
 
-输入数据包含：
-- knowledge_mastery: 各知识点掌握度
-- error_attribution: 错误归因
-- duration_days: 计划天数（7/30/90）
-- goal: 学生目标（可选）
+�������ݰ�����
+- knowledge_mastery: ��֪ʶ�����ն�
+- error_attribution: �������
+- duration_days: �ƻ�������7/30/90��
+- goal: ѧ��Ŀ�꣨��ѡ��
 
-严格输出 JSON（不要 markdown 代码块）：
+�ϸ���� JSON����Ҫ markdown ����飩��
 {
-  "title": "计划的标题",
-  "goal_statement": "目标描述",
+  "title": "�ƻ��ı���",
+  "goal_statement": "Ŀ������",
   "plan_content": [
     {
       "day": 1,
-      "focus": "当日学习主题",
-      "knowledge_points": ["相关知识点ID"],
+      "focus": "����ѧϰ����",
+      "knowledge_points": ["���֪ʶ��ID"],
       "tasks": [
         {
-          "type": "review（复习）| practice（练习）| review_mistake（回顾错题）| read（阅读）| quiz（自测）",
-          "description": "具体任务描述",
-          "duration_min": 建议用时（分钟）
+          "type": "review����ϰ��| practice����ϰ��| review_mistake���ع˴��⣩| read���Ķ���| quiz���Բ⣩",
+          "description": "������������",
+          "duration_min": ������ʱ�����ӣ�
         }
       ],
-      "total_duration_min": 当日总用时
+      "total_duration_min": ��������ʱ
     }
   ]
 }
 
-规则：
-1. 按"先复习薄弱知识点 → 再针对性练习 → 最后综合巩固"的顺序安排
-2. 每天总用时建议 45-120 分钟
-3. 每3-5天安排一次综合复习
-4. 确保覆盖所有薄弱知识点，掌握度越低安排越多时间
-5. 尽量具体，给出可执行的任务描述`
+����
+1. ��"�ȸ�ϰ����֪ʶ�� �� ���������ϰ �� ����ۺϹ���"��˳����
+2. ÿ������ʱ���� 45-120 ����
+3. ÿ3-5�찲��һ���ۺϸ�ϰ
+4. ȷ���������б���֪ʶ�㣬���ն�Խ�Ͱ���Խ��ʱ��
+5. �������壬������ִ�е���������`
 
 export async function generatePlan(
   userId: string,
@@ -403,22 +401,22 @@ export async function generatePlan(
   durationDays: number,
   goal?: string
 ): Promise<LearningPlan> {
-  // 获取考试成绩
+  // ��ȡ���Գɼ�
   const exam = await getExam(examId, userId)
-  if (!exam) throw new Error('考试不存在')
+  if (!exam) throw new Error('���Բ�����')
 
-  // 获取分析结果
+  // ��ȡ�������
   const analysis = await getExamAnalysis(examId, userId)
-  if (!analysis) throw new Error('请先完成考试分析')
+  if (!analysis) throw new Error('������ɿ��Է���')
 
   const planInput = {
     knowledge_mastery: analysis.knowledge_mastery,
     error_attribution: analysis.error_attribution,
     duration_days: durationDays,
-    goal: goal || `从${exam.score}/${exam.total_score}提升至${Math.min((exam.score || 0) + 20, exam.total_score || 150)}/${exam.total_score}`,
+    goal: goal || `��${exam.score}/${exam.total_score}������${Math.min((exam.score || 0) + 20, exam.total_score || 150)}/${exam.total_score}`,
   }
 
-  const userPrompt = `请生成 ${durationDays} 天学习计划：\n\n${JSON.stringify(planInput, null, 2)}`
+  const userPrompt = `������ ${durationDays} ��ѧϰ�ƻ���\n\n${JSON.stringify(planInput, null, 2)}`
 
   const { text: responseText, tokensIn, tokensOut } = await callDeepSeek({
     model: FLASH_MODEL,
@@ -426,7 +424,7 @@ export async function generatePlan(
     user: userPrompt,
     maxTokens: 3000,
     temperature: 0.3,
-  }, userId)
+  })
 
   const aiResult = extractJSON(responseText) as {
     title: string
@@ -434,12 +432,12 @@ export async function generatePlan(
     plan_content: any[]
   }
 
-  const { data: plan, error } = await supabase
+  const { data: plan, error } = await getSupabase()
     .from('learning_plans')
     .insert({
       user_id: userId,
       exam_id: examId,
-      title: aiResult.title || `${durationDays}天提升计划`,
+      title: aiResult.title || `${durationDays}�������ƻ�`,
       duration_days: durationDays,
       goal: goal || aiResult.goal_statement,
       plan_content: aiResult.plan_content || [],
@@ -448,15 +446,14 @@ export async function generatePlan(
     .select()
     .single()
 
-  if (error) throw new Error(`创建学习计划失败: ${error.message}`)
+  if (error) throw new Error(`����ѧϰ�ƻ�ʧ��: ${error.message}`)
 
-  trackCost(userId, FLASH_MODEL, tokensIn, tokensOut)
-
+  
   return plan as LearningPlan
 }
 
 export async function getActivePlan(userId: string): Promise<LearningPlan | null> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('learning_plans')
     .select('*')
     .eq('user_id', userId)
@@ -467,7 +464,7 @@ export async function getActivePlan(userId: string): Promise<LearningPlan | null
 
   if (error) {
     if (error.code === 'PGRST116') return null
-    throw new Error(`查询学习计划失败: ${error.message}`)
+    throw new Error(`��ѯѧϰ�ƻ�ʧ��: ${error.message}`)
   }
   return data as LearningPlan
 }
@@ -477,7 +474,7 @@ export async function updatePlanProgress(
   userId: string,
   progress: number
 ): Promise<LearningPlan> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('learning_plans')
     .update({ progress, updated_at: new Date().toISOString() })
     .eq('id', planId)
@@ -485,45 +482,45 @@ export async function updatePlanProgress(
     .select()
     .single()
 
-  if (error) throw new Error(`更新计划进度失败: ${error.message}`)
+  if (error) throw new Error(`���¼ƻ�����ʧ��: ${error.message}`)
   return data as LearningPlan
 }
 
-// ═══════════════════════════════════════════════════════
-//  AI 教练
-// ═══════════════════════════════════════════════════════
+// �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
+//  AI ����
+// �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
 
-const COACH_SYSTEM_PROMPT = `你是一位耐心、专业的 AI 学习教练。你的学生刚经历过考试，你需要：
-1. 根据他们的考试结果给予鼓励和具体建议
-2. 回答学习相关问题
-3. 帮助制定和执行学习计划
-4. 给出切实可行的提分建议
+const COACH_SYSTEM_PROMPT = `����һλ���ġ�רҵ�� AI ѧϰ���������ѧ���վ��������ԣ�����Ҫ��
+1. �������ǵĿ��Խ����������;��彨��
+2. �ش�ѧϰ�������
+3. �����ƶ���ִ��ѧϰ�ƻ�
+4. ������ʵ���е���ֽ���
 
-始终保持积极、支持性的语气。回答要具体、可操作，不要空泛说教。`
+ʼ�ձ��ֻ�����֧���Ե��������ش�Ҫ���塢�ɲ�������Ҫ�շ�˵�̡�`
 
 export async function askCoach(
   userId: string,
   question: string,
   examId?: string
 ): Promise<CoachMessage> {
-  // 保存用户消息
-  await supabase.from('coach_messages').insert({
+  // �����û���Ϣ
+  await getSupabase().from('coach_messages').insert({
     user_id: userId,
     role: 'user',
     content: question,
     message_type: 'question',
   })
 
-  // 如果有考试ID，附加考试上下文
+  // ����п���ID�����ӿ���������
   let context = ''
   if (examId) {
     const analysis = await getExamAnalysis(examId, userId)
     if (analysis && analysis.status === 'completed') {
-      context = `\n\n学生最近的考试分析概要：\n总体评价：${analysis.overall_summary}\n薄弱知识点：${JSON.stringify(analysis.knowledge_mastery?.filter((k: any) => (k.mastery || 0) < 0.6).map((k: any) => k.name))}\n错误归因：${JSON.stringify(analysis.error_attribution)}`
+      context = `\n\nѧ������Ŀ��Է�����Ҫ��\n�������ۣ�${analysis.overall_summary}\n����֪ʶ�㣺${JSON.stringify(analysis.knowledge_mastery?.filter((k: any) => (k.mastery || 0) < 0.6).map((k: any) => k.name))}\n�������${JSON.stringify(analysis.error_attribution)}`
     }
   }
 
-  const userPrompt = `${context ? `【考试背景】${context}\n\n` : ''}学生提问：${question}`
+  const userPrompt = `${context ? `�����Ա�����${context}\n\n` : ''}ѧ�����ʣ�${question}`
 
   const { text: responseText, tokensIn, tokensOut } = await callDeepSeek({
     model: FLASH_MODEL,
@@ -531,10 +528,10 @@ export async function askCoach(
     user: userPrompt,
     maxTokens: 1000,
     temperature: 0.5,
-  }, userId)
+  })
 
-  // 保存教练回复
-  const { data: message, error } = await supabase
+  // ��������ظ�
+  const { data: message, error } = await getSupabase()
     .from('coach_messages')
     .insert({
       user_id: userId,
@@ -545,33 +542,111 @@ export async function askCoach(
     .select()
     .single()
 
-  if (error) throw new Error(`保存教练回复失败: ${error.message}`)
+  if (error) throw new Error(`��������ظ�ʧ��: ${error.message}`)
 
-  trackCost(userId, FLASH_MODEL, tokensIn, tokensOut)
-
+  
   return message as CoachMessage
 }
 
 export async function getCoachHistory(userId: string, limit = 20): Promise<CoachMessage[]> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('coach_messages')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(limit)
 
-  if (error) throw new Error(`查询教练记录失败: ${error.message}`)
+  if (error) throw new Error(`��ѯ������¼ʧ��: ${error.message}`)
   return (data || []).reverse() as CoachMessage[]
 }
 
-// ═══════════════════════════════════════════════════════
-//  每日提醒
-// ═══════════════════════════════════════════════════════
+// �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
+//  Student Model
+// �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
+
+export async function getStudentProfile(userId: string): Promise<{
+  studentId: string
+  masteryMap: Record<string, number>
+  mistakePatterns: { type: string; count: number }[]
+  strengths: string[]
+  weaknesses: string[]
+  learningStyle: string
+  examCount: number
+  recentTrend: 'improving' | 'stable' | 'declining'
+}> {
+  const { data: mastery } = await getSupabase()
+    .from('knowledge_mastery')
+    .select('*')
+    .eq('user_id', userId)
+
+  const { data: mistakes } = await getSupabase()
+    .from('mistakes')
+    .select('type')
+    .eq('user_id', userId)
+
+  const { count: examCount } = await getSupabase()
+    .from('exams')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+
+  const masteryMap: Record<string, number> = {}
+  const strengths: string[] = []
+  const weaknesses: string[] = []
+
+  for (const m of (mastery || []) as any[]) {
+    masteryMap[m.knowledge_point] = m.mastery
+    if (m.mastery >= 0.7) strengths.push(m.knowledge_point)
+    else if (m.mastery < 0.5) weaknesses.push(m.knowledge_point)
+  }
+
+  const patternCount: Record<string, number> = {}
+  for (const m of (mistakes || []) as any[]) {
+    patternCount[m.type] = (patternCount[m.type] || 0) + 1
+  }
+  const mistakePatterns = Object.entries(patternCount).map(([type, count]) => ({ type, count }))
+
+  return {
+    studentId: userId,
+    masteryMap,
+    mistakePatterns,
+    strengths,
+    weaknesses,
+    learningStyle: 'practice',
+    examCount: examCount || 0,
+    recentTrend: strengths.length >= weaknesses.length ? 'improving' : 'stable',
+  }
+}
+
+export async function getStudentMastery(userId: string): Promise<any[]> {
+  const { data } = await getSupabase()
+    .from('knowledge_mastery')
+    .select('*')
+    .eq('user_id', userId)
+    .order('mastery', { ascending: true })
+  return (data || []) as any[]
+}
+
+export async function getStudentMistakePatterns(userId: string): Promise<{ type: string; count: number }[]> {
+  const { data } = await getSupabase()
+    .from('mistakes')
+    .select('type')
+    .eq('user_id', userId)
+
+  const counts: Record<string, number> = {}
+  for (const m of (data || []) as any[]) {
+    counts[m.type] = (counts[m.type] || 0) + 1
+  }
+  return Object.entries(counts).map(([type, count]) => ({ type, count }))
+}
+
+// �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
+//  ÿ������
+// �T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T�T
 
 export async function getDailyReminder(userId: string): Promise<DailyReminder | null> {
   const today = new Date().toISOString().split('T')[0]
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('daily_reminders')
     .select('*')
     .eq('user_id', userId)
@@ -580,19 +655,19 @@ export async function getDailyReminder(userId: string): Promise<DailyReminder | 
 
   if (error) {
     if (error.code === 'PGRST116') {
-      // 没有今日提醒，自动生成
+      // û�н������ѣ��Զ�����
       return generateDailyReminder(userId)
     }
-    throw new Error(`查询今日提醒失败: ${error.message}`)
+    throw new Error(`��ѯ��������ʧ��: ${error.message}`)
   }
   return data as DailyReminder
 }
 
 async function generateDailyReminder(userId: string): Promise<DailyReminder> {
-  // 获取当前活跃计划
+  // ��ȡ��ǰ��Ծ�ƻ�
   const plan = await getActivePlan(userId)
-  // 获取最近一次分析
-  const { data: recentAnalysis } = await supabase
+  // ��ȡ���һ�η���
+  const { data: recentAnalysis } = await getSupabase()
     .from('exam_analyses')
     .select('*')
     .eq('user_id', userId)
@@ -601,9 +676,9 @@ async function generateDailyReminder(userId: string): Promise<DailyReminder> {
     .limit(1)
     .single()
 
-  // 构建提醒内容
-  let reminderTitle = '今日学习建议'
-  let reminderContent = '今天继续按照学习计划执行，保持节奏！'
+  // ������������
+  let reminderTitle = '����ѧϰ����'
+  let reminderContent = '�����������ѧϰ�ƻ�ִ�У����ֽ��࣡'
 
   if (plan && plan.plan_content) {
     const today = new Date()
@@ -612,20 +687,20 @@ async function generateDailyReminder(userId: string): Promise<DailyReminder> {
     const todayPlan = (plan.plan_content as any[])?.find((d: any) => d.day === dayDiff)
 
     if (todayPlan) {
-      reminderTitle = `第${todayPlan.day}天：${todayPlan.focus}`
-      reminderContent = `今日学习 ${todayPlan.total_duration_min || '?'} 分钟\n` +
-        (todayPlan.tasks as any[])?.map((t: any) => `- ${t.description}（${t.duration_min}分钟）`).join('\n') || ''
+      reminderTitle = `��${todayPlan.day}�죺${todayPlan.focus}`
+      reminderContent = `����ѧϰ ${todayPlan.total_duration_min || '?'} ����\n` +
+        (todayPlan.tasks as any[])?.map((t: any) => `- ${t.description}��${t.duration_min}���ӣ�`).join('\n') || ''
     }
   } else if (recentAnalysis) {
     const km = (recentAnalysis.knowledge_mastery as any[]) || []
     const weakest = km.filter((k: any) => (k.mastery || 0) < 0.6)
     if (weakest.length > 0) {
-      reminderTitle = '重点攻克薄弱知识点'
-      reminderContent = `你的薄弱环节：${weakest.map((k: any) => k.name).join('、')}\n建议今天先复习这些知识点，再做针对性练习。`
+      reminderTitle = '�ص㹥�˱���֪ʶ��'
+      reminderContent = `��ı������ڣ�${weakest.map((k: any) => k.name).join('��')}\n��������ȸ�ϰ��Щ֪ʶ�㣬�����������ϰ��`
     }
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('daily_reminders')
     .insert({
       user_id: userId,
@@ -638,7 +713,7 @@ async function generateDailyReminder(userId: string): Promise<DailyReminder> {
     .select()
     .single()
 
-  if (error) throw new Error(`创建每日提醒失败: ${error.message}`)
+  if (error) throw new Error(`����ÿ������ʧ��: ${error.message}`)
   return data as DailyReminder
 }
 
@@ -646,7 +721,7 @@ export async function acknowledgeReminder(
   reminderId: string,
   userId: string
 ): Promise<DailyReminder> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('daily_reminders')
     .update({ is_read: true, is_actioned: true })
     .eq('id', reminderId)
@@ -654,6 +729,6 @@ export async function acknowledgeReminder(
     .select()
     .single()
 
-  if (error) throw new Error(`确认提醒失败: ${error.message}`)
+  if (error) throw new Error(`ȷ������ʧ��: ${error.message}`)
   return data as DailyReminder
 }

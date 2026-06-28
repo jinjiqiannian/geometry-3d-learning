@@ -89,9 +89,6 @@ serve(async (req) => {
           break
         }
 
-        // 从 session metadata 中获取 userId
-        const userId = session.metadata?.userId || (session as any).client_reference_id
-
         const subscription = await stripe.subscriptions.retrieve(subscriptionId)
         const priceId = subscription.items.data[0]?.price?.id
         if (!priceId) {
@@ -102,25 +99,18 @@ serve(async (req) => {
         const plan = mapPriceToPlan(priceId)
         const interval = subscription.items.data[0].price.recurring?.interval === "year" ? "yearly" : "monthly"
 
-        const upsertPayload: Record<string, any> = {
-          stripe_customer_id: customerId,
-          stripe_subscription_id: subscriptionId,
-          plan,
-          billing_interval: interval,
-          status: subscription.status === "active" ? "active" : "past_due",
-          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-          updated_at: new Date().toISOString(),
-        }
-
-        // 如果有 userId，一起写入（确保 subscriptions 表关联到正确的用户）
-        if (userId) {
-          upsertPayload.user_id = userId
-        }
-
         const { error } = await supabase
           .from("subscriptions")
-          .upsert(upsertPayload, { onConflict: "stripe_customer_id" })
+          .upsert({
+            stripe_customer_id: customerId,
+            stripe_subscription_id: subscriptionId,
+            plan,
+            billing_interval: interval,
+            status: subscription.status === "active" ? "active" : "past_due",
+            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "stripe_customer_id" })
 
         if (error) console.error("Failed to upsert subscription:", error)
         break

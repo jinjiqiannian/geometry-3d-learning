@@ -28,23 +28,6 @@
 不要为了架构而架构。不要预先设计 10 层抽象。
 目标：最快交付用户价值。
 
-### Skill Orchestrator（自动技能路由 — 必须执行）
-Before making ANY code change, determine which skill governs the task:
-
-1. **UI / navigation / user flow** → `product-ux-scope`（单入口、零配置、极简学习流）
-2. **Explanation / steps / reasoning / hints** → `learning-tutor-engine`（自适应讲解粒度深度）
-3. **Geometry / visualization / labels / rendering** → `scene-ir-core`（SceneIR 唯一真相层）
-4. **Login / session / user identity** → `auth-guest-mode`（访客优先，登录非门禁）
-5. **README / repo / docs / positioning** → `github-product-mode`（产品展示非技术文档）
-6. **Architecture violation detection** → `self-healing-system`（改完后自动检查偏离）
-
-Output format before acting:
-```
-Selected Skill: <name>
-Reason: <why>
-Memory Check: proceed / adjust / reject
-```
-
 ### 产品经理+架构师
 修改代码前先隐式分析：当前结构、涉及文件、风险点。
 未经确认不要大规模改代码。小步迭代。

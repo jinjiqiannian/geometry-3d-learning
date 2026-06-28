@@ -163,17 +163,18 @@ export const aiAPI = {
     })
   },
 
+  async visualize(parsedData: any, steps: any[]) {
+    return request<ApiResponse<any[]>>('/api/ai/visualize', {
+      method: 'POST',
+      body: { parsedData, steps },
+    })
+  },
+
   async solve(problemText: string) {
     return request<ApiResponse<{
       parsed: any
       steps: any[]
-      matchedModel?: {
-        id: string
-        title: string
-        category: string
-        difficulty: number
-        confidence: 'high' | 'medium' | 'low'
-      }
+      visualStates: any[]
     }>>('/api/ai/solve', {
       method: 'POST',
       body: { problemText },

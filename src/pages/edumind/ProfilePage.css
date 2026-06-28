@@ -1,0 +1,158 @@
+/* ═══════════════════════════════════════════════════════
+   EduMind ProfilePage 样式
+   使用现有 CSS 变量体系
+   ═══════════════════════════════════════════════════════ */
+
+.ed-profile-loading {
+  text-align: center;
+  padding: 48px 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.ed-profile {
+  max-width: 640px;
+}
+
+.ed-profile-back {
+  font-size: var(--text-sm);
+  color: var(--link);
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 16px;
+}
+.ed-profile-back:hover { text-decoration: underline; }
+
+.ed-profile-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.ed-profile-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ed-profile-stat {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  text-align: center;
+}
+
+.ed-profile-stat-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.ed-profile-stat-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ed-profile-stat-green { color: #22c55e; }
+.ed-profile-stat-sep { color: var(--text-muted); }
+.ed-profile-stat-red { color: #ef4444; }
+
+.ed-profile-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.ed-profile-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.ed-profile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ed-profile-tag {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.ed-profile-tag-green {
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.3);
+  color: #22c55e;
+}
+
+.ed-profile-tag-red {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  color: #ef4444;
+}
+
+.ed-profile-mastery-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ed-profile-mastery-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+}
+
+.ed-profile-mastery-name { color: var(--text-primary); }
+.ed-profile-mastery-pct { font-weight: 600; color: var(--accent); }
+
+.ed-profile-mastery-bar-bg {
+  height: 8px;
+  background: var(--bg-elevated);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ed-profile-mastery-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+.ed-profile-mastery-bar-fill.fill-green { background: #22c55e; }
+.ed-profile-mastery-bar-fill.fill-yellow { background: #f59e0b; }
+.ed-profile-mastery-bar-fill.fill-red { background: #ef4444; }
+
+.ed-profile-mistake-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.ed-profile-mistake-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.ed-profile-mistake-item:last-child { border-bottom: none; }
+
+.ed-profile-mistake-name { font-size: 0.9rem; color: var(--text-primary); }
+.ed-profile-mistake-count { font-weight: 700; color: var(--accent); }
+
+.ed-profile-empty {
+  text-align: center;
+  padding: 48px 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}

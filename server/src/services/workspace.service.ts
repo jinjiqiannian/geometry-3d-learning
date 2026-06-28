@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════
 //  Workspace Service — CRUD + 回放 + 分享
 // ═══════════════════════════════════════════════════════
-import { supabase } from '../lib/supabase.js'
+import { getSupabase } from '../db/client.js'
 import { v4 as uuidv4 } from 'uuid'
 import type {
   Workspace, WorkspaceListItem, Step, WorkspaceGeometry,
@@ -17,7 +17,7 @@ export async function createWorkspace(
   steps?: Step[],
   geometry?: WorkspaceGeometry | null
 ): Promise<Workspace> {
-  supabase
+  const supabase = getSupabase()
   const id = uuidv4()
 
   const { data, error } = await supabase
@@ -47,7 +47,7 @@ export async function getWorkspace(
   workspaceId: string,
   userId?: string
 ): Promise<Workspace | null> {
-  supabase
+  const supabase = getSupabase()
 
   const { data, error } = await supabase
     .from('workspaces')
@@ -70,7 +70,7 @@ export async function listWorkspaces(
   page = 1,
   limit = 20
 ): Promise<PaginatedResponse<WorkspaceListItem>> {
-  supabase
+  const supabase = getSupabase()
   const from = (page - 1) * limit
   const to = from + limit - 1
 
@@ -115,7 +115,7 @@ export async function updateWorkspace(
     isPublic?: boolean
   }
 ): Promise<Workspace> {
-  supabase
+  const supabase = getSupabase()
 
   // Verify ownership
   const { data: existing } = await supabase
@@ -152,7 +152,7 @@ export async function deleteWorkspace(
   workspaceId: string,
   userId: string
 ): Promise<void> {
-  supabase
+  const supabase = getSupabase()
 
   const { error } = await supabase
     .from('workspaces')
@@ -254,7 +254,7 @@ export async function searchPublicWorkspaces(
   page = 1,
   limit = 20
 ): Promise<PaginatedResponse<WorkspaceListItem>> {
-  supabase
+  const supabase = getSupabase()
   const from = (page - 1) * limit
   const to = from + limit - 1
 

@@ -13,7 +13,7 @@ const TEMPLATES = {
       { step: 4, title: '计算求解', content: '代入棱长 {size}，使用勾股定理、余弦定理或向量法进行计算。', type: 'calculation' },
       { step: 5, title: '得出结论', content: '综合以上各步的计算结果，得出最终答案。回顾解题思路：先识别{typeName}特征（棱长 {size}），再根据已知条件选择合适的公式，代入数据计算后得到结论。', type: 'conclusion' },
     ],
-    skew_lines: [
+    angle_skew_lines: [
       { step: 1, title: '识别几何体', content: '正方体，所有棱长相等，对面平行，相邻面垂直。', type: 'observation' },
       { step: 2, title: '找出异面直线', content: '在正方体中定位题目指定的两条异面直线，确认它们不在同一平面内。', type: 'observation' },
       { step: 3, title: '平移法作辅助线', content: '将其中一条直线沿正方体的棱平移到与另一条直线共面的位置。平移不改变线段方向，因此夹角不变。', type: 'construction' },
@@ -258,39 +258,48 @@ const TEMPLATES = {
 
 // ── 关键词 → 题型匹配 ────────────────────────────
 
-export function detectProblemType(type, text) {
+function detectProblemType(type, text) {
   const t = text.toLowerCase()
 
-  // ★ 增强题型识别 — 新题型枚举
-  if (/异面|skew|所成角/.test(t) && !/线面角|二面角/.test(t)) return 'skew_lines'
-  if (/二面角|dihedral/.test(t)) return 'dihedral_angle'
-  if (/线面角|直线.*平面.*角|直线与平面所成/.test(t)) return 'line_plane_angle'
-  if (/截面|截平面/.test(t)) return 'section'
-  if (/最短距离|最小值|最短路|min/.test(t)) return 'shortest_distance'
-  if (/向量|坐标|法向量|方向向量|点积|叉积|内积/.test(t)) return 'spatial_vector'
-  if (/点到.*(平面|面).*距离|点面距离|等体积法/.test(t)) return 'distance_point_plane'
-  if (/体积|容积/.test(t) && !/侧面积|表面积/.test(t)) return 'volume'
-  if (/内切|内接|外接|外切/.test(t)) return 'inscribed_circumscribed'
-
-  // 旧 subtypes 保留兼容
   if (type === 'cube') {
-    if (/对角线|diagonal/.test(t)) return 'diagonal'
-    if (/二面角/.test(t)) return 'dihedral_angle'
+    if (/二面角|dihedral/.test(t)) return 'dihedral_angle'
     if (/线面角|直线.*平面.*角/.test(t)) return 'line_plane_angle'
-    if (/异面|skew/.test(t)) return 'skew_lines'
+    if (/点.*到.*(平面|面).*距离|等体积法/.test(t)) return 'point_plane_distance'
+    if (/内接|内切/.test(t)) return 'inscribed'
+    if (/外接|外切/.test(t)) return 'circumscribed'
+    if (/异面|skew/.test(t)) return 'angle_skew_lines'
     if (/截面/.test(t)) return 'section'
+    if (/对角线|diagonal/.test(t)) return 'diagonal'
   }
 
   if (type === 'cuboid') {
-    if (/对角线|diagonal/.test(t)) return 'diagonal_long'
+    if (/体对角线|对角线长/.test(t)) return 'diagonal_long'
+  }
+
+  if (type === 'sphere') {
+    if (/内接|内切/.test(t)) return 'inscribed'
+    if (/球冠|crown|spherical cap/.test(t)) return 'spherical_cap'
+  }
+
+  if (type === 'cone') {
+    if (/母线|generatrix/.test(t)) return 'generatrix'
+    if (/侧面积|侧面展开/.test(t)) return 'lateral_area'
+  }
+
+  if (type === 'pyramid') {
+    if (/外接|外切/.test(t)) return 'circumscribed'
+    if (/侧面积|侧棱/.test(t)) return 'lateral_area'
   }
 
   if (type === 'tetrahedron') {
-    if (/对棱|异面/.test(t)) return 'skew_lines'
+    if (/对棱|异面/.test(t)) return 'opposite_edges'
+    if (/内接|内切/.test(t)) return 'inscribed'
+    if (/外接|外切/.test(t)) return 'circumscribed'
     if (/体积/.test(t)) return 'volume'
   }
 
-  return 'general'
+  // For other types, default template is fine
+  return 'default'
 }
 
 // ── 公开 API ─────────────────────────────────────
@@ -360,7 +369,7 @@ function makeTeacherTitle(step, ctx) {
 
   // 按步骤类型生成老师口吻标题
   const titles = {
-    conceptual: [
+    observation: [
       `先来看看这个${geo}`,
       `看看题目给的${geo}是什么样的`,
       `${geo}的基本特征`,
@@ -370,10 +379,6 @@ function makeTeacherTitle(step, ctx) {
       `看清楚题目里提到的线和面`,
       `这个${geo}里有什么已知条件`,
       `搞清楚题目问的是什么`,
-    ],
-    observation: [ // 旧名兼容
-      `先来看看这个${geo}`,
-      `看看题目给的${geo}是什么样的`,
     ],
     construction: [
       `为了方便计算，我们加一条辅助线`,
@@ -397,11 +402,7 @@ function makeTeacherTitle(step, ctx) {
       `一步步推导出来`,
       `用勾股定理（或其他公式）来算`,
     ],
-    conclusion: [ // 旧名兼容
-      `这样就算出来了`,
-      `所有的步骤串起来，得到最终答案`,
-    ],
-    validation: [
+    conclusion: [
       `这样就算出来了`,
       `所有的步骤串起来，得到最终答案`,
       `回过头来看，这道题的思路是这样的`,

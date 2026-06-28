@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-//  MasteryStars — ★★★★★ 掌握度星标组件
+//  MasteryStars — ★★★★★ 掌握度星标
 // ═══════════════════════════════════════════════════════
 
 export default function MasteryStars({ mastery = 0, size = 'md' }) {
@@ -9,8 +9,7 @@ export default function MasteryStars({ mastery = 0, size = 'md' }) {
   const half = remainder >= 0.3 && remainder < 0.8
   const empty = 5 - filled - (half ? 1 : 0)
 
-  const sizeMap = { sm: 14, md: 18, lg: 24 }
-  const px = sizeMap[size] || sizeMap.md
+  const px = size === 'sm' ? 14 : size === 'lg' ? 24 : 18
   const color = mastery >= 0.8 ? '#22c55e' : mastery >= 0.6 ? '#eab308' : mastery >= 0.4 ? '#f97316' : '#ef4444'
 
   return (
@@ -36,7 +35,7 @@ export default function MasteryStars({ mastery = 0, size = 'md' }) {
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
         </svg>
       ))}
-      <span style={{ marginLeft: '4px', fontSize: `${px - 2}px`, color: '#666' }}>
+      <span style={{ marginLeft: '4px', fontSize: `${px - 2}px`, color: 'var(--edumind-text-secondary)' }}>
         {(clamped * 100).toFixed(0)}%
       </span>
     </span>

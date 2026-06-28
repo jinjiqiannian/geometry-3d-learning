@@ -1,11 +1,7 @@
 // ═══════════════════════════════════════════════════════
 //  线段定义系统 — 每种几何体的所有重要线段
 //  id 格式: "顶点标签-顶点标签" 或 "名称"
-//
-//  ★ 顶点坐标已统一到 sceneIRTemplate.js，此文件不再维护独立副本
 // ═══════════════════════════════════════════════════════
-
-import { getScaledTemplate } from './sceneIRTemplate'
 
 // ── 从自定义顶点重新计算中心点 ────────────────────────
 function computeCentersFromVertices(type, vertices, defaultPts) {
@@ -70,21 +66,181 @@ function computeCentersFromVertices(type, vertices, defaultPts) {
 /** 根据 size 参数计算所有顶点和参考点 */
 // customVertices: 自由模式下由约束求解器提供的顶点（覆盖模板计算）
 // customLabels: 题目解析后提供的自定义标签（覆盖默认标签）
-// ★ 顶点坐标统一从 sceneIRTemplate 获取，不再本地定义
 function getPoints(type, params, customVertices, customLabels) {
+  const { size = 2 } = params
+
   // 自由模式：用自定义顶点覆盖模板顶点，中心点从实际顶点计算
   if (customVertices && customVertices.length > 0) {
     const defaultPts = getPoints(type, params)
+    // 从自定义顶点重新计算中心点
     const centers = computeCentersFromVertices(type, customVertices, defaultPts)
     return { vertices: customVertices, centers, labels: defaultPts.labels }
   }
 
-  // ★ 统一从 sceneIRTemplate 获取缩放后的顶点
-  const tpl = getScaledTemplate(type, params, customLabels)
-  return {
-    vertices: tpl.vertices,
-    centers: tpl.centers,
-    labels: tpl.labels,
+  const s = size / 2
+
+  switch (type) {
+    case 'cube': {
+      // 底面→顶面：ABCD 底面，EFGH 顶面
+      const v = [
+        [-s, -s, -s], [s, -s, -s], [s, -s, s], [-s, -s, s],  // 0-3 底面
+        [-s, s, -s], [s, s, -s], [s, s, s], [-s, s, s],        // 4-7 顶面
+      ]
+      const c = {
+        body: [0, 0, 0],
+        front: [0, 0, s], back: [0, 0, -s],
+        left: [-s, 0, 0], right: [s, 0, 0],
+        top: [0, s, 0], bottom: [0, -s, 0],
+      }
+      const labels = customLabels || 'ABCDEFGH'.split('')
+      return { vertices: v, centers: c, labels }
+    }
+
+    case 'pyramid': {
+      const v = [
+        [-s, -s, -s], [s, -s, -s], [s, -s, s], [-s, -s, s],
+        [0, s, 0],
+      ]
+      const baseCenter = [0, -s, 0]
+      const c = { body: [0, 0, 0], base: baseCenter, apex: [0, s, 0] }
+      const labels = customLabels || 'ABCDP'.split('')
+      return { vertices: v, centers: c, labels }
+    }
+
+    case 'prism': {
+      const v = [
+        [-s, -s, -s], [s, -s, -s], [-s, -s, s],
+        [-s, s, -s], [s, s, -s], [-s, s, s],
+      ]
+      const c = {
+        body: [-s / 3, 0, -s / 3],
+        baseBottom: [-s / 3, -s, -s / 3],
+        baseTop: [-s / 3, s, -s / 3],
+      }
+      const labels = customLabels || "ABC A'B'C'".match(/[A-C]'?/g)
+      return { vertices: v, centers: c, labels }
+    }
+
+    case 'sphere': {
+      const v = [
+        [0, -s, 0], [0, s, 0], [s, 0, 0],
+        [-s, 0, 0], [0, 0, s], [0, 0, -s],
+      ]
+      const labels = customLabels || 'SNEWFB'.split('')
+      return { vertices: v, centers: { body: [0, 0, 0] }, labels }
+    }
+
+    case 'cylinder': {
+      const v = [
+        [0, -s, 0], [0, s, 0],
+        [s, -s, 0], [-s, -s, 0], [0, -s, s], [0, -s, -s],
+        [s, s, 0], [-s, s, 0], [0, s, s], [0, s, -s],
+      ]
+      const labels = customLabels || "OO'ABCDA'B'C'D'".match(/[A-O]'?/g)
+      return { vertices: v, centers: { body: [0, 0, 0], top: [0, s, 0], bottom: [0, -s, 0] }, labels }
+    }
+
+    case 'cone': {
+      const v = [
+        [0, -s, 0], [0, s, 0],
+        [s, -s, 0], [-s, -s, 0], [0, -s, s], [0, -s, -s],
+      ]
+      const labels = customLabels || 'OPABCD'.split('')
+      return { vertices: v, centers: { base: [0, -s, 0], apex: [0, s, 0] }, labels }
+    }
+
+    case 'squareFrustum': {
+      // 底面正方形(边长size) + 顶面正方形(边长size/2)，高=size，中心对齐
+      const topS = s / 2
+      const v = [
+        [-s, -s, -s], [s, -s, -s], [s, -s, s], [-s, -s, s],     // 底面 ABCD (0-3)
+        [-topS, s, -topS], [topS, s, -topS], [topS, s, topS], [-topS, s, topS],  // 顶面 EFGH (4-7)
+      ]
+      const c = {
+        body: [0, 0, 0],
+        bottom: [0, -s, 0],
+        top: [0, s, 0],
+      }
+      const labels = customLabels || 'ABCDEFGH'.split('')
+      return { vertices: v, centers: c, labels }
+    }
+
+    case 'circularFrustum': {
+      const v = [
+        [0, -s, 0], [0, s, 0],                                     // O(0) 底面圆心, O'(1) 顶面圆心
+        [s, -s, 0], [-s, -s, 0], [0, -s, s], [0, -s, -s],          // 底面标记 A-D (2-5)
+        [s / 2, s, 0], [-s / 2, s, 0], [0, s, s / 2], [0, s, -s / 2],  // 顶面标记 A'-D' (6-9)
+      ]
+      const labels = customLabels || "OO'ABCDA'B'C'D'".match(/[A-O]'?/g)
+      return { vertices: v, centers: { body: [0, 0, 0], top: [0, s, 0], bottom: [0, -s, 0] }, labels }
+    }
+
+    case 'cuboid': {
+      // 长(size)×宽(0.6size)×高(size)，底面→顶面
+      const a = s          // 半长 (x)
+      const c = s          // 半高 (y)
+      const b = s * 0.6    // 半宽 (z)
+      const v = [
+        [-a, -c, -b], [ a, -c, -b], [ a, -c,  b], [-a, -c,  b],  // 底面 ABCD (0-3)
+        [-a,  c, -b], [ a,  c, -b], [ a,  c,  b], [-a,  c,  b],  // 顶面 EFGH (4-7)
+      ]
+      const centers = {
+        body: [0, 0, 0],
+        front: [0, 0, b], back: [0, 0, -b],
+        left: [-a, 0, 0], right: [a, 0, 0],
+        top: [0, c, 0], bottom: [0, -c, 0],
+      }
+      const labels = customLabels || 'ABCDEFGH'.split('')
+      return { vertices: v, centers, labels }
+    }
+
+    case 'tetrahedron': {
+      // 正四面体 — 4个顶点取自正方体的4个对角顶点
+      // 正方体边长 L = size/√2
+      const L = size / Math.sqrt(2)
+      const h = L / 2
+      const v = [
+        [-h, -h, -h], [ h,  h, -h], [ h, -h,  h], [-h,  h,  h],
+      ]
+      // 中点
+      const mid01 = [(v[0][0]+v[1][0])/2, (v[0][1]+v[1][1])/2, (v[0][2]+v[1][2])/2]
+      const mid23 = [(v[2][0]+v[3][0])/2, (v[2][1]+v[3][1])/2, (v[2][2]+v[3][2])/2]
+      const mid02 = [(v[0][0]+v[2][0])/2, (v[0][1]+v[2][1])/2, (v[0][2]+v[2][2])/2]
+      const mid13 = [(v[1][0]+v[3][0])/2, (v[1][1]+v[3][1])/2, (v[1][2]+v[3][2])/2]
+      const mid03 = [(v[0][0]+v[3][0])/2, (v[0][1]+v[3][1])/2, (v[0][2]+v[3][2])/2]
+      const mid12 = [(v[1][0]+v[2][0])/2, (v[1][1]+v[2][1])/2, (v[1][2]+v[2][2])/2]
+      // 面重心
+      const face012 = [(v[0][0]+v[1][0]+v[2][0])/3, (v[0][1]+v[1][1]+v[2][1])/3, (v[0][2]+v[1][2]+v[2][2])/3]
+      const face013 = [(v[0][0]+v[1][0]+v[3][0])/3, (v[0][1]+v[1][1]+v[3][1])/3, (v[0][2]+v[1][2]+v[3][2])/3]
+      const face023 = [(v[0][0]+v[2][0]+v[3][0])/3, (v[0][1]+v[2][1]+v[3][1])/3, (v[0][2]+v[2][2]+v[3][2])/3]
+      const face123 = [(v[1][0]+v[2][0]+v[3][0])/3, (v[1][1]+v[2][1]+v[3][1])/3, (v[1][2]+v[2][2]+v[3][2])/3]
+      const c = {
+        body: [0, 0, 0],
+        mid01, mid23, mid02, mid13, mid03, mid12,
+        face012, face013, face023, face123,
+      }
+      const labels = customLabels || 'ABCD'.split('')
+      return { vertices: v, centers: c, labels }
+    }
+
+    case 'octahedron': {
+      // 正八面体 — 6个顶点在坐标轴上
+      const a = size / Math.sqrt(2)
+      const v = [
+        [0, a, 0], [a, 0, 0], [0, 0, a], [-a, 0, 0], [0, 0, -a], [0, -a, 0],
+      ]
+      const c = {
+        body: [0, 0, 0],
+        top: [0, a, 0],
+        bottom: [0, -a, 0],
+        equator: [0, 0, 0],
+      }
+      const labels = customLabels || ['T','R','F','L','B','D']
+      return { vertices: v, centers: c, labels }
+    }
+
+    default:
+      return { vertices: [], centers: {}, labels: [] }
   }
 }
 

@@ -1,7 +1,6 @@
 // ═══════════════════════════════════════════════════════
 //  约束求解器 — 边方向分组 / 顶点模板计算 / 迭代松弛
 // ═══════════════════════════════════════════════════════
-import { getScaledTemplate } from './sceneIRTemplate'
 
 // ── 多面体棱边方向分组 ────────────────────────────────
 //  返回 { groupLabel: [edgeId, ...] }
@@ -99,12 +98,47 @@ export function getDefaultEdgeLengths(type, constraintMode, modeParams) {
 }
 
 // ── 初始顶点模板（从默认尺寸构建）─────────────────────
-// ★ 顶点坐标统一从 sceneIRTemplate 获取
-
 /** 返回初始顶点坐标，用于迭代松弛的起点 */
 export function getTemplateVertices(type, size = 2) {
-  const tpl = getScaledTemplate(type, { size })
-  return tpl.vertices
+  const s = size / 2
+
+  switch (type) {
+    case 'cube':
+    case 'cuboid': {
+      const a = s          // x 半长
+      const c = s          // y 半高
+      const b = s * 0.6    // z 半宽 (cuboid) — cube 这里会覆盖
+      // 对于 cube，所有半轴相等
+      const hx = type === 'cube' ? s : a
+      const hy = s
+      const hz = type === 'cube' ? s : b
+      return [
+        [-hx, -hy, -hz], [ hx, -hy, -hz], [ hx, -hy,  hz], [-hx, -hy,  hz],  // 底面 ABCD
+        [-hx,  hy, -hz], [ hx,  hy, -hz], [ hx,  hy,  hz], [-hx,  hy,  hz],  // 顶面 EFGH
+      ]
+    }
+    case 'pyramid': {
+      return [
+        [-s, -s, -s], [ s, -s, -s], [ s, -s,  s], [-s, -s,  s],  // 底面 ABCD
+        [ 0,  s,  0],                                              // 顶点 P
+      ]
+    }
+    case 'prism': {
+      return [
+        [-s, -s, -s], [ s, -s, -s], [-s, -s,  s],  // 底面 ABC
+        [-s,  s, -s], [ s,  s, -s], [-s,  s,  s],  // 顶面 A'B'C'
+      ]
+    }
+    case 'squareFrustum': {
+      const topS = s / 2
+      return [
+        [-s, -s, -s], [ s, -s, -s], [ s, -s,  s], [-s, -s,  s],     // 底面 ABCD
+        [-topS, s, -topS], [ topS, s, -topS], [ topS, s,  topS], [-topS, s,  topS],  // 顶面 EFGH
+      ]
+    }
+    default:
+      return []
+  }
 }
 
 // ── 边 → 顶点索引映射 ─────────────────────────────────

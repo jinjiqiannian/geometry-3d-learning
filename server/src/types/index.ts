@@ -44,32 +44,6 @@ export type GeometryType =
   | 'cone' | 'pyramid' | 'prism'
   | 'squareFrustum' | 'circularFrustum'
 
-// ── Problem Type Classification ─────────────────
-export type ProblemSubType =
-  | 'skew_lines'
-  | 'dihedral_angle'
-  | 'line_plane_angle'
-  | 'section'
-  | 'shortest_distance'
-  | 'volume'
-  | 'spatial_vector'
-  | 'distance_point_plane'
-  | 'inscribed_circumscribed'
-  | 'general'
-
-export const PROBLEM_SUBTYPE_NAMES: Record<ProblemSubType, string> = {
-  skew_lines: '异面直线夹角',
-  dihedral_angle: '二面角',
-  line_plane_angle: '线面角',
-  section: '截面',
-  shortest_distance: '最短距离',
-  volume: '体积计算',
-  spatial_vector: '空间向量',
-  distance_point_plane: '点到平面距离',
-  inscribed_circumscribed: '内切外接',
-  general: '综合题',
-}
-
 export interface ParsedProblem {
   type: GeometryType
   size: number
@@ -78,8 +52,6 @@ export interface ParsedProblem {
   annotations: Annotation[]
   explanation: string
   extraParams?: Record<string, number>  // e.g. { height: 4, radius2: 3 }
-  problemType?: ProblemSubType  // AI 识别的题型（唯一权威来源）
-  category?: ModelCategory      // 模型分类，undefined=geometry-3d（向后兼容）
 }
 
 export interface HighlightLine {
@@ -94,114 +66,8 @@ export interface Annotation {
   position: 'top' | 'bottom' | 'left' | 'right'
 }
 
-// ── Scene IR (Scene Intermediate Representation) ──
-// 唯一的事实源：AI Steps → SceneIR → 3D Renderer
-
-export interface ScenePoint {
-  id: string           // 唯一标识，如 "A"、"A1"、"M_AB"
-  label: string        // 显示标签，如 "A₁"
-  position: [number, number, number]  // 3D 坐标
-  color?: string
-  visible?: boolean
-}
-
-export interface SceneLine {
-  id: string           // 唯一标识，如 "AB"
-  from: string         // 起点 ScenePoint.id
-  to: string           // 终点 ScenePoint.id
-  category: string     // '棱' | '底面边' | '顶面边' | '侧棱' | '对角线' | '辅助线' | '高线'
-  dashed?: boolean
-  color?: string
-  visible?: boolean
-  highlighted?: boolean
-}
-
-export interface SceneFace {
-  id: string
-  vertices: string[]   // ScenePoint.id 列表
-  opacity?: number
-  visible?: boolean
-  color?: string
-}
-
-export interface SceneSection {
-  id: string
-  type: 'plane' | 'polygon'
-  points: string[]     // 截面经过的 ScenePoint.id
-  visible?: boolean
-}
-
-export interface SceneIR {
-  points: ScenePoint[]
-  lines: SceneLine[]
-  faces?: SceneFace[]
-  sections?: SceneSection[]
-  labelVisibility?: Record<string, boolean>
-  annotations?: { text: string; position: string }[]
-}
-
-export interface ScenePointRef {
-  pointId: string
-  position: [number, number, number]
-  label: string
-}
-
-export interface SceneOps {
-  highlightPoints?: string[]
-  highlightLines?: string[]
-  addAuxLines?: {
-    from: ScenePointRef
-    to: ScenePointRef
-    label?: string
-    dashed?: boolean
-    color?: string
-  }[]
-  addAuxPoints?: {
-    id: string
-    label: string
-    position: 'midpoint' | 'intersection' | 'projection'
-    refs: string[]
-  }[]
-  fadeLines?: string[]
-  focusPoints?: string[]
-  showLabels?: string[]
-  planeHighlight?: {
-    vertices: string[]
-    color?: string
-    opacity?: number
-  }
-  sectionCut?: {
-    plane: string[]
-    showSection?: boolean
-    opacity?: number
-  }
-}
-
-// ── SceneOp — 原子化场景操作 ──────────────────────
-// 每个 Step 对应一个或多个 SceneOp，按顺序执行
-// 替代旧的 SceneState（含渲染控制字段）
-
-export type SceneOp =
-  | { type: 'highlight'; targets: string[] }
-  | { type: 'addAuxLine'; from: string; to: string; dashed?: boolean; color?: string }
-  | { type: 'addAuxPoint'; id: string; position: 'midpoint' | 'intersection' | 'projection'; refs: string[] }
-  | { type: 'fade'; targets: string[] }
-  | { type: 'setOpacity'; targets: string[]; opacity: number }
-  | { type: 'section'; plane: string[]; showSection?: boolean; opacity?: number }
-  | { type: 'showLabels'; labels: string[] }
-
 // ── Steps ─────────────────────────────────────────
-export type StepType = 'conceptual' | 'construction' | 'calculation' | 'validation'
-
-export interface WhyExplain {
-  intuition: string   // 直觉理解（生活类比）
-  math_reason: string // 数学原理
-}
-
-export interface StuckExplain {
-  misconception: string // 学生常见错误理解
-  correction: string    // 正确理解
-}
+export type StepType = 'observation' | 'construction' | 'calculation' | 'conclusion'
 
 export interface AuxLine {
   from: string
@@ -228,12 +94,8 @@ export interface Step {
   title: string
   content: string
   type: StepType
-  why?: WhyExplain
-  stuck?: StuckExplain
-  sceneState?: SceneState           // 旧格式 — AI 直接控制渲染（已弃用）
-  sceneOps?: SceneOps               // 中间格式 — 结构化操作指令（兼容）
-  sceneOpSequence?: SceneOp[]       // ✅ 新格式 — 原子操作序列（SceneIR 驱动）
-  locked?: boolean                  // Free用户锁定
+  sceneState?: SceneState
+  locked?: boolean  // Free用户锁定
 }
 
 // ── Workspace ─────────────────────────────────────
@@ -306,28 +168,6 @@ export interface PPTExportOptions {
   includeNarration?: boolean
 }
 
-// ── Knowledge Graph ────────────────────────────────
-export interface KnowledgePoint {
-  id: string
-  code: string
-  name: string
-  category: string
-  sub_category: string | null
-  description: string | null
-  importance: number
-  lft: number
-  rgt: number
-  depth: number
-  created_at: string
-}
-
-export interface KnowledgePrerequisite {
-  id: string
-  knowledge_id: string
-  prerequisite_id: string
-  created_at: string
-}
-
 // ── Billing ───────────────────────────────────────
 export interface BillingStatus {
   plan: 'free' | 'pro' | 'teacher'
@@ -337,64 +177,6 @@ export interface BillingStatus {
   daily_usage: number
   daily_limit: number
   remaining: number
-}
-
-// ── MathModel 2.0 ──────────────────────────────────
-export type ModelCategory =
-  | 'geometry-3d'
-  | 'function'
-  | 'derivative'
-  | 'sequence'
-  | 'conic'
-  | 'probability'
-  | 'statistics'
-  | 'vector'
-  | 'complex'
-  | 'inequality'
-
-export type DifficultyLevel = 1 | 2 | 3 | 4 | 5
-
-export interface RecognitionRule {
-  keywords: string[]
-  patterns: string[]
-  requiresLLM: boolean
-}
-
-export interface SolutionMethod {
-  name: string
-  description: string
-  steps: string[]
-  formula?: string
-}
-
-export interface ModelPrompts {
-  solve: string
-  tutor: string
-  socratic: string
-  hint: string
-  variant: string
-}
-
-export interface ExampleRef {
-  id: string
-  title: string
-  difficulty: DifficultyLevel
-}
-
-export interface MathModel {
-  id: string
-  title: string
-  category: ModelCategory
-  difficulty: DifficultyLevel
-  recognition: RecognitionRule
-  methods: SolutionMethod[]
-  traps: string[]
-  prerequisites: string[]
-  nextModels: string[]
-  examples: ExampleRef[]
-  aiPrompts: ModelPrompts
-  createdAt: string
-  updatedAt: string
 }
 
 // ── API Responses ─────────────────────────────────
@@ -420,8 +202,6 @@ declare global {
       userId?: string
       userPlan?: 'free' | 'pro' | 'teacher'
       userRole?: 'student' | 'teacher'
-      query: Record<string, any>
-      params: Record<string, any>
     }
   }
 }

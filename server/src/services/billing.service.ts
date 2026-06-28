@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 import Stripe from 'stripe'
 import { env } from '../config/env.js'
-import { supabase, supabaseAdmin } from '../lib/supabase.js'
+import { getSupabase } from '../db/client.js'
 import type { BillingStatus } from '../types/index.js'
 
 let stripe: Stripe | null = null
@@ -22,10 +22,10 @@ function getStripe(): Stripe {
 
 // ── Price ID mapping ───────────────────────────────
 const PRICE_IDS: Record<string, string> = {
-  pro_monthly: process.env.STRIPE_PRICE_PRO_MONTHLY || '',
-  pro_yearly: process.env.STRIPE_PRICE_PRO_YEARLY || '',
-  teacher_monthly: process.env.STRIPE_PRICE_TEACHER_MONTHLY || '',
-  teacher_yearly: process.env.STRIPE_PRICE_TEACHER_YEARLY || '',
+  pro_monthly: process.env.STRIPE_PRICE_PRO_MONTHLY || 'price_pro_monthly',
+  pro_yearly: process.env.STRIPE_PRICE_PRO_YEARLY || 'price_pro_yearly',
+  teacher_monthly: process.env.STRIPE_PRICE_TEACHER_MONTHLY || 'price_teacher_monthly',
+  teacher_yearly: process.env.STRIPE_PRICE_TEACHER_YEARLY || 'price_teacher_yearly',
 }
 
 // ── Create Checkout Session ────────────────────────
@@ -37,13 +37,13 @@ export async function createCheckoutSession(
   interval: 'monthly' | 'yearly'
 ): Promise<{ url: string }> {
   const stripe = getStripe()
-  supabase
+  const supabase = getSupabase()
 
   const priceKey = `${plan}_${interval}`
   const priceId = PRICE_IDS[priceKey]
 
-  if (!priceId) {
-    throw new Error(`Stripe price not configured for ${priceKey}. Set env STRIPE_PRICE_${plan.toUpperCase()}_${interval.toUpperCase()}`)
+  if (!priceId || priceId.startsWith('price_')) {
+    throw new Error(`Stripe price not configured for ${priceKey}. Set STRIPE_PRICE_${plan.toUpperCase()}_${interval.toUpperCase()} in env.`)
   }
 
   // Get or create Stripe customer
@@ -105,7 +105,7 @@ export async function createPortalSession(
   userId: string
 ): Promise<{ url: string }> {
   const stripe = getStripe()
-  supabase
+  const supabase = getSupabase()
 
   const { data: sub } = await supabase
     .from('subscriptions')
@@ -128,7 +128,7 @@ export async function createPortalSession(
 // ── Get Billing Status ─────────────────────────────
 
 export async function getBillingStatus(userId: string): Promise<BillingStatus> {
-  supabase
+  const supabase = getSupabase()
 
   const { data: sub } = await supabase
     .from('subscriptions')
@@ -179,7 +179,7 @@ export async function handleWebhook(
     throw new Error(`Webhook signature verification failed: ${(err as Error).message}`)
   }
 
-  supabaseAdmin
+  const supabase = getSupabase()
 
   switch (event.type) {
     case 'checkout.session.completed': {

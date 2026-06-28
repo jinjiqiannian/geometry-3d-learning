@@ -10,13 +10,14 @@ import { isPolyhedral } from '../engines/geometryEngine'
 import { computeVerticesFromParams } from '../engines/constraintSolver'
 import { aiAPI } from '../services/api'
 import { computeVisualIntent } from '../engines/visualIntent'
-import { buildBaseSceneIR, applyStepToSceneIR } from '../engines/sceneIRBuilder'
 import { createLabelMap, INTERNAL_LABELS } from '../engines/labelMapper'
 import { generateShareUrl, detectShareParam, decodeShare } from '../engines/shareUtils'
 import { useSubscription } from '../contexts/SubscriptionContext'
 // 静态 import — 消除每次搜题的动态加载延迟
 import { quickMatch } from '../engines/problemParser'
-import { generateLocalSteps, detectProblemType } from '../engines/explanationEngine'
+import { generateLocalSteps } from '../engines/explanationEngine'
+// SceneIR — 3D 场景确定性状态机
+import { buildBaseSceneIR, applyStepToSceneIR } from '../engines/sceneIRBuilder'
 import './WorkspacePage.css'
 
 // ── Default constraint params ─────────────────────
@@ -207,7 +208,6 @@ export default function WorkspacePage() {
     setLoadingStage('parsing')
     setError(null)
 
-    const totalStart = performance.now()
     let parsedResult = null
     let resultSteps = []
     let succeeded = false
@@ -228,29 +228,27 @@ export default function WorkspacePage() {
       } catch (e) { /* quick match fail silently */ }
       console.log(`[perf] quickMatch: ${(performance.now() - quickTime).toFixed(0)}ms`)
 
-      // ── Phase 1: AI 一站式解决（含模型匹配 + plan 路由）──
-      // 替代旧的 parse + reason 两段式调用
-      setLoadingStage('reasoning')
-      let solveTime = performance.now()
-      const solveRes = await aiAPI.solve(text)
-      if (solveRes?.data) {
-        parsedResult = solveRes.data.parsed
-        resultSteps = solveRes.data.steps
-
-        // Fallback: 如果 AI 没有返回 problemType，用前端关键词检测兜底
-        if (!parsedResult.problemType) {
-          try {
-            parsedResult.problemType = detectProblemType(parsedResult.type, text)
-          } catch { /* fallback silent fail */ }
-        }
-
+      // ── Phase 1: Deep Parse — geometry via AI ──
+      setLoadingStage('parsing')
+      let parseTime = performance.now()
+      const parseRes = await aiAPI.parse(text)
+      if (parseRes?.data) {
+        parsedResult = parseRes.data
         setParsedData(parsedResult)
         setGeometry({
           type: parsedResult.type || 'cube',
           params: { size: parsedResult.size || 2 },
           ...defaultConstraintParams(parsedResult.type || 'cube'),
         })
+      }
+      console.log(`[perf] AI parse: ${(performance.now() - parseTime).toFixed(0)}ms`)
 
+      // ── Phase 2: Reasoning — steps via AI Pro model ──
+      setLoadingStage('reasoning')
+      let reasonTime = performance.now()
+      const reasonRes = await aiAPI.reason(text, parsedResult || { type: 'cube', size: 2 })
+      if (reasonRes?.data) {
+        resultSteps = reasonRes.data
         // Visual states 由客户端 computeVisualIntent() 即时计算，无需 AI
         setSteps(resultSteps)
         setCurrentStep(0)
@@ -288,7 +286,7 @@ export default function WorkspacePage() {
 
       succeeded = true
       await recordUsage('generate', text)
-      console.log(`[perf] AI solve: ${(performance.now() - solveTime).toFixed(0)}ms`)
+      console.log(`[perf] AI reason: ${(performance.now() - reasonTime).toFixed(0)}ms`)
       console.log(`[perf] Total solve: ${(performance.now() - totalStart).toFixed(0)}ms`)
 
       // 保存到学习记录（含步骤，支持历史回放）
@@ -401,28 +399,22 @@ export default function WorkspacePage() {
     return computeVisualIntent(step, parsedData, problemText, labelMap)
   }, [currentStep, steps, parsedData, problemText, labelMap])
 
-  // ── (3a) sceneIR — 确定性场景中间表示 ──────────────
-  //  依赖: parsedData, steps, currentStep
-  //  SceneIR 是 AI Steps → 3D 渲染之间的唯一数据层
-  //  当 steps 或 currentStep 变化时自动重新计算
-  // ── SceneIR State Machine — 链式状态机 ──────────
-  //  每个步骤从上一步的 SceneIR 增量构建，而非独立计算
+  // ── (3a) sceneIR — Step→3D 场景状态机 ──────────
+  //  依赖: steps, parsedData
   const sceneIR = useMemo(() => {
-    if (!parsedData || steps.length === 0) return null
+    if (!steps.length || !parsedData?.type) return null
     const base = buildBaseSceneIR(
       parsedData.type,
-      { size: parsedData.size },
-      parsedData.labels || undefined
+      { size: parsedData.size || 2 },
+      parsedData.vertices || parsedData.labels || null
     )
-    // 链式推进：从 base → step 0 → step 1 → ... → currentStep
-    let prevIR = base
-    for (let i = 0; i <= currentStep; i++) {
-      const step = steps[i]
-      if (!step) return prevIR
-      prevIR = applyStepToSceneIR(i, step.type, step.sceneOps, prevIR)
+    // 对当前步骤应用场景操作
+    const step = steps[currentStep]
+    if (step && step.sceneOps) {
+      return applyStepToSceneIR(currentStep, step.type, step.sceneOps, base)
     }
-    return prevIR
-  }, [currentStep, steps, parsedData])
+    return base
+  }, [steps, currentStep, parsedData])
 
   // ── (3b) 有效标签显示 — 渐进披露：第一步隐藏标签 ──
   const effectiveShowLabels = useMemo(() => {

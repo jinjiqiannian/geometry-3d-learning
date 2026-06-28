@@ -1,20 +1,9 @@
 import { useState, memo } from 'react'
-
-// 题型名称映射
-const PROBLEM_TYPE_NAMES = {
-  skew_lines: '异面直线夹角',
-  dihedral_angle: '二面角',
-  line_plane_angle: '线面角',
-  section: '截面问题',
-  shortest_distance: '最短距离',
-  volume: '体积计算',
-  spatial_vector: '空间向量',
-  distance_point_plane: '点到平面距离',
-  inscribed_circumscribed: '内切外接',
-}
 import ProgressHeader from './ProgressHeader'
 import StepList from './StepList'
 import AnswerPanel from './AnswerPanel'
+import AnswerBanner from './explanation/AnswerBanner'
+import CoreIdeaCard from './explanation/CoreIdeaCard'
 import PlaybackControls from './PlaybackControls'
 import './ExplanationPanel.css'
 
@@ -39,7 +28,7 @@ const ExplanationPanel = memo(function ExplanationPanel({
   isPlaying = false,
 }) {
   const currentStepData = steps[currentStep]
-  const showAnswer = currentStepData?.type === 'validation' && !loading
+  const showAnswer = currentStepData?.type === 'conclusion' && !loading
   const [followUpInput, setFollowUpInput] = useState('')
   const [showFollowUp, setShowFollowUp] = useState(false)
 
@@ -76,28 +65,86 @@ const ExplanationPanel = memo(function ExplanationPanel({
         </div>
       )}
 
-      {/* ── 题型识别徽标 ── */}
-      {parsedData?.problemType && parsedData.problemType !== 'general' && (
-        <div className="ep-type-badge">
-          <span className="ep-type-icon">📐</span>
-          <span className="ep-type-label">识别题型</span>
-          <span className="ep-type-name">
-            {PROBLEM_TYPE_NAMES[parsedData.problemType] || parsedData.problemType}
-          </span>
-        </div>
+      {/* ════════════════════════════════════════════
+         P0: 答案优先层级
+         优先级:
+         1. 答案 (AnswerBanner)
+         2. 核心思路 (CoreIdeaCard)
+         3. 分步解析 (折叠)
+         4. AI 完整推理 (折叠)
+         ════════════════════════════════════════════ */}
+      {steps.length > 0 && loadingStage === 'done' && !loading && (
+        <>
+          {/* 优先级 1: 答案 — 学生最关心 */}
+          <AnswerBanner
+            steps={steps}
+            loading={loading}
+            loadingStage={loadingStage}
+          />
+
+          {/* 优先级 2: 核心思路 + 知识点标签 */}
+          <CoreIdeaCard
+            steps={steps}
+            parsedData={parsedData}
+            loading={loading}
+            loadingStage={loadingStage}
+          />
+
+          {/* 知识点标签 */}
+          {parsedData?.knowledgePoints?.length > 0 && (
+            <div className="ep-knowledge-points" style={{
+              margin: '0 16px 8px',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '6px',
+            }}>
+              {parsedData.knowledgePoints.map((kp, i) => (
+                <span key={i} style={{
+                  fontSize: '0.75rem',
+                  padding: '2px 10px',
+                  borderRadius: '12px',
+                  background: 'var(--accent-subtle)',
+                  color: 'var(--accent)',
+                  border: '1px solid var(--accent)',
+                }}>
+                  {kp}
+                </span>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* ── 解析 ── */}
       {steps.length > 0 ? (
         <div className="ep-steps-wrap">
-          <div className="ep-steps-label">解析</div>
-          <StepList
-            steps={steps}
-            currentStep={currentStep}
-            onStepClick={onStepClick}
-          />
+          {/* 优先级 3: 分步解析 (默认折叠) */}
+          <details className="ep-details">
+            <summary className="ep-details-summary">📖 分步解析</summary>
+            <StepList
+              steps={steps}
+              currentStep={currentStep}
+              onStepClick={onStepClick}
+            />
+          </details>
 
-          {/* Final answer (only on conclusion step) */}
+          {/* AI 推理过程 (默认折叠) */}
+          {parsedData?.aiReasoning && (
+            <details className="ep-details" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+              <summary className="ep-details-summary">🤖 AI 推理过程</summary>
+              <div style={{
+                padding: '8px 16px 12px',
+                fontSize: 'var(--text-xs)',
+                color: 'var(--text-secondary)',
+                lineHeight: 1.6,
+                whiteSpace: 'pre-wrap',
+              }}>
+                {parsedData.aiReasoning}
+              </div>
+            </details>
+          )}
+
+          {/* Final answer (only on conclusion step) — 保留原有 AnswerPanel */}
           {showAnswer && (
             <AnswerPanel
               step={currentStepData}

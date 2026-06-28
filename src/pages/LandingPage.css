@@ -269,7 +269,215 @@
 }
 
 /* ═══════════════════════════════════════════════════
-   Section 2 — 热门例题
+   Section 2 — 学科入口
+   ═══════════════════════════════════════════════════ */
+.landing-subjects {
+  padding: 64px 0;
+  background: linear-gradient(180deg, #ffffff 0%, #f8f9ff 100%);
+}
+
+.landing-subjects-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .landing-subjects-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .landing-subjects-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.landing-subject-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 28px 24px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  overflow: hidden;
+}
+
+.landing-subject-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: transparent;
+}
+
+.landing-subject-card-bg {
+  position: absolute;
+  top: -50%;
+  right: -30%;
+  width: 120%;
+  height: 120%;
+  opacity: 0.06;
+  border-radius: 50%;
+  transition: opacity 0.25s ease;
+}
+
+.landing-subject-card:hover .landing-subject-card-bg {
+  opacity: 0.1;
+}
+
+.landing-subject-card-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+.landing-subject-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  margin-bottom: 14px;
+  transition: transform 0.2s ease;
+}
+
+.landing-subject-card:hover .landing-subject-icon {
+  transform: scale(1.1);
+}
+
+.landing-subject-name {
+  font-size: var(--text-lg);
+  font-weight: 650;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+
+.landing-subject-desc {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.landing-subject-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.landing-subject-feature {
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.03);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .landing-subject-feature {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.landing-subject-card-decoration {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  opacity: 0.04;
+}
+
+.landing-subject-short-name {
+  font-size: 80px;
+  font-weight: 800;
+  letter-spacing: -0.1em;
+  line-height: 1;
+}
+
+.landing-subject-card:hover .landing-subject-card-decoration {
+  opacity: 0.06;
+}
+
+/* ═══════════════════════════════════════════════════
+   Section 3 — 跨学科推荐
+   ═══════════════════════════════════════════════════ */
+.landing-cross-subject {
+  padding: 64px 0;
+}
+
+.landing-cross-subject-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .landing-cross-subject-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .landing-cross-subject-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.landing-cross-subject-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  transition: all 0.2s ease;
+}
+
+.landing-cross-subject-card:hover {
+  border-color: var(--border-default);
+  background: var(--accent-subtle);
+}
+
+.landing-cross-subject-icon {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.landing-cross-subject-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+}
+
+.landing-cross-subject-title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+
+.landing-cross-subject-desc {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════
+   Section 4 — 热门例题
    ═══════════════════════════════════════════════════ */
 .landing-examples {
   padding: 64px 0;

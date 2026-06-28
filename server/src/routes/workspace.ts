@@ -15,7 +15,7 @@ function getParam(req: Request, name: string): string {
 
 // ── Validation ─────────────────────────────────────
 const createSchema = z.object({
-  problemText: z.string().min(3, '题目至少3个字符').max(2000, '题目最多2000个字符'),
+  problemText: z.string().min(3),
   parsedData: z.any().optional(),
   steps: z.any().optional(),
   geometry: z.any().optional(),

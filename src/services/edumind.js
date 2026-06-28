@@ -1,29 +1,22 @@
 // ═══════════════════════════════════════════════════════
 //  EduMind API Client
+//  来源: archive/exammind frontend/src/lib/api.ts (适配主项目)
 // ═══════════════════════════════════════════════════════
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_BASE = import.meta.env.VITE_API_URL || ''
 
 function getToken() {
-  try {
-    return localStorage.getItem('mathviz_token')
-  } catch {
-    return null
-  }
+  try { return localStorage.getItem('mathviz_token') } catch { return null }
 }
 
 async function request(path, options = {}) {
   const { method = 'GET', body, auth = true } = options
   const headers = { 'Content-Type': 'application/json' }
   const token = getToken()
-  if (auth && token) {
-    headers['Authorization'] = `Bearer ${token}`
-  }
+  if (auth && token) headers['Authorization'] = `Bearer ${token}`
 
   const config = { method, headers }
-  if (body && method !== 'GET') {
-    config.body = JSON.stringify(body)
-  }
+  if (body && method !== 'GET') config.body = JSON.stringify(body)
 
   const response = await fetch(`${API_BASE}${path}`, config)
 
@@ -34,14 +27,12 @@ async function request(path, options = {}) {
   }
 
   const json = await response.json()
-  if (!response.ok) {
-    throw new Error(json.error || `请求失败 (${response.status})`)
-  }
+  if (!response.ok) throw new Error(json.error || `请求失败 (${response.status})`)
   return json
 }
 
 export const edumindAPI = {
-  // ── 考试管理 ──
+  // ── 考试 ──
   createExam(data) {
     return request('/api/edumind/exams', { method: 'POST', body: data })
   },
@@ -50,9 +41,6 @@ export const edumindAPI = {
   },
   getExam(id) {
     return request(`/api/edumind/exams/${id}`)
-  },
-  updateExam(id, data) {
-    return request(`/api/edumind/exams/${id}`, { method: 'PATCH', body: data })
   },
   deleteExam(id) {
     return request(`/api/edumind/exams/${id}`, { method: 'DELETE' })
@@ -71,6 +59,17 @@ export const edumindAPI = {
     return request('/api/edumind/diagnosis')
   },
 
+  // ── 学生画像 ──
+  getStudentProfile() {
+    return request('/api/edumind/student/profile')
+  },
+  getStudentMastery() {
+    return request('/api/edumind/student/mastery')
+  },
+  getStudentMistakes() {
+    return request('/api/edumind/student/mistakes')
+  },
+
   // ── 学习计划 ──
   generatePlan(examId, durationDays, goal) {
     return request('/api/edumind/plan/generate', {
@@ -82,18 +81,12 @@ export const edumindAPI = {
     return request('/api/edumind/plan')
   },
   updatePlanProgress(id, progress) {
-    return request(`/api/edumind/plan/${id}`, {
-      method: 'PATCH',
-      body: { progress },
-    })
+    return request(`/api/edumind/plan/${id}`, { method: 'PATCH', body: { progress } })
   },
 
   // ── AI 教练 ──
   askCoach(question, examId) {
-    return request('/api/edumind/coach/ask', {
-      method: 'POST',
-      body: { question, examId },
-    })
+    return request('/api/edumind/coach/ask', { method: 'POST', body: { question, examId } })
   },
   getCoachHistory(limit = 20) {
     return request(`/api/edumind/coach/history?limit=${limit}`)
@@ -102,9 +95,22 @@ export const edumindAPI = {
     return request('/api/edumind/coach/daily')
   },
   acknowledgeReminder(reminderId) {
-    return request('/api/edumind/coach/acknowledge', {
+    return request('/api/edumind/coach/acknowledge', { method: 'POST', body: { reminderId } })
+  },
+
+  // ── 上传 ──
+  uploadFile(examId, file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('examId', examId)
+    const token = getToken()
+    return fetch(`${API_BASE}/api/edumind/upload`, {
       method: 'POST',
-      body: { reminderId },
-    })
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    }).then(r => r.json())
+  },
+  getUploadStatus(id) {
+    return request(`/api/edumind/upload/${id}/status`)
   },
 }

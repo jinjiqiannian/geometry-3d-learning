@@ -2,7 +2,7 @@
 //  频率限制中间件 — 基于用户plan的差异化限制
 // ═══════════════════════════════════════════════════════
 import { Request, Response, NextFunction } from 'express'
-import { supabase } from '../lib/supabase.js'
+import { getSupabase } from '../db/client.js'
 
 const DAILY_LIMITS: Record<string, number> = {
   free: 3,
@@ -17,11 +17,8 @@ const DAILY_LIMITS: Record<string, number> = {
 export function dailyLimit(action: string) {
   return async (req: Request, res: Response, next: NextFunction) => {
     if (!req.userId || !req.userPlan) {
-      return res.status(401).json({
-        success: false,
-        error: '请先登录后使用',
-        code: 'AUTH_REQUIRED',
-      })
+      // No auth — skip rate limiting (auth middleware will handle)
+      return next()
     }
 
     const plan = req.userPlan
@@ -32,6 +29,7 @@ export function dailyLimit(action: string) {
     }
 
     try {
+      const supabase = getSupabase()
       const today = new Date().toISOString().slice(0, 10)
 
       const { count, error } = await supabase
@@ -43,11 +41,7 @@ export function dailyLimit(action: string) {
 
       if (error) {
         console.warn('Rate limit check failed:', error.message)
-        return res.status(429).json({
-          success: false,
-          error: '服务繁忙，请稍后再试',
-          code: 'RATE_LIMIT_CHECK_FAILED',
-        })
+        return next() // Fail open
       }
 
       const usage = count || 0
@@ -63,14 +57,12 @@ export function dailyLimit(action: string) {
         })
       }
 
+      // Attach usage info to request for logging
+      ;(req as any)._usageCount = usage
       next()
     } catch (err) {
       console.error('Rate limit error:', err)
-      return res.status(500).json({
-        success: false,
-        error: '服务异常，请稍后再试',
-        code: 'RATE_LIMIT_ERROR',
-      })
+      next() // Fail open
     }
   }
 }
@@ -85,6 +77,7 @@ export async function recordUsage(
   workspaceId?: string
 ): Promise<void> {
   try {
+    const supabase = getSupabase()
     await supabase.from('usage_records').insert({
       user_id: userId,
       action,

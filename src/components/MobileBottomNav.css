@@ -61,6 +61,138 @@
   color: var(--text-primary);
 }
 
+.mb-nav-subject-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.mb-nav-subject-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: -2px;
+  cursor: pointer;
+}
+
+.mb-subject-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 150;
+  animation: fade-in 0.2s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mb-subject-menu {
+  position: fixed;
+  bottom: 64px;
+  left: 0;
+  right: 0;
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  box-shadow: var(--shadow-xl);
+  z-index: 200;
+  animation: slide-up 0.25s ease;
+  max-height: 70vh;
+  overflow: hidden;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.mb-subject-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.mb-subject-menu-title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mb-subject-menu-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mb-subject-menu-close:hover {
+  background: var(--accent-subtle);
+  color: var(--text-primary);
+}
+
+.mb-subject-menu-list {
+  padding: 8px 12px 16px;
+}
+
+.mb-subject-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.mb-subject-menu-item:hover {
+  background: var(--accent-subtle);
+}
+
+.mb-subject-menu-item.active {
+  background: var(--accent-subtle);
+  color: var(--text-primary);
+}
+
+.mb-subject-menu-item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mb-subject-menu-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.mb-subject-menu-item-name {
+  font-size: var(--text-sm);
+  font-weight: 550;
+  color: inherit;
+}
+
+.mb-subject-menu-item-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
 /* 移动端：显示底部导航，为 Tab Bar 腾出空间 */
 @media (max-width: 767px) {
   .mobile-bottom-nav {

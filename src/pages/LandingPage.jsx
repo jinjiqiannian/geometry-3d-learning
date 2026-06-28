@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSubscription } from '../contexts/SubscriptionContext'
-import { EXAMPLES, GEOMETRY_NAMES } from '../constants'
+import { EXAMPLES, GEOMETRY_NAMES, SUBJECTS, CROSS_SUBJECT_RECOMMENDATIONS } from '../constants'
 import { recommendProblems } from '../engines/difficultyEngine'
 import CameraCapture from '../features/solid-geometry/CameraCapture'
 import './LandingPage.css'
 
-// ── Logo SVG ──────────────────────────────────────
 function GeometryLogo({ size = 32 }) {
   return (
     <svg className="landing-logo-svg" viewBox="0 0 32 32" fill="none"
@@ -21,7 +20,49 @@ function GeometryLogo({ size = 32 }) {
   )
 }
 
-// ── Feature icon SVGs ─────────────────────────────
+function SubjectIcon({ type, size = 24 }) {
+  const icons = {
+    math: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ width: size, height: size }}>
+        <path d="M16 2L3 9v14l13 7 13-7V9L16 2z" />
+        <path d="M3 9l13 7 13-7" />
+        <path d="M16 23V9" />
+      </svg>
+    ),
+    physics: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ width: size, height: size }}>
+        <circle cx="12" cy="12" r="10" />
+        <circle cx="12" cy="12" r="4" />
+        <line x1="12" y1="2" x2="12" y2="6" />
+        <line x1="12" y1="18" x2="12" y2="22" />
+        <line x1="2" y1="12" x2="6" y2="12" />
+        <line x1="18" y1="12" x2="22" y2="12" />
+      </svg>
+    ),
+    chemistry: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ width: size, height: size }}>
+        <circle cx="12" cy="8" r="3" />
+        <circle cx="8" cy="16" r="3" />
+        <circle cx="16" cy="16" r="3" />
+        <path d="M12 11L12 13" />
+        <path d="M12 13L8 13" />
+        <path d="M12 13L16 13" />
+      </svg>
+    ),
+    biology: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ width: size, height: size }}>
+        <ellipse cx="12" cy="12" rx="8" ry="10" />
+        <path d="M12 4L12 20" />
+        <path d="M6 8L18 8" />
+        <path d="M6 12L18 12" />
+        <path d="M6 16L18 16" />
+        <circle cx="12" cy="12" r="2" />
+      </svg>
+    ),
+  }
+  return icons[type] || icons.math
+}
+
 const FEATURE_ICONS = {
   ai: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -74,7 +115,7 @@ const FEATURES = [
   {
     id: 'ai',
     title: 'AI 解析',
-    desc: '智能识别几何题目，自动生成完整解题步骤与答案',
+    desc: '智能识别题目，自动生成完整解题步骤与答案',
     icon: FEATURE_ICONS.ai,
     gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
   },
@@ -115,7 +156,6 @@ const FEATURES = [
   },
 ]
 
-// ── 热门题目标签（Hero 内快速填充）──────────────
 const HOT_TAGS = [
   { label: '正方体', text: '正方体ABCD-A₁B₁C₁D₁棱长为2，求异面直线A₁B与B₁C所成角余弦值' },
   { label: '三棱锥', text: '正三棱锥S-ABC底面边长为4，高为3，求侧棱与底面所成角' },
@@ -124,7 +164,6 @@ const HOT_TAGS = [
   { label: '异面直线', text: '正方体棱长为1，求异面直线AC与BD₁的距离' },
 ]
 
-// ── 分类 & 几何体类型 ──
 const ALL_CATEGORIES = ['全部', ...new Set(EXAMPLES.map(e => e.category))]
 const ALL_GEOMETRY_TYPES = [...new Set(EXAMPLES.map(e => e.geometryType))]
 
@@ -132,7 +171,6 @@ export default function LandingPage() {
   const navigate = useNavigate()
   const { isPro } = useSubscription()
 
-  // Input
   const [input, setInput] = useState('')
   const [focused, setFocused] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -144,12 +182,10 @@ export default function LandingPage() {
     catch { /* */ }
   }, [])
 
-  // Filter
   const [searchQuery, setSearchQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('全部')
   const [activeGeoType, setActiveGeoType] = useState(null)
 
-  // History & recommendations
   const [history, setHistory] = useState([])
   const [recommended, setRecommended] = useState(null)
 
@@ -164,7 +200,6 @@ export default function LandingPage() {
     } catch { /* */ }
   }, [])
 
-  // ── Filtered examples ──
   const filteredExamples = useMemo(() => {
     let results = EXAMPLES
     if (activeCategory !== '全部') {
@@ -185,7 +220,6 @@ export default function LandingPage() {
     return results
   }, [searchQuery, activeCategory, activeGeoType])
 
-  // ── Navigate ──
   const handleGenerate = useCallback(async (text) => {
     const trimmed = text.trim()
     if (trimmed.length < 3) return
@@ -207,12 +241,10 @@ export default function LandingPage() {
     handleGenerate(text)
   }
 
-  // Hot tag click: fill input (don't submit immediately)
   const handleHotTag = (text) => {
     setInput(text)
   }
 
-  // Continue history
   const handleContinue = (item) => {
     if (item.steps && item.steps.length > 0) {
       try {
@@ -225,7 +257,6 @@ export default function LandingPage() {
     }
   }
 
-  // Camera
   const handleGeometryRecognized = useCallback((result) => {
     const desc = result?.explanation || result?.text || ''
     if (desc) setInput(prev => prev ? `${prev}\n${desc}` : desc)
@@ -243,28 +274,26 @@ export default function LandingPage() {
     return `${d.getMonth() + 1}月${d.getDate()}日`
   }
 
+  const getSubjectIconComponent = (iconName) => {
+    return <SubjectIcon type={iconName} size={20} />
+  }
+
   return (
     <div className="landing">
-      {/* ═══════════════════════════════════════════════
-          Section 1 — Hero (65vh, 垂直居中)
-          ═══════════════════════════════════════════ */}
       <section className="landing-hero">
         <div className="landing-hero-inner">
-          {/* Logo */}
           <div className="landing-hero-logo">
             <GeometryLogo size={44} />
             <span className="landing-hero-brand">几何维度</span>
           </div>
 
-          {/* Title */}
           <h1 className="landing-hero-title">
-            AI 立体几何学习助手
+            AI 多学科学习平台
           </h1>
           <p className="landing-hero-subtitle">
-            输入一道几何题，自动生成三维动态讲解
+            数学、物理、化学、生物，一站式智能学习助手
           </p>
 
-          {/* Input */}
           <div className={`landing-hero-input-wrap ${focused ? 'focused' : ''}`}>
             <textarea
               className="landing-hero-input"
@@ -273,7 +302,7 @@ export default function LandingPage() {
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               onKeyDown={handleKeyDown}
-              placeholder="输入一道立体几何题，如：正方体ABCD-A₁B₁C₁D₁棱长为2，求异面直线A₁B与B₁C所成角余弦值"
+              placeholder="输入一道题目，如：正方体ABCD-A₁B₁C₁D₁棱长为2，求异面直线A₁B与B₁C所成角余弦值"
               rows={3}
               spellCheck={false}
             />
@@ -282,7 +311,6 @@ export default function LandingPage() {
                 {loading ? '解析中…' : '按 Enter 开始解析'}
               </span>
               <div className="landing-hero-input-actions">
-                {/* Camera toggle */}
                 <button
                   className="landing-hero-camera-btn"
                   onClick={() => setShowCamera(v => !v)}
@@ -307,7 +335,6 @@ export default function LandingPage() {
 
           {error && <div className="landing-hero-error">{error}</div>}
 
-          {/* Camera panel */}
           {showCamera && (
             <div className="landing-hero-camera">
               <CameraCapture
@@ -317,7 +344,6 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* Hot tags */}
           <div className="landing-hero-tags">
             {HOT_TAGS.map(tag => (
               <button
@@ -332,17 +358,77 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════
-          Section 2 — 热门例题
-          ═══════════════════════════════════════════ */}
+      <section className="landing-subjects">
+        <div className="landing-section-inner">
+          <div className="landing-section-heading">
+            <h2 className="landing-section-title">选择学科</h2>
+            <p className="landing-section-subtitle">探索多学科学习资源</p>
+          </div>
+
+          <div className="landing-subjects-grid">
+            {SUBJECTS.map(subject => (
+              <button
+                key={subject.id}
+                className="landing-subject-card"
+                onClick={() => navigate(subject.path)}
+              >
+                <div className="landing-subject-card-bg" style={{ background: subject.gradient }} />
+                <div className="landing-subject-card-content">
+                  <div className="landing-subject-icon" style={{ backgroundColor: `${subject.color}20`, color: subject.color }}>
+                    <SubjectIcon type={subject.icon} size={28} />
+                  </div>
+                  <h3 className="landing-subject-name">{subject.name}</h3>
+                  <p className="landing-subject-desc">{subject.description}</p>
+                  <div className="landing-subject-features">
+                    {subject.features.slice(0, 3).map((feature, i) => (
+                      <span key={i} className="landing-subject-feature">{feature}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="landing-subject-card-decoration">
+                  <span className="landing-subject-short-name">{subject.shortName}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="landing-cross-subject">
+        <div className="landing-section-inner">
+          <div className="landing-section-heading">
+            <h2 className="landing-section-title">跨学科推荐</h2>
+            <p className="landing-section-subtitle">知识融会贯通，举一反三</p>
+          </div>
+
+          <div className="landing-cross-subject-grid">
+            {CROSS_SUBJECT_RECOMMENDATIONS.map(item => (
+              <div key={item.id} className="landing-cross-subject-card">
+                <div className="landing-cross-subject-icon">
+                  {item.subjects.map((subId, i) => {
+                    const subject = SUBJECTS.find(s => s.id === subId)
+                    return (
+                      <div key={i} className="landing-cross-subject-badge" style={{ backgroundColor: `${subject?.color}20`, color: subject?.color }}>
+                        {getSubjectIconComponent(subId)}
+                      </div>
+                    )
+                  })}
+                </div>
+                <h3 className="landing-cross-subject-title">{item.title}</h3>
+                <p className="landing-cross-subject-desc">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="landing-examples">
         <div className="landing-section-inner">
           <div className="landing-section-heading">
-            <h2 className="landing-section-title">热门例题</h2>
+            <h2 className="landing-section-title">数学例题</h2>
             <p className="landing-section-subtitle">精选高频立体几何题目</p>
           </div>
 
-          {/* Search + filter */}
           <div className="landing-filter-bar">
             <div className="landing-search-wrap">
               <svg className="landing-search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -363,7 +449,6 @@ export default function LandingPage() {
             </div>
 
             <div className="landing-filter-row">
-              {/* Category tabs */}
               <div className="landing-filter-tabs">
                 {ALL_CATEGORIES.map(cat => (
                   <button
@@ -376,7 +461,6 @@ export default function LandingPage() {
                 ))}
               </div>
 
-              {/* Geometry type tags */}
               <div className="landing-filter-tags">
                 <button
                   className={`landing-filter-tag ${!activeGeoType ? 'active' : ''}`}
@@ -397,7 +481,6 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Examples grid */}
           {filteredExamples.length > 0 ? (
             <div className="landing-examples-grid">
               {filteredExamples.map((ex) => (
@@ -425,7 +508,6 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* 为你推荐 */}
           {recommended && recommended.recommendations?.length > 0 && (
             <div className="landing-subsection">
               <div className="landing-subsection-header">
@@ -450,7 +532,6 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* 最近学习 */}
           {history.length > 0 && (
             <div className="landing-subsection">
               <div className="landing-subsection-header">
@@ -474,14 +555,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════
-          Section 3 — 核心功能
-          ═══════════════════════════════════════════ */}
       <section className="landing-features">
         <div className="landing-section-inner">
           <div className="landing-section-heading">
             <h2 className="landing-section-title">核心功能</h2>
-            <p className="landing-section-subtitle">六大模块，覆盖立体几何学习全流程</p>
+            <p className="landing-section-subtitle">多学科通用，覆盖学习全流程</p>
           </div>
 
           <div className="landing-features-grid">
@@ -501,9 +579,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════
-          Section 4 — 会员计划（页面最底部，低调）
-          ═══════════════════════════════════════════ */}
       <section className="landing-plans">
         <div className="landing-section-inner">
           <div className="landing-section-heading">
@@ -512,7 +587,6 @@ export default function LandingPage() {
           </div>
 
           <div className="landing-plans-grid">
-            {/* Free */}
             <div className="landing-plan-card">
               <div className="landing-plan-header">
                 <h3 className="landing-plan-name">免费版</h3>
@@ -535,7 +609,6 @@ export default function LandingPage() {
               </button>
             </div>
 
-            {/* Pro */}
             <div className={`landing-plan-card ${isPro ? 'landing-plan-card--current' : ''}`}>
               {isPro && <span className="landing-plan-badge">当前方案</span>}
               <div className="landing-plan-header">
@@ -569,23 +642,19 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════
-          Footer
-          ═══════════════════════════════════════════ */}
       <footer className="landing-footer">
         <div className="landing-footer-inner">
           <div className="landing-footer-brand">
             <GeometryLogo size={18} />
             <span>几何维度</span>
           </div>
-          <p>AI 驱动的立体几何学习工具 · 三步学会一道题</p>
+          <p>AI 驱动的多学科学习工具 · 三步学会一道题</p>
         </div>
       </footer>
     </div>
   )
 }
 
-// ── 搜索关键词高亮 ──
 function highlightMatch(text, query) {
   if (!query.trim()) return text
   const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

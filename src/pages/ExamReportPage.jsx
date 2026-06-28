@@ -1,45 +1,57 @@
 // ═══════════════════════════════════════════════════════
 //  ExamReportPage — AI 分析报告展示
+//  来源: archive AnalysisPage.tsx → JSX + edumind.css
 // ═══════════════════════════════════════════════════════
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { edumindAPI } from '../services/edumind.js'
-import MasteryStars from '../components/MasteryStars.jsx'
-import ErrorAttributionChart from '../components/ErrorAttributionChart.jsx'
 import './EduMindPage.css'
+
+const MISTYPE_LABEL = {
+  CALCULATION_ERROR: '计算错误',
+  READING_ERROR: '审题错误',
+  CONCEPT_ERROR: '知识漏洞',
+  REASONING_ERROR: '推理错误',
+  CARELESS_ERROR: '粗心错误',
+}
+
+const TYPE_COLORS = {
+  CALCULATION_ERROR: { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b' },
+  CONCEPT_ERROR: { bg: 'rgba(239,68,68,0.15)', color: '#ef4444' },
+  READING_ERROR: { bg: 'rgba(139,92,246,0.15)', color: '#8b5cf6' },
+  REASONING_ERROR: { bg: 'rgba(59,130,246,0.15)', color: '#3b82f6' },
+  CARELESS_ERROR: { bg: 'rgba(148,163,184,0.15)', color: '#94a3b8' },
+}
 
 export default function ExamReportPage() {
   const { id } = useParams()
   const [exam, setExam] = useState(null)
-  const [analysis, setAnalysis] = useState(null)
+  const [mistakes, setMistakes] = useState([])
+  const [mastery, setMastery] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [polling, setPolling] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    loadReport()
+    if (!id) return
+    loadAnalysis()
   }, [id])
 
-  async function loadReport() {
+  async function loadAnalysis() {
     try {
-      setLoading(true)
-      setError(null)
-
-      const examRes = await edumindAPI.getExam(id)
-      setExam(examRes.data)
-
-      // 尝试获取分析结果
-      try {
-        const analysisRes = await edumindAPI.getAnalysis(id)
-        const a = analysisRes.data
-        setAnalysis(a)
-
-        if (a && (a.status === 'pending' || a.status === 'processing')) {
+      const [ex, an] = await Promise.allSettled([
+        edumindAPI.getExam(id),
+        edumindAPI.getAnalysis(id),
+      ])
+      if (ex.status === 'fulfilled') setExam(ex.value.data)
+      if (an.status === 'fulfilled') {
+        const d = an.value.data
+        setMistakes(d?.mistakes || [])
+        setMastery(d?.mastery || [])
+        if (d?.status === 'pending' || d?.status === 'processing') {
           setPolling(true)
           pollAnalysis()
         }
-      } catch {
-        setAnalysis(null)
       }
     } catch (err) {
       setError(err.message)
@@ -52,8 +64,9 @@ export default function ExamReportPage() {
     const interval = setInterval(async () => {
       try {
         const res = await edumindAPI.getAnalysis(id)
-        if (res.data.status === 'completed' || res.data.status === 'failed') {
-          setAnalysis(res.data)
+        if (res.data?.status === 'completed' || res.data?.status === 'failed') {
+          setMistakes(res.data?.mistakes || [])
+          setMastery(res.data?.mastery || [])
           setPolling(false)
           clearInterval(interval)
         }
@@ -64,194 +77,94 @@ export default function ExamReportPage() {
     }, 2000)
   }
 
-  async function handleAnalyze() {
-    try {
-      setPolling(true)
-      await edumindAPI.analyze(id)
-      pollAnalysis()
-    } catch (err) {
-      setError(err.message)
-      setPolling(false)
-    }
-  }
+  if (loading) return <div className="edumind-loading">加载中...</div>
+  if (error) return <div className="edumind-error">{error}</div>
+  if (!exam) return <div className="edumind-page"><div className="edumind-empty">考试不存在</div></div>
 
-  if (loading) {
-    return <div className="edumind-page"><div className="edumind-loading">加载中...</div></div>
-  }
-
-  if (error) {
-    return (
-      <div className="edumind-page">
-        <div className="edumind-error">{error}</div>
-        <Link to="/edumind" className="edumind-link">← 返回仪表盘</Link>
-      </div>
-    )
-  }
-
-  if (!exam) {
-    return (
-      <div className="edumind-page">
-        <div className="edumind-empty">考试不存在</div>
-        <Link to="/edumind" className="edumind-link">← 返回仪表盘</Link>
-      </div>
-    )
-  }
-
-  const analysisPending = !analysis || analysis.status === 'pending' || analysis.status === 'processing'
-  const scorePct = exam.total_score > 0 ? ((exam.score / exam.total_score) * 100).toFixed(1) : null
+  const scorePct = exam.total_score && exam.actual_score != null
+    ? ((exam.actual_score / exam.total_score) * 100).toFixed(1)
+    : null
 
   return (
     <div className="edumind-page">
       <Link to="/edumind" className="edumind-link" style={{ display: 'inline-block', marginBottom: '16px' }}>
-        ← 返回仪表盘
+        ← 返回首页
       </Link>
 
-      {/* 报告头部 */}
+      {/* Header */}
       <div className="edumind-card" style={{ marginBottom: '16px' }}>
-        <div className="edumind-report-header">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 style={{ margin: '0 0 8px 0', fontSize: '1.3rem' }}>{exam.title}</h1>
-            <div style={{ color: 'var(--edumind-text-secondary)', fontSize: '0.9rem' }}>
-              {exam.exam_date ? new Date(exam.exam_date).toLocaleDateString('zh-CN') : ''}
-              {exam.duration_min ? ` · ${exam.duration_min}分钟` : ''}
-              {exam.subject ? ` · ${exam.subject}` : ''}
+            <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>{exam.title || '考试分析'}</h1>
+            <div style={{ fontSize: '0.9rem', color: 'var(--edumind-text-secondary)', marginTop: '4px' }}>
+              {exam.subject} · {exam.exam_date ? new Date(exam.exam_date).toLocaleDateString('zh-CN') : ''}
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div className="edumind-report-score">
-              <span className="score-value">{exam.score ?? '?'}</span>
-              <span className="score-total">/{exam.total_score ?? '?'}</span>
-            </div>
-            {scorePct && (
-              <div style={{ color: 'var(--edumind-text-secondary)', fontSize: '0.9rem' }}>
-                得分率 {scorePct}%
-              </div>
-            )}
-            {exam.grade && <div className="edumind-report-grade">{exam.grade}</div>}
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--edumind-primary)' }}>{exam.actual_score ?? '?'}</div>
+            <div style={{ fontSize: '0.9rem', color: 'var(--edumind-text-secondary)' }}>/ {exam.total_score ?? '?'}</div>
+            {scorePct && <div style={{ fontSize: '0.8rem', color: 'var(--edumind-text-secondary)' }}>得分率 {scorePct}%</div>}
           </div>
         </div>
 
-        {/* 分析状态 */}
         {polling && (
-          <div className="edumind-stage-badge processing" style={{ marginBottom: '8px' }}>
+          <div style={{ marginTop: '12px', fontSize: '0.9rem', color: 'var(--edumind-primary)', background: 'rgba(99,102,241,0.1)', borderRadius: '8px', padding: '8px 12px' }}>
             🔄 AI 分析中，请稍候...
           </div>
         )}
-        {analysis?.status === 'failed' && (
-          <div className="edumind-stage-badge failed" style={{ marginBottom: '8px' }}>
-            ❌ 分析失败，请重试
-          </div>
-        )}
-        {analysisPending && !polling && (
-          <button className="edumind-btn-primary" onClick={handleAnalyze}>
-            🤖 开始 AI 分析
-          </button>
-        )}
       </div>
 
-      {analysis && analysis.status === 'completed' && (
-        <>
-          {/* 总体评价 */}
-          {analysis.overall_summary && (
-            <div className="edumind-card edumind-section">
-              <h2>📋 总体评价</h2>
-              <p style={{ lineHeight: '1.7', color: 'var(--edumind-text-secondary)' }}>{analysis.overall_summary}</p>
-            </div>
-          )}
-
-          {/* 错误归因 */}
-          <div className="edumind-card edumind-section">
-            <h2>🎯 错误归因</h2>
-            <ErrorAttributionChart attributions={analysis.error_attribution || []} />
+      {/* Mistakes */}
+      {mistakes.length > 0 && (
+        <div className="edumind-card edumind-section">
+          <h2>错题归因</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {mistakes.map(m => {
+              const tc = TYPE_COLORS[m.type] || { bg: 'rgba(148,163,184,0.15)', color: '#94a3b8' }
+              return (
+                <div key={m.id} style={{ padding: '12px', background: 'var(--edumind-card-bg)', border: '1px solid var(--edumind-border)', borderRadius: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ background: tc.bg, color: tc.color, padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 500 }}>
+                      {MISTYPE_LABEL[m.type] || m.type}
+                    </span>
+                    {m.reason && <span style={{ fontSize: '0.9rem', color: 'var(--edumind-text-secondary)' }}>{m.reason}</span>}
+                  </div>
+                </div>
+              )
+            })}
           </div>
-
-          {/* 知识点掌握度 */}
-          <div className="edumind-card edumind-section">
-            <h2>📊 知识点掌握度</h2>
-            {(analysis.knowledge_mastery || []).length === 0 ? (
-              <div className="edumind-empty">暂无掌握度数据</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {(analysis.knowledge_mastery || [])
-                  .sort((a, b) => (a.mastery || 0) - (b.mastery || 0))
-                  .map(k => (
-                    <div key={k.knowledge_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--edumind-border)' }}>
-                      <div>
-                        <span>{k.name}</span>
-                        <span style={{ marginLeft: '8px', fontSize: '0.75rem', color: 'var(--edumind-text-secondary)' }}>
-                          ({k.questions_count}题, {(k.correct_rate * 100).toFixed(0)}%正确率)
-                        </span>
-                      </div>
-                      <MasteryStars mastery={k.mastery || 0} size="sm" />
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-
-          {/* 改进建议 */}
-          <div className="edumind-card edumind-section">
-            <h2>💡 改进建议</h2>
-            {(analysis.improvement_suggestions || []).length === 0 ? (
-              <div className="edumind-empty">暂无建议</div>
-            ) : (
-              <ol style={{ paddingLeft: '20px', margin: 0 }}>
-                {(analysis.improvement_suggestions || [])
-                  .sort((a, b) => (a.priority || 99) - (b.priority || 99))
-                  .map((s, i) => (
-                    <li key={i} style={{ marginBottom: '12px', lineHeight: '1.6' }}>
-                      <strong>{s.suggestion}</strong>
-                    </li>
-                  ))}
-              </ol>
-            )}
-          </div>
-
-          {/* 逐题分析 */}
-          {(exam.questions || []).length > 0 && (
-            <div className="edumind-card edumind-section">
-              <h2>📝 逐题分析</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {exam.questions.map((q, idx) => {
-                  const pct = q.score > 0 ? ((q.earned / q.score) * 100).toFixed(0) : 0
-                  const mastery = q.score > 0 ? q.earned / q.score : 0
-                  return (
-                    <div key={idx} style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--edumind-border)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                        <span style={{ fontWeight: 500 }}>第 {idx + 1} 题</span>
-                        <span style={{ color: mastery >= 0.6 ? 'var(--edumind-success)' : 'var(--edumind-danger)' }}>
-                          {q.earned}/{q.score} ({pct}%)
-                        </span>
-                      </div>
-                      {q.content && <div style={{ fontSize: '0.85rem', color: 'var(--edumind-text-secondary)', marginBottom: '4px' }}>{q.content}</div>}
-                      <MasteryStars mastery={mastery} size="sm" />
-                      {(q.knowledge_points || []).length > 0 && (
-                        <div style={{ marginTop: '4px', fontSize: '0.8rem', color: 'var(--edumind-text-secondary)' }}>
-                          知识点: {q.knowledge_points.join(', ')}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* 生成学习计划按钮 */}
-          <div style={{ textAlign: 'center', marginTop: '24px' }}>
-            <Link to="/edumind/plan" className="edumind-btn-primary">
-              📅 基于此分析生成学习计划
-            </Link>
-          </div>
-        </>
+        </div>
       )}
 
-      {analysis?.status === 'failed' && (
-        <div style={{ textAlign: 'center', marginTop: '16px' }}>
-          <button className="edumind-btn-primary" onClick={handleAnalyze}>
-            重新分析
-          </button>
+      {/* Mastery */}
+      {mastery.length > 0 && (
+        <div className="edumind-card edumind-section">
+          <h2>知识点掌握度</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {mastery.map(k => (
+              <div key={k.knowledge_point}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '0.9rem' }}>
+                  <span>{k.knowledge_point}</span>
+                  <span style={{ fontWeight: 600, color: 'var(--edumind-primary)' }}>{(k.mastery * 100).toFixed(0)}%</span>
+                </div>
+                <div className="edumind-progress-bar">
+                  <div
+                    className="edumind-progress-fill"
+                    style={{
+                      width: `${k.mastery * 100}%`,
+                      background: k.mastery >= 0.7 ? '#22c55e' : k.mastery >= 0.4 ? '#f59e0b' : '#ef4444',
+                    }}
+                  />
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--edumind-text-secondary)', marginTop: '2px' }}>{k.correct_count}/{k.question_count} 题正确</div>
+              </div>
+            ))}
+          </div>
         </div>
+      )}
+
+      {mistakes.length === 0 && mastery.length === 0 && !polling && (
+        <div className="edumind-empty">暂无分析数据</div>
       )}
     </div>
   )

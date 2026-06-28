@@ -486,3 +486,96 @@ export const FORMULAS = {
   tetrahedron: { volume: 'V = a³√2/12', surface: 'S = √3·a²' },
   octahedron: { volume: 'V = a³√2/3', surface: 'S = 2√3·a²' },
 }
+
+export const SUBJECTS = [
+  {
+    id: 'math',
+    name: '数学',
+    shortName: '数',
+    icon: 'math',
+    color: '#6366f1',
+    gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+    description: '立体几何、函数、代数',
+    features: ['AI解析', '3D动态讲解', '分步解题', '错题本'],
+    path: '/',
+  },
+  {
+    id: 'physics',
+    name: '物理',
+    shortName: '物',
+    icon: 'physics',
+    color: '#06b6d4',
+    gradient: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
+    description: '力学、电磁学、光学',
+    features: ['模型识别', '公式推导', '受力分析', '图像分析'],
+    path: '/physics',
+  },
+  {
+    id: 'chemistry',
+    name: '化学',
+    shortName: '化',
+    icon: 'chemistry',
+    color: '#22c55e',
+    gradient: 'linear-gradient(135deg, #22c55e, #10b981)',
+    description: '元素、反应、有机化学',
+    features: ['反应方程式', '元素周期表', '物质结构', '实验模拟'],
+    path: '/chemistry',
+  },
+  {
+    id: 'biology',
+    name: '生物',
+    shortName: '生',
+    icon: 'biology',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
+    description: '细胞、遗传、生态学',
+    features: ['细胞结构', 'DNA分析', '生态系统', '遗传图谱'],
+    path: '/biology',
+  },
+]
+
+export const SUBJECT_COLORS = {
+  math: '#6366f1',
+  physics: '#06b6d4',
+  chemistry: '#22c55e',
+  biology: '#f59e0b',
+}
+
+export const CROSS_SUBJECT_RECOMMENDATIONS = [
+  {
+    id: 'cross1',
+    title: '数学与物理的桥梁',
+    description: '利用数学几何知识理解物理中的力学平衡和运动轨迹，掌握向量分析在物理中的应用',
+    subjects: ['math', 'physics'],
+  },
+  {
+    id: 'cross2',
+    title: '化学中的数学思维',
+    description: '运用数学统计方法分析化学反应速率，利用几何知识理解分子空间结构',
+    subjects: ['math', 'chemistry'],
+  },
+  {
+    id: 'cross3',
+    title: '生物与化学的融合',
+    description: '通过化学原理理解生物体内的新陈代谢，掌握有机分子与生命活动的关系',
+    subjects: ['chemistry', 'biology'],
+  },
+  {
+    id: 'cross4',
+    title: '物理与生物的联系',
+    description: '利用物理学原理解释生物力学现象，理解细胞膜的渗透与扩散原理',
+    subjects: ['physics', 'biology'],
+  },
+  {
+    id: 'cross5',
+    title: '多学科综合应用',
+    description: '结合数学建模、物理模拟、化学分析和生物实验，解决复杂的实际问题',
+    subjects: ['math', 'physics', 'chemistry'],
+  },
+  {
+    id: 'cross6',
+    title: '数据科学与生命科学',
+    description: '运用数学统计和物理建模方法分析生物大数据，探索基因表达规律',
+    subjects: ['math', 'biology'],
+  },
+]

@@ -1,20 +1,18 @@
-﻿node_modules
-dist
+# server env
+*.swo
+*.swp
 .DS_Store
 .env
-.env.local
 .env.development.local
-.env.test.local
+.env.local
 .env.production.local
-
+.env.test.local
+.idea/
+.vscode/
+archive/
+dist
 npm-debug.log*
+server/.env
 yarn-debug.log*
 yarn-error.log*
-
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# server env
-server/.env
+node_modules

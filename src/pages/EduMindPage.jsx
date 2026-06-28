@@ -1,140 +1,105 @@
 // ═══════════════════════════════════════════════════════
-//  EduMindPage — 考试分析仪表盘主页
+//  EduMindPage — 考试分析仪表盘
+//  来源: archive Dashboard.tsx → JSX + edumind.css
 // ═══════════════════════════════════════════════════════
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { edumindAPI } from '../services/edumind.js'
-import MasteryStars from '../components/MasteryStars.jsx'
-import ErrorAttributionChart from '../components/ErrorAttributionChart.jsx'
 import './EduMindPage.css'
 
 export default function EduMindPage() {
   const [exams, setExams] = useState([])
-  const [diagnosis, setDiagnosis] = useState(null)
-  const [reminder, setReminder] = useState(null)
+  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
 
   useEffect(() => {
-    loadData()
+    Promise.allSettled([edumindAPI.listExams(), edumindAPI.getStudentProfile()]).then(([ex, pr]) => {
+      if (ex.status === 'fulfilled') setExams(ex.value.data?.items || ex.value.data || [])
+      if (pr.status === 'fulfilled') setProfile(pr.value.data)
+      setLoading(false)
+    })
   }, [])
 
-  async function loadData() {
-    try {
-      setLoading(true)
-      setError(null)
-      const [examRes, diagRes, remindRes] = await Promise.allSettled([
-        edumindAPI.listExams(1, 5),
-        edumindAPI.getDiagnosis(),
-        edumindAPI.getDailyReminder(),
-      ])
-      if (examRes.status === 'fulfilled') setExams(examRes.value.data?.items || [])
-      if (diagRes.status === 'fulfilled') setDiagnosis(diagRes.value.data)
-      if (remindRes.status === 'fulfilled') setReminder(remindRes.value.data)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loading) {
-    return <div className="edumind-loading">加载中...</div>
-  }
+  if (loading) return <div className="edumind-loading">加载中...</div>
 
   return (
     <div className="edumind-page">
       <header className="edumind-header">
-        <h1>📊 考试分析</h1>
-        <Link to="/edumind/upload" className="edumind-btn-primary">
-          + 上传成绩单
-        </Link>
+        <h1>考试分析</h1>
+        <Link to="/edumind/upload" className="edumind-btn-primary">+ 上传试卷</Link>
       </header>
 
-      {error && <div className="edumind-error">{error}</div>}
-
-      {/* 今日提醒 */}
-      {reminder && (
-        <div className="edumind-card edumind-reminder">
-          <div className="edumind-reminder-title">📌 {reminder.title}</div>
-          <div className="edumind-reminder-content">{reminder.content}</div>
-          <Link to="/edumind/coach" className="edumind-link">查看详情 →</Link>
+      {/* Quick Stats */}
+      {profile && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+          <div className="edumind-card" style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--edumind-text-secondary)' }}>考试次数</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, marginTop: '4px' }}>{profile.examCount}</div>
+          </div>
+          <div className="edumind-card" style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--edumind-text-secondary)' }}>优势知识点</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 600, marginTop: '4px', color: '#22c55e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {profile.strengths[0] || '-'}
+            </div>
+          </div>
+          <div className="edumind-card" style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--edumind-text-secondary)' }}>薄弱知识点</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 600, marginTop: '4px', color: '#ef4444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {profile.weaknesses[0] || '-'}
+            </div>
+          </div>
+          <div className="edumind-card" style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--edumind-text-secondary)' }}>学习趋势</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 600, marginTop: '4px', color: 'var(--edumind-primary)' }}>
+              {profile.recentTrend === 'improving' ? '↑ 进步中' : profile.recentTrend === 'declining' ? '↓ 需关注' : '→ 稳定'}
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="edumind-grid">
-        {/* 最近考试 */}
-        <div className="edumind-card">
-          <h3>最近考试</h3>
-          {exams.length === 0 ? (
-            <div className="edumind-empty">
-              <p>还没有考试记录</p>
-              <Link to="/edumind/upload" className="edumind-link">上传你的第一份成绩单 →</Link>
-            </div>
-          ) : (
-            <ul className="edumind-exam-list">
-              {exams.map(exam => (
-                <li key={exam.id}>
-                  <Link to={`/edumind/report/${exam.id}`} className="edumind-exam-item">
-                    <span className="edumind-exam-title">{exam.title}</span>
-                    <span className="edumind-exam-score">
-                      {exam.score != null && exam.total_score != null
-                        ? `${exam.score}/${exam.total_score}`
-                        : '待分析'}
-                    </span>
-                    <span className="edumind-exam-date">
-                      {exam.exam_date ? new Date(exam.exam_date).toLocaleDateString('zh-CN') : ''}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-          {exams.length > 0 && (
-            <Link to="/edumind/upload" className="edumind-link" style={{ marginTop: '8px', display: 'inline-block' }}>
-              查看全部 →
-            </Link>
-          )}
-        </div>
-
-        {/* 薄弱知识点 */}
-        <div className="edumind-card">
-          <h3>薄弱知识点</h3>
-          {diagnosis?.weakPoints?.length > 0 ? (
-            <ul className="edumind-weak-list">
-              {diagnosis.weakPoints.slice(0, 5).map(p => (
-                <li key={p.id}>
-                  <span>{p.name}</span>
-                  <MasteryStars mastery={0.3} size="sm" />
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="edumind-empty">
-              <p>暂无薄弱数据，完成考试分析后自动生成</p>
-            </div>
-          )}
-        </div>
-
-        {/* 快速操作 */}
-        <div className="edumind-card">
-          <h3>快速操作</h3>
-          <div className="edumind-actions">
-            <Link to="/edumind/upload" className="edumind-action-btn">
-              📝 上传成绩单
-            </Link>
-            <Link to="/edumind/diagnosis" className="edumind-action-btn">
-              🔍 知识点诊断
-            </Link>
-            <Link to="/edumind/plan" className="edumind-action-btn">
-              📅 学习计划
-            </Link>
-            <Link to="/edumind/coach" className="edumind-action-btn">
-              🤖 AI 教练
-            </Link>
+      {/* Weakness Alert */}
+      {profile && profile.weaknesses.length > 0 && (
+        <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
+          <div style={{ fontWeight: 600, color: '#ef4444' }}>⚠️ 薄弱知识点</div>
+          <div style={{ fontSize: '0.9rem', color: 'var(--edumind-text-secondary)', marginTop: '4px' }}>
+            {profile.weaknesses.slice(0, 3).join('、')}
           </div>
         </div>
+      )}
+
+      {/* Recent Exams */}
+      <div>
+        <h2 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '12px' }}>最近考试</h2>
+        {exams.length === 0 ? (
+          <div className="edumind-card" style={{ textAlign: 'center', padding: '32px' }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>📝</div>
+            <p style={{ color: 'var(--edumind-text-secondary)' }}>还没有考试记录</p>
+            <Link to="/edumind/upload" style={{ color: 'var(--edumind-primary)', fontSize: '0.9rem', marginTop: '8px', display: 'inline-block' }}>上传第一份试卷 →</Link>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {exams.map(exam => (
+              <Link key={exam.id} to={`/edumind/report/${exam.id}`} className="edumind-exam-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'var(--edumind-card-bg)', border: '1px solid var(--edumind-border)', borderRadius: '12px', textDecoration: 'none', color: 'var(--edumind-text)', transition: 'border-color 0.2s' }}>
+                <div>
+                  <div style={{ fontWeight: 500 }}>{exam.title || '未命名考试'}</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--edumind-text-secondary)', marginTop: '2px' }}>
+                    {exam.subject} · {exam.exam_date ? new Date(exam.exam_date).toLocaleDateString('zh-CN') : ''}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--edumind-primary)' }}>
+                    {exam.actual_score != null ? exam.actual_score : '?'}
+                    <span style={{ fontSize: '0.85rem', color: 'var(--edumind-text-secondary)' }}>/{exam.total_score || '?'}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Mobile spacer */}
+      <div style={{ height: '64px' }} />
     </div>
   )
 }
