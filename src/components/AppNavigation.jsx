@@ -151,13 +151,14 @@ export default function AppNavigation() {
 
       <div className="app-nav-right">
         <ThemeToggle />
-        <Link
-          to="/pricing"
-          className={`app-nav-pricing ${isPro ? 'is-pro' : ''}`}
-        >
-          {isPro ? (plan === 'teacher' ? '教师版' : 'Pro') : ''}
-          {!isPro && <span className="app-nav-upgrade-dot" />}
-        </Link>
+        {isPro && (
+          <Link
+            to="/pricing"
+            className="app-nav-pricing is-pro"
+          >
+            {plan === 'teacher' ? '教师版' : 'Pro'}
+          </Link>
+        )}
         <UserMenu />
       </div>
     </nav>
