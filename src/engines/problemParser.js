@@ -133,7 +133,29 @@ function extractText(response) {
 // ═══════════════════════════════════════════════════════
 
 /**
- * 解析文字题目，返回结构化几何数据
+ * 解析文字题目，返回结构化几何数据（同步版本，纯本地解析）
+ * @param {string} text - 用户输入的中文几何题
+ * @returns {{type:string, size:number, labels:string[], highlightLines:Array, annotations:Array, explanation:string}}
+ */
+export function parseProblemSync(text) {
+  if (!text || text.trim().length < 3) {
+    throw new Error("请输入至少3个字的题目描述");
+  }
+
+  const trimmed = text.trim();
+
+  // 先尝试本地关键词匹配（快速路径）
+  const quickResult = quickMatch(trimmed);
+  if (quickResult && quickResult.confidence >= 0.7) {
+    return quickResult;
+  }
+
+  // 返回增强的本地默认结果
+  return generateFallbackResult(trimmed);
+}
+
+/**
+ * 解析文字题目，返回结构化几何数据（异步版本，支持API）
  * @param {string} text - 用户输入的中文几何题
  * @param {string} apiKey - Anthropic API 密钥
  * @returns {Promise<{type:string, size:number, labels:string[], highlightLines:Array, annotations:Array, explanation:string}>}

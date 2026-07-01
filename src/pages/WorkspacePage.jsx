@@ -16,7 +16,7 @@ import {
   decodeShare,
 } from "../engines/shareUtils";
 import { useSubscription } from "../contexts/SubscriptionContext";
-import { parseProblem } from "../engines/problemParser";
+import { parseProblemSync } from "../engines/problemParser";
 import { generateLocalSteps } from "../engines/explanationEngine";
 import {
   buildBaseSceneIR,
@@ -259,7 +259,7 @@ export default function WorkspacePage() {
 
       try {
         // ── Phase 1: Local Parse — geometry via local engine ──
-        const parseResult = parseProblem(text);
+        const parseResult = parseProblemSync(text);
         console.log(
           `[perf] parseProblem: ${(performance.now() - totalStart).toFixed(0)}ms`
         );
@@ -560,7 +560,7 @@ export default function WorkspacePage() {
       setFollowUpAnswer(null);
       try {
         const combinedText = `${problemText}\n\n追问：${question}`;
-        const parseResult = parseProblem(combinedText);
+        const parseResult = parseProblemSync(combinedText);
         if (parseResult) {
           const steps = generateLocalSteps(combinedText, parseResult);
           if (steps.length > 0) {
