@@ -1,363 +1,418 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
-import { Canvas } from '@react-three/fiber'
-import Canvas3D from '../features/solid-geometry/Canvas3D'
-import GeometryMiniControls from '../components/GeometryMiniControls'
-import ExplanationPanel from '../components/ExplanationPanel'
-import TeacherModePanel from '../components/TeacherModePanel'
-import { getLineDefinitions } from '../engines/lineDefinitions'
-import { isPolyhedral } from '../engines/geometryEngine'
-import { computeVerticesFromParams } from '../engines/constraintSolver'
-import { aiAPI } from '../services/api'
-import { computeVisualIntent } from '../engines/visualIntent'
-import { createLabelMap, INTERNAL_LABELS } from '../engines/labelMapper'
-import { generateShareUrl, detectShareParam, decodeShare } from '../engines/shareUtils'
-import { useSubscription } from '../contexts/SubscriptionContext'
-// 静态 import — 消除每次搜题的动态加载延迟
-import { quickMatch } from '../engines/problemParser'
-import { generateLocalSteps } from '../engines/explanationEngine'
-// SceneIR — 3D 场景确定性状态机
-import { buildBaseSceneIR, applyStepToSceneIR } from '../engines/sceneIRBuilder'
-import './WorkspacePage.css'
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useSearchParams, Link } from "react-router-dom";
+import { Canvas } from "@react-three/fiber";
+import Canvas3D from "../features/solid-geometry/Canvas3D";
+import GeometryMiniControls from "../components/GeometryMiniControls";
+import ExplanationPanel from "../components/ExplanationPanel";
+import TeacherModePanel from "../components/TeacherModePanel";
+import { getLineDefinitions } from "../engines/lineDefinitions";
+import { isPolyhedral } from "../engines/geometryEngine";
+import { computeVerticesFromParams } from "../engines/constraintSolver";
+import { computeVisualIntent } from "../engines/visualIntent";
+import { createLabelMap, INTERNAL_LABELS } from "../engines/labelMapper";
+import {
+  generateShareUrl,
+  detectShareParam,
+  decodeShare,
+} from "../engines/shareUtils";
+import { useSubscription } from "../contexts/SubscriptionContext";
+import { parseProblem } from "../engines/problemParser";
+import { generateLocalSteps } from "../engines/explanationEngine";
+import {
+  buildBaseSceneIR,
+  applyStepToSceneIR,
+} from "../engines/sceneIRBuilder";
+import "./WorkspacePage.css";
 
 // ── Default constraint params ─────────────────────
 function defaultConstraintParams(type) {
-  if (type === 'cuboid') {
-    return { constraintMode: 'cuboid', cubeSize: 2, cuboidA: 2, cuboidB: 1.2, cuboidC: 2, freeEdgeLengths: {} }
+  if (type === "cuboid") {
+    return {
+      constraintMode: "cuboid",
+      cubeSize: 2,
+      cuboidA: 2,
+      cuboidB: 1.2,
+      cuboidC: 2,
+      freeEdgeLengths: {},
+    };
   }
-  return { constraintMode: 'cube', cubeSize: 2, cuboidA: 2, cuboidB: 1.2, cuboidC: 2, freeEdgeLengths: {} }
+  return {
+    constraintMode: "cube",
+    cubeSize: 2,
+    cuboidA: 2,
+    cuboidB: 1.2,
+    cuboidC: 2,
+    freeEdgeLengths: {},
+  };
 }
 
 export default function WorkspacePage() {
-  const { checkCanGenerate, recordUsage, remaining, isPro, triggerPaywall } = useSubscription()
-  const [searchParams] = useSearchParams()
-  const canvasRef = useRef(null)
+  const { checkCanGenerate, recordUsage, remaining, isPro, triggerPaywall } =
+    useSubscription();
+  const [searchParams] = useSearchParams();
+  const canvasRef = useRef(null);
 
   // ── Geometry state (from SolidGeometryPage) ──────
   const [geometry, setGeometry] = useState({
-    type: 'cube',
+    type: "cube",
     params: { size: 2 },
-    ...defaultConstraintParams('cube'),
-  })
-  const [showFaces, setShowFaces] = useState(true)
-  const [showLabels, setShowLabels] = useState(true)
-  const [visibleLines, setVisibleLines] = useState(() => new Set())
-  const [hoveredLine, setHoveredLine] = useState(null)
-  const [customLines, setCustomLines] = useState([])
-  const [shownLengthLabels, setShownLengthLabels] = useState(() => new Set())
-  const [searchedLine, setSearchedLine] = useState('')
-  const [edgeColorOverrides, setEdgeColorOverrides] = useState({})
-  const [selectedEdge, setSelectedEdge] = useState(null)
+    ...defaultConstraintParams("cube"),
+  });
+  const [showFaces, setShowFaces] = useState(true);
+  const [showLabels, setShowLabels] = useState(true);
+  const [visibleLines, setVisibleLines] = useState(() => new Set());
+  const [hoveredLine, setHoveredLine] = useState(null);
+  const [customLines, setCustomLines] = useState([]);
+  const [shownLengthLabels, setShownLengthLabels] = useState(() => new Set());
+  const [searchedLine, setSearchedLine] = useState("");
+  const [edgeColorOverrides, setEdgeColorOverrides] = useState({});
+  const [selectedEdge, setSelectedEdge] = useState(null);
 
   // ── Workspace state ──────────────────────────────
-  const [problemText, setProblemText] = useState('')
-  const [parsedData, setParsedData] = useState(null)
-  const [steps, setSteps] = useState([])
-  const [currentStep, setCurrentStep] = useState(0)
-  const [loading, setLoading] = useState(false)
-  const [loadingStage, setLoadingStage] = useState('idle') // idle|preview|parsing|reasoning|done
-  const [error, setError] = useState(null)
-  const [pptLoading, setPptLoading] = useState(false)
-  const [quickInput, setQuickInput] = useState('')
-  const [followUpLoading, setFollowUpLoading] = useState(false)
-  const [followUpAnswer, setFollowUpAnswer] = useState(null)
-  const [cameraResetKey, setCameraResetKey] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const playTimerRef = useRef(null)
-  const [shareToast, setShareToast] = useState('')
+  const [problemText, setProblemText] = useState("");
+  const [parsedData, setParsedData] = useState(null);
+  const [steps, setSteps] = useState([]);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [loadingStage, setLoadingStage] = useState("idle"); // idle|preview|parsing|reasoning|done
+  const [error, setError] = useState(null);
+  const [pptLoading, setPptLoading] = useState(false);
+  const [quickInput, setQuickInput] = useState("");
+  const [followUpLoading, setFollowUpLoading] = useState(false);
+  const [followUpAnswer, setFollowUpAnswer] = useState(null);
+  const [cameraResetKey, setCameraResetKey] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const playTimerRef = useRef(null);
+  const [shareToast, setShareToast] = useState("");
 
   // ── WebGL 支持检测（同步，无状态切换） ──────────
   const [hasWebGL] = useState(() => {
     try {
-      const c = document.createElement('canvas')
-      return !!(c.getContext('webgl') || c.getContext('experimental-webgl'))
-    } catch { return false }
-  })
+      const c = document.createElement("canvas");
+      return !!(c.getContext("webgl") || c.getContext("experimental-webgl"));
+    } catch {
+      return false;
+    }
+  });
 
   // ── Mobile ──────────────────────────────────────
   // Debounced resize to prevent Canvas remount on orientation change
   const [isMobile, setIsMobile] = useState(() => {
-    try { return window.innerWidth <= 767 } catch { return false }
-  })
-  const [show3D, setShow3D] = useState(true)
-  // 移动端加载完成后默认折叠 3D，让学生先看讲解
-  const [mobile3DAutoCollapsed, setMobile3DAutoCollapsed] = useState(false)
-  useEffect(() => {
-    if (isMobile && loadingStage === 'done' && steps.length > 0 && !mobile3DAutoCollapsed) {
-      setShow3D(false)
-      setMobile3DAutoCollapsed(true)
+    try {
+      return window.innerWidth <= 767;
+    } catch {
+      return false;
     }
-  }, [isMobile, loadingStage, steps.length, mobile3DAutoCollapsed])
+  });
+  const [show3D, setShow3D] = useState(true);
+  // 移动端加载完成后默认折叠 3D，让学生先看讲解
+  const [mobile3DAutoCollapsed, setMobile3DAutoCollapsed] = useState(false);
+  useEffect(() => {
+    if (
+      isMobile &&
+      loadingStage === "done" &&
+      steps.length > 0 &&
+      !mobile3DAutoCollapsed
+    ) {
+      setShow3D(false);
+      setMobile3DAutoCollapsed(true);
+    }
+  }, [isMobile, loadingStage, steps.length, mobile3DAutoCollapsed]);
 
   useEffect(() => {
-    let timer = null
+    let timer = null;
     const onResize = () => {
-      clearTimeout(timer)
+      clearTimeout(timer);
       timer = setTimeout(() => {
-        setIsMobile(window.innerWidth <= 767)
-      }, 500)
-    }
-    window.addEventListener('resize', onResize)
+        setIsMobile(window.innerWidth <= 767);
+      }, 500);
+    };
+    window.addEventListener("resize", onResize);
     return () => {
-      window.removeEventListener('resize', onResize)
-      clearTimeout(timer)
-    }
-  }, [])
+      window.removeEventListener("resize", onResize);
+      clearTimeout(timer);
+    };
+  }, []);
 
   // ── Auto-parse from URL query / share link ────────
   useEffect(() => {
-    const q = searchParams.get('q')
-    const replay = searchParams.get('replay')
-    const shareParam = detectShareParam()
+    const q = searchParams.get("q");
+    const replay = searchParams.get("replay");
+    const shareParam = detectShareParam();
 
     // 分享链接加载
     if (shareParam && !q) {
-      const shared = decodeShare(shareParam)
+      const shared = decodeShare(shareParam);
       if (shared) {
-        setProblemText(shared.text || '')
+        setProblemText(shared.text || "");
         if (shared.geometry) {
           setGeometry({
-            type: shared.geometry.type || 'cube',
-            params: { size: shared.geometry.size || shared.geometry.params?.size || 2 },
-            ...defaultConstraintParams(shared.geometry.type || 'cube'),
-          })
+            type: shared.geometry.type || "cube",
+            params: {
+              size: shared.geometry.size || shared.geometry.params?.size || 2,
+            },
+            ...defaultConstraintParams(shared.geometry.type || "cube"),
+          });
         }
         if (shared.steps) {
-          setSteps(shared.steps)
-          setParsedData(shared.parsedData || null)
-          setCurrentStep(0)
-          setLoadingStage('done')
+          setSteps(shared.steps);
+          setParsedData(shared.parsedData || null);
+          setCurrentStep(0);
+          setLoadingStage("done");
         } else if (shared.text) {
-          handleParseProblem(shared.text)
+          handleParseProblem(shared.text);
         }
-        setShareToast('已加载分享的几何场景')
-        setTimeout(() => setShareToast(''), 2500)
-        return
+        setShareToast("已加载分享的几何场景");
+        setTimeout(() => setShareToast(""), 2500);
+        return;
       }
     }
 
     if (q && q.trim()) {
       // 检查是否有历史回放数据（sessionStorage）
-      if (replay === '1') {
+      if (replay === "1") {
         try {
-          const savedSteps = sessionStorage.getItem('mathviz_replay_steps')
-          const savedParsed = sessionStorage.getItem('mathviz_replay_parsed')
+          const savedSteps = sessionStorage.getItem("mathviz_replay_steps");
+          const savedParsed = sessionStorage.getItem("mathviz_replay_parsed");
           if (savedSteps) {
-            const steps = JSON.parse(savedSteps)
-            const parsed = savedParsed ? JSON.parse(savedParsed) : null
-            setProblemText(q.trim())
-            setSteps(steps)
-            setParsedData(parsed)
-            setCurrentStep(0)
+            const steps = JSON.parse(savedSteps);
+            const parsed = savedParsed ? JSON.parse(savedParsed) : null;
+            setProblemText(q.trim());
+            setSteps(steps);
+            setParsedData(parsed);
+            setCurrentStep(0);
             if (parsed) {
               setGeometry({
-                type: parsed.type || 'cube',
+                type: parsed.type || "cube",
                 params: { size: parsed.size || 2 },
-                ...defaultConstraintParams(parsed.type || 'cube'),
-              })
+                ...defaultConstraintParams(parsed.type || "cube"),
+              });
             }
-            setLoadingStage('done')
+            setLoadingStage("done");
             // 清除回放数据
-            sessionStorage.removeItem('mathviz_replay_steps')
-            sessionStorage.removeItem('mathviz_replay_parsed')
-            return
+            sessionStorage.removeItem("mathviz_replay_steps");
+            sessionStorage.removeItem("mathviz_replay_parsed");
+            return;
           }
-        } catch { /* fall through to normal parse */ }
+        } catch {
+          /* fall through to normal parse */
+        }
       }
-      handleParseProblem(q.trim())
+      handleParseProblem(q.trim());
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Custom vertices (free mode) ──────────────────
   const customVertices = useMemo(() => {
-    if (!isPolyhedral(geometry.type)) return null
-    if (geometry.constraintMode === 'free') {
+    if (!isPolyhedral(geometry.type)) return null;
+    if (geometry.constraintMode === "free") {
       const modeParams = {
         size: geometry.params.size ?? 2,
         freeEdgeLengths: geometry.freeEdgeLengths || {},
-      }
-      return computeVerticesFromParams(geometry.type, 'free', modeParams)
+      };
+      return computeVerticesFromParams(geometry.type, "free", modeParams);
     }
-    return null
-  }, [geometry.type, geometry.constraintMode, geometry.params.size, geometry.freeEdgeLengths])
+    return null;
+  }, [
+    geometry.type,
+    geometry.constraintMode,
+    geometry.params.size,
+    geometry.freeEdgeLengths,
+  ]);
 
   // ── Reset on geometry type change ────────────────
   useEffect(() => {
-    const { lines } = getLineDefinitions(geometry.type, geometry.params, customVertices)
+    const { lines } = getLineDefinitions(
+      geometry.type,
+      geometry.params,
+      customVertices
+    );
     const defaults = new Set(
       lines
-        .filter(l => ['棱', '底面边', '顶面边', '侧棱'].includes(l.category) && !l.dashed)
-        .map(l => `${l.id}|${l.category}`)
-    )
-    setVisibleLines(defaults)
-    setHoveredLine(null)
-    setCustomLines([])
-    setShownLengthLabels(new Set())
-    setSearchedLine('')
-    setSelectedEdge(null)
-    setEdgeColorOverrides({})
-  }, [geometry.type]) // eslint-disable-line react-hooks/exhaustive-deps
+        .filter(
+          (l) =>
+            ["棱", "底面边", "顶面边", "侧棱"].includes(l.category) && !l.dashed
+        )
+        .map((l) => `${l.id}|${l.category}`)
+    );
+    setVisibleLines(defaults);
+    setHoveredLine(null);
+    setCustomLines([]);
+    setShownLengthLabels(new Set());
+    setSearchedLine("");
+    setSelectedEdge(null);
+    setEdgeColorOverrides({});
+  }, [geometry.type]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Parse problem with AI backend ──
-  const handleParseProblem = useCallback(async (text) => {
-    if (!checkCanGenerate()) return
-    if (loading) return  // 防止重复提交
+  // ── Parse problem with local engine ──
+  const handleParseProblem = useCallback(
+    async (text) => {
+      if (loading) return;
 
-    setProblemText(text)
-    setLoading(true)
-    setLoadingStage('parsing')
-    setError(null)
+      setProblemText(text);
+      setLoading(true);
+      setLoadingStage("parsing");
+      setError(null);
+      setFollowUpAnswer(null);
 
-    let parsedResult = null
-    let resultSteps = []
-    let succeeded = false
+      const totalStart = performance.now();
 
-    try {
-      // ── Phase 0: Quick Match — instant geometry (no API) ──
-      let quickTime = performance.now()
       try {
-        const quick = quickMatch(text)
-        if (quick) {
+        // ── Phase 1: Local Parse — geometry via local engine ──
+        const parseResult = parseProblem(text);
+        console.log(
+          `[perf] parseProblem: ${(performance.now() - totalStart).toFixed(0)}ms`
+        );
+
+        if (parseResult) {
+          const parsedData = parseResult;
+          setParsedData(parsedData);
           setGeometry({
-            type: quick.type || 'cube',
-            params: { size: quick.size || 2 },
-            ...defaultConstraintParams(quick.type || 'cube'),
-          })
-          setLoadingStage('preview')
-        }
-      } catch (e) { /* quick match fail silently */ }
-      console.log(`[perf] quickMatch: ${(performance.now() - quickTime).toFixed(0)}ms`)
+            type: parsedData.type || "cube",
+            params: { size: parsedData.size || 2 },
+            ...defaultConstraintParams(parsedData.type || "cube"),
+          });
 
-      // ── Phase 1: Deep Parse — geometry via AI ──
-      setLoadingStage('parsing')
-      let parseTime = performance.now()
-      const parseRes = await aiAPI.parse(text)
-      if (parseRes?.data) {
-        parsedResult = parseRes.data
-        setParsedData(parsedResult)
-        setGeometry({
-          type: parsedResult.type || 'cube',
-          params: { size: parsedResult.size || 2 },
-          ...defaultConstraintParams(parsedResult.type || 'cube'),
-        })
-      }
-      console.log(`[perf] AI parse: ${(performance.now() - parseTime).toFixed(0)}ms`)
+          // ── Phase 2: Generate Steps — local step generation ──
+          setLoadingStage("reasoning");
+          const stepsStart = performance.now();
+          const resultSteps = generateLocalSteps(text, parsedData);
+          console.log(
+            `[perf] generateLocalSteps: ${(performance.now() - stepsStart).toFixed(0)}ms`
+          );
 
-      // ── Phase 2: Reasoning — steps via AI Pro model ──
-      setLoadingStage('reasoning')
-      let reasonTime = performance.now()
-      const reasonRes = await aiAPI.reason(text, parsedResult || { type: 'cube', size: 2 })
-      if (reasonRes?.data) {
-        resultSteps = reasonRes.data
-        // Visual states 由客户端 computeVisualIntent() 即时计算，无需 AI
-        setSteps(resultSteps)
-        setCurrentStep(0)
+          setSteps(resultSteps);
+          setCurrentStep(0);
 
-        // Handle highlight lines from parse data
-        if (parsedResult?.highlightLines?.length > 0) {
-          const { lines: predefinedLines } = getLineDefinitions(
-            parsedResult.type || 'cube',
-            { size: parsedResult.size || 2 }
-          )
-          const newCustomLines = []
-          parsedResult.highlightLines.forEach(hl => {
-            const exists = predefinedLines.some(l => l.id === hl.label && l.category === 'AI高亮')
-            if (!exists) {
-              newCustomLines.push({
-                id: hl.label || `${hl.from}${hl.to}`,
-                category: 'AI高亮',
-                from: hl.from,
-                to: hl.to,
-                dashed: false,
-                custom: true,
-              })
+          if (parsedData?.highlightLines?.length > 0) {
+            const { lines: predefinedLines } = getLineDefinitions(
+              parsedData.type || "cube",
+              { size: parsedData.size || 2 }
+            );
+            const newCustomLines = [];
+            parsedData.highlightLines.forEach((hl) => {
+              const exists = predefinedLines.some(
+                (l) => l.id === hl.label && l.category === "AI高亮"
+              );
+              if (!exists) {
+                newCustomLines.push({
+                  id: hl.label || `${hl.from}${hl.to}`,
+                  category: "AI高亮",
+                  from: hl.from,
+                  to: hl.to,
+                  dashed: false,
+                  custom: true,
+                });
+              }
+            });
+            if (newCustomLines.length > 0) {
+              setCustomLines(newCustomLines);
+              setVisibleLines((prev) => {
+                const next = new Set(prev);
+                newCustomLines.forEach((l) =>
+                  next.add(`${l.id}|${l.category}`)
+                );
+                return next;
+              });
             }
-          })
-          if (newCustomLines.length > 0) {
-            setCustomLines(newCustomLines)
-            setVisibleLines(prev => {
-              const next = new Set(prev)
-              newCustomLines.forEach(l => next.add(`${l.id}|${l.category}`))
-              return next
-            })
           }
+
+          await recordUsage("generate", text);
+          console.log(
+            `[perf] Total solve: ${(performance.now() - totalStart).toFixed(0)}ms`
+          );
+
+          try {
+            const saved = JSON.parse(
+              localStorage.getItem("mathviz_history") || "[]"
+            );
+            saved.unshift({
+              date: new Date().toISOString(),
+              text,
+              type: parsedData.type || "cube",
+              steps: resultSteps || [],
+              parsedData,
+            });
+            if (saved.length > 50) saved.length = 50;
+            localStorage.setItem("mathviz_history", JSON.stringify(saved));
+          } catch (err) {
+            console.warn(
+              "WorkspacePage: Failed to save parse result to history",
+              err
+            );
+          }
+        } else {
+          setError("题目解析失败，请尝试不同的描述方式。");
         }
-      }
 
-      succeeded = true
-      await recordUsage('generate', text)
-      console.log(`[perf] AI reason: ${(performance.now() - reasonTime).toFixed(0)}ms`)
-      console.log(`[perf] Total solve: ${(performance.now() - totalStart).toFixed(0)}ms`)
-
-      // 保存到学习记录（含步骤，支持历史回放）
-      try {
-        const saved = JSON.parse(localStorage.getItem('mathviz_history') || '[]')
-        saved.unshift({
-          date: new Date().toISOString(),
-          text,
-          type: parsedResult?.type || 'cube',
-          steps: resultSteps || [],
-          parsedData: parsedResult,
-        })
-        if (saved.length > 50) saved.length = 50
-        localStorage.setItem('mathviz_history', JSON.stringify(saved))
+        setLoadingStage("done");
       } catch (err) {
-        console.warn('WorkspacePage: Failed to save parse result to history', err)
-      }
-
-      setLoadingStage('done')
-    } catch (err) {
-      const msg = err.message || ''
-      let userError = '解析失败，请重试'
-      if (msg.includes('fetch') || msg.includes('network') || msg.includes('Network')) {
-        userError = '网络连接失败，请检查网络后重试'
-      } else if (msg.includes('timeout') || msg.includes('Timeout')) {
-        userError = 'AI 响应超时，请尝试简化题目描述'
-      } else if (msg.includes('401') || msg.includes('403')) {
-        userError = 'API 密钥无效，请在设置中更新'
-      } else if (msg.includes('429')) {
-        userError = '请求过于频繁，请稍后重试'
-      } else if (msg) {
-        userError = msg
-      }
-      setError(userError)
-      // Fallback: local template
-      try {
-        const parsed = quickMatch(text) || { type: 'cube', size: 2, labels: [], highlightLines: [], explanation: '' }
-        setParsedData(parsed)
-        const fallbackSteps = generateLocalSteps(text, parsed)
-        setSteps(fallbackSteps)
-        setCurrentStep(0)
-        setGeometry({
-          type: parsed.type || 'cube',
-          params: { size: parsed.size || 2 },
-          ...defaultConstraintParams(parsed.type || 'cube'),
-        })
-        setError(null)
+        const msg = err.message || "";
+        let userError = "解析失败，请重试";
+        if (
+          msg.includes("fetch") ||
+          msg.includes("network") ||
+          msg.includes("Network")
+        ) {
+          userError = "网络连接失败，请检查网络后重试";
+        } else if (msg.includes("timeout") || msg.includes("Timeout")) {
+          userError = "处理超时，请尝试简化题目描述";
+        } else if (msg) {
+          userError = msg;
+        }
+        setError(userError);
 
         try {
-          const saved = JSON.parse(localStorage.getItem('mathviz_history') || '[]')
-          saved.unshift({
-            date: new Date().toISOString(),
-            text,
-            type: parsed?.type || 'cube',
-            steps: fallbackSteps,
-            parsedData: parsed,
-          })
-          if (saved.length > 50) saved.length = 50
-          localStorage.setItem('mathviz_history', JSON.stringify(saved))
-        } catch (err) {
-          console.warn('WorkspacePage: Failed to save fallback result to history', err)
+          const fallbackParsed = {
+            type: "cube",
+            size: 2,
+            labels: [],
+            highlightLines: [],
+            explanation: "",
+          };
+          setParsedData(fallbackParsed);
+          const fallbackSteps = generateLocalSteps(text, fallbackParsed);
+          setSteps(fallbackSteps);
+          setCurrentStep(0);
+          setGeometry({
+            type: "cube",
+            params: { size: 2 },
+            ...defaultConstraintParams("cube"),
+          });
+          setError(null);
+
+          try {
+            const saved = JSON.parse(
+              localStorage.getItem("mathviz_history") || "[]"
+            );
+            saved.unshift({
+              date: new Date().toISOString(),
+              text,
+              type: "cube",
+              steps: fallbackSteps,
+              parsedData: fallbackParsed,
+            });
+            if (saved.length > 50) saved.length = 50;
+            localStorage.setItem("mathviz_history", JSON.stringify(saved));
+          } catch (err) {
+            console.warn(
+              "WorkspacePage: Failed to save fallback result to history",
+              err
+            );
+          }
+        } catch (fallbackErr) {
+          console.warn(
+            "WorkspacePage: Fallback parse also failed",
+            fallbackErr
+          );
+          setError("题目解析失败，请尝试不同的描述方式。");
         }
-      } catch (fallbackErr) {
-        console.warn('WorkspacePage: Fallback parse also failed', fallbackErr)
-        setError('题目解析失败，请尝试不同的描述方式。')
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false)
-      if (!succeeded) setLoadingStage('idle')
-    }
-  }, [checkCanGenerate, recordUsage])
+    },
+    [loading, recordUsage]
+  );
 
   // ── Geometry change (from GeometryMiniControls) ──
 
@@ -366,10 +421,10 @@ export default function WorkspacePage() {
       type,
       params: { size: params?.size ?? 2 },
       ...defaultConstraintParams(type),
-    })
-  }, [])
+    });
+  }, []);
 
-  const polyhedral = isPolyhedral(geometry.type)
+  const polyhedral = isPolyhedral(geometry.type);
 
   // ═══════════════════════════════════════════════════════
   //  以下变量严格按照依赖顺序声明 —— 前面的变量不能引用后面的变量
@@ -378,196 +433,223 @@ export default function WorkspacePage() {
   // ── (1) labelMap — 题目标签 → 内部索引映射 ─────────
   //  依赖: parsedData
   const labelMap = useMemo(() => {
-    if (!parsedData?.vertices && !parsedData?.labels) return null
-    const userLabels = parsedData.vertices || parsedData.labels || null
-    const internalLabels = INTERNAL_LABELS[parsedData.type] || INTERNAL_LABELS.cube
-    return createLabelMap(userLabels, internalLabels)
-  }, [parsedData])
+    if (!parsedData?.vertices && !parsedData?.labels) return null;
+    const userLabels = parsedData.vertices || parsedData.labels || null;
+    const internalLabels =
+      INTERNAL_LABELS[parsedData.type] || INTERNAL_LABELS.cube;
+    return createLabelMap(userLabels, internalLabels);
+  }, [parsedData]);
 
   // ── (2) vertexLabels — 自定义顶点标签（从题目解析）──
   //  依赖: labelMap
   const vertexLabels = useMemo(() => {
-    if (!labelMap) return null
-    return labelMap.displayLabels
-  }, [labelMap])
+    if (!labelMap) return null;
+    return labelMap.displayLabels;
+  }, [labelMap]);
 
   // ── (3) visualIntent — Step→3D deterministic mapping ──
   //  依赖: steps, parsedData, problemText, labelMap
   const visualIntent = useMemo(() => {
-    const step = steps[currentStep]
-    if (!step || !parsedData) return null
-    return computeVisualIntent(step, parsedData, problemText, labelMap)
-  }, [currentStep, steps, parsedData, problemText, labelMap])
+    const step = steps[currentStep];
+    if (!step || !parsedData) return null;
+    return computeVisualIntent(step, parsedData, problemText, labelMap);
+  }, [currentStep, steps, parsedData, problemText, labelMap]);
 
   // ── (3a) sceneIR — Step→3D 场景状态机 ──────────
   //  依赖: steps, parsedData
   const sceneIR = useMemo(() => {
-    if (!steps.length || !parsedData?.type) return null
+    if (!steps.length || !parsedData?.type) return null;
     const base = buildBaseSceneIR(
       parsedData.type,
       { size: parsedData.size || 2 },
       parsedData.vertices || parsedData.labels || null
-    )
+    );
     // 对当前步骤应用场景操作
-    const step = steps[currentStep]
+    const step = steps[currentStep];
     if (step && step.sceneOps) {
-      return applyStepToSceneIR(currentStep, step.type, step.sceneOps, base)
+      return applyStepToSceneIR(currentStep, step.type, step.sceneOps, base);
     }
-    return base
-  }, [steps, currentStep, parsedData])
+    return base;
+  }, [steps, currentStep, parsedData]);
 
   // ── (3b) 有效标签显示 — 渐进披露：第一步隐藏标签 ──
   const effectiveShowLabels = useMemo(() => {
-    if (visualIntent?.hideLabels) return false
-    return showLabels
-  }, [visualIntent?.hideLabels, showLabels])
+    if (visualIntent?.hideLabels) return false;
+    return showLabels;
+  }, [visualIntent?.hideLabels, showLabels]);
 
   // ── (4) mergedLines — 合并的边定义 ─────────────────
   //  依赖: geometry, customVertices, vertexLabels, customLines, edgeColorOverrides
   const mergedLines = useMemo(() => {
-    const { lines } = getLineDefinitions(geometry.type, geometry.params, customVertices, vertexLabels)
-    const merged = [...lines, ...customLines]
+    const { lines } = getLineDefinitions(
+      geometry.type,
+      geometry.params,
+      customVertices,
+      vertexLabels
+    );
+    const merged = [...lines, ...customLines];
     if (Object.keys(edgeColorOverrides).length > 0) {
-      return merged.map(l => {
-        const key = `${l.id}|${l.category}`
-        return edgeColorOverrides[key] ? { ...l, colorOverride: edgeColorOverrides[key] } : l
-      })
+      return merged.map((l) => {
+        const key = `${l.id}|${l.category}`;
+        return edgeColorOverrides[key]
+          ? { ...l, colorOverride: edgeColorOverrides[key] }
+          : l;
+      });
     }
-    return merged
-  }, [geometry.type, geometry.params.size, customLines, edgeColorOverrides, customVertices, vertexLabels])
+    return merged;
+  }, [
+    geometry.type,
+    geometry.params.size,
+    customLines,
+    edgeColorOverrides,
+    customVertices,
+    vertexLabels,
+  ]);
 
   // ── Step navigation ──────────────────────────────
   const handleStepClick = useCallback((index) => {
-    setCurrentStep(index)
-  }, [])
+    setCurrentStep(index);
+  }, []);
 
   const handleNextStep = useCallback(() => {
-    setCurrentStep(prev => Math.min(prev + 1, steps.length - 1))
-  }, [steps.length])
+    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
+  }, [steps.length]);
 
   const handlePrevStep = useCallback(() => {
-    setCurrentStep(prev => Math.max(prev - 1, 0))
-  }, [])
+    setCurrentStep((prev) => Math.max(prev - 1, 0));
+  }, []);
 
   // ── Quick input submit (workspace empty state) ──
   const handleQuickSubmit = useCallback(() => {
-    const trimmed = quickInput.trim()
-    if (trimmed.length < 3 || loading) return
-    handleParseProblem(trimmed)
-  }, [quickInput, loading, handleParseProblem])
+    const trimmed = quickInput.trim();
+    if (trimmed.length < 3 || loading) return;
+    handleParseProblem(trimmed);
+  }, [quickInput, loading, handleParseProblem]);
 
-  const handleQuickKeyDown = useCallback((e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleQuickSubmit()
-    }
-  }, [handleQuickSubmit])
+  const handleQuickKeyDown = useCallback(
+    (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleQuickSubmit();
+      }
+    },
+    [handleQuickSubmit]
+  );
 
   // ── PPT 导出 ───────────────────────────────────
   const handleExportPPT = useCallback(async () => {
-    if (!canvasRef.current) return
-    setPptLoading(true)
+    if (!canvasRef.current) return;
+    setPptLoading(true);
     try {
-      const { generatePPT } = await import('../engines/pptExporter')
+      const { generatePPT } = await import("../engines/pptExporter");
       await generatePPT(
         { problemText, steps, parsedData, geometry },
         canvasRef.current
-      )
+      );
     } catch (err) {
-      console.error('PPT export failed:', err)
+      console.error("PPT export failed:", err);
     } finally {
-      setPptLoading(false)
+      setPptLoading(false);
     }
-  }, [problemText, steps, parsedData, geometry])
+  }, [problemText, steps, parsedData, geometry]);
 
-  // ── 追问 AI ──
-  const handleAskFollowUp = useCallback(async (question) => {
-    setFollowUpLoading(true)
-    setFollowUpAnswer(null)
-    try {
-      const currentStepData = steps[currentStep]
-      const contextPrompt = `原题：${problemText}\n当前步骤（第${currentStep + 1}步）：${currentStepData?.title || ''}\n${currentStepData?.content || ''}\n\n学生追问：${question}\n\n请针对这个追问给出简洁的解答（2-4句话），用中文。`
-      const result = await aiAPI.solve(contextPrompt)
-      if (result?.data?.steps?.length > 0) {
-        setFollowUpAnswer(result.data.steps[0].content || result.data.steps[0].title || '抱歉，无法回答这个问题。')
-      } else if (result?.data?.parsed?.explanation) {
-        setFollowUpAnswer(result.data.parsed.explanation)
-      } else {
-        setFollowUpAnswer('抱歉，无法回答这个问题，请尝试换一种方式提问。')
+  // ── 追问 ──
+  const handleAskFollowUp = useCallback(
+    async (question) => {
+      setFollowUpLoading(true);
+      setFollowUpAnswer(null);
+      try {
+        const combinedText = `${problemText}\n\n追问：${question}`;
+        const parseResult = parseProblem(combinedText);
+        if (parseResult) {
+          const steps = generateLocalSteps(combinedText, parseResult);
+          if (steps.length > 0) {
+            setFollowUpAnswer(
+              steps[0].content || steps[0].title || "抱歉，无法回答这个问题。"
+            );
+          } else {
+            setFollowUpAnswer("抱歉，无法回答这个问题，请尝试换一种方式提问。");
+          }
+        } else {
+          setFollowUpAnswer("抱歉，无法回答这个问题，请尝试换一种方式提问。");
+        }
+      } catch {
+        setFollowUpAnswer("追问失败，请重试。");
+      } finally {
+        setFollowUpLoading(false);
       }
-    } catch {
-      setFollowUpAnswer('追问失败，请检查网络后重试。')
-    } finally {
-      setFollowUpLoading(false)
-    }
-  }, [problemText, steps, currentStep])
+    },
+    [problemText]
+  );
 
   // ── 重置视角 ──
   const handleResetCamera = useCallback(() => {
-    setCameraResetKey(k => k + 1)
-  }, [])
+    setCameraResetKey((k) => k + 1);
+  }, []);
 
   // ── 自动回放 ──
   const handleTogglePlay = useCallback(() => {
-    setIsPlaying(prev => {
+    setIsPlaying((prev) => {
       if (prev) {
         // 停止
-        if (playTimerRef.current) clearTimeout(playTimerRef.current)
-        return false
+        if (playTimerRef.current) clearTimeout(playTimerRef.current);
+        return false;
       }
-      return true
-    })
-  }, [])
+      return true;
+    });
+  }, []);
 
   useEffect(() => {
-    if (!isPlaying || steps.length === 0) return
+    if (!isPlaying || steps.length === 0) return;
     const advance = () => {
-      setCurrentStep(prev => {
-        const next = prev + 1
+      setCurrentStep((prev) => {
+        const next = prev + 1;
         if (next >= steps.length) {
-          setIsPlaying(false)
-          return prev
+          setIsPlaying(false);
+          return prev;
         }
-        playTimerRef.current = setTimeout(advance, 3500)
-        return next
-      })
-    }
-    playTimerRef.current = setTimeout(advance, 2000)
-    return () => { if (playTimerRef.current) clearTimeout(playTimerRef.current) }
-  }, [isPlaying, steps.length])
+        playTimerRef.current = setTimeout(advance, 3500);
+        return next;
+      });
+    };
+    playTimerRef.current = setTimeout(advance, 2000);
+    return () => {
+      if (playTimerRef.current) clearTimeout(playTimerRef.current);
+    };
+  }, [isPlaying, steps.length]);
 
   // ── 重试 ──
   const handleRetry = useCallback(() => {
-    if (!problemText || loading) return
-    setError(null)
-    setLoadingStage('idle')
-    handleParseProblem(problemText)
-  }, [problemText, loading, handleParseProblem])
+    if (!problemText || loading) return;
+    setError(null);
+    setLoadingStage("idle");
+    handleParseProblem(problemText);
+  }, [problemText, loading, handleParseProblem]);
 
   // ── 截图导出 ──
   const handleScreenshot = useCallback(async () => {
-    if (!canvasRef.current) return
+    if (!canvasRef.current) return;
     try {
-      const { toPng } = await import('html-to-image')
+      const { toPng } = await import("html-to-image");
       const dataUrl = await toPng(canvasRef.current, {
         pixelRatio: 2,
-        backgroundColor: '#f8f9fb',
-      })
-      const link = document.createElement('a')
-      link.download = `几何维度-${new Date().toISOString().slice(0, 10)}.png`
-      link.href = dataUrl
-      link.click()
+        backgroundColor: "#f8f9fb",
+      });
+      const link = document.createElement("a");
+      link.download = `几何维度-${new Date().toISOString().slice(0, 10)}.png`;
+      link.href = dataUrl;
+      link.click();
     } catch {
       // Fallback: canvas.toDataURL
-      const canvas = canvasRef.current?.querySelector('canvas')
+      const canvas = canvasRef.current?.querySelector("canvas");
       if (canvas) {
-        const link = document.createElement('a')
-        link.download = `几何维度-${new Date().toISOString().slice(0, 10)}.png`
-        link.href = canvas.toDataURL('image/png')
-        link.click()
+        const link = document.createElement("a");
+        link.download = `几何维度-${new Date().toISOString().slice(0, 10)}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
       }
     }
-  }, [])
+  }, []);
 
   // ── 分享链接 ──
   const handleShare = useCallback(async () => {
@@ -576,35 +658,39 @@ export default function WorkspacePage() {
       geometry: { type: geometry.type, params: geometry.params },
       steps: steps.length > 0 ? steps : undefined,
       parsedData: parsedData,
-    }
-    const url = generateShareUrl(shareData)
-    if (!url) return
+    };
+    const url = generateShareUrl(shareData);
+    if (!url) return;
 
     try {
-      await navigator.clipboard.writeText(url)
-      setShareToast('链接已复制，可发送给朋友')
+      await navigator.clipboard.writeText(url);
+      setShareToast("链接已复制，可发送给朋友");
     } catch {
       // Fallback: show in prompt
-      setShareToast(url)
+      setShareToast(url);
     }
-    setTimeout(() => setShareToast(''), 3000)
-  }, [problemText, geometry, steps, parsedData])
+    setTimeout(() => setShareToast(""), 3000);
+  }, [problemText, geometry, steps, parsedData]);
 
   return (
     <div className="workspace-page">
       <div className="wp-top-bar">
-        <Link to="/" className="wp-back-link">← 返回首页</Link>
+        <Link to="/" className="wp-back-link">
+          ← 返回首页
+        </Link>
         <span className="wp-top-title">
-          {problemText ? problemText.slice(0, 50) + (problemText.length > 50 ? '…' : '') : '几何维度'}
+          {problemText
+            ? problemText.slice(0, 50) + (problemText.length > 50 ? "…" : "")
+            : "几何维度"}
         </span>
         <div className="wp-top-actions">
           {/* 移动端 3D 切换 */}
           {isMobile && (
             <button
               className="wp-toggle-3d"
-              onClick={() => setShow3D(prev => !prev)}
+              onClick={() => setShow3D((prev) => !prev)}
             >
-              {show3D ? '隐藏 3D' : '显示 3D'}
+              {show3D ? "隐藏 3D" : "显示 3D"}
             </button>
           )}
         </div>
@@ -618,7 +704,7 @@ export default function WorkspacePage() {
           </span>
           <button
             className="wp-upgrade-banner-btn"
-            onClick={() => triggerPaywall('免费额度即将用完，升级解锁无限使用')}
+            onClick={() => triggerPaywall("免费额度即将用完，升级解锁无限使用")}
           >
             升级无限使用 →
           </button>
@@ -626,12 +712,10 @@ export default function WorkspacePage() {
       )}
       {!isPro && remaining === 0 && (
         <div className="wp-upgrade-banner danger">
-          <span className="wp-upgrade-banner-text">
-            今日免费次数已用完
-          </span>
+          <span className="wp-upgrade-banner-text">今日免费次数已用完</span>
           <button
             className="wp-upgrade-banner-btn"
-            onClick={() => triggerPaywall('已达每日使用上限，升级继续使用')}
+            onClick={() => triggerPaywall("已达每日使用上限，升级继续使用")}
           >
             升级继续使用 →
           </button>
@@ -663,9 +747,12 @@ export default function WorkspacePage() {
             <span className="wp-empty-examples-label">快速体验</span>
             <div className="wp-empty-examples-row">
               {[
-                { text: '正方体棱长为2，求体对角线AG的长度', label: '正方体对角线' },
-                { text: '球体半径为3，求体积和表面积', label: '球体体积' },
-                { text: '正四棱锥底面边长4，高6，求体积', label: '棱锥体积' },
+                {
+                  text: "正方体棱长为2，求体对角线AG的长度",
+                  label: "正方体对角线",
+                },
+                { text: "球体半径为3，求体积和表面积", label: "球体体积" },
+                { text: "正四棱锥底面边长4，高6，求体积", label: "棱锥体积" },
               ].map((ex) => (
                 <button
                   key={ex.label}
@@ -681,7 +768,7 @@ export default function WorkspacePage() {
       )}
 
       {/* ── Unified layout: single Canvas, CSS-driven responsive ── */}
-      <div className={`wp-main ${isMobile ? 'wp-main--mobile' : ''}`}>
+      <div className={`wp-main ${isMobile ? "wp-main--mobile" : ""}`}>
         {/* 讲解面板（左侧/上方） */}
         <div className="wp-explain-col">
           <ExplanationPanel
@@ -706,13 +793,17 @@ export default function WorkspacePage() {
 
         {/* 3D 场景（右侧/下方）— 全生命周期只 mount 一次，用 CSS display 控制显隐 */}
         <div
-          className={`wp-canvas-col ${isMobile && !show3D ? 'wp-canvas--hidden' : ''}`}
+          className={`wp-canvas-col ${isMobile && !show3D ? "wp-canvas--hidden" : ""}`}
           ref={canvasRef}
         >
           {hasWebGL ? (
             <Canvas
-              style={{ width: '100%', height: '100%' }}
-              gl={{ preserveDrawingBuffer: true, antialias: true, powerPreference: 'high-performance' }}
+              style={{ width: "100%", height: "100%" }}
+              gl={{
+                preserveDrawingBuffer: true,
+                antialias: true,
+                powerPreference: "high-performance",
+              }}
               dpr={[1, 2]}
             >
               <Canvas3D
@@ -731,7 +822,7 @@ export default function WorkspacePage() {
                 customVertices={customVertices}
                 sceneIR={sceneIR}
                 highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
-                highlightColor={visualIntent?.highlightColor || '#FF6B6B'}
+                highlightColor={visualIntent?.highlightColor || "#FF6B6B"}
                 auxLines={visualIntent?.auxLines || []}
                 faceOpacity={visualIntent?.faceOpacity ?? 0.42}
                 nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
@@ -744,16 +835,18 @@ export default function WorkspacePage() {
             <div className="wp-webgl-fallback">
               <span className="wp-webgl-fallback-icon">⚠️</span>
               <p>您的浏览器不支持 WebGL，无法显示 3D 场景</p>
-              <p className="wp-webgl-fallback-hint">请使用最新版 Chrome、Edge 或 Firefox</p>
+              <p className="wp-webgl-fallback-hint">
+                请使用最新版 Chrome、Edge 或 Firefox
+              </p>
             </div>
           )}
           <GeometryMiniControls
             geometry={geometry}
             onGeometryChange={handleGeometryChange}
             showFaces={showFaces}
-            onToggleFaces={() => setShowFaces(prev => !prev)}
+            onToggleFaces={() => setShowFaces((prev) => !prev)}
             showLabels={effectiveShowLabels}
-            onToggleLabels={() => setShowLabels(prev => !prev)}
+            onToggleLabels={() => setShowLabels((prev) => !prev)}
             onResetCamera={handleResetCamera}
             onScreenshot={handleScreenshot}
             onShare={handleShare}
@@ -761,7 +854,7 @@ export default function WorkspacePage() {
         </div>
       </div>
 
-      {typeof TeacherModePanel !== 'undefined' ? (
+      {typeof TeacherModePanel !== "undefined" ? (
         <TeacherModePanel
           totalSteps={steps.length}
           currentStep={currentStep}
@@ -774,13 +867,17 @@ export default function WorkspacePage() {
       {shareToast && (
         <div className="wp-share-toast">
           <span className="wp-share-toast-text">{shareToast}</span>
-          {shareToast.startsWith('http') && (
+          {shareToast.startsWith("http") && (
             <button
               className="wp-share-toast-copy"
               onClick={async () => {
-                try { await navigator.clipboard.writeText(shareToast); setShareToast('链接已复制！') }
-                catch { /* */ }
-                setTimeout(() => setShareToast(''), 2000)
+                try {
+                  await navigator.clipboard.writeText(shareToast);
+                  setShareToast("链接已复制！");
+                } catch {
+                  /* */
+                }
+                setTimeout(() => setShareToast(""), 2000);
               }}
             >
               点此复制
@@ -789,5 +886,5 @@ export default function WorkspacePage() {
         </div>
       )}
     </div>
-  )
+  );
 }
