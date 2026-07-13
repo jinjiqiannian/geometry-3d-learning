@@ -27,24 +27,25 @@ export function enforceProgression(sceneState, stepIndex, stepType, problemEdgeI
   // 复制一份，避免修改原始对象
   const result = { ...sceneState }
 
-  // 辅助线数组（由 construction 步骤生成）
-  let allowedAuxLines = []
-  if (stepType === 'construction') {
-    // 构造步骤可以显示辅助线
-    allowedAuxLines = sceneState.auxLines || []
+  // ── AI sceneState 优先级：保留 AI 提供的精确高亮，不覆盖 ──
+  // 不再用 computeAllowedHighlights 覆盖 AI 提供的 highlightEdgeIds
+  // 仅第一页无 AI 高亮时做淡化处理
+
+  // 辅助线：construction 步骤之外的辅助线仅当 AI 显式指定时才保留
+  if (stepType !== 'construction' && (!sceneState.auxLines || sceneState.auxLines.length === 0)) {
+    result.auxLines = []
   }
-  result.auxLines = allowedAuxLines
 
-  // 高亮边：根据步骤类型和序号递增
-  const allowedHighlights = computeAllowedHighlights(stepIndex, stepType, problemEdgeIds)
-  result.highlightEdgeIds = allowedHighlights
+  // Step 0 无 AI 高亮时清空
+  if (stepIndex === 0 && (!sceneState.highlightEdgeIds || sceneState.highlightEdgeIds.length === 0)) {
+    result.highlightEdgeIds = []
+  }
 
-  // 步骤类型默认配置 — 严格渐进披露
-  // Step 0: 仅显示几何体轮廓（所有边极淡），让学生先看到几何体形状
+  // 步骤类型默认配置 — 仅当 AI 未指定时使用
   const typeConfigs = {
     observation: {
-      faceOpacity: stepIndex === 0 ? 0.35 : 0.38,
-      nonHighlightOpacity: stepIndex === 0 ? 0.06 : 0.12,
+      faceOpacity: stepIndex === 0 ? 0.35 : 0.42,
+      nonHighlightOpacity: stepIndex === 0 ? 0.12 : 0.25,
       hideLabels: stepIndex === 0,
     },
     construction: {

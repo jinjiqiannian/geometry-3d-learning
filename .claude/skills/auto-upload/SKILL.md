@@ -1,8 +1,26 @@
 ---
-name: auto-upload
-description: 自动部署 — 检测 git 状态，提交并部署到 GitHub Pages
+name: 自动部署
+description: 自动部署 — 检测git状态，提交并部署到GitHub Pages
 model: default
 ---
+
+<!--
+📝 中文说明
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 核心作用：自动提交代码并部署到GitHub Pages
+
+🔔 何时触发：
+   - 说"上传"、"部署"、"上网站"、"发布"
+   - 说"commit"、"push"
+   - 要求提交代码并发布
+
+📌 关键要点：
+   1. 检查变更 → 安全审查 → 提交 → 推送 → 构建部署
+   2. 安全规则：不提交敏感文件(.env、密钥、token)
+   3. Commit格式：Conventional Commits (feat/fix/perf/refactor/docs)
+   4. 部署方式：npm run deploy → gh-pages -d dist
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
 
 # Auto Upload — 自动部署
 

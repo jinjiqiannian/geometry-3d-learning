@@ -187,6 +187,98 @@ export const aiAPI = {
       body: { workspaceId },
     })
   },
+
+  /**
+   * 流式解题 — 使用 SSE 逐字输出推理过程
+   * callbacks:
+   *   onParsed(parsed) — 题目解析完成
+   *   onReasoning(chunk) — 推理文本片段
+   *   onComplete({parsed, steps}) — 全部完成
+   *   onError(err) — 出错
+   * Returns abort function to cancel the stream.
+   */
+  solveStream(
+    problemText: string,
+    callbacks: {
+      onParsed?: (data: any) => void
+      onReasoning?: (chunk: string) => void
+      onComplete?: (data: { parsed: any; steps: any[] }) => void
+      onError?: (err: Error) => void
+    }
+  ): () => void {
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+    const controller = new AbortController()
+
+    const run = async () => {
+      try {
+        const token = (() => {
+          try { return localStorage.getItem('mathviz_token') } catch { return null }
+        })()
+
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        }
+        if (token) headers['Authorization'] = `Bearer ${token}`
+
+        const response = await fetch(`${API_BASE}/api/ai/solve-stream`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ problemText }),
+          signal: controller.signal,
+        })
+
+        if (!response.ok) {
+          const errBody = await response.json().catch(() => ({}))
+          throw new Error(errBody.error || `请求失败 (${response.status})`)
+        }
+
+        const reader = response.body?.getReader()
+        if (!reader) throw new Error('响应体为空')
+
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+
+          let currentEvent = ''
+          for (const line of lines) {
+            if (line.startsWith('event: ')) {
+              currentEvent = line.slice(7).trim()
+            } else if (line.startsWith('data: ')) {
+              const data = line.slice(6)
+              if (currentEvent === 'parsed') {
+                callbacks.onParsed?.(JSON.parse(data))
+              } else if (currentEvent === 'reasoning') {
+                callbacks.onReasoning?.(JSON.parse(data))
+              } else if (currentEvent === 'done') {
+                callbacks.onComplete?.(JSON.parse(data))
+                controller.abort()
+                return
+              } else if (currentEvent === 'error') {
+                const errData = JSON.parse(data)
+                callbacks.onError?.(new Error(errData.message || '推理失败'))
+                controller.abort()
+                return
+              }
+              currentEvent = ''
+            }
+          }
+        }
+      } catch (err: any) {
+        if (err.name === 'AbortError') return
+        callbacks.onError?.(err instanceof Error ? err : new Error(String(err)))
+      }
+    }
+
+    run()
+    return () => controller.abort()
+  },
 }
 
 // ═══════════════════════════════════════════════════════
@@ -322,6 +414,62 @@ interface ApiResponse<T = any> {
   data?: T
   error?: string
   message?: string
+}
+
+// ═══════════════════════════════════════════════════════
+//  Feedback API
+// ═══════════════════════════════════════════════════════
+
+export const feedbackAPI = {
+  async submit(data: {
+    type: string
+    title: string
+    description: string
+    contact?: string
+    rating?: number
+    learning_difficulties?: string[]
+    geometry_type?: string
+    difficulty_level?: string
+  }) {
+    return request<ApiResponse<{ id: string; created_at: string }>>('/api/feedback', {
+      method: 'POST',
+      body: data,
+      auth: false,
+    })
+  },
+
+  async list(params?: { type?: string; status?: string; page?: number; limit?: number }) {
+    const search = new URLSearchParams()
+    if (params?.type) search.set('type', params.type)
+    if (params?.status) search.set('status', params.status)
+    if (params?.page) search.set('page', String(params.page))
+    if (params?.limit) search.set('limit', String(params.limit))
+    const qs = search.toString()
+    return request<ApiResponse<{
+      items: any[]
+      total: number
+      page: number
+      limit: number
+      totalPages: number
+    }>>(`/api/feedback${qs ? '?' + qs : ''}`)
+  },
+
+  async stats() {
+    return request<ApiResponse<{
+      total: number
+      pending: number
+      reviewed: number
+      resolved: number
+      byType: Record<string, number>
+    }>>('/api/feedback/stats')
+  },
+
+  async update(id: string, data: { status?: string; admin_notes?: string }) {
+    return request<ApiResponse<any>>(`/api/feedback/${id}`, {
+      method: 'PATCH',
+      body: data,
+    })
+  },
 }
 
 // ── Listen for unauthorized events ─────────────────

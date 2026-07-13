@@ -6,8 +6,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useSupabase } from '../../contexts/SupabaseContext'
-import AppNavigation from '../../components/AppNavigation'
-import MobileBottomNav from '../../components/MobileBottomNav'
 import './ProfilePage.css'
 
 const MISTYPE_LABEL = {
@@ -19,14 +17,14 @@ const MISTYPE_LABEL = {
 }
 
 export default function ProfilePage() {
-  const supabase = useSupabase()
+  const { supabase } = useSupabase()
   const [profile, setProfile] = useState(null)
   const [mastery, setMastery] = useState([])
   const [mistakes, setMistakes] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!supabase) return
+    if (!supabase) { setLoading(false); return }
 
     // Get user from auth
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -73,21 +71,15 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="page-container">
-        <AppNavigation />
-        <div className="page-content"><div className="ed-profile-loading">加载中...</div></div>
-        <MobileBottomNav />
-      </div>
+      <div className="page-content"><div className="ed-profile-loading">加载中...</div></div>
     )
   }
 
   return (
-    <div className="page-container">
-      <AppNavigation />
-      <div className="page-content">
-        <div className="ed-profile">
-          <Link to="/" className="ed-profile-back">← 返回首页</Link>
-          <h1 className="ed-profile-title">学生画像</h1>
+    <div className="page-content">
+      <div className="ed-profile">
+        <Link to="/math" className="ed-profile-back">← 返回</Link>
+        <h1 className="ed-profile-title">学生画像</h1>
 
           {profile && (
             <div className="ed-profile-stats">
@@ -175,7 +167,5 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
-      <MobileBottomNav />
-    </div>
   )
 }

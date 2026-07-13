@@ -89,13 +89,24 @@ export function createLabelMap(userLabels, internalLabels) {
     const ul = userLabels[i]
     const il = internalLabels[i]
     labelToIndex[ul] = i
+    // 同时存储标准化形式（ASCII），用于边引用匹配
+    // 如 "A₁" → 同时存 "A1"，这样 "异面直线A₁B" 中的 "A1B" 也能解析
+    const normalized = normalizeSubscripts(ul)
+    if (normalized !== ul) {
+      labelToIndex[normalized] = i
+    }
     indexToLabel[i] = ul
   }
 
   // 对于 userLabels 超出 internalLabels 的部分，也记录
   for (let i = internalLabels.length; i < userLabels.length; i++) {
-    labelToIndex[userLabels[i]] = i
-    indexToLabel[i] = userLabels[i]
+    const ul = userLabels[i]
+    labelToIndex[ul] = i
+    const normalized = normalizeSubscripts(ul)
+    if (normalized !== ul) {
+      labelToIndex[normalized] = i
+    }
+    indexToLabel[i] = ul
   }
 
   // 生成边映射：userEdge → internalEdge

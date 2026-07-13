@@ -1,8 +1,26 @@
 ---
-name: skill-creator
-description: 元技能 — 创建、验证、打包 Claude Code Skills。需要造新 Skill 时使用。
+name: 创建Skill
+description: 创建、验证、打包Claude Code Skills。需要造新Skill时使用
 user-invocable: true
 ---
+
+<!--
+📝 中文说明
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 核心作用：创建新的Claude Code Skill（元技能）
+
+🔔 何时触发：
+   - 需要造新Skill时
+   - 用户说"创建一个新skill"
+   - 要添加新的AI能力模块时
+
+📌 关键要点：
+   1. 创建流程：需求确认 → 创建目录+文件 → 写SKILL.md → 验证清单
+   2. 命名规范：kebab-case（全小写+连字符）
+   3. 最佳实践：一个skill只做一件事，description放够触发词
+   4. SKILL.md ≤ 50行，复杂逻辑放references/
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
 
 你是 Skill 架构师。用户让你创建新 Skill 时，按以下流程执行。
 

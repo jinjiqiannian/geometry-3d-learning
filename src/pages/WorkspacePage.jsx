@@ -3,6 +3,9 @@ import { useSearchParams, Link } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
 import Canvas3D from "../features/solid-geometry/Canvas3D";
 import GeometryMiniControls from "../components/GeometryMiniControls";
+import { MEASURE_MODES } from "../features/solid-geometry/MeasureTool";
+import { ANNOTATION_MODES } from "../features/solid-geometry/AnnotationTool";
+import { VIEW_PRESETS } from "../features/solid-geometry/ViewControl";
 import ExplanationPanel from "../components/ExplanationPanel";
 import TeacherModePanel from "../components/TeacherModePanel";
 import { getLineDefinitions } from "../engines/lineDefinitions";
@@ -16,12 +19,22 @@ import {
   decodeShare,
 } from "../engines/shareUtils";
 import { useSubscription } from "../contexts/SubscriptionContext";
+import { useSupabase } from "../contexts/SupabaseContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { parseProblemSync } from "../engines/problemParser";
 import { generateLocalSteps } from "../engines/explanationEngine";
+import { aiAPI } from "../services/api";
 import {
   buildBaseSceneIR,
   applyStepToSceneIR,
+  buildSceneIRFromSemantic,
+  buildSceneIRSequenceFromSemantic,
 } from "../engines/sceneIRBuilder";
+import {
+  validateAndCompleteSemantic,
+  convertLegacyParsedToSemantic,
+  parseProblemToSemantic,
+} from "../engines/geometryValidator";
 import "./WorkspacePage.css";
 
 // ── Default constraint params ─────────────────────
@@ -46,9 +59,51 @@ function defaultConstraintParams(type) {
   };
 }
 
+/**
+ * 将 AI sceneState 转换为 sceneOps 格式
+ * sceneState 来自后端 DeepSeek 推理结果
+ * sceneOps 是 sceneIRBuilder 可消费的格式
+ */
+function convertSceneStateToOps(sceneState) {
+  if (!sceneState) return null;
+  const ops = {
+    highlightLines: [],
+    addAuxLines: [],
+    fadeLines: [],
+    showLabels: [],
+  };
+
+  // 高亮边：{from, to} → id
+  if (sceneState.highlightEdges) {
+    ops.highlightLines = sceneState.highlightEdges.map(e => {
+      if (typeof e === 'string') return e;
+      return `${e.from}${e.to}`;
+    });
+  }
+
+  // 辅助线
+  if (sceneState.showAuxiliaryLines) {
+    ops.addAuxLines = sceneState.showAuxiliaryLines.map(aux => ({
+      from: { pointId: aux.from },
+      to: { pointId: aux.to },
+      dashed: aux.dashed !== false,
+      color: aux.color || '#8b5cf6',
+    }));
+  }
+
+  // 标签
+  if (sceneState.showLabels) {
+    ops.showLabels = sceneState.showLabels;
+  }
+
+  return ops;
+}
+
 export default function WorkspacePage() {
+  const { isGuest } = useSupabase();
   const { checkCanGenerate, recordUsage, remaining, isPro, triggerPaywall } =
     useSubscription();
+  const { isDark } = useTheme();
   const [searchParams] = useSearchParams();
   const canvasRef = useRef(null);
 
@@ -68,6 +123,15 @@ export default function WorkspacePage() {
   const [edgeColorOverrides, setEdgeColorOverrides] = useState({});
   const [selectedEdge, setSelectedEdge] = useState(null);
 
+  // ── Tool states ──────────────────────────────────
+  const [measureMode, setMeasureMode] = useState(MEASURE_MODES.NONE);
+  const [measurements, setMeasurements] = useState([]);
+  const [annotationMode, setAnnotationMode] = useState(ANNOTATION_MODES.NONE);
+  const [annotations, setAnnotations] = useState([]);
+  const [labelText, setLabelText] = useState("");
+  const [activeCut, setActiveCut] = useState(null);
+  const [viewPreset, setViewPreset] = useState(VIEW_PRESETS.DEFAULT);
+
   // ── Workspace state ──────────────────────────────
   const [problemText, setProblemText] = useState("");
   const [parsedData, setParsedData] = useState(null);
@@ -85,6 +149,15 @@ export default function WorkspacePage() {
   const playTimerRef = useRef(null);
   const [shareToast, setShareToast] = useState("");
 
+  // ── Streaming state ────────────────────────────────
+  const [streamingReasoning, setStreamingReasoning] = useState("");
+  const [streamingDone, setStreamingDone] = useState(false);
+  const abortStreamRef = useRef(null);
+  const streamingReasoningRef = useRef(""); // 跟踪最新推理文本，避免闭包陈旧
+
+  // ── 常驻搜索栏 state ───────────────────────────────
+  const [searchInput, setSearchInput] = useState("");
+
   // ── WebGL 支持检测（同步，无状态切换） ──────────
   const [hasWebGL] = useState(() => {
     try {
@@ -95,8 +168,17 @@ export default function WorkspacePage() {
     }
   });
 
+  // ── 首次使用引导 ────────────────────────────────
+  const FIRST_VISIT_KEY = 'mathviz:first_visit'
+  const [showGuide, setShowGuide] = useState(() => {
+    try { return !localStorage.getItem(FIRST_VISIT_KEY) } catch { return false }
+  })
+  const dismissGuide = useCallback(() => {
+    try { localStorage.setItem(FIRST_VISIT_KEY, '1') } catch { /* ignore */ }
+    setShowGuide(false)
+  }, [])
+
   // ── Mobile ──────────────────────────────────────
-  // Debounced resize to prevent Canvas remount on orientation change
   const [isMobile, setIsMobile] = useState(() => {
     try {
       return window.innerWidth <= 767;
@@ -105,7 +187,6 @@ export default function WorkspacePage() {
     }
   });
   const [show3D, setShow3D] = useState(true);
-  // 移动端加载完成后默认折叠 3D，让学生先看讲解
   const [mobile3DAutoCollapsed, setMobile3DAutoCollapsed] = useState(false);
   useEffect(() => {
     if (
@@ -134,13 +215,22 @@ export default function WorkspacePage() {
     };
   }, []);
 
+  // ── cleanup: abort stream on unmount ──────────────
+  useEffect(() => {
+    return () => {
+      if (abortStreamRef.current) {
+        abortStreamRef.current();
+        abortStreamRef.current = null;
+      }
+    };
+  }, []);
+
   // ── Auto-parse from URL query / share link ────────
   useEffect(() => {
     const q = searchParams.get("q");
     const replay = searchParams.get("replay");
     const shareParam = detectShareParam();
 
-    // 分享链接加载
     if (shareParam && !q) {
       const shared = decodeShare(shareParam);
       if (shared) {
@@ -169,7 +259,6 @@ export default function WorkspacePage() {
     }
 
     if (q && q.trim()) {
-      // 检查是否有历史回放数据（sessionStorage）
       if (replay === "1") {
         try {
           const savedSteps = sessionStorage.getItem("mathviz_replay_steps");
@@ -189,7 +278,6 @@ export default function WorkspacePage() {
               });
             }
             setLoadingStage("done");
-            // 清除回放数据
             sessionStorage.removeItem("mathviz_replay_steps");
             sessionStorage.removeItem("mathviz_replay_parsed");
             return;
@@ -198,7 +286,7 @@ export default function WorkspacePage() {
           /* fall through to normal parse */
         }
       }
-      handleParseProblem(q.trim());
+      handleParseProblem(q.trim(), { useLocalOnly: false });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -244,9 +332,9 @@ export default function WorkspacePage() {
     setEdgeColorOverrides({});
   }, [geometry.type]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Parse problem with local engine ──
+  // ── Parse problem: useLocalOnly=true → 本地模板, false → AI 流式 ──
   const handleParseProblem = useCallback(
-    async (text) => {
+    async (text, { useLocalOnly = false } = {}) => {
       if (loading) return;
 
       setProblemText(text);
@@ -254,165 +342,220 @@ export default function WorkspacePage() {
       setLoadingStage("parsing");
       setError(null);
       setFollowUpAnswer(null);
+      setStreamingReasoning("");
+      setStreamingDone(false);
 
       const totalStart = performance.now();
 
       try {
-        // ── Phase 1: Local Parse — geometry via local engine ──
-        const parseResult = parseProblemSync(text);
-        console.log(
-          `[perf] parseProblem: ${(performance.now() - totalStart).toFixed(0)}ms`
-        );
-
-        if (parseResult) {
-          const parsedData = parseResult;
-          setParsedData(parsedData);
-          setGeometry({
-            type: parsedData.type || "cube",
-            params: { size: parsedData.size || 2 },
-            ...defaultConstraintParams(parsedData.type || "cube"),
-          });
-
-          // ── Phase 2: Generate Steps — local step generation ──
-          setLoadingStage("reasoning");
-          const stepsStart = performance.now();
+        // ── 例题模式：仅本地引擎（不调 AI）──
+        if (useLocalOnly) {
+          setLoadingStage("parsing");
+          const semantic = parseProblemToSemantic(text);
+          const parsedData = {
+            type: semantic.shape,
+            size: semantic.size,
+            labels: semantic.points,
+            vertices: semantic.points,
+            highlightLines: semantic.importantLines.map(l => ({
+              from: l[0],
+              to: l[1],
+              label: l,
+            })),
+            explanation: semantic.shape,
+            semantic,
+          };
           const resultSteps = generateLocalSteps(text, parsedData);
-          console.log(
-            `[perf] generateLocalSteps: ${(performance.now() - stepsStart).toFixed(0)}ms`
-          );
-
-          setSteps(resultSteps);
-          setCurrentStep(0);
-
-          if (parsedData?.highlightLines?.length > 0) {
-            const { lines: predefinedLines } = getLineDefinitions(
-              parsedData.type || "cube",
-              { size: parsedData.size || 2 }
-            );
-            const newCustomLines = [];
-            parsedData.highlightLines.forEach((hl) => {
-              const exists = predefinedLines.some(
-                (l) => l.id === hl.label && l.category === "AI高亮"
-              );
-              if (!exists) {
-                newCustomLines.push({
-                  id: hl.label || `${hl.from}${hl.to}`,
-                  category: "AI高亮",
-                  from: hl.from,
-                  to: hl.to,
-                  dashed: false,
-                  custom: true,
-                });
-              }
-            });
-            if (newCustomLines.length > 0) {
-              setCustomLines(newCustomLines);
-              setVisibleLines((prev) => {
-                const next = new Set(prev);
-                newCustomLines.forEach((l) =>
-                  next.add(`${l.id}|${l.category}`)
-                );
-                return next;
-              });
-            }
-          }
-
-          await recordUsage("generate", text);
-          console.log(
-            `[perf] Total solve: ${(performance.now() - totalStart).toFixed(0)}ms`
-          );
-
-          try {
-            const saved = JSON.parse(
-              localStorage.getItem("mathviz_history") || "[]"
-            );
-            saved.unshift({
-              date: new Date().toISOString(),
-              text,
-              type: parsedData.type || "cube",
-              steps: resultSteps || [],
-              parsedData,
-            });
-            if (saved.length > 50) saved.length = 50;
-            localStorage.setItem("mathviz_history", JSON.stringify(saved));
-          } catch (err) {
-            console.warn(
-              "WorkspacePage: Failed to save parse result to history",
-              err
-            );
-          }
-        } else {
-          setError("题目解析失败，请尝试不同的描述方式。");
+          applyResults(parsedData, resultSteps);
+          try { await recordUsage("generate", text); } catch {}
+          saveToHistory(text, parsedData, resultSteps);
+          console.log(`[perf] Total solve (local only): ${(performance.now() - totalStart).toFixed(0)}ms`);
+          setLoadingStage("done");
+          setLoading(false);
+          return;
         }
 
-        setLoadingStage("done");
+        // ── 用户搜题模式：仅 AI 流式解题（不降级到本地模板）──
+        setLoadingStage("reasoning");
+        setStreamingReasoning("");
+        setStreamingDone(false);
+
+        const abort = aiAPI.solveStream(text, {
+          onParsed: (parsed) => {
+            setParsedData(parsed);
+            setGeometry({
+              type: parsed.type || "cube",
+              params: { size: parsed.size || 2 },
+              ...defaultConstraintParams(parsed.type || "cube"),
+            });
+          },
+          onReasoning: (chunk) => {
+            streamingReasoningRef.current += chunk;
+            setStreamingReasoning(streamingReasoningRef.current);
+          },
+          onComplete: ({ parsed, steps: resultSteps }) => {
+            setStreamingDone(true);
+
+            if (parsed) {
+              // 保存推理过程到 parsedData，让 collapsible "AI 推理过程" 能显示
+              const parsedWithReasoning = {
+                ...parsed,
+                aiReasoning: streamingReasoningRef.current || parsed.aiReasoning || '',
+              };
+              setParsedData(parsedWithReasoning);
+              setGeometry({
+                type: parsed.type || "cube",
+                params: { size: parsed.size || 2 },
+                ...defaultConstraintParams(parsed.type || "cube"),
+              });
+              setSteps(resultSteps);
+              setCurrentStep(0);
+
+              if (parsed?.highlightLines?.length > 0) {
+                const { lines: predefinedLines } = getLineDefinitions(
+                  parsed.type || "cube", { size: parsed.size || 2 }
+                );
+                const newCustomLines = [];
+                parsed.highlightLines.forEach((hl) => {
+                  const exists = predefinedLines.some(
+                    (l) => l.id === hl.label && l.category === "AI高亮"
+                  );
+                  if (!exists) {
+                    newCustomLines.push({
+                      id: hl.label || `${hl.from}${hl.to}`,
+                      category: "AI高亮", from: hl.from, to: hl.to,
+                      dashed: false, custom: true,
+                    });
+                  }
+                });
+                if (newCustomLines.length > 0) {
+                  setCustomLines(newCustomLines);
+                  setVisibleLines((prev) => {
+                    const next = new Set(prev);
+                    newCustomLines.forEach((l) => next.add(`${l.id}|${l.category}`));
+                    return next;
+                  });
+                }
+              }
+
+              setLoadingStage("done");
+              console.log(`[perf] Total solve (AI stream): ${(performance.now() - totalStart).toFixed(0)}ms`);
+              try { recordUsage("generate", text); } catch {}
+              saveToHistory(text, parsed, resultSteps);
+            }
+            setLoading(false);
+          },
+          onError: (err) => {
+            setError(null);
+            console.warn("AI 解题失败，降级到本地模板:", err.message);
+            const semantic = parseProblemToSemantic(text);
+            const fallbackParsed = {
+              type: semantic.shape,
+              size: semantic.size,
+              labels: semantic.points,
+              vertices: semantic.points,
+              highlightLines: semantic.importantLines.map(l => ({
+                from: l[0],
+                to: l[1],
+                label: l,
+              })),
+              explanation: semantic.shape,
+              semantic,
+            };
+            const fallbackSteps = generateLocalSteps(text, fallbackParsed);
+            applyResults(fallbackParsed, fallbackSteps);
+            saveToHistory(text, fallbackParsed, fallbackSteps);
+            setLoadingStage("done");
+            setLoading(false);
+          },
+        });
+
+        abortStreamRef.current = abort;
       } catch (err) {
         const msg = err.message || "";
-        let userError = "解析失败，请重试";
-        if (
-          msg.includes("fetch") ||
-          msg.includes("network") ||
-          msg.includes("Network")
-        ) {
-          userError = "网络连接失败，请检查网络后重试";
-        } else if (msg.includes("timeout") || msg.includes("Timeout")) {
-          userError = "处理超时，请尝试简化题目描述";
-        } else if (msg) {
-          userError = msg;
-        }
-        setError(userError);
-
-        try {
-          const fallbackParsed = {
-            type: "cube",
-            size: 2,
-            labels: [],
-            highlightLines: [],
-            explanation: "",
-          };
-          setParsedData(fallbackParsed);
-          const fallbackSteps = generateLocalSteps(text, fallbackParsed);
-          setSteps(fallbackSteps);
-          setCurrentStep(0);
-          setGeometry({
-            type: "cube",
-            params: { size: 2 },
-            ...defaultConstraintParams("cube"),
-          });
-          setError(null);
-
-          try {
-            const saved = JSON.parse(
-              localStorage.getItem("mathviz_history") || "[]"
-            );
-            saved.unshift({
-              date: new Date().toISOString(),
-              text,
-              type: "cube",
-              steps: fallbackSteps,
-              parsedData: fallbackParsed,
-            });
-            if (saved.length > 50) saved.length = 50;
-            localStorage.setItem("mathviz_history", JSON.stringify(saved));
-          } catch (err) {
-            console.warn(
-              "WorkspacePage: Failed to save fallback result to history",
-              err
-            );
-          }
-        } catch (fallbackErr) {
-          console.warn(
-            "WorkspacePage: Fallback parse also failed",
-            fallbackErr
-          );
-          setError("题目解析失败，请尝试不同的描述方式。");
-        }
-      } finally {
+        setError(null);
+        console.warn("解析异常，降级到本地模板:", msg);
+        const semantic = parseProblemToSemantic(text);
+        const fallbackParsed = {
+          type: semantic.shape,
+          size: semantic.size,
+          labels: semantic.points,
+          vertices: semantic.points,
+          highlightLines: semantic.importantLines.map(l => ({
+            from: l[0],
+            to: l[1],
+            label: l,
+          })),
+          explanation: semantic.shape,
+          semantic,
+        };
+        const fallbackSteps = generateLocalSteps(text, fallbackParsed);
+        applyResults(fallbackParsed, fallbackSteps);
+        saveToHistory(text, fallbackParsed, fallbackSteps);
+        setLoadingStage("done");
         setLoading(false);
       }
     },
     [loading, recordUsage]
   );
+
+  // ── Helper: Apply parsed data + steps to state ──
+  function applyResults(parsedData, resultSteps) {
+    setParsedData(parsedData);
+    setGeometry({
+      type: parsedData.type || "cube",
+      params: { size: parsedData.size || 2 },
+      ...defaultConstraintParams(parsedData.type || "cube"),
+    });
+    setSteps(resultSteps);
+    setCurrentStep(0);
+
+    if (parsedData?.highlightLines?.length > 0) {
+      const { lines: predefinedLines } = getLineDefinitions(
+        parsedData.type || "cube", { size: parsedData.size || 2 }
+      );
+      const newCustomLines = [];
+      parsedData.highlightLines.forEach((hl) => {
+        const exists = predefinedLines.some(
+          (l) => l.id === hl.label && l.category === "AI高亮"
+        );
+        if (!exists) {
+          newCustomLines.push({
+            id: hl.label || `${hl.from}${hl.to}`,
+            category: "AI高亮", from: hl.from, to: hl.to,
+            dashed: false, custom: true,
+          });
+        }
+      });
+      if (newCustomLines.length > 0) {
+        setCustomLines(newCustomLines);
+        setVisibleLines((prev) => {
+          const next = new Set(prev);
+          newCustomLines.forEach((l) => next.add(`${l.id}|${l.category}`));
+          return next;
+        });
+      }
+    }
+  }
+
+  // ── Helper: Save to localStorage history ──
+  function saveToHistory(text, parsedData, resultSteps) {
+    try {
+      const saved = JSON.parse(localStorage.getItem("mathviz_history") || "[]");
+      saved.unshift({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 10),
+        date: new Date().toISOString(),
+        text,
+        type: parsedData?.type || "cube",
+        steps: resultSteps || [],
+        parsedData: parsedData || {},
+      });
+      if (saved.length > 50) saved.length = 50;
+      localStorage.setItem("mathviz_history", JSON.stringify(saved));
+    } catch (err) {
+      console.warn("WorkspacePage: Failed to save to history", err);
+    }
+  }
 
   // ── Geometry change (from GeometryMiniControls) ──
 
@@ -459,15 +602,26 @@ export default function WorkspacePage() {
   //  依赖: steps, parsedData
   const sceneIR = useMemo(() => {
     if (!steps.length || !parsedData?.type) return null;
+    
+    const semantic = convertLegacyParsedToSemantic(parsedData);
+    const irSequence = buildSceneIRSequenceFromSemantic(semantic);
+    
+    if (irSequence.length > 0) {
+      const index = Math.min(currentStep, irSequence.length - 1);
+      return irSequence[index];
+    }
+    
     const base = buildBaseSceneIR(
       parsedData.type,
       { size: parsedData.size || 2 },
       parsedData.vertices || parsedData.labels || null
     );
-    // 对当前步骤应用场景操作
     const step = steps[currentStep];
-    if (step && step.sceneOps) {
-      return applyStepToSceneIR(currentStep, step.type, step.sceneOps, base);
+    if (step) {
+      const ops = step.sceneState ? convertSceneStateToOps(step.sceneState) : step.sceneOps;
+      if (ops) {
+        return applyStepToSceneIR(currentStep, step.type, ops, base);
+      }
     }
     return base;
   }, [steps, currentStep, parsedData]);
@@ -478,8 +632,21 @@ export default function WorkspacePage() {
     return showLabels;
   }, [visualIntent?.hideLabels, showLabels]);
 
+  // ── (3c) cameraTarget — 步骤类型对应的 3D 相机自动飞行目标 ──
+  const STEP_CAMERA_PRESETS = {
+    observation:  [4, 4, 6],
+    conceptual:   [4, 4, 6],
+    construction: [2.5, 2, 3.5],
+    calculation:  [1, 3, 5],
+    conclusion:   [5, 3, 5],
+  };
+  const cameraTarget = useMemo(() => {
+    const step = steps[currentStep];
+    if (!step) return null;
+    return STEP_CAMERA_PRESETS[step.type] || STEP_CAMERA_PRESETS.observation;
+  }, [steps, currentStep]);
+
   // ── (4) mergedLines — 合并的边定义 ─────────────────
-  //  依赖: geometry, customVertices, vertexLabels, customLines, edgeColorOverrides
   const mergedLines = useMemo(() => {
     const { lines } = getLineDefinitions(
       geometry.type,
@@ -519,11 +686,28 @@ export default function WorkspacePage() {
     setCurrentStep((prev) => Math.max(prev - 1, 0));
   }, []);
 
+  // ── 常驻搜索栏提交 ──
+  const handleSearchSubmit = useCallback(() => {
+    const trimmed = searchInput.trim();
+    if (trimmed.length < 3 || loading) return;
+    handleParseProblem(trimmed, { useLocalOnly: false });
+  }, [searchInput, loading, handleParseProblem]);
+
+  const handleSearchKeyDown = useCallback(
+    (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSearchSubmit();
+      }
+    },
+    [handleSearchSubmit]
+  );
+
   // ── Quick input submit (workspace empty state) ──
   const handleQuickSubmit = useCallback(() => {
     const trimmed = quickInput.trim();
     if (trimmed.length < 3 || loading) return;
-    handleParseProblem(trimmed);
+    handleParseProblem(trimmed, { useLocalOnly: false });
   }, [quickInput, loading, handleParseProblem]);
 
   const handleQuickKeyDown = useCallback(
@@ -591,7 +775,6 @@ export default function WorkspacePage() {
   const handleTogglePlay = useCallback(() => {
     setIsPlaying((prev) => {
       if (prev) {
-        // 停止
         if (playTimerRef.current) clearTimeout(playTimerRef.current);
         return false;
       }
@@ -626,6 +809,46 @@ export default function WorkspacePage() {
     handleParseProblem(problemText);
   }, [problemText, loading, handleParseProblem]);
 
+  // ── 再来一题 ──
+  const PRACTICE_EXAMPLES = [
+    { text: "正方体棱长为2，求体对角线AG的长度", label: "正方体对角线" },
+    { text: "球体半径为3，求体积和表面积", label: "球体体积" },
+    { text: "正四棱锥底面边长4，高6，求体积", label: "棱锥体积" },
+    { text: "圆柱底面半径2，高5，求侧面积和体积", label: "圆柱体积" },
+    { text: "圆锥底面半径3，高4，求体积和母线长", label: "圆锥体积" },
+  ]
+  const handlePracticeMore = useCallback(() => {
+    const others = PRACTICE_EXAMPLES.filter(ex => ex.text !== problemText)
+    const pick = others[Math.floor(Math.random() * others.length)]
+    if (pick) handleParseProblem(pick.text)
+  }, [problemText, handleParseProblem])
+
+  // ── 键盘快捷键 ──
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault()
+          handlePrevStep()
+          break
+        case 'ArrowRight':
+          e.preventDefault()
+          handleNextStep()
+          break
+        case ' ':
+          if (steps.length > 0) {
+            e.preventDefault()
+            handleTogglePlay()
+          }
+          break
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handlePrevStep, handleNextStep, handleTogglePlay, steps.length])
+
   // ── 截图导出 ──
   const handleScreenshot = useCallback(async () => {
     if (!canvasRef.current) return;
@@ -633,14 +856,13 @@ export default function WorkspacePage() {
       const { toPng } = await import("html-to-image");
       const dataUrl = await toPng(canvasRef.current, {
         pixelRatio: 2,
-        backgroundColor: "#f8f9fb",
+        backgroundColor: isDark ? "#161616" : "#f8f9fb",
       });
       const link = document.createElement("a");
       link.download = `几何维度-${new Date().toISOString().slice(0, 10)}.png`;
       link.href = dataUrl;
       link.click();
     } catch {
-      // Fallback: canvas.toDataURL
       const canvas = canvasRef.current?.querySelector("canvas");
       if (canvas) {
         const link = document.createElement("a");
@@ -649,7 +871,7 @@ export default function WorkspacePage() {
         link.click();
       }
     }
-  }, []);
+  }, [isDark]);
 
   // ── 分享链接 ──
   const handleShare = useCallback(async () => {
@@ -666,7 +888,6 @@ export default function WorkspacePage() {
       await navigator.clipboard.writeText(url);
       setShareToast("链接已复制，可发送给朋友");
     } catch {
-      // Fallback: show in prompt
       setShareToast(url);
     }
     setTimeout(() => setShareToast(""), 3000);
@@ -674,77 +895,94 @@ export default function WorkspacePage() {
 
   return (
     <div className="workspace-page">
-      <div className="wp-top-bar">
-        <Link to="/" className="wp-back-link">
-          ← 返回首页
-        </Link>
-        <span className="wp-top-title">
-          {problemText
-            ? problemText.slice(0, 50) + (problemText.length > 50 ? "…" : "")
-            : "几何维度"}
-        </span>
-        <div className="wp-top-actions">
-          {/* 移动端 3D 切换 */}
+
+      {/* ── 搜索栏 ── */}
+      <div className="wp-search-bar">
+        <div className="wp-search-row">
+          <Link to="/math" className="wp-search-back" title="返回首页">←</Link>
+          <textarea
+            className="wp-search-input"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
+            placeholder="输入一道几何题，AI 将为你解析…"
+            rows={1}
+            spellCheck={false}
+            disabled={loading}
+          />
+          <button
+            className="wp-search-submit"
+            onClick={handleSearchSubmit}
+            disabled={searchInput.trim().length < 3 || loading}
+          >
+            {loading ? (loadingStage === "reasoning" ? "AI 推理中…" : "解析中…") : "解析"}
+          </button>
           {isMobile && (
             <button
-              className="wp-toggle-3d"
+              className="wp-search-3d-toggle"
               onClick={() => setShow3D((prev) => !prev)}
+              title={show3D ? "隐藏 3D" : "显示 3D"}
             >
-              {show3D ? "隐藏 3D" : "显示 3D"}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" />
+                <path d="M2 7l10 5 10-5" />
+                <path d="M12 22V12" />
+              </svg>
             </button>
           )}
         </div>
       </div>
 
-      {/* ── 升级引导条（免费用户剩余不足时） ── */}
+      {/* ── 升级引导条 ── */}
       {!isPro && problemText && !loading && remaining <= 5 && remaining > 0 && (
         <div className="wp-upgrade-banner">
           <span className="wp-upgrade-banner-text">
             今日还剩 <strong>{remaining}</strong> 次免费使用
           </span>
-          <button
-            className="wp-upgrade-banner-btn"
-            onClick={() => triggerPaywall("免费额度即将用完，升级解锁无限使用")}
-          >
-            升级无限使用 →
-          </button>
+          {isGuest ? (
+            <button
+              className="wp-upgrade-banner-btn"
+              onClick={() => document.dispatchEvent(new CustomEvent('mathviz:show-auth'))}
+            >
+              登录增加额度 →
+            </button>
+          ) : (
+            <button
+              className="wp-upgrade-banner-btn"
+              onClick={() => triggerPaywall("免费额度即将用完，升级解锁无限使用")}
+            >
+              升级无限使用 →
+            </button>
+          )}
         </div>
       )}
       {!isPro && remaining === 0 && (
         <div className="wp-upgrade-banner danger">
           <span className="wp-upgrade-banner-text">今日免费次数已用完</span>
-          <button
-            className="wp-upgrade-banner-btn"
-            onClick={() => triggerPaywall("已达每日使用上限，升级继续使用")}
-          >
-            升级继续使用 →
-          </button>
+          <div className="wp-upgrade-banner-actions">
+            {isGuest && (
+              <button
+                className="wp-upgrade-banner-btn"
+                onClick={() => document.dispatchEvent(new CustomEvent('mathviz:show-auth'))}
+              >
+                登录继续使用
+              </button>
+            )}
+            <button
+              className={`wp-upgrade-banner-btn ${isGuest ? 'secondary' : ''}`}
+              onClick={() => triggerPaywall("已达每日使用上限，升级继续使用")}
+            >
+              升级{isGuest ? ' →' : '继续使用 →'}
+            </button>
+          </div>
         </div>
       )}
 
-      {/* ── Quick input: workspace 空状态 ── */}
+      {/* ── Quick input: workspace 空状态（仅示例按钮） ── */}
       {!problemText && !loading && (
         <div className="wp-empty-state">
-          <div className="wp-quick-input-bar">
-            <textarea
-              className="wp-quick-input"
-              value={quickInput}
-              onChange={(e) => setQuickInput(e.target.value)}
-              onKeyDown={handleQuickKeyDown}
-              placeholder="输入一道几何题开始解析…"
-              rows={2}
-              spellCheck={false}
-            />
-            <button
-              className="wp-quick-submit"
-              onClick={handleQuickSubmit}
-              disabled={quickInput.trim().length < 3}
-            >
-              解析
-            </button>
-          </div>
           <div className="wp-empty-examples">
-            <span className="wp-empty-examples-label">快速体验</span>
+            <span className="wp-empty-examples-label">快速体验（本地模板）</span>
             <div className="wp-empty-examples-row">
               {[
                 {
@@ -757,9 +995,9 @@ export default function WorkspacePage() {
                 <button
                   key={ex.label}
                   className="wp-empty-example-btn"
-                  onClick={() => handleParseProblem(ex.text)}
+                  onClick={() => handleParseProblem(ex.text, { useLocalOnly: true })}
                 >
-                  {ex.label}
+                  {ex.label} ✦
                 </button>
               ))}
             </div>
@@ -769,7 +1007,6 @@ export default function WorkspacePage() {
 
       {/* ── Unified layout: single Canvas, CSS-driven responsive ── */}
       <div className={`wp-main ${isMobile ? "wp-main--mobile" : ""}`}>
-        {/* 讲解面板（左侧/上方） */}
         <div className="wp-explain-col">
           <ExplanationPanel
             steps={steps}
@@ -788,10 +1025,12 @@ export default function WorkspacePage() {
             followUpAnswer={followUpAnswer}
             onPlay={steps.length > 0 ? handleTogglePlay : undefined}
             isPlaying={isPlaying}
+            streamingReasoning={streamingReasoning}
+            streamingDone={streamingDone}
+            onPracticeMore={handlePracticeMore}
           />
         </div>
 
-        {/* 3D 场景（右侧/下方）— 全生命周期只 mount 一次，用 CSS display 控制显隐 */}
         <div
           className={`wp-canvas-col ${isMobile && !show3D ? "wp-canvas--hidden" : ""}`}
           ref={canvasRef}
@@ -829,6 +1068,14 @@ export default function WorkspacePage() {
                 vertexLabels={vertexLabels}
                 cameraResetKey={cameraResetKey}
                 sphereOverlay={visualIntent?.sphereOverlay || null}
+                cameraTarget={cameraTarget}
+                isDark={isDark}
+                measureMode={measureMode}
+                measurements={measurements}
+                annotationMode={annotationMode}
+                annotations={annotations}
+                activeCut={activeCut}
+                viewPreset={viewPreset}
               />
             </Canvas>
           ) : (
@@ -841,8 +1088,6 @@ export default function WorkspacePage() {
             </div>
           )}
           <GeometryMiniControls
-            geometry={geometry}
-            onGeometryChange={handleGeometryChange}
             showFaces={showFaces}
             onToggleFaces={() => setShowFaces((prev) => !prev)}
             showLabels={effectiveShowLabels}
@@ -863,7 +1108,7 @@ export default function WorkspacePage() {
           pptLoading={pptLoading}
         />
       ) : null}
-      {/* ── Share toast ── */}
+
       {shareToast && (
         <div className="wp-share-toast">
           <span className="wp-share-toast-text">{shareToast}</span>
@@ -883,6 +1128,42 @@ export default function WorkspacePage() {
               点此复制
             </button>
           )}
+        </div>
+      )}
+
+      {/* ── 首次使用引导 ── */}
+      {showGuide && (
+        <div className="wp-guide-overlay" onClick={dismissGuide}>
+          <div className="wp-guide-card" onClick={(e) => e.stopPropagation()}>
+            <h2 className="wp-guide-title">👋 欢迎来到几何维度</h2>
+            <p className="wp-guide-subtitle">三步开始学习：</p>
+            <div className="wp-guide-steps">
+              <div className="wp-guide-step">
+                <span className="wp-guide-step-num">1</span>
+                <div>
+                  <strong>输入题目</strong>
+                  <p>在上方输入框中输入一道几何题，点击"解析"</p>
+                </div>
+              </div>
+              <div className="wp-guide-step">
+                <span className="wp-guide-step-num">2</span>
+                <div>
+                  <strong>查看步骤</strong>
+                  <p>AI 将分步讲解，每步都有公式和计算过程</p>
+                </div>
+              </div>
+              <div className="wp-guide-step">
+                <span className="wp-guide-step-num">3</span>
+                <div>
+                  <strong>探索 3D</strong>
+                  <p>右侧的 3D 模型可以旋转缩放，直观理解空间关系</p>
+                </div>
+              </div>
+            </div>
+            <button className="wp-guide-btn" onClick={dismissGuide}>
+              我知道了
+            </button>
+          </div>
         </div>
       )}
     </div>

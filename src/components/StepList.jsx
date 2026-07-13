@@ -12,6 +12,7 @@ export default function StepList({ steps = [], currentStep = 0, onStepClick }) {
           step={step}
           index={i}
           isCurrent={i === currentStep}
+          currentStep={currentStep}
           onClick={() => onStepClick?.(i)}
         />
       ))}

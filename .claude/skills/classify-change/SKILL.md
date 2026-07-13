@@ -1,7 +1,24 @@
 ---
-name: classify-change
-description: 自动分类每次代码变更 — growth/ui/feat/fix/perf/ci/refactor/infra。每次 commit 前自动调用。
+name: 变更分类
+description: 自动分类每次代码变更 — growth/ui/feat/fix/perf/ci/refactor/infra。每次commit前自动调用
 ---
+
+<!--
+📝 中文说明
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 核心作用：自动分类每次代码变更的类型
+
+🔔 何时触发：
+   - 每次commit前自动调用
+   - 需要判断变更类型时
+
+📌 关键要点：
+   1. 8种分类：growth(用户影响)/ui(视觉)/feat(新功能)/fix(Bug修复)
+              perf(性能)/ci(CI/CD)/refactor(重构)/infra(基础设施)
+   2. 每次变更必须精确分类为一种
+   3. 只输出分类名称，不输出解释
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
 
 ## Change Classifier
 

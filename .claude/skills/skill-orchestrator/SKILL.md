@@ -1,8 +1,27 @@
 ---
-name: skill-orchestrator
-description: 核心调度器 — 自动判断当前修改属于哪种系统行为，选择对应 skill 执行
+name: 核心调度
+description: 核心调度器 — 自动判断当前修改属于哪种系统行为，选择对应skill执行
 model: default
 ---
+
+<!--
+📝 中文说明
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 核心作用：系统级决策层，自动判断任务类型并选择对应skill
+
+🔔 何时触发：
+   - 任何代码修改前自动执行
+   - 需要判断用哪个skill时
+
+📌 关键要点：
+   1. 5大领域：UI导航→product-ux-scope、讲解步骤→learning-tutor-engine
+               几何渲染→scene-ir-core、登录认证→auth-guest-mode
+               文档定位→github-product-mode
+   2. 一次只选一个主要skill，选中后所有决策遵循该skill
+   3. 没有匹配默认用product-ux-scope
+   4. 行动前必须输出：Selected Skill + Reason
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
 
 # Skill Orchestrator (Core Router)
 

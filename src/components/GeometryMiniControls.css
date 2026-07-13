@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════
-   GeometryMiniControls — Canvas overlay · Light theme
+   GeometryMiniControls — Canvas overlay · 学习模式简化版
    ═══════════════════════════════════════════════════════ */
 
 .geo-mini-controls {
@@ -14,11 +14,14 @@
 
 .gmc-bar {
   display: flex;
-  gap: 6px;
+  gap: 4px;
+  align-items: center;
 }
 
 .gmc-btn {
   padding: 5px 10px;
+  min-width: 44px;
+  min-height: 28px;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   background: var(--bg-surface);
@@ -26,11 +29,14 @@
   font-weight: 500;
   color: var(--text-primary);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
   white-space: nowrap;
   font-family: inherit;
-  letter-spacing: -0.01em;
   box-shadow: var(--shadow-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .gmc-btn:hover {
@@ -39,51 +45,17 @@
 }
 
 .gmc-btn.active {
-  background: var(--bg-base);
-  border-color: var(--border-focus);
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
-}
-
-.gmc-dropdown {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-  max-height: 280px;
-  overflow-y: auto;
-  min-width: 140px;
-}
-
-.gmc-dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 9px 14px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  transition: all var(--transition-fast);
-  text-align: left;
-  font-family: inherit;
-}
-
-.gmc-dropdown-item:hover {
   background: var(--accent-subtle);
-  color: var(--text-primary);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
-.gmc-dropdown-item.active {
-  background: var(--accent-subtle);
-  color: var(--text-primary);
-  font-weight: 550;
-}
-
-.gmc-geo-name {
-  font-size: var(--text-sm);
+.gmc-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border-subtle);
+  flex-shrink: 0;
+  margin: 0 2px;
 }
 
 /* Mobile */
@@ -96,5 +68,6 @@
   .gmc-btn {
     padding: 4px 8px;
     font-size: 10px;
+    min-width: 36px;
   }
 }

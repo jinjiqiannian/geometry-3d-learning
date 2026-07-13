@@ -162,6 +162,69 @@ aiRouter.post(
 )
 
 // ═══════════════════════════════════════════════════════
+//  POST /api/ai/solve-stream — 流式一站式解题 ★流式主入口
+//  使用 SSE 逐字输出推理过程，最后输出完整步骤
+// ═══════════════════════════════════════════════════════
+aiRouter.post(
+  '/solve-stream',
+  optionalAuth,
+  dailyLimit('generate'),
+  async (req: Request, res: Response) => {
+    try {
+      const body = parseSchema.parse(req.body)
+      const plan = req.userPlan || 'pro'
+
+      // Set SSE headers
+      res.setHeader('Content-Type', 'text/event-stream')
+      res.setHeader('Cache-Control', 'no-cache')
+      res.setHeader('Connection', 'keep-alive')
+      res.setHeader('X-Accel-Buffering', 'no')
+      res.flushHeaders()
+
+      // Handle client disconnect
+      let aborted = false
+      req.on('close', () => { aborted = true })
+
+      for await (const event of aiService.solveCompleteStream(body.problemText, plan, req.userId)) {
+        if (aborted) break
+
+        if (event.type === 'parsed') {
+          res.write(`event: parsed\ndata: ${JSON.stringify(event.data)}\n\n`)
+        } else if (event.type === 'reasoning') {
+          res.write(`event: reasoning\ndata: ${JSON.stringify(event.data)}\n\n`)
+        } else if (event.type === 'done') {
+          if (req.userId) {
+            await recordUsage(req.userId, 'generate', body.problemText).catch(() => {})
+          }
+          res.write(`event: done\ndata: ${JSON.stringify(event.data)}\n\n`)
+          res.write(`event: __close\ndata: done\n\n`)
+          res.end()
+          return
+        } else if (event.type === 'error') {
+          res.write(`event: error\ndata: ${JSON.stringify(event.data)}\n\n`)
+          res.write(`event: __close\ndata: error\n\n`)
+          res.end()
+          return
+        }
+      }
+
+      if (!aborted && !res.writableEnded) {
+        res.write(`event: __close\ndata: done\n\n`)
+        res.end()
+      }
+    } catch (err: any) {
+      if (!res.headersSent) {
+        res.status(500).json({ success: false, error: err.message })
+      } else {
+        res.write(`event: error\ndata: ${JSON.stringify({ message: err.message })}\n\n`)
+        res.write(`event: __close\ndata: error\n\n`)
+        res.end()
+      }
+    }
+  }
+)
+
+// ═══════════════════════════════════════════════════════
 //  POST /api/ai/narrate — 教师讲稿（Teacher only）
 // ═══════════════════════════════════════════════════════
 aiRouter.post(

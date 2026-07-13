@@ -117,6 +117,8 @@ export default function MobileBottomNav() {
   }
 
   const currentSubject = getCurrentSubject()
+  const homePath = currentSubject.path
+  const isHomeActive = location.pathname.startsWith(homePath) && location.pathname !== '/'
 
   return (
     <>
@@ -126,12 +128,12 @@ export default function MobileBottomNav() {
             return (
               <div key={item.path} className="mb-nav-subject-wrapper">
                 <Link
-                  to={item.path}
-                  className={`mb-nav-item ${isActive(item.path) ? 'active' : ''}`}
+                  to={homePath}
+                  className={`mb-nav-item ${isHomeActive ? 'active' : ''}`}
                   aria-label={item.label}
-                  aria-current={isActive(item.path) ? 'page' : undefined}
+                  aria-current={isHomeActive ? 'page' : undefined}
                 >
-                  <item.icon active={isActive(item.path)} />
+                  <item.icon active={isHomeActive} />
                   <span className="mb-nav-label">{item.label}</span>
                 </Link>
                 <button

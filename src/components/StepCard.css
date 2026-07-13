@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════════════════
-   StepCard — 解题步骤卡片 · 时间线风格 · 教学友好
+   StepCard — 解题步骤卡片 · 三状态 · 教学友好
    ═══════════════════════════════════════════════════════ */
 
+/* ── Base ──────────────────────────────────────────── */
 .step-card {
   display: flex;
   gap: 12px;
@@ -17,10 +18,14 @@
   background: var(--accent-subtle);
 }
 
+/* ── State: current ─────────────────────────────────── */
 .step-card.current {
   background: var(--accent-subtle);
   border-left-color: var(--accent);
   animation: stepActivate 0.3s ease;
+}
+.step-card.current .step-title {
+  color: var(--accent);
 }
 
 @keyframes stepActivate {
@@ -28,16 +33,34 @@
   to { background: var(--accent-subtle); }
 }
 
+/* ── State: completed ───────────────────────────────── */
+.step-card.completed {
+  border-left-color: var(--color-success, #16a34a);
+  opacity: 0.85;
+}
+.step-card.completed:hover {
+  background: rgba(22, 163, 74, 0.06);
+}
+
+/* ── State: pending ─────────────────────────────────── */
+.step-card.pending {
+  opacity: 0.45;
+  cursor: default;
+}
+.step-card.pending:hover {
+  background: transparent;
+}
+
+/* ── Locked ────────────────────────────────────────── */
 .step-card.locked {
   opacity: 0.4;
   cursor: not-allowed;
 }
-
 .step-card.locked:hover {
   background: transparent;
 }
 
-/* ── 左侧时间线 ────────────────────────────────── */
+/* ── 左侧时间线 ──────────────────────────────────── */
 .step-timeline {
   display: flex;
   flex-direction: column;
@@ -55,7 +78,11 @@
   background: var(--border-default);
   flex-shrink: 0;
   z-index: 1;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .step-card.current .step-dot {
@@ -64,6 +91,26 @@
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
+/* Completed dot: green with checkmark */
+.step-dot--done {
+  background: var(--color-success, #16a34a) !important;
+  width: 14px;
+  height: 14px;
+}
+.step-dot-check {
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Pending dot: hollow circle */
+.step-card.pending .step-dot {
+  background: transparent;
+  border: 2px solid var(--border-default);
+}
+
+/* ── 连接线 ────────────────────────────────────────── */
 .step-line {
   width: 1.5px;
   flex: 1;
@@ -71,40 +118,69 @@
   min-height: 16px;
   margin-top: 2px;
 }
+.step-card.completed .step-line {
+  background: var(--color-success, #16a34a);
+  opacity: 0.4;
+}
 
-/* ── 卡片主体 ──────────────────────────────────── */
+/* ── 卡片主体 ────────────────────────────────────── */
 .step-body {
   flex: 1;
   min-width: 0;
 }
 
-.step-card:not(.current) .step-body > .step-content,
-.step-card:not(.current) .step-body > .step-title {
+.step-card:not(.current):not(.completed):not(.pending) .step-body > .step-content,
+.step-card:not(.current):not(.completed):not(.pending) .step-body > .step-title {
   opacity: 0.65;
 }
 
+/* ── 步奏头部（类型徽章 + 公式标签） ───────────── */
 .step-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 3px;
+  flex-wrap: wrap;
 }
 
+/* 类型徽章 */
 .step-type-badge {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 550;
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
+  padding: 1px 7px;
+  border-radius: 3px;
   white-space: nowrap;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+}
+.step-type-badge--observation { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
+.step-type-badge--construction { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+.step-type-badge--calculation { background: rgba(217, 119, 6, 0.12); color: #d97706; }
+.step-type-badge--conclusion { background: rgba(22, 163, 74, 0.12); color: #16a34a; }
+
+/* 公式标签（在徽章旁边显示） */
+.step-formula-label {
+  font-size: 9px;
+  font-family: var(--font-math, monospace);
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--border-subtle);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
 }
 
+/* ── 步奏序号 ────────────────────────────────────── */
 .step-number {
   font-size: 10px;
   color: var(--text-muted);
   font-weight: 450;
 }
 
+/* ── 标题 ──────────────────────────────────────────── */
 .step-title {
   font-size: var(--text-sm);
   font-weight: 550;
@@ -113,9 +189,23 @@
   margin-bottom: 2px;
 }
 
+/* ── 内容 ──────────────────────────────────────────── */
 .step-content {
   font-size: var(--text-xs);
   color: var(--text-secondary);
   line-height: 1.6;
   margin-top: 2px;
+}
+
+/* 非当前步奏内容截断为 2 行 */
+.step-content--clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.step-card.current .step-content,
+.step-card.completed .step-content {
+  -webkit-line-clamp: unset;
+  display: block;
 }

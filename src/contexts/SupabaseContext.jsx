@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || ''
@@ -11,6 +11,27 @@ function getSupabase() {
     supabaseInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   }
   return supabaseInstance
+}
+
+// ── 访客 ID 工具函数 ───────────────────────────────
+
+const GUEST_ID_KEY = 'mathviz_guest_id'
+
+/** 生成临时 UUID */
+function generateGuestId() {
+  try { return crypto.randomUUID() } catch { return Date.now().toString(36) + Math.random().toString(36).slice(2, 10) }
+}
+
+/** 获取持久化的访客 ID */
+function getOrCreateGuestId() {
+  try {
+    let id = localStorage.getItem(GUEST_ID_KEY)
+    if (!id) {
+      id = generateGuestId()
+      localStorage.setItem(GUEST_ID_KEY, id)
+    }
+    return id
+  } catch { return generateGuestId() }
 }
 
 // ── 手机号工具函数 ─────────────────────────────────
@@ -46,6 +67,11 @@ export function SupabaseProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [connected, setConnected] = useState(false)
+
+  // ── 访客 ID（life of localStorage, never null）──
+  const [guestId] = useState(() => getOrCreateGuestId())
+  // 简化为 !user：loading 期间暂时视为访客，避免闪一下"已登录"UI
+  const isGuest = useMemo(() => !user, [user])
 
   // Check if Supabase is configured
   useEffect(() => {
@@ -232,6 +258,8 @@ export function SupabaseProvider({ children }) {
       user,
       profile,
       loading,
+      guestId,
+      isGuest,
       signUp,
       signIn,
       signUpWithPhone,

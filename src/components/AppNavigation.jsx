@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import ThemeToggle from './ThemeToggle'
 import UserMenu from './UserMenu'
 import { useSubscription } from '../contexts/SubscriptionContext'
@@ -7,7 +7,8 @@ import { SUBJECTS } from '../constants'
 import './AppNavigation.css'
 
 const NAV_ITEMS = [
-  { path: '/', label: '首页' },
+  // 首页动态指向当前学科主页
+
   { path: '/workspace', label: '工作台' },
   { path: '/history', label: '历史' },
   { path: '/edumind/profile', label: '考试分析' },
@@ -75,6 +76,25 @@ export default function AppNavigation() {
   const location = useLocation()
   const { plan, isPro } = useSubscription()
   const [showSubjectDropdown, setShowSubjectDropdown] = useState(false)
+  const subjectRef = useRef(null)
+
+  // 点击展开/收起 + 点击外部自动关闭
+  useEffect(() => {
+    if (!showSubjectDropdown) return
+    const handleClickOutside = (e) => {
+      if (subjectRef.current && !subjectRef.current.contains(e.target)) {
+        setShowSubjectDropdown(false)
+      }
+    }
+    // 用 setTimeout 避免触发按钮自身的 click 事件
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside)
+    }, 0)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showSubjectDropdown])
 
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/'
@@ -96,11 +116,17 @@ export default function AppNavigation() {
           <span className="app-nav-brand">几何维度</span>
         </Link>
 
-        <div className="app-nav-subject-dropdown" onMouseEnter={() => setShowSubjectDropdown(true)} onMouseLeave={() => setShowSubjectDropdown(false)}>
-          <button className="app-nav-subject-btn" aria-haspopup="true" aria-expanded={showSubjectDropdown}>
+        <div className="app-nav-subject-dropdown" ref={subjectRef}>
+          <button
+            className="app-nav-subject-btn"
+            aria-haspopup="true"
+            aria-expanded={showSubjectDropdown}
+            onClick={() => setShowSubjectDropdown(prev => !prev)}
+          >
             <SubjectIcon type={currentSubject.icon} />
             <span className="app-nav-subject-name">{currentSubject.name}</span>
-            <svg className="app-nav-subject-arrow" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <svg className="app-nav-subject-arrow" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+              style={{ transform: showSubjectDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }}>
               <path d="M3 4.5l3 3 3-3" />
             </svg>
           </button>
@@ -122,7 +148,7 @@ export default function AppNavigation() {
                     <div className="app-nav-subject-item-desc">{subject.description}</div>
                   </div>
                   {subject.id === currentSubject.id && (
-                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                       <polyline points="4 8 8 12 12 4" />
                     </svg>
                   )}
@@ -133,6 +159,12 @@ export default function AppNavigation() {
         </div>
 
         <nav className="app-nav-links" aria-label="主导航">
+          <Link
+            to={currentSubject.path}
+            className={`app-nav-link ${location.pathname.startsWith(currentSubject.path) && location.pathname !== '/' ? 'active' : ''}`}
+          >
+            首页
+          </Link>
           {NAV_ITEMS.map(item => {
             const active = isActive(item.path)
             return (
@@ -150,6 +182,16 @@ export default function AppNavigation() {
       </div>
 
       <div className="app-nav-right">
+        <button
+          className="app-nav-feedback"
+          onClick={() => document.dispatchEvent(new CustomEvent('mathviz:show-feedback'))}
+          title="意见反馈"
+          aria-label="意见反馈"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+        </button>
         <ThemeToggle />
         {isPro && (
           <Link

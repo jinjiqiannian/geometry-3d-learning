@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { GEOMETRY_NAMES } from '../constants'
 import './HistoryPage.css'
@@ -10,6 +10,10 @@ export default function HistoryPage() {
   const [history, setHistory] = useState([])
   const [filterType, setFilterType] = useState(ALL_TYPES)
   const [deleteConfirm, setDeleteConfirm] = useState(null) // index of item to delete
+  const deleteTimerRef = useRef(null)
+
+  // Cleanup delete timer on unmount
+  useEffect(() => () => { if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current) }, [])
 
   useEffect(() => {
     try {
@@ -89,11 +93,17 @@ export default function HistoryPage() {
     return groups
   }, {})
 
+  // 获取全局索引（优先用 id，避免筛选后 indexOf 匹配错误）
+  function getGlobalIndex(item) {
+    if (item.id) return history.findIndex(h => h.id === item.id)
+    return history.indexOf(item)
+  }
+
   return (
     <div className="history-page">
       <div className="app-container">
       <div className="history-header">
-        <Link to="/" className="history-back">← 返回首页</Link>
+        <Link to="/math" className="history-back">← 返回</Link>
         <h1 className="history-title">学习记录</h1>
         <div className="history-header-actions">
           {availableTypes.length > 1 && (
@@ -127,7 +137,7 @@ export default function HistoryPage() {
           <p className="history-empty-desc">
             {history.length === 0 ? '开始解一道几何题，记录会自动保存' : '尝试切换筛选类型'}
           </p>
-          <Link to="/" className="history-empty-cta">开始解题</Link>
+          <Link to="/workspace" className="history-empty-cta">开始解题</Link>
         </div>
       ) : (
         <div className="history-list">
@@ -138,7 +148,7 @@ export default function HistoryPage() {
                 <span className="history-group-count">{items.length} 题</span>
               </div>
               {items.map((item, groupIdx) => {
-                const globalIdx = history.indexOf(item)
+                const globalIdx = getGlobalIndex(item)
                 return (
                   <div key={groupIdx} className="history-item-wrap">
                     <button
@@ -170,7 +180,7 @@ export default function HistoryPage() {
                         } else {
                           setDeleteConfirm(globalIdx)
                           // 3秒后自动取消确认
-                          setTimeout(() => setDeleteConfirm(null), 3000)
+                          deleteTimerRef.current = setTimeout(() => { setDeleteConfirm(null); deleteTimerRef.current = null }, 3000)
                         }
                       }}
                       title={deleteConfirm === globalIdx ? '确认删除' : '删除此记录'}

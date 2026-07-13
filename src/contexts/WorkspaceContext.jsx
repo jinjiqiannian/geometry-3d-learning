@@ -77,39 +77,6 @@ export function WorkspaceProvider({ children }) {
     }
   }, [checkCanGenerate, recordUsage])
 
-  // ── Generate AI-enhanced steps (Pro feature) ──
-  const generateAiSteps = useCallback(async (userApiKey) => {
-    if (checkCanAiExplain && !checkCanAiExplain()) return
-
-    setWorkspace(prev => ({ ...prev, loading: true }))
-
-    try {
-      // Call Claude API for detailed explanation
-      const { generateAIExplanation } = await import('../engines/explanationEngine')
-      const aiSteps = await generateAIExplanation(
-        workspace.problemText,
-        workspace.parsedData,
-        userApiKey
-      )
-
-      setWorkspace(prev => ({
-        ...prev,
-        steps: aiSteps,
-        loading: false,
-      }))
-
-      if (recordUsage) {
-        await recordUsage('ai_explain', workspace.problemText, workspace.id)
-      }
-    } catch (error) {
-      setWorkspace(prev => ({
-        ...prev,
-        loading: false,
-        error: error.message || 'AI讲解生成失败',
-      }))
-    }
-  }, [workspace.problemText, workspace.parsedData, workspace.id, checkCanAiExplain, recordUsage])
-
   // ── Step navigation ──
   const goToStep = useCallback((n) => {
     setWorkspace(prev => ({
@@ -217,7 +184,6 @@ export function WorkspaceProvider({ children }) {
     currentSceneState,
     setProblem,
     parseAndGenerate,
-    generateAiSteps,
     goToStep,
     nextStep,
     prevStep,
@@ -225,7 +191,7 @@ export function WorkspaceProvider({ children }) {
     updateGeometry,
     saveWorkspace,
     loadWorkspace,
-  }), [workspace, currentSceneState, setProblem, parseAndGenerate, generateAiSteps,
+  }), [workspace, currentSceneState, setProblem, parseAndGenerate,
        goToStep, nextStep, prevStep, updateSceneState, updateGeometry, saveWorkspace, loadWorkspace])
 
   return (

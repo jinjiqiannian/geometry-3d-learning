@@ -58,10 +58,11 @@ export function TeacherProvider({ children }) {
   const startAutoPlay = useCallback((totalSteps, onStepChange) => {
     setAutoPlay(true)
     stepRef.current = 0
+    const stepCount = totalSteps > 0 ? totalSteps : narration.length
 
     const advance = () => {
       stepRef.current++
-      if (stepRef.current < totalSteps) {
+      if (stepRef.current < stepCount) {
         onStepChange?.(stepRef.current)
         // Get duration from current narration or default
         const phrase = narration[stepRef.current]

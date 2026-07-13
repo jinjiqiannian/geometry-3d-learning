@@ -1,7 +1,25 @@
 ---
-name: commit-generator
-description: 自动生成 Conventional Commit 消息。根据 diff 或描述输出规范 commit message。
+name: 生成Commit
+description: 自动生成规范的Commit消息。根据diff或描述输出提交信息
 ---
+
+<!--
+📝 中文说明
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 核心作用：根据代码变更自动生成规范的Commit消息
+
+🔔 何时触发：
+   - 提交代码前生成commit message
+   - 根据diff描述生成提交信息
+
+📌 关键要点：
+   1. 格式：<type>(<scope>): <意图驱动的摘要>
+   2. 优先写WHY而非WHAT
+   3. 不超过90字符
+   4. 可用类型：growth/ui/feat/fix/perf/ci/infra/refactor
+   5. 聚焦用户/产品影响，避免不必要的实现细节
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
 
 ## Commit Generator
 

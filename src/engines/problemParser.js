@@ -4,30 +4,64 @@
 
 import { extractVerticesFromText, normalizeSubscripts } from "./labelMapper";
 
-const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
+const PROVIDER_CONFIGS = {
+  anthropic: {
+    apiUrl: "https://api.anthropic.com/v1/messages",
+    headers: { "anthropic-version": "2023-06-01" },
+    responseParser: (data) => data.content?.find(b => b.type === "text")?.text || "",
+    defaultModel: "claude-sonnet-4-6",
+  },
+  deepseek: {
+    apiUrl: "https://api.deepseek.com/v1/chat/completions",
+    headers: {},
+    responseParser: (data) => data.choices?.[0]?.message?.content || "",
+    defaultModel: "v4-pro",
+  },
+  openai: {
+    apiUrl: "https://api.openai.com/v1/chat/completions",
+    headers: {},
+    responseParser: (data) => data.choices?.[0]?.message?.content || "",
+    defaultModel: "gpt-4o",
+  },
+};
+
 const MODEL = "claude-sonnet-4-6";
 
 // ── 几何题解析 System Prompt ─────────────────────────
-const PARSE_SYSTEM_PROMPT = `你是一个中学立体几何题目解析器。用户输入一道几何题的文字描述，你提取所有几何信息。
+const PARSE_SYSTEM_PROMPT = `你是一个中学立体几何题目语义解析器。用户输入一道几何题的文字描述，你需要提取所有几何语义信息。
 
-严格输出以下 JSON 格式（不要输出其他内容，不要用 markdown 代码块包裹）：
+严格输出以下 Geometry Semantic JSON 格式（不要输出其他内容，不要用 markdown 代码块包裹）：
 
 {
-  "type": "cube|sphere|cylinder|cone|pyramid|prism",
+  "shape": "cube|cuboid|pyramid|prism|sphere|cylinder|cone|tetrahedron|octahedron|squareFrustum|circularFrustum",
   "size": 数字（边长/半径，题目未给出则默认2）,
-  "labels": ["题目中使用的顶点标签，按标准顺序排列"],
-  "highlightLines": [{"from": "A", "to": "C", "label": "AC", "reason": "题目要求"}],
-  "annotations": [{"text": "已知条件", "position": "bottom|top|left|right"}],
-  "explanation": "一句话概述你理解的题目内容"
+  "points": ["所有顶点标签，包括辅助点", "A", "B", "C", "D", "P", "E", "F"],
+  "edges": [{"from": "A", "to": "B", "label": "AB"}],
+  "faces": [],
+  "planes": [{"label": "BEF", "points": ["B", "E", "F"]}],
+  "relations": ["E midpoint AD", "F on PA", "PC parallel plane BEF"],
+  "importantLines": ["PC", "AF", "BE", "EF"],
+  "importantPlanes": ["BEF"],
+  "highlight": ["parallel", "midpoint"],
+  "animationSteps": []
 }
 
 规则：
-1. type 只能是: cube（正方体）、sphere（球体）、cylinder（圆柱）、cone（圆锥）、pyramid（棱锥/四棱锥）、prism（棱柱/三棱柱）
+1. shape 只能是: cube（正方体）、cuboid（长方体）、pyramid（四棱锥）、prism（三棱柱）、sphere（球体）、cylinder（圆柱）、cone（圆锥）、tetrahedron（正四面体）、octahedron（正八面体）、squareFrustum（四棱台）、circularFrustum（圆台）
 2. size 从题目数字中提取（如"棱长为3"→size=3，"半径为2"→size=2），找不到用2
-3. labels 用题目中实际使用的字母标注（如 ABCD-EFGH 表示正方体8个顶点）
-4. highlightLines 是题目中提到的关键线段（要求计算的、已知长度的、需要证明的）
-5. 如果识别不出任何几何体，type 用 "unknown" 并在 explanation 中说明原因
-6. 只输出 JSON，不要有任何解释文字`;
+3. points 必须包含所有题目中出现的顶点标签，包括辅助点（如中点E、交点F等）
+4. edges 列出所有需要显示的边，包括几何体棱和辅助线
+5. planes 列出所有需要显示的平面（如截面、辅助平面）
+6. relations 描述点、线、面之间的关系，格式：
+   - "E midpoint AD" 表示E是AD的中点
+   - "F on PA" 表示F在PA上
+   - "PC parallel plane BEF" 表示PC平行于平面BEF
+   - "AB perpendicular CD" 表示AB垂直于CD
+7. importantLines 列出需要高亮的关键线段
+8. importantPlanes 列出需要高亮的关键平面
+9. highlight 列出需要标记的关系类型：parallel（平行）、perpendicular（垂直）、midpoint（中点）、ratio（比例）、section（截面）
+10. 如果识别不出任何几何体，shape 用 "cube" 并在 relations 中说明原因
+11. 只输出 JSON，不要有任何解释文字`;
 
 // ── 图片识别 System Prompt ───────────────────────────
 const IMAGE_SYSTEM_PROMPT = `你是一个几何题图片识别器。请识别图片中的几何题目文字内容。
@@ -58,43 +92,55 @@ const IMAGE_SYSTEM_PROMPT = `你是一个几何题图片识别器。请识别图
  * @param {string} options.apiKey - API 密钥
  * @returns {Promise<Object>} API 响应 JSON
  */
-async function callClaude({ system, message, images, apiKey }) {
+async function callAI({ system, message, images, apiKey, provider = "deepseek", model = "v4-pro" }) {
   if (!apiKey || apiKey.trim() === "") {
     throw new Error("请先设置 API Key");
   }
 
-  const content = [];
+  const config = PROVIDER_CONFIGS[provider] || PROVIDER_CONFIGS.deepseek;
+  const useModel = model || config.defaultModel;
 
-  // 如果有图片，先添加图片
-  if (images && images.length > 0) {
-    for (const img of images) {
-      content.push({
-        type: "image",
-        source: {
-          type: "base64",
-          media_type: img.mediaType || "image/jpeg",
-          data: img.data,
-        },
-      });
+  let body;
+  if (provider === "anthropic") {
+    const content = [];
+    if (images && images.length > 0) {
+      for (const img of images) {
+        content.push({
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: img.mediaType || "image/jpeg",
+            data: img.data,
+          },
+        });
+      }
     }
+    content.push({ type: "text", text: message });
+    body = {
+      model: useModel,
+      max_tokens: 1024,
+      system,
+      messages: [{ role: "user", content }],
+    };
+  } else {
+    const messages = [
+      { role: "system", content: system },
+      { role: "user", content: message },
+    ];
+    body = {
+      model: useModel,
+      max_tokens: 1024,
+      temperature: 0.3,
+      messages,
+    };
   }
 
-  // 添加文字消息
-  content.push({ type: "text", text: message });
-
-  const body = {
-    model: MODEL,
-    max_tokens: 1024,
-    system,
-    messages: [{ role: "user", content }],
-  };
-
-  const response = await fetch(ANTHROPIC_API, {
+  const response = await fetch(config.apiUrl, {
     method: "POST",
     headers: {
       "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
       "content-type": "application/json",
+      ...config.headers,
     },
     body: JSON.stringify(body),
   });
@@ -107,11 +153,11 @@ async function callClaude({ system, message, images, apiKey }) {
     if (response.status === 429) {
       throw new Error("请求过于频繁，请稍后重试");
     }
-    throw new Error(err.error?.message || `API 请求失败 (${response.status})`);
+    throw new Error(err.error?.message || err.message || `API 请求失败 (${response.status})`);
   }
 
   const data = await response.json();
-  return data;
+  return { data, text: config.responseParser(data) };
 }
 
 /**
@@ -157,35 +203,35 @@ export function parseProblemSync(text) {
 /**
  * 解析文字题目，返回结构化几何数据（异步版本，支持API）
  * @param {string} text - 用户输入的中文几何题
- * @param {string} apiKey - Anthropic API 密钥
+ * @param {string} apiKey - API 密钥
+ * @param {string} provider - 提供商：anthropic/deepseek/openai
+ * @param {string} model - 模型名称
  * @returns {Promise<{type:string, size:number, labels:string[], highlightLines:Array, annotations:Array, explanation:string}>}
  */
-export async function parseProblem(text, apiKey) {
+export async function parseProblem(text, apiKey, provider = "deepseek", model = "v4-pro") {
   if (!text || text.trim().length < 3) {
     throw new Error("请输入至少3个字的题目描述");
   }
 
   const trimmed = text.trim();
 
-  // 先尝试本地关键词匹配（快速路径，不消耗 API）
   const quickResult = quickMatch(trimmed);
   if (quickResult && quickResult.confidence >= 0.7) {
     return quickResult;
   }
 
-  // 如果没有 API Key，返回增强的本地默认结果
   if (!apiKey || apiKey.trim() === "") {
     return generateFallbackResult(trimmed);
   }
 
-  // 调用 Claude API 解析
-  const response = await callClaude({
+  const { text: rawText } = await callAI({
     system: PARSE_SYSTEM_PROMPT,
     message: `请解析以下几何题目：\n\n${trimmed}`,
     apiKey,
+    provider,
+    model,
   });
 
-  const rawText = extractText(response);
   return parseResponse(rawText);
 }
 
@@ -193,22 +239,25 @@ export async function parseProblem(text, apiKey) {
  * 解析拍照图片，识别题目文字
  * @param {string} base64Data - 图片 base64 编码（不含 data:xxx;base64, 前缀）
  * @param {string} mediaType - 图片 MIME 类型（如 image/jpeg）
- * @param {string} apiKey - Anthropic API 密钥
+ * @param {string} apiKey - API 密钥
+ * @param {string} provider - 提供商：anthropic/deepseek/openai
+ * @param {string} model - 模型名称
  * @returns {Promise<{hasProblem:boolean, problemText:string, figureDescription:string}>}
  */
-export async function parseImage(base64Data, mediaType, apiKey) {
+export async function parseImage(base64Data, mediaType, apiKey, provider = "deepseek", model = "v4-pro") {
   if (!base64Data) {
     throw new Error("请先拍摄或选择图片");
   }
 
-  const response = await callClaude({
+  const { text: rawText } = await callAI({
     system: IMAGE_SYSTEM_PROMPT,
     message: "请识别这张图片中的几何题目。",
     images: [{ data: base64Data, mediaType: mediaType || "image/jpeg" }],
     apiKey,
+    provider,
+    model,
   });
 
-  const rawText = extractText(response);
   const result = parseResponse(rawText);
 
   if (!result.hasProblem) {
@@ -275,6 +324,63 @@ function parseResponse(text) {
 }
 
 /**
+ * 从题目文本中提取额外标签（如 E、F 等辅助点）
+ * 这些标签不在几何体默认顶点命名中，但被题目提到
+ */
+function extractAdditionalLabels(text, knownLabels) {
+  const known = new Set(knownLabels || []);
+  const result = [];
+
+  // 模式1：大写字母后跟中文语境词（为、在、是、作、连等）
+  const ctxPattern = /([A-Z])(?=[为的在是作连与和到使得且则或交属于]|，|,|。|；|：|:|、|\s)/g;
+  let m;
+  while ((m = ctxPattern.exec(text)) !== null) {
+    if (!known.has(m[1])) {
+      known.add(m[1]);
+      result.push(m[1]);
+    }
+  }
+
+  // 模式2：大写字母序列中的散装字母（如 PC//平面BEF → P,C,B,E,F）
+  const blockPattern = /([A-Z]{2,})/g;
+  while ((m = blockPattern.exec(text)) !== null) {
+    for (const ch of m[1]) {
+      if (!known.has(ch)) {
+        known.add(ch);
+        result.push(ch);
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * 从题目文本中提取简单边引用（相邻大写字母对）
+ * 用于补充 extractEdgeRefs 的遗漏
+ */
+function extractSimpleEdgePairs(text) {
+  const lines = [];
+  const seen = new Set();
+  // 匹配相邻的大写字母对（如 PA、AD、PC、EF 等）
+  const pairPattern = /([A-Z])([A-Z])/g;
+  let m;
+  while ((m = pairPattern.exec(text)) !== null) {
+    const label = m[1] + m[2];
+    if (!seen.has(label)) {
+      seen.add(label);
+      lines.push({
+        from: m[1],
+        to: m[2],
+        label,
+        reason: "题目提及",
+      });
+    }
+  }
+  return lines;
+}
+
+/**
  * 本地快速关键词匹配（减少不必要的 API 调用）
  * 返回 null 表示无法匹配，需要调用 API
  */
@@ -282,11 +388,10 @@ function detectSubType(text, type) {
   if (/二面角|dihedral/.test(text)) return "dihedral_angle";
   if (/线面角|直线.*(?:与|和).*(?:平面|面).*(?:所成|的)角/.test(text))
     return "line_plane_angle";
-  if (/异面|skew|异面直线/.test(text) && type === "cube") return "skew_lines";
+  if (/异面|skew|异面直线|所成角|夹角/.test(text) && type === "cube") return "skew_lines";
+  if (/余弦|正弦|正切|cos|sin|tan/.test(text) && type === "cube") return "skew_lines";
   if (/点.*到.*(?:平面|面).*距离|等体积法/.test(text))
     return "point_plane_distance";
-  if (/对角线|diagonal/.test(text) && (type === "cube" || type === "cuboid"))
-    return "diagonal";
   if (/内接|内切|inscribed/.test(text)) return "inscribed";
   if (/外接|外切|circumscribed/.test(text)) return "circumscribed";
   if (/体积|volume/.test(text)) return "volume";
@@ -294,6 +399,7 @@ function detectSubType(text, type) {
   if (/侧面积|侧面展开/.test(text)) return "lateral_area";
   if (/母线|generatrix/.test(text)) return "generatrix";
   if (/表面[积积]|表面|面积/.test(text)) return "surface_area";
+  if (/对角线|diagonal/.test(text)) return "diagonal";
   if (/球冠|crown|spherical cap/.test(text)) return "spherical_cap";
   if (/对棱/.test(text)) return "opposite_edges";
   return "general";
@@ -456,44 +562,131 @@ export function quickMatch(text) {
     };
   }
 
-  // 棱锥/四棱锥
-  const pyramidMatch = t.match(/棱锥|四棱锥|pyramid/);
-  if (pyramidMatch) {
-    const sizeMatch = t.match(/边长[为是]?\s*(\d+(?:\.\d+)?)/);
+  // 三棱锥（三角锥）
+  const triPyramidMatch = t.match(/三棱锥|triangular pyramid/i);
+  if (triPyramidMatch) {
+    const sizeMatch = t.match(/(?:棱长|边长)[为是]?\s*(\d+(?:\.\d+)?)/);
     const hMatch = t.match(/高[为是]?\s*(\d+(?:\.\d+)?)/);
     const size = sizeMatch ? parseFloat(sizeMatch[1]) : 2;
+
+    const extractedLabels = extractVerticesFromText(text);
+    let labels = extractedLabels || ["A", "B", "C", "P"];
+    const extraLabels = extractAdditionalLabels(text, labels);
+    if (extraLabels.length > 0) {
+      labels = [...new Set([...labels, ...extraLabels])];
+    }
+
+    const highlightLines = extractEdgeRefs(text);
+    const simpleEdges = extractSimpleEdgePairs(text);
+    if (simpleEdges.length > 0) {
+      const existing = new Set(highlightLines.map(h => h.label));
+      for (const e of simpleEdges) {
+        if (!existing.has(e.label)) highlightLines.push(e);
+      }
+    }
+
     return {
       type: "pyramid",
       size,
       subType: detectSubType(text, "pyramid"),
-      labels: ["A", "B", "C", "D", "P"],
-      highlightLines: [],
+      labels,
+      vertices: labels,
+      highlightLines,
       params: { size, height: hMatch ? parseFloat(hMatch[1]) : size * 1.5 },
       annotations: [],
       explanation: sizeMatch
-        ? `正四棱锥，底面边长 ${size}`
-        : "正四棱锥（参数来自快速匹配）",
+        ? `三棱锥，底面边长 ${size}`
+        : "三棱锥（参数来自快速匹配）",
       confidence: sizeMatch ? 0.85 : 0.6,
     };
   }
 
+  // 棱锥/四棱锥
+  const pyramidMatch = t.match(/四棱锥|棱锥|pyramid/i);
+  if (pyramidMatch) {
+    const sizeMatch = t.match(/(?:边长|棱长)[为是]?\s*(\d+(?:\.\d+)?)/);
+    const hMatch = t.match(/高[为是]?\s*(\d+(?:\.\d+)?)/);
+    const size = sizeMatch ? parseFloat(sizeMatch[1]) : 2;
+
+    // 从文本提取顶点标签（P-ABCD 模式等）
+    const extractedLabels = extractVerticesFromText(text);
+    let labels = extractedLabels || ["A", "B", "C", "D", "P"];
+
+    // 扫描额外单字母标签（E、F 等辅助点）
+    const extraLabels = extractAdditionalLabels(text, labels);
+    if (extraLabels.length > 0) {
+      labels = [...new Set([...labels, ...extraLabels])];
+    }
+
+    const highlightLines = extractEdgeRefs(text);
+    // 补充简单边引用（相邻大写字母对）
+    const simpleEdges = extractSimpleEdgePairs(text);
+    if (simpleEdges.length > 0) {
+      const existing = new Set(highlightLines.map(h => h.label));
+      for (const e of simpleEdges) {
+        if (!existing.has(e.label)) highlightLines.push(e);
+      }
+    }
+
+    let confidence = 0.75;
+    if (extractedLabels && extractedLabels.length > 0) confidence = 0.9;
+    if (sizeMatch) confidence = 0.95;
+
+    return {
+      type: "pyramid",
+      size,
+      subType: detectSubType(text, "pyramid"),
+      labels,
+      vertices: labels,
+      highlightLines,
+      params: { size, height: hMatch ? parseFloat(hMatch[1]) : size * 1.5 },
+      annotations: [],
+      explanation: sizeMatch
+        ? `四棱锥，底面边长 ${size}`
+        : "四棱锥（参数来自快速匹配）",
+      confidence,
+    };
+  }
+
   // 棱柱/三棱柱
-  const prismMatch = t.match(/棱柱|三棱柱|prism/);
+  const prismMatch = t.match(/棱柱|三棱柱|prism/i);
   if (prismMatch) {
     const sizeMatch = t.match(/(?:棱长|边长)[为是]?\s*(\d+(?:\.\d+)?)/);
     const size = sizeMatch ? parseFloat(sizeMatch[1]) : 2;
+
+    const extractedLabels = extractVerticesFromText(text);
+    let labels = extractedLabels || ["A", "B", "C", "A'", "B'", "C'"];
+    const extraLabels = extractAdditionalLabels(text, labels);
+    if (extraLabels.length > 0) {
+      labels = [...new Set([...labels, ...extraLabels])];
+    }
+
+    const highlightLines = extractEdgeRefs(text);
+    const simpleEdges = extractSimpleEdgePairs(text);
+    if (simpleEdges.length > 0) {
+      const existing = new Set(highlightLines.map(h => h.label));
+      for (const e of simpleEdges) {
+        if (!existing.has(e.label)) highlightLines.push(e);
+      }
+    }
+
+    let confidence = 0.6;
+    if (extractedLabels) confidence = 0.8;
+    if (sizeMatch) confidence = extractedLabels ? 0.9 : 0.85;
+
     return {
       type: "prism",
       size,
       subType: detectSubType(text, "prism"),
-      labels: ["A", "B", "C", "A'", "B'", "C'"],
-      highlightLines: [],
+      labels,
+      vertices: labels,
+      highlightLines,
       params: { size },
       annotations: [],
       explanation: sizeMatch
         ? `直角三棱柱，边长 ${size}`
         : "直角三棱柱（参数来自快速匹配）",
-      confidence: sizeMatch ? 0.85 : 0.6,
+      confidence,
     };
   }
 
@@ -578,13 +771,14 @@ export function quickMatch(text) {
  * @param {string} apiKey
  * @returns {Promise<{valid:boolean, error?:string}>}
  */
-export async function validateApiKey(apiKey) {
+export async function validateApiKey(apiKey, provider = "deepseek", model = "v4-pro") {
   try {
-    await callClaude({
+    await callAI({
       system: "回复 OK",
       message: "ping",
       apiKey,
-      max_tokens: 10,
+      provider,
+      model,
     });
     return { valid: true };
   } catch (e) {
@@ -741,14 +935,59 @@ function generateFallbackResult(text) {
     };
   }
 
-  if (/棱锥|四棱锥|pyramid/.test(t)) {
+  if (/三棱锥|triangular pyramid/i.test(t)) {
     const hMatch = text.match(/高[为是]?\s*(\d+(?:\.\d+)?)/);
+    const extractedLabels = extractVerticesFromText(text);
+    let labels = extractedLabels || ["A", "B", "C", "P"];
+    const extraLabels = extractAdditionalLabels(text, labels);
+    if (extraLabels.length > 0) {
+      labels = [...new Set([...labels, ...extraLabels])];
+    }
+    const hl = extractEdgeRefs(text);
+    const simpleEdges = extractSimpleEdgePairs(text);
+    if (simpleEdges.length > 0) {
+      const existing = new Set(hl.map(h => h.label));
+      for (const e of simpleEdges) {
+        if (!existing.has(e.label)) hl.push(e);
+      }
+    }
     return {
       type: "pyramid",
       size,
       subType: detectSubType(text, "pyramid"),
-      labels: ["A", "B", "C", "D", "P"],
-      highlightLines: [],
+      labels,
+      vertices: labels,
+      highlightLines: hl,
+      params: { size, height: hMatch ? parseFloat(hMatch[1]) : size * 1.5 },
+      annotations: [],
+      explanation: `三棱锥，棱长 ${size}（本地解析）`,
+      confidence: 0.8,
+    };
+  }
+
+  if (/棱锥|四棱锥|pyramid/i.test(t)) {
+    const hMatch = text.match(/高[为是]?\s*(\d+(?:\.\d+)?)/);
+    const extractedLabels = extractVerticesFromText(text);
+    let labels = extractedLabels || ["A", "B", "C", "D", "P"];
+    const extraLabels = extractAdditionalLabels(text, labels);
+    if (extraLabels.length > 0) {
+      labels = [...new Set([...labels, ...extraLabels])];
+    }
+    const hl = extractEdgeRefs(text);
+    const simpleEdges = extractSimpleEdgePairs(text);
+    if (simpleEdges.length > 0) {
+      const existing = new Set(hl.map(h => h.label));
+      for (const e of simpleEdges) {
+        if (!existing.has(e.label)) hl.push(e);
+      }
+    }
+    return {
+      type: "pyramid",
+      size,
+      subType: detectSubType(text, "pyramid"),
+      labels,
+      vertices: labels,
+      highlightLines: hl,
       params: { size, height: hMatch ? parseFloat(hMatch[1]) : size * 1.5 },
       annotations: [],
       explanation: `正四棱锥，底面边长 ${size}（本地解析）`,
@@ -756,13 +995,28 @@ function generateFallbackResult(text) {
     };
   }
 
-  if (/棱柱|三棱柱|prism/.test(t)) {
+  if (/棱柱|三棱柱|prism/i.test(t)) {
+    const extractedLabels = extractVerticesFromText(text);
+    let labels = extractedLabels || ["A", "B", "C", "A'", "B'", "C'"];
+    const extraLabels = extractAdditionalLabels(text, labels);
+    if (extraLabels.length > 0) {
+      labels = [...new Set([...labels, ...extraLabels])];
+    }
+    const hl = extractEdgeRefs(text);
+    const simpleEdges = extractSimpleEdgePairs(text);
+    if (simpleEdges.length > 0) {
+      const existing = new Set(hl.map(h => h.label));
+      for (const e of simpleEdges) {
+        if (!existing.has(e.label)) hl.push(e);
+      }
+    }
     return {
       type: "prism",
       size,
       subType: detectSubType(text, "prism"),
-      labels: ["A", "B", "C", "A'", "B'", "C'"],
-      highlightLines: [],
+      labels,
+      vertices: labels,
+      highlightLines: hl,
       params: { size },
       annotations: [],
       explanation: `直角三棱柱，边长 ${size}（本地解析）`,

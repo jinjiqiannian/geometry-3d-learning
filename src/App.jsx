@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
 import { SupabaseProvider } from './contexts/SupabaseContext';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
-import { AppProvider } from './contexts/AppContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
 import { TeacherProvider } from './contexts/TeacherContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -23,9 +22,9 @@ const ExamUploadPage = lazy(() => import('./pages/ExamUploadPage'));
 const ExamReportPage = lazy(() => import('./pages/ExamReportPage'));
 const LearningPlanPage = lazy(() => import('./pages/LearningPlanPage'));
 const EduMindProfile = lazy(() => import('./pages/edumind/ProfilePage'));
-const PhysicsPage = lazy(() => import('./pages/SubjectPage'));
-const ChemistryPage = lazy(() => import('./pages/SubjectPage'));
-const BiologyPage = lazy(() => import('./pages/SubjectPage'));
+const MathPage = lazy(() => import('./pages/MathPage'));
+const PhysicsPage = lazy(() => import('./pages/PhysicsPage'));
+const FeedbackAdminPage = lazy(() => import('./pages/FeedbackAdminPage'));
 
 // ── Suspense fallback ──
 function PageLoader() {
@@ -70,26 +69,18 @@ const router = createHashRouter([
         ),
       },
       {
+        path: 'math',
+        element: (
+          <WrappedRoute>
+            <MathPage />
+          </WrappedRoute>
+        ),
+      },
+      {
         path: 'physics',
         element: (
           <WrappedRoute>
             <PhysicsPage subjectId="physics" />
-          </WrappedRoute>
-        ),
-      },
-      {
-        path: 'chemistry',
-        element: (
-          <WrappedRoute>
-            <ChemistryPage subjectId="chemistry" />
-          </WrappedRoute>
-        ),
-      },
-      {
-        path: 'biology',
-        element: (
-          <WrappedRoute>
-            <BiologyPage subjectId="biology" />
           </WrappedRoute>
         ),
       },
@@ -173,6 +164,14 @@ const router = createHashRouter([
           </WrappedRoute>
         ),
       },
+      {
+        path: 'admin/feedback',
+        element: (
+          <WrappedRoute>
+            <FeedbackAdminPage />
+          </WrappedRoute>
+        ),
+      },
     ],
   },
 ]);
@@ -182,15 +181,13 @@ export default function App() {
     <ErrorBoundary>
       <SupabaseProvider>
         <SubscriptionProvider>
-          <AppProvider>
-            <WorkspaceProvider>
-              <TeacherProvider>
-                <ThemeProvider>
-                  <RouterProvider router={router} />
-                </ThemeProvider>
-              </TeacherProvider>
-            </WorkspaceProvider>
-          </AppProvider>
+          <WorkspaceProvider>
+            <TeacherProvider>
+              <ThemeProvider>
+                <RouterProvider router={router} />
+              </ThemeProvider>
+            </TeacherProvider>
+          </WorkspaceProvider>
         </SubscriptionProvider>
       </SupabaseProvider>
     </ErrorBoundary>

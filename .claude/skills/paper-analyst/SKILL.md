@@ -1,7 +1,27 @@
 ---
-name: paper-analyst
-description: "Analyze academic papers and research PDFs. Use this skill when the user uploads or pastes a research paper and wants to understand it. Triggers: 'analyze this paper', 'read this PDF', 'summarize this research', 'paper summary', 'research paper breakdown', 'explain this study', 'paper critique', 'academic paper analysis', '论文分析', '帮我看这篇论文', '解读这篇文章', '这篇 paper 讲什么', '帮我分析这个 PDF', '论文解读', '文献分析', '读一下这篇论文', '帮我总结这篇文章', '这篇论文的创新点', '论文方法分析', '论文结果', '帮我准备组会汇报', '生成 PPT 大纲'. Do NOT use for non-academic PDFs, spreadsheets, or general document tasks."
+name: 论文分析
+description: 分析学术论文和研究PDF。触发词：分析论文、解读论文、论文解读、组会汇报、生成PPT大纲
 ---
+
+<!--
+📝 中文说明
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 核心作用：分析学术论文，输出中文解读和PPT大纲
+
+🔔 何时触发：
+   - 说"分析论文"、"论文解读"、"帮我看这篇论文"
+   - 说"这篇paper讲什么"、"帮我分析这个PDF"
+   - 说"帮我准备组会汇报"、"生成PPT大纲"
+   - 上传学术论文PDF时
+
+📌 关键要点：
+   1. 5种模式：quick快速/standard标准/extended前作/presentation汇报/presentation_with_figures带图
+   2. 严格防幻觉：每个贡献标注[原文声明]或[模型归纳]
+   3. 不确定的标注[未明确给出]或[不确定]
+   4. 先分类论文类型，不要默认是AI/ML论文
+   5. 输出默认中文
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
 
 # Paper Analyst
 

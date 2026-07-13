@@ -1,10 +1,7 @@
-import { useState, memo } from 'react'
-import { GEOMETRIES } from '../constants'
+import { memo } from 'react'
 import './GeometryMiniControls.css'
 
 const GeometryMiniControls = memo(function GeometryMiniControls({
-  geometry,
-  onGeometryChange,
   showFaces,
   onToggleFaces,
   showLabels,
@@ -14,37 +11,23 @@ const GeometryMiniControls = memo(function GeometryMiniControls({
   onScreenshot,
   onShare,
 }) {
-  const [open, setOpen] = useState(false)
-
-  const currentGeo = GEOMETRIES.find(g => g.id === geometry?.type) || GEOMETRIES[0]
-
   return (
     <div className="geo-mini-controls">
       <div className="gmc-bar">
-        <button
-          className="gmc-btn"
-          onClick={() => setOpen(!open)}
-        >
-          {currentGeo.name} {open ? '▲' : '▼'}
-        </button>
 
         <button
           className={`gmc-btn ${showFaces ? 'active' : ''}`}
           onClick={onToggleFaces}
+          title={showFaces ? '隐藏面' : '显示面'}
         >
           {showFaces ? '实体' : '线框'}
         </button>
 
-        <button
-          className={`gmc-btn ${showLabels ? 'active' : ''}`}
-          onClick={onToggleLabels}
-        >
-          标签
-        </button>
+        <div className="gmc-divider" />
 
         {onResetCamera && (
-          <button className="gmc-btn gmc-btn-hint" onClick={onResetCamera} title={cameraHint || '推荐视角'}>
-            {cameraHint || '重置'}
+          <button className="gmc-btn gmc-btn-hint" onClick={onResetCamera} title={cameraHint || '重置视角'}>
+            重置
           </button>
         )}
 
@@ -60,20 +43,6 @@ const GeometryMiniControls = memo(function GeometryMiniControls({
           </button>
         )}
       </div>
-
-      {open && (
-        <div className="gmc-dropdown">
-          {GEOMETRIES.map(geo => (
-            <button
-              key={geo.id}
-              className={`gmc-dropdown-item ${geo.id === geometry?.type ? 'active' : ''}`}
-              onClick={() => { onGeometryChange?.(geo.id, { size: geometry?.params?.size || 2 }); setOpen(false) }}
-            >
-              <span className="gmc-geo-name">{geo.name}</span>
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   )
 })

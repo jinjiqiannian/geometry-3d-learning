@@ -69,8 +69,6 @@ export default function ExamUploadPage() {
           <select className="edumind-select" style={{ width: '100%' }} value={subject} onChange={e => setSubject(e.target.value)}>
             <option value="math">数学</option>
             <option value="physics">物理</option>
-            <option value="chemistry">化学</option>
-            <option value="biology">生物</option>
             <option value="english">英语</option>
             <option value="chinese">语文</option>
           </select>

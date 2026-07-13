@@ -9,23 +9,28 @@ import './AnswerPanel.css'
 
 /**
  * 从 steps 中提取实际使用的公式
- * 查找 calculation 类型步骤中的公式表达式
+ * 优先读取 step.formula 字段（教材通用公式），回退到正则提取
  */
 function extractFormulaFromSteps(steps) {
   if (!steps || steps.length === 0) return null
 
-  // 找最后一个 calculation 步骤
-  const calcSteps = steps.filter(s => s.type === 'calculation')
+  // 找最后一个 calculation 或 conclusion 步骤
+  const calcSteps = steps.filter(s => s.type === 'calculation' || s.type === 'conclusion')
   if (calcSteps.length === 0) return null
 
-  const lastCalc = calcSteps[calcSteps.length - 1]
+  // 优先使用 step.formula 字段（教材通用公式）
+  for (let i = calcSteps.length - 1; i >= 0; i--) {
+    if (calcSteps[i].formula) {
+      return calcSteps[i].formula
+    }
+  }
 
-  // 从 content 中提取公式模式
+  // 回退：从 content 中提取公式模式
+  const lastCalc = calcSteps[calcSteps.length - 1]
   const content = lastCalc.content
 
-  // 常见公式模式
   const patterns = [
-    /cos[θθ]\s*=\s*[^。，.]+/i,
+    /cos\s*θ\s*=\s*[^。，.]+/i,
     /[余弦定理|勾股定理|向量]/,
     /[=＝]\s*[\d√π./()a-z^]+/,
     /[VSL]\s*[=＝]\s*[^，。]+/,
@@ -36,7 +41,6 @@ function extractFormulaFromSteps(steps) {
     if (match) return match[0].trim()
   }
 
-  // 回退：返回整个 calculation 内容作为公式说明
   return content.length > 80 ? content.slice(0, 80) + '…' : content
 }
 
@@ -91,7 +95,6 @@ export default function AnswerPanel({ step, parsedData, steps }) {
       <div className="ap-section">
         <span className="ap-label">结果</span>
         <div className="ap-result">
-          {step.content.split('。')[0]}
           {result && <span className="ap-result-highlight">{result}</span>}
         </div>
       </div>

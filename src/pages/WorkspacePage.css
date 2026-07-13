@@ -11,66 +11,6 @@
   background: var(--bg-deep);
 }
 
-/* ── Top bar ──────────────────────────────────────── */
-.wp-top-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 6px 16px;
-  border-bottom: 1px solid var(--border-subtle);
-  background: var(--bg-base);
-  flex-shrink: 0;
-}
-
-.wp-back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  text-decoration: none;
-  padding: 4px 8px;
-  border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
-  flex-shrink: 0;
-}
-
-.wp-back-link:hover {
-  color: var(--text-primary);
-  background: var(--accent-subtle);
-}
-
-.wp-top-title {
-  flex: 1;
-  font-size: var(--text-sm);
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.wp-top-actions {
-  flex-shrink: 0;
-}
-
-.wp-toggle-3d {
-  padding: 4px 10px;
-  border-radius: var(--radius-md);
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  cursor: pointer;
-  font-family: inherit;
-  transition: all var(--transition-fast);
-}
-
-.wp-toggle-3d:hover {
-  border-color: var(--border-emphasis);
-  color: var(--text-primary);
-}
-
 /* ── Unified layout (CSS-driven responsive, single Canvas) ── */
 .wp-main {
   flex: 1;
@@ -146,8 +86,8 @@
   justify-content: center;
   gap: 12px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.06));
-  border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+  background: linear-gradient(135deg, rgba(74, 144, 226, 0.08), rgba(107, 163, 232, 0.06));
+  border-bottom: 1px solid rgba(74, 144, 226, 0.15);
   flex-shrink: 0;
 }
 
@@ -188,6 +128,24 @@
   opacity: 0.88;
 }
 
+.wp-upgrade-banner-btn.secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+}
+
+.wp-upgrade-banner-btn.secondary:hover {
+  background: var(--accent-subtle);
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+.wp-upgrade-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 @media (max-width: 767px) {
   .wp-upgrade-banner {
     flex-direction: column;
@@ -195,12 +153,22 @@
     padding: 8px 12px;
     text-align: center;
   }
+
+  .wp-upgrade-banner-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .wp-upgrade-banner-actions .wp-upgrade-banner-btn {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 /* ── Empty state ──────────────────────────────────── */
 .wp-empty-state {
   width: 100%;
-  max-width: 480px;
+  max-width: 100%;
 }
 
 .wp-empty-examples {
@@ -244,9 +212,9 @@
 /* ── Quick input bar (empty state) ─────────────────── */
 .wp-quick-input-bar {
   display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  padding: 12px 16px;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
   border-bottom: 1px solid var(--border-subtle);
   background: var(--bg-base);
   flex-shrink: 0;
@@ -256,20 +224,21 @@
   flex: 1;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  padding: 8px 12px;
+  padding: 10px 14px;
   font-size: var(--text-sm);
   font-family: var(--font-sans);
   color: var(--text-primary);
   background: var(--bg-surface);
   resize: none;
   outline: none;
-  line-height: 1.5;
+  line-height: 1.6;
   transition: border-color var(--transition-fast);
+  min-height: 44px;
 }
 
 .wp-quick-input:focus {
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.08);
 }
 
 .wp-quick-input::placeholder {
@@ -278,17 +247,18 @@
 }
 
 .wp-quick-submit {
-  padding: 7px 16px;
+  padding: 10px 20px;
   border-radius: var(--radius-md);
   background: var(--accent);
   color: white;
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   font-weight: 550;
   cursor: pointer;
   font-family: inherit;
   border: none;
   flex-shrink: 0;
   transition: all var(--transition-fast);
+  min-height: 44px;
 }
 
 .wp-quick-submit:hover:not(:disabled) {
@@ -421,3 +391,206 @@
     font-size: var(--text-xs);
   }
 }
+
+/* ── 搜索栏 ──────────────────────────────────────── */
+.wp-search-bar {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+  flex-shrink: 0;
+}
+
+.wp-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wp-search-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 16px;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.wp-search-back:hover {
+  background: var(--accent-subtle);
+  color: var(--text-primary);
+}
+
+.wp-search-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.wp-search-input:focus {
+  border-color: var(--accent);
+}
+
+.wp-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.wp-search-submit {
+  padding: 8px 20px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: 550;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: opacity var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.wp-search-submit:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.wp-search-submit:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.wp-search-3d-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.wp-search-3d-toggle:hover {
+  border-color: var(--border-emphasis);
+  color: var(--text-primary);
+}
+
+/* ── 首次使用引导 ── */
+
+.wp-guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.2s ease;
+}
+
+.wp-guide-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: 36px 32px 28px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: var(--shadow-xl);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wp-guide-title {
+  font-size: var(--text-xl);
+  font-weight: 650;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
+}
+
+.wp-guide-subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin: 0 0 24px;
+}
+
+.wp-guide-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.wp-guide-step {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.wp-guide-step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--text-inverse);
+  font-size: var(--text-xs);
+  font-weight: 650;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.wp-guide-step strong {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.wp-guide-step p {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.wp-guide-btn {
+  width: 100%;
+  padding: 11px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--text-inverse);
+  font-size: var(--text-sm);
+  font-weight: 550;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.wp-guide-btn:hover {
+  opacity: 0.88;
+}
+

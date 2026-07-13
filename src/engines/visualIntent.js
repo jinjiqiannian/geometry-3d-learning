@@ -82,7 +82,18 @@ const GEOMETRY_EDGES = {
     'AG','BH','CE','DF',
   ],
   pyramid: [
-    'AB','BC','CD','DA','PA','PB','PC','PD','AC','BD','PO',
+    'AB','BC','CD','DA',
+    'PA','PB','PC','PD',
+    'AC','BD',
+    'PO',
+    // 常见辅助点连线（E 为 AD 中点、F 为 PA 上点等）
+    'BE','DE','CE','AE',
+    'EF','FG','EG',
+    'PE','PF','PG',
+    'AF','BF','CF','DF',
+    'AP','BP','CP','DP',
+    'PE','PF','PG',
+    'AG','BG','CG','DG',
   ],
   prism: [
     'AB','BC','CA',"A'B'","B'C'","C'A'","AA'","BB'","CC'",
@@ -308,23 +319,85 @@ export function computeVisualIntent(step, parsedData, problemText, labelMap) {
 
 /**
  * Rule-based intent computation (fallback when AI sceneState is not available)
+ *
+ * Progressive disclosure by step type:
+ *   observation  → 高亮题目中出现的所有边，全貌展示
+ *   construction → 清空高亮，添加辅助线/辅助点，淡化非关键边
+ *   calculation  → 仅高亮正在计算的边，淡化其余
+ *   conclusion   → 恢复全貌，高亮与最终答案相关的边
  */
 function computeRuleBasedIntent(step, parsedData, problemText, geoType, typeDefaults, problemEdges, validEdges) {
-  const base = {
-    highlightEdgeIds: problemEdges,
-    highlightColor: typeDefaults.highlightColor,
-    auxLines: [],
-    faceOpacity: typeDefaults.faceOpacity,
-    nonHighlightOpacity: typeDefaults.nonHighlightOpacity,
-  }
+  // 从步骤文本中提取边标签（步骤内容中的大写字母对）
+  const stepText = `${step.title || ''} ${step.content || ''}`
+  const stepEdges = extractStepEdges(stepText, validEdges)
 
-  if (step.type === 'construction') {
-    const auxLines = computeAuxLines(step, parsedData, geoType, problemEdges, problemText)
-    base.highlightEdgeIds = []
-    base.auxLines = auxLines.slice(0, 2)
-  }
+  switch (step.type) {
+    case 'observation':
+      // 全貌展示：高亮题目中出现的所有边
+      return {
+        highlightEdgeIds: stepEdges.length > 0 ? stepEdges : problemEdges,
+        highlightColor: typeDefaults.highlightColor,
+        auxLines: [],
+        faceOpacity: typeDefaults.faceOpacity,
+        nonHighlightOpacity: 1.0,  // 全显示
+      }
 
-  return base
+    case 'construction':
+      // 构建：清空高亮，添加辅助线，淡化非关键边
+      return {
+        highlightEdgeIds: [],
+        highlightColor: typeDefaults.highlightColor,
+        auxLines: computeAuxLines(step, parsedData, geoType, problemEdges, problemText).slice(0, 3),
+        faceOpacity: 0.28,
+        nonHighlightOpacity: 0.25,  // 淡化非关键边
+      }
+
+    case 'calculation':
+      // 计算：聚焦关键边，高亮步骤文本中出现的边，其余淡化
+      return {
+        highlightEdgeIds: stepEdges.length > 0 ? stepEdges : problemEdges,
+        highlightColor: typeDefaults.highlightColor,
+        auxLines: [],
+        faceOpacity: 0.20,  // 面更透明，聚焦线条
+        nonHighlightOpacity: 0.15,  // 非关键边几乎不可见
+      }
+
+    case 'conclusion':
+      // 结论：恢复全貌，高亮步骤中提及的答案边
+      return {
+        highlightEdgeIds: stepEdges.length > 0 ? stepEdges : problemEdges,
+        highlightColor: typeDefaults.highlightColor,
+        auxLines: [],
+        faceOpacity: typeDefaults.faceOpacity,
+        nonHighlightOpacity: 1.0,  // 全部恢复显示
+      }
+
+    default:
+      return {
+        highlightEdgeIds: problemEdges,
+        highlightColor: typeDefaults.highlightColor,
+        auxLines: [],
+        faceOpacity: typeDefaults.faceOpacity,
+        nonHighlightOpacity: typeDefaults.nonHighlightOpacity,
+      }
+  }
+}
+
+/**
+ * 从步骤文本中提取有效的边标签
+ * 匹配大写字母对（如 PC、BE、EF、PA 等），过滤只有有效几何边
+ * 也尝试反向匹配（因为边无序：AB=BA）
+ */
+function extractStepEdges(text, validEdges) {
+  const ids = new Set()
+  const matches = text.match(/[A-Z]'?[A-Z]'?/g) || []
+  for (const m of matches) {
+    if (m.length < 2) continue
+    if (validEdges.has(m)) { ids.add(m); continue }
+    const rev = m.split('').reverse().join('')
+    if (validEdges.has(rev)) ids.add(rev)
+  }
+  return [...ids]
 }
 
 // ── Edge extraction ──────────────────────────────────

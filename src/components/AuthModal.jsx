@@ -121,6 +121,21 @@ export default function AuthModal() {
     }
   }, [account, countdown, isLogin])
 
+  // ── 手机号登录（验证码通过后）──
+  const handlePhoneLogin = useCallback(async () => {
+    try {
+      // 验证码通过 → 尝试用内部邮箱登录
+      // 如果用户已存在，密码是他们自己设置的
+      await signInWithPhone(account, password || '')
+      setVisible(false)
+    } catch {
+      // 用户可能还没注册，引导注册
+      setError('该手机号尚未注册，请先注册')
+      setIsLogin(false)
+      setStep(STEP_PASSWORD)
+    }
+  }, [signInWithPhone, account, password, setVisible, setError, setIsLogin, setStep])
+
   // ── 验证验证码 ──
   const verifyCode = useCallback(async () => {
     if (!code || code.length < 4) {
@@ -171,22 +186,7 @@ export default function AuthModal() {
     } finally {
       setLoading(false)
     }
-  }, [code, account, isLogin])
-
-  // ── 手机号登录（验证码通过后）──
-  const handlePhoneLogin = async () => {
-    try {
-      // 验证码通过 → 尝试用内部邮箱登录
-      // 如果用户已存在，密码是他们自己设置的
-      await signInWithPhone(account, password || '')
-      setVisible(false)
-    } catch {
-      // 用户可能还没注册，引导注册
-      setError('该手机号尚未注册，请先注册')
-      setIsLogin(false)
-      setStep(STEP_PASSWORD)
-    }
-  }
+  }, [code, account, isLogin, password, handlePhoneLogin, setVisible, setError, setIsLogin, setStep])
 
   // ── 提交（邮箱模式/最终注册）──
   const handleSubmit = async (e) => {
@@ -442,6 +442,17 @@ export default function AuthModal() {
             </button>
           </p>
         )}
+
+        {/* ── 先看看（访客模式入口） ── */}
+        <p className="auth-guest-skip">
+          <button
+            type="button"
+            className="auth-skip-btn"
+            onClick={() => setVisible(false)}
+          >
+            先看看
+          </button>
+        </p>
       </div>
     </div>
   )

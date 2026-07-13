@@ -36,7 +36,7 @@ export default function LearningPlanPage() {
 
   return (
     <div className="edumind-page">
-      <Link to="/edumind" className="edumind-link" style={{ display: 'inline-block', marginBottom: '16px' }}>
+      <Link to="/math" className="edumind-link" style={{ display: 'inline-block', marginBottom: '16px' }}>
         ← 返回首页
       </Link>
       <h1 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '16px' }}>📅 学习计划</h1>

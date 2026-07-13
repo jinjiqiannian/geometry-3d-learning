@@ -48,7 +48,7 @@ export default class ErrorBoundary extends Component {
                 重新生成
               </button>
               <Link
-                to="/"
+                to="/math"
                 className="error-boundary-btn error-boundary-btn-secondary"
                 onClick={this.handleRetry}
               >

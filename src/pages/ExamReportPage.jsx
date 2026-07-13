@@ -2,7 +2,7 @@
 //  ExamReportPage — AI 分析报告展示
 //  来源: archive AnalysisPage.tsx → JSX + edumind.css
 // ═══════════════════════════════════════════════════════
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { edumindAPI } from '../services/edumind.js'
 import './EduMindPage.css'
@@ -31,6 +31,10 @@ export default function ExamReportPage() {
   const [loading, setLoading] = useState(true)
   const [polling, setPolling] = useState(false)
   const [error, setError] = useState('')
+  const pollRef = useRef(null)
+
+  // Cleanup polling on unmount
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current) }, [])
 
   useEffect(() => {
     if (!id) return
@@ -61,17 +65,19 @@ export default function ExamReportPage() {
   }
 
   function pollAnalysis() {
-    const interval = setInterval(async () => {
+    pollRef.current = setInterval(async () => {
       try {
         const res = await edumindAPI.getAnalysis(id)
         if (res.data?.status === 'completed' || res.data?.status === 'failed') {
           setMistakes(res.data?.mistakes || [])
           setMastery(res.data?.mastery || [])
           setPolling(false)
-          clearInterval(interval)
+          clearInterval(pollRef.current)
+          pollRef.current = null
         }
       } catch {
-        clearInterval(interval)
+        clearInterval(pollRef.current)
+        pollRef.current = null
         setPolling(false)
       }
     }, 2000)
@@ -87,7 +93,7 @@ export default function ExamReportPage() {
 
   return (
     <div className="edumind-page">
-      <Link to="/edumind" className="edumind-link" style={{ display: 'inline-block', marginBottom: '16px' }}>
+      <Link to="/math" className="edumind-link" style={{ display: 'inline-block', marginBottom: '16px' }}>
         ← 返回首页
       </Link>
 

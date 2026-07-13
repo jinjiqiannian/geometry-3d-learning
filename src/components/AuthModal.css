@@ -309,6 +309,28 @@
   border-radius: 999px;
 }
 
+/* ── 访客模式：先看看 ── */
+.auth-guest-skip {
+  margin-top: 12px;
+}
+
+.auth-skip-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  font-family: inherit;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.auth-skip-btn:hover {
+  color: var(--text-secondary);
+  background: var(--accent-subtle);
+}
+
 @keyframes authFadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes authSlideUp {
   from { opacity: 0; transform: translateY(16px) scale(0.98); }

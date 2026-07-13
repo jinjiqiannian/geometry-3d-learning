@@ -11,9 +11,7 @@ export default function ThemeToggle({ className = '' }) {
       title={isDark ? '切换到浅色模式' : '切换到深色模式'}
       aria-label={isDark ? '切换到浅色模式' : '切换到深色模式'}
     >
-      <span className="theme-toggle-icon">
-        {isDark ? '☀️' : '🌙'}
-      </span>
+
       <span className="theme-toggle-label">
         {isDark ? '浅色' : '深色'}
       </span>
