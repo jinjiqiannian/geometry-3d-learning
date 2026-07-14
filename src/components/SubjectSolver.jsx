@@ -23,6 +23,7 @@ export default function SubjectSolver({ subject = "physics" }) {
   const [parsedData, setParsedData] = useState({})
   const [solvedText, setSolvedText] = useState("")
   const [aiActive, setAiActive] = useState(false)
+  const [finalAnswer, setFinalAnswer] = useState(null)
   const c = colors.primary
 
   const handleSolve = useCallback(async () => {
@@ -37,9 +38,13 @@ export default function SubjectSolver({ subject = "physics" }) {
     try {
       const aiResult = await aiAPI.solve(text)
       if (aiResult && aiResult.success && aiResult.data) {
-        const { parsed, steps } = aiResult.data
+        const { parsed, steps, finalAnswer } = aiResult.data
+        console.log('[SubjectSolver] AI返回的steps:', JSON.stringify(steps, null, 2));
+        console.log('[SubjectSolver] AI返回的parsed:', JSON.stringify(parsed, null, 2));
+        console.log('[SubjectSolver] AI返回的finalAnswer:', JSON.stringify(finalAnswer, null, 2));
         setParsedData(parsed)
         setSteps(steps)
+        setFinalAnswer(finalAnswer)
         setSolvedText(text)
         setCurrentStep(0)
 
@@ -126,6 +131,7 @@ export default function SubjectSolver({ subject = "physics" }) {
               step={steps[currentStep]}
               parsedData={parsedData}
               steps={steps}
+              finalAnswer={finalAnswer}
             />
           </div>
           {/* Step nav */}

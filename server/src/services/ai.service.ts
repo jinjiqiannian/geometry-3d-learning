@@ -640,43 +640,58 @@ const REASON_SYSTEM_PROMPT = `你是一个顶尖的中学数学老师，专门�
 [REASON] 代入 a=2 得 d = 2√3。
 推理结束后，再输出严格 JSON 数组。
 
-严格输出以下 JSON 数组（不要 markdown 代码块）：
+严格输出以下 JSON 对象（不要 markdown 代码块）：
 
-[
-  {
-    "step": 1,
-    "title": "识别几何体",
-    "content": "正方体ABCD-A₁B₁C₁D₁，棱长为2。要计算异面直线A₁B与B₁C夹角。",
-    "type": "observation",
-    "sceneState": {
-      "cameraPosition": [5, 3, 5],
-      "cameraTarget": [0, 0, 0],
-      "highlightEdges": [],
-      "highlightColor": "#4A90E2",
-      "showAuxiliaryLines": [],
-      "showLabels": ["A","B","C","D","A1","B1","C1","D1"],
-      "annotations": [{"text": "正方体，棱长=2", "position": "bottom"}],
-      "opacity": {"faces": 0.6, "nonHighlightedEdges": 0.8},
-      "animationType": "fade",
-      "duration": 2000
+{
+  "steps": [
+    {
+      "step": 1,
+      "title": "识别几何体",
+      "content": "正方体ABCD-A₁B₁C₁D₁，棱长为2。要计算异面直线A₁B与B₁C夹角。",
+      "type": "observation",
+      "sceneState": {
+        "cameraPosition": [5, 3, 5],
+        "cameraTarget": [0, 0, 0],
+        "highlightEdges": [],
+        "highlightColor": "#4A90E2",
+        "showAuxiliaryLines": [],
+        "showLabels": ["A","B","C","D","A1","B1","C1","D1"],
+        "annotations": [{"text": "正方体，棱长=2", "position": "bottom"}],
+        "opacity": {"faces": 0.6, "nonHighlightedEdges": 0.8},
+        "animationType": "fade",
+        "duration": 2000
+      }
     }
+  ],
+  "finalAnswer": {
+    "expression": "d = a√3",
+    "value": "2√3"
   }
-]
+}
 
 严格要求：
 1. content 必须包含具体顶点名称和数值，写入真实的数学表达式。例如 "A₁B = √(2²+2²) = 2√2" 而不是 "用勾股定理求线段长"
 2. highlightEdges 用 [{from: "A1", to: "B"}] 格式指定高亮线段
 3. showAuxiliaryLines 用 [{from: "A1", to: "C", dashed: true, color: "#4A90E2"}] 格式
-4. 最后一步 annotations 中写出最终答案
-5. type: observation=观察分析, construction=作图构造, calculation=计算推导, conclusion=结论
-6. 4-6个步骤，计算步骤中写出完整算式
-7. 先输出 [REASON] 前缀的推理过程，再输出 JSON 数组`
+4. finalAnswer 字段必须包含题目要求的最终答案，expression 是答案表达式，value 是答案数值
+5. 如果题目要求的是比例（如 AP/AF），请根据推导结果计算出最终数值答案
+6. type: observation=观察分析, construction=作图构造, calculation=计算推导, conclusion=结论
+7. 4-6个步骤，计算步骤中写出完整算式
+8. 先输出 [REASON] 前缀的推理过程，再输出 JSON 对象`
+
+export interface ReasoningResult {
+  steps: Step[]
+  finalAnswer: {
+    expression: string
+    value: string
+  } | null
+}
 
 export async function generateReasoning(
   text: string,
   parsed: ParsedProblem,
   userId?: string
-): Promise<Step[]> {
+): Promise<ReasoningResult> {
   const normalized = normalizeText(text)
   const cacheKey = `reason_${hashText(normalized)}`
 
@@ -698,23 +713,25 @@ export async function generateReasoning(
     temperature: 0.3,
   })
 
-  const steps = extractJSON(responseText) as Step[]
+  const response = extractJSON(responseText) as { steps?: Step[]; finalAnswer?: { expression: string; value: string } }
 
-  // Validate
-  if (!Array.isArray(steps)) {
-    console.error('AI reasoning: expected array but got:', typeof steps)
+  if (!response || !Array.isArray(response.steps)) {
+    console.error('AI reasoning: expected object with steps array but got:', typeof response)
     console.error('Raw response start:', responseText.slice(0, 500))
-    throw new Error('AI推理返回格式错误：期望数组')
+    throw new Error('AI推理返回格式错误：期望包含steps数组的对象')
   }
 
-  // Normalize each step
-  const result = steps.map((s, i) => ({
+  const steps = response.steps.map((s, i) => ({
     step: s.step || i + 1,
     title: s.title || `步骤 ${i + 1}`,
     content: s.content || '',
     type: s.type || 'observation',
     sceneState: s.sceneState || undefined,
   }))
+
+  const finalAnswer = response.finalAnswer || null
+
+  const result = { steps, finalAnswer }
 
   cache.set(cacheKey, result)
 
@@ -855,6 +872,10 @@ export async function generateNarration(
 export interface CompleteSolution {
   parsed: ParsedProblem
   steps: Step[]
+  finalAnswer?: {
+    expression: string
+    value: string
+  } | null
 }
 
 /**
@@ -960,9 +981,9 @@ export async function solveComplete(
   }
 
   // Layer 2: AI Reasoning — 仅复杂题走 AI
-  const steps = await generateReasoning(text, parsed, userId)
+  const reasoningResult = await generateReasoning(text, parsed, userId)
 
-  return { parsed, steps }
+  return { parsed, steps: reasoningResult.steps, finalAnswer: reasoningResult.finalAnswer }
 }
 
 /**

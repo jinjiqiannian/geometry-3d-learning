@@ -64,15 +64,16 @@ function extractResult(content) {
   return null
 }
 
-export default function AnswerPanel({ step, parsedData, steps }) {
-  // Only show when we're on the conclusion step
+export default function AnswerPanel({ step, parsedData, steps, finalAnswer }) {
   if (!step || step.type !== 'conclusion') return null
 
-  // 从步骤中提取实际使用的公式
   const formulaUsed = extractFormulaFromSteps(steps || [])
 
-  // 提取数值结果
-  const result = extractResult(step.content)
+  const result = finalAnswer?.value || extractResult(step.content)
+  console.log('[AnswerPanel] step:', step);
+  console.log('[AnswerPanel] step.content:', step.content);
+  console.log('[AnswerPanel] finalAnswer:', finalAnswer);
+  console.log('[AnswerPanel] result:', result);
 
   // 获取题目类型的中文名
   const geomName = parsedData?.type || ''

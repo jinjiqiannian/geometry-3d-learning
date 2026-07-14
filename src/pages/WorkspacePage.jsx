@@ -603,7 +603,7 @@ export default function WorkspacePage() {
   const sceneIR = useMemo(() => {
     if (!steps.length || !parsedData?.type) return null;
     
-    const semantic = convertLegacyParsedToSemantic(parsedData);
+    const semantic = convertLegacyParsedToSemantic(parsedData, steps);
     const irSequence = buildSceneIRSequenceFromSemantic(semantic);
     
     if (irSequence.length > 0) {
@@ -614,7 +614,9 @@ export default function WorkspacePage() {
     const base = buildBaseSceneIR(
       parsedData.type,
       { size: parsedData.size || 2 },
-      parsedData.vertices || parsedData.labels || null
+      semantic.roleMap,
+      semantic.pointPositions,
+      semantic.edges
     );
     const step = steps[currentStep];
     if (step) {

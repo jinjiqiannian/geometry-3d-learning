@@ -1,4 +1,3 @@
-import { getScaledTemplate } from './sceneIRTemplate';
 import { validateAndCompleteSemantic } from './geometryValidator';
 const PROGRESSION_CONFIG = {
  conceptual: {
@@ -40,108 +39,99 @@ const STEP_ZERO_CONFIG = {
 function edgeId(a, b) {
  return a < b ? a + b : b + a;
 }
-export function buildBaseSceneIR(type, params, userLabels) {
- const tpl = getScaledTemplate(type, params || {}, userLabels);
- const points = tpl.vertices.map((pos, i) => ({
- id: tpl.labels[i] || 'V' + i,
- label: tpl.labels[i] || 'V' + i,
- position: pos,
- visible: true,
- }));
- const lines = tpl.lines.map(line => ({
- id: line.id,
- from: tpl.labels[line.from] || 'V' + line.from,
- to: tpl.labels[line.to] || 'V' + line.to,
- category: line.category,
- dashed: line.dashed || false,
- visible: true,
- highlighted: false,
- }));
- const faces = tpl.faces.length > 0
- ? tpl.faces.map((face, i) => ({
- id: 'face_' + i,
- vertices: face.vertices.map(vi => tpl.labels[vi] || 'V' + vi),
- opacity: 0.35,
- visible: true,
- color: face.color,
- }))
- : undefined;
- return {
- points,
- lines,
- faces,
- labelVisibility: {},
- };
+export function buildBaseSceneIR(type, params, roleMap, pointPositions, edges) {
+  const points = [];
+  if (pointPositions) {
+    Object.keys(pointPositions).forEach(label => {
+      points.push({
+        id: label,
+        label: label,
+        position: pointPositions[label],
+        visible: true,
+      });
+    });
+  }
+  
+  const lines = [];
+  if (edges) {
+    const edgeSet = new Set();
+    edges.forEach(edge => {
+      const key = edgeId(edge.from, edge.to);
+      if (!edgeSet.has(key)) {
+        edgeSet.add(key);
+        lines.push({
+          id: edge.label || key,
+          from: edge.from,
+          to: edge.to,
+          category: edge.category || '棱',
+          dashed: edge.dashed || false,
+          visible: true,
+          highlighted: false,
+        });
+      }
+    });
+  }
+  
+  return {
+    points,
+    lines,
+    faces: undefined,
+    labelVisibility: {},
+  };
 }
 export function buildSceneIRFromSemantic(semantic) {
- const validated = validateAndCompleteSemantic(semantic);
- const tpl = getScaledTemplate(validated.shape, { size: validated.size }, validated.points);
- const labelToPosition = {};
- tpl.labels.forEach((label, idx) => {
- if (tpl.vertices[idx]) {
- labelToPosition[label] = [...tpl.vertices[idx]];
- }
- });
- if (validated.pointPositions) {
- Object.assign(labelToPosition, validated.pointPositions);
- }
- const points = validated.points.map(point => ({
- id: point,
- label: point,
- position: labelToPosition[point] || [0, 0, 0],
- visible: true,
- }));
- const edgeSet = new Set();
- const lines = [];
- validated.edges.forEach(edge => {
- const key = edgeId(edge.from, edge.to);
- if (!edgeSet.has(key)) {
- edgeSet.add(key);
- lines.push({
- id: edge.label || key,
- from: edge.from,
- to: edge.to,
- category: edge.category || '棱',
- dashed: edge.dashed || false,
- visible: true,
- highlighted: validated.importantLines.includes(edge.label || key),
- });
- }
- });
- const faces = [];
- if (tpl.faces && tpl.faces.length > 0) {
- tpl.faces.forEach((face, i) => {
- faces.push({
- id: 'face_' + i,
- vertices: face.vertices.map(vi => tpl.labels[vi] || 'V' + vi),
- opacity: 0.35,
- visible: true,
- color: face.color,
- });
- });
- }
- const sections = [];
- validated.planes.forEach((plane, i) => {
- sections.push({
- id: 'plane_' + i,
- type: 'polygon',
- points: plane.points,
- visible: validated.importantPlanes.includes(plane.label),
- label: plane.label,
- });
- });
- const highlightEdges = validated.importantLines || [];
- const highlightPlanes = validated.importantPlanes || [];
- return {
- points,
- lines,
- faces,
- sections,
- labelVisibility: {},
- highlightEdges,
- highlightPlanes,
- highlightTags: validated.highlight || [],
- };
+  const validated = validateAndCompleteSemantic(semantic);
+  const labelToPosition = validated.pointPositions || {};
+  
+  const points = validated.points.map(point => ({
+    id: point,
+    label: point,
+    position: labelToPosition[point] || [0, 0, 0],
+    visible: true,
+  }));
+  
+  const edgeSet = new Set();
+  const lines = [];
+  validated.edges.forEach(edge => {
+    const key = edgeId(edge.from, edge.to);
+    if (!edgeSet.has(key)) {
+      edgeSet.add(key);
+      lines.push({
+        id: edge.label || key,
+        from: edge.from,
+        to: edge.to,
+        category: edge.category || '棱',
+        dashed: edge.dashed || false,
+        visible: true,
+        highlighted: validated.importantLines.includes(edge.label || key),
+      });
+    }
+  });
+  
+  const sections = [];
+  validated.planes.forEach((plane, i) => {
+    sections.push({
+      id: 'plane_' + i,
+      type: 'polygon',
+      points: plane.points,
+      visible: validated.importantPlanes.includes(plane.label),
+      label: plane.label,
+    });
+  });
+  
+  const highlightEdges = validated.importantLines || [];
+  const highlightPlanes = validated.importantPlanes || [];
+  
+  return {
+    points,
+    lines,
+    faces: undefined,
+    sections,
+    labelVisibility: {},
+    highlightEdges,
+    highlightPlanes,
+    highlightTags: validated.highlight || [],
+  };
 }
 export function applyStepToSceneIR(stepIndex, stepType, sceneOps, baseIR) {
  if (!baseIR) {
@@ -276,7 +266,21 @@ export function applyStepToSceneIR(stepIndex, stepType, sceneOps, baseIR) {
 export function buildSceneIRSequence(type, params, userLabels, steps) {
  if (!steps || steps.length === 0)
  return [];
- const baseIR = buildBaseSceneIR(type, params, userLabels);
+ const semantic = {
+ shape: type,
+ size: params?.size || 2,
+ points: userLabels || [],
+ edges: [],
+ faces: [],
+ planes: [],
+ relations: [],
+ importantLines: [],
+ importantPlanes: [],
+ highlight: [],
+ animationSteps: [],
+ };
+ const validated = validateAndCompleteSemantic(semantic);
+ const baseIR = buildBaseSceneIR(type, params, validated.roleMap, validated.pointPositions, validated.edges);
  const sequence = [];
  for (let i = 0; i < steps.length; i++) {
  const step = steps[i];

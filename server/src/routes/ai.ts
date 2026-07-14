@@ -150,6 +150,7 @@ aiRouter.post(
         data: {
           parsed: solution.parsed,
           steps: solution.steps,
+          finalAnswer: solution.finalAnswer,
         },
       })
     } catch (err: any) {

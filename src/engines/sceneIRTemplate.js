@@ -370,6 +370,147 @@ export const VERTEX_TEMPLATES = {
   },
 }
 
+// ── 几何体角色定义 ────────────────────────────────
+// 定义每种几何体的顶点角色，用于将标签映射到正确的几何位置
+export const ROLE_DEFINITIONS = {
+  pyramid: {
+    apex: 4,
+    baseVertices: [0, 1, 2, 3],
+  },
+  cube: {
+    baseVertices: [0, 1, 2, 3],
+    topVertices: [4, 5, 6, 7],
+  },
+  cuboid: {
+    baseVertices: [0, 1, 2, 3],
+    topVertices: [4, 5, 6, 7],
+  },
+  prism: {
+    baseVertices: [0, 1, 2],
+    topVertices: [3, 4, 5],
+  },
+  sphere: {
+    south: 0,
+    north: 1,
+    east: 2,
+    west: 3,
+    front: 4,
+    back: 5,
+  },
+  cylinder: {
+    bottomCenter: 0,
+    topCenter: 1,
+    bottomVertices: [2, 3, 4, 5],
+    topVertices: [6, 7, 8, 9],
+  },
+  cone: {
+    baseCenter: 0,
+    apex: 1,
+    baseVertices: [2, 3, 4, 5],
+  },
+  squareFrustum: {
+    baseVertices: [0, 1, 2, 3],
+    topVertices: [4, 5, 6, 7],
+  },
+  circularFrustum: {
+    bottomCenter: 0,
+    topCenter: 1,
+    bottomVertices: [2, 3, 4, 5],
+    topVertices: [6, 7, 8, 9],
+  },
+  tetrahedron: {
+    vertices: [0, 1, 2, 3],
+  },
+  octahedron: {
+    top: 0,
+    bottom: 5,
+    equatorVertices: [1, 2, 3, 4],
+  },
+};
+
+/**
+ * 根据几何体类型和标签数组生成roleMap
+ * 将模板顶点索引映射到AI返回的实际标签
+ * 
+ * 原理：
+ * 1. 模板定义了角色与模板顶点索引的对应关系（如 apex: 4）
+ * 2. 根据几何体类型的特征边模式推断AI返回标签中的实际角色
+ * 3. 例如四棱锥：apex是连接到底面四个顶点的点，baseVertices是构成底面四边形的点
+ * 4. 返回角色到标签的映射，与AI返回顺序无关
+ * 
+ * @param {string} type - 几何体类型
+ * @param {string[]} labels - AI返回的标签数组（来自parsed.labels）
+ * @param {string[]} basePoints - 基础顶点标签（来自SHAPE_EDGE_TEMPLATES.requiredPoints）
+ * @param {Array} edges - 边数组，用于推断角色关系
+ * @returns {Object} roleMap - { apex: 'P', baseVertices: ['A','B','C','D'], ... }
+ */
+export function buildRoleMap(type, labels, basePoints, edges) {
+  const roleDef = ROLE_DEFINITIONS[type];
+  const tpl = VERTEX_TEMPLATES[type];
+  if (!roleDef || !tpl) return {};
+
+  const labelSet = new Set(labels);
+  const result = {};
+
+  if (type === 'pyramid') {
+    const basePointSet = new Set(basePoints);
+    const edgeMap = new Map();
+    edges.forEach(e => {
+      const key = e.from < e.to ? `${e.from},${e.to}` : `${e.to},${e.from}`;
+      edgeMap.set(key, true);
+    });
+
+    const degreeMap = new Map();
+    basePointSet.forEach(p => {
+      let degree = 0;
+      basePointSet.forEach(other => {
+        if (p !== other) {
+          const key = p < other ? `${p},${other}` : `${other},${p}`;
+          if (edgeMap.has(key)) degree++;
+        }
+      });
+      degreeMap.set(p, degree);
+    });
+
+    let apex = null;
+    let maxDegree = 0;
+    for (const [p, degree] of degreeMap) {
+      if (degree > maxDegree) {
+        maxDegree = degree;
+        apex = p;
+      }
+    }
+
+    if (!apex) {
+      apex = tpl.labels[roleDef.apex];
+    }
+
+    const baseVertices = basePoints.filter(p => p !== apex);
+
+    result.apex = apex;
+    result.baseVertices = baseVertices;
+  } else {
+    for (const [role, indices] of Object.entries(roleDef)) {
+      if (Array.isArray(indices)) {
+        result[role] = indices.map(idx => {
+          const templateLabel = tpl.labels[idx];
+          return labelSet.has(templateLabel) ? templateLabel : templateLabel;
+        });
+      } else {
+        const templateLabel = tpl.labels[indices];
+        result[role] = labelSet.has(templateLabel) ? templateLabel : templateLabel;
+      }
+    }
+  }
+
+  console.log('[buildRoleMap] type:', type);
+  console.log('[buildRoleMap] labels:', labels);
+  console.log('[buildRoleMap] basePoints:', basePoints);
+  console.log('[buildRoleMap] result:', JSON.stringify(result));
+
+  return result;
+}
+
 // ── 公共工具函数 ──────────────────────────────────
 
 /**

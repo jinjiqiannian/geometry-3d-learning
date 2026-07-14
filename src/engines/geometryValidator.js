@@ -1,4 +1,4 @@
-import { VERTEX_TEMPLATES, getScaledTemplate } from './sceneIRTemplate';
+import { VERTEX_TEMPLATES, getScaledTemplate, buildRoleMap, ROLE_DEFINITIONS } from './sceneIRTemplate';
 const SHAPE_EDGE_TEMPLATES = {
  cube: {
  requiredEdges: ['AB', 'BC', 'CD', 'DA', 'EF', 'FG', 'GH', 'HE', 'AE', 'BF', 'CG', 'DH'],
@@ -73,10 +73,16 @@ export function validateAndCompleteSemantic(semantic) {
  return { from: a, to: b, label: a + b };
  });
  completeRelations(result);
- completeImportantElements(result);
- computePointPositions(result);
- generateAnimationSteps(result);
- return result;
+  completeImportantElements(result);
+  
+  result.roleMap = buildRoleMap(result.shape, result.points, basePoints, result.edges);
+  
+  computePointPositions(result);
+  generateAnimationSteps(result);
+  
+  console.log('[validateAndCompleteSemantic] roleMap:', JSON.stringify(result.roleMap));
+  
+  return result;
 }
 function getBasePoints(shape) {
  return SHAPE_EDGE_TEMPLATES[shape]?.requiredPoints || [];
@@ -140,20 +146,38 @@ function completeImportantElements(semantic) {
  });
 }
 function computePointPositions(semantic) {
- const tpl = getScaledTemplate(semantic.shape, { size: semantic.size || 2 }, semantic.points);
- const labelToPosition = {};
- tpl.labels.forEach((label, idx) => {
- if (tpl.vertices[idx]) {
- labelToPosition[label] = [...tpl.vertices[idx]];
- }
- });
- semantic.points.forEach(point => {
- if (!labelToPosition[point]) {
- labelToPosition[point] = findDerivedPosition(point, semantic, labelToPosition);
- }
- });
- semantic.pointPositions = labelToPosition;
- return labelToPosition;
+  const tpl = getScaledTemplate(semantic.shape, { size: semantic.size || 2 });
+  const roleDef = ROLE_DEFINITIONS[semantic.shape];
+  const roleMap = semantic.roleMap || {};
+  
+  const labelToPosition = {};
+  
+  if (roleDef && roleMap) {
+    for (const [role, indices] of Object.entries(roleDef)) {
+      const labels = roleMap[role];
+      if (!labels) continue;
+      
+      if (Array.isArray(indices)) {
+        indices.forEach((idx, i) => {
+          if (tpl.vertices[idx] && labels[i]) {
+            labelToPosition[labels[i]] = [...tpl.vertices[idx]];
+          }
+        });
+      } else {
+        if (tpl.vertices[indices] && labels) {
+          labelToPosition[labels] = [...tpl.vertices[indices]];
+        }
+      }
+    }
+  }
+  
+  semantic.points.forEach(point => {
+    if (!labelToPosition[point]) {
+      labelToPosition[point] = findDerivedPosition(point, semantic, labelToPosition);
+    }
+  });
+  semantic.pointPositions = labelToPosition;
+  return labelToPosition;
 }
 function findDerivedPosition(point, semantic, knownPositions) {
  const midpointPattern = /^([A-Z]) midpoint ([A-Z])([A-Z])$/;
@@ -294,7 +318,82 @@ function getShapeName(shape) {
  };
  return names[shape] || shape;
 }
-export function convertLegacyParsedToSemantic(parsedData) {
+function normalizeEdgeLabel(label) {
+  if (typeof label === 'string' && label.length === 2) {
+    const [a, b] = label.split('');
+    return a < b ? label : `${b}${a}`;
+  }
+  return label;
+}
+
+function extractSceneState(steps = []) {
+  const result = {
+    importantLines: [],
+    importantPlanes: [],
+    highlightPoints: [],
+    focusObject: null,
+    camera: null,
+    visibleObjects: [],
+  };
+  
+  const seenLines = new Set();
+  const seenPlanes = new Set();
+  const seenPoints = new Set();
+  
+  steps.forEach(step => {
+    const sceneState = step.sceneState;
+    if (!sceneState) return;
+    
+    if (sceneState.highlightEdges) {
+      sceneState.highlightEdges.forEach(line => {
+        const rawId = typeof line === 'string' ? line : `${line.from}${line.to}`;
+        const normalizedId = normalizeEdgeLabel(rawId);
+        if (!seenLines.has(normalizedId)) {
+          seenLines.add(normalizedId);
+          result.importantLines.push(normalizedId);
+        }
+      });
+    }
+    
+    if (sceneState.highlightPlanes) {
+      sceneState.highlightPlanes.forEach(plane => {
+        if (!seenPlanes.has(plane)) {
+          seenPlanes.add(plane);
+          result.importantPlanes.push(plane);
+        }
+      });
+    }
+    
+    if (sceneState.highlightPoints) {
+      sceneState.highlightPoints.forEach(point => {
+        if (!seenPoints.has(point)) {
+          seenPoints.add(point);
+          result.highlightPoints.push(point);
+        }
+      });
+    }
+    
+    if (sceneState.focusObject && !result.focusObject) {
+      result.focusObject = sceneState.focusObject;
+    }
+    
+    if (sceneState.camera && !result.camera) {
+      result.camera = sceneState.camera;
+    }
+    
+    if (sceneState.visibleObjects) {
+      sceneState.visibleObjects.forEach(obj => {
+        if (!result.visibleObjects.includes(obj)) {
+          result.visibleObjects.push(obj);
+        }
+      });
+    }
+  });
+  
+  return result;
+}
+
+export function convertLegacyParsedToSemantic(parsedData, steps = []) {
  const semantic = {
  shape: parsedData.type || 'cube',
  size: parsedData.size || 2,
@@ -308,11 +407,27 @@ export function convertLegacyParsedToSemantic(parsedData) {
  highlight: [],
  animationSteps: [],
  };
- if (parsedData.highlightLines) {
- parsedData.highlightLines.forEach(line => {
- semantic.importantLines.push(line.label || `${line.from}${line.to}`);
- });
+ 
+ const sceneState = extractSceneState(steps);
+ semantic.importantLines = sceneState.importantLines;
+ semantic.importantPlanes = sceneState.importantPlanes;
+ semantic.highlightPoints = sceneState.highlightPoints;
+ semantic.focusObject = sceneState.focusObject;
+ semantic.camera = sceneState.camera;
+ semantic.visibleObjects = sceneState.visibleObjects;
+ 
+ const allContent = steps.map(s => s.content).join(' ');
+ if (allContent) {
+ semantic.relations = extractRelationsFromText(allContent);
+ const textPlanes = extractImportantPlanes(allContent);
+ textPlanes.forEach(plane => {
+ if (!semantic.importantPlanes.includes(plane)) {
+ semantic.importantPlanes.push(plane);
  }
+ });
+ semantic.highlight = extractHighlightTags(allContent);
+ }
+ console.log('[convertLegacyParsedToSemantic] relations:', JSON.stringify(semantic.relations, null, 2));
  return validateAndCompleteSemantic(semantic);
 }
 export function parseProblemToSemantic(problemText) {
