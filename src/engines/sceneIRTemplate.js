@@ -489,6 +489,28 @@ export function buildRoleMap(type, labels, basePoints, edges) {
 
     result.apex = apex;
     result.baseVertices = baseVertices;
+  } else if (type === 'cube' || type === 'cuboid') {
+    const basePointsNoTemplate = Array.from(labelSet).filter(p => p.length <= 2).slice(0, 8);
+
+    const baseVertices = basePointsNoTemplate.filter(p => !p.match(/\d/));
+    const topVertices = basePointsNoTemplate.filter(p => p.match(/\d/));
+
+    if (baseVertices.length === 4 && topVertices.length === 4) {
+      result.baseVertices = baseVertices;
+      result.topVertices = topVertices;
+    } else {
+      for (const [role, indices] of Object.entries(roleDef)) {
+        if (Array.isArray(indices)) {
+          result[role] = indices.map(idx => {
+            const templateLabel = tpl.labels[idx];
+            return labelSet.has(templateLabel) ? templateLabel : templateLabel;
+          });
+        } else {
+          const templateLabel = tpl.labels[indices];
+          result[role] = labelSet.has(templateLabel) ? templateLabel : templateLabel;
+        }
+      }
+    }
   } else {
     for (const [role, indices] of Object.entries(roleDef)) {
       if (Array.isArray(indices)) {

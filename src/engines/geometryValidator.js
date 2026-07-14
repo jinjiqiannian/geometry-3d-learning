@@ -180,7 +180,7 @@ function computePointPositions(semantic) {
   return labelToPosition;
 }
 function findDerivedPosition(point, semantic, knownPositions) {
- const midpointPattern = /^([A-Z]) midpoint ([A-Z])([A-Z])$/;
+ const midpointPattern = /^([A-Z]) midpoint ([A-Z][0-9]?)([A-Z][0-9]?)$/;
  for (const rel of semantic.relations) {
  const match = rel.match(midpointPattern);
  if (match) {
@@ -194,7 +194,7 @@ function findDerivedPosition(point, semantic, knownPositions) {
  }
  }
  }
- const onLinePattern = /^([A-Z]) on ([A-Z])([A-Z])$/;
+ const onLinePattern = /^([A-Z]) on ([A-Z][0-9]?)([A-Z][0-9]?)$/;
  for (const rel of semantic.relations) {
  const match = rel.match(onLinePattern);
  if (match) {
@@ -499,21 +499,21 @@ function extractPointsFromText(text, shape) {
  return Array.from(pointSet);
 }
 function extractRelationsFromText(text) {
- const relations = [];
- const midpointPattern = /([A-Z])是?\s*([A-Z])([A-Z])\s*的?中点/g;
- let match;
- while ((match = midpointPattern.exec(text)) !== null) {
- relations.push(`${match[1]} midpoint ${match[2]}${match[3]}`);
- }
- const parallelPattern = /([A-Z][A-Z]?)\s*\/\/\s*([A-Z][A-Z]?)/g;
- while ((match = parallelPattern.exec(text)) !== null) {
- relations.push(`${match[1]} parallel ${match[2]}`);
- }
- const onLinePattern = /([A-Z])\s*在\s*([A-Z])([A-Z])\s*上/g;
- while ((match = onLinePattern.exec(text)) !== null) {
- relations.push(`${match[1]} on ${match[2]}${match[3]}`);
- }
- return relations;
+  const relations = [];
+  const midpointPattern = /([A-Z])是?\s*([A-Z][0-9]?)([A-Z][0-9]?)\s*的?中点/g;
+  let match;
+  while ((match = midpointPattern.exec(text)) !== null) {
+    relations.push(`${match[1]} midpoint ${match[2]}${match[3]}`);
+  }
+  const parallelPattern = /([A-Z][A-Z]?)\s*\/\/\s*([A-Z][A-Z]?)/g;
+  while ((match = parallelPattern.exec(text)) !== null) {
+    relations.push(`${match[1]} parallel ${match[2]}`);
+  }
+  const onLinePattern = /([A-Z])\s*在\s*([A-Z][0-9]?)([A-Z][0-9]?)\s*上/g;
+  while ((match = onLinePattern.exec(text)) !== null) {
+    relations.push(`${match[1]} on ${match[2]}${match[3]}`);
+  }
+  return relations;
 }
 function extractImportantLines(text) {
  const lines = [];
