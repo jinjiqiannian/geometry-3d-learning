@@ -1,22 +1,12 @@
+import { toTextbookMath } from './statementCompressor'
 import './StepCard.css'
 
-const TYPE_COLORS = {
-  observation:  '#6366f1',
-  construction: '#8b5cf6',
-  calculation:  '#d97706',
-  conclusion:   '#16a34a',
-}
-
-const TYPE_BADGES = {
-  observation:  '观察',
-  construction: '构造',
-  calculation:  '计算',
-  conclusion:   '结论',
-}
-
-export default function StepCard({ step, index, isCurrent, locked, onClick, onUpgrade, currentStep }) {
-  const dotColor = TYPE_COLORS[step.type] || TYPE_COLORS.observation
-  const badge = TYPE_BADGES[step.type] || ''
+export default function StepCard({ step, index, isCurrent, locked, onClick, currentStep }) {
+  // 展示层教材化：仅转换显示文本，不改动 step 原数据
+  const displayTitle = toTextbookMath(step.title ?? '')
+  let displayContent = toTextbookMath(step.content ?? '')
+  displayContent = displayContent.replace(/^(得到|由此可知|由此可得|可知|于是|故)[：:]\s*/u, '')
+  const displayFormula = step.formula ? toTextbookMath(step.formula) : ''
 
   // Determine state: completed / current / pending
   const isCompleted = currentStep != null && index < currentStep
@@ -30,29 +20,22 @@ export default function StepCard({ step, index, isCurrent, locked, onClick, onUp
   return (
     <div
       className={`step-card ${stateClass} ${locked ? 'locked' : ''}`}
-      data-step-index={index}
       onClick={locked ? undefined : onClick}
     >
-      {/* 左侧时间线指示器 */}
       <div className="step-timeline">
-        <div
-          className={`step-dot ${isCompleted ? 'step-dot--done' : ''}`}
-          style={{ backgroundColor: isCurrent ? dotColor : undefined }}
-        >
-          {isCompleted && <span className="step-dot-check">✓</span>}
+        <div className={`step-dot ${isCompleted ? 'step-dot--done' : ''}`}>
+          {isCompleted ? <span className="step-dot-check">✓</span> : <span className="step-dot-num">{index + 1}</span>}
         </div>
         {index > 0 && <div className="step-line" />}
       </div>
 
-      {/* 卡片主体 */}
       <div className="step-body">
-        <div className="step-header">
-          {badge && <span className={`step-type-badge step-type-badge--${step.type}`}>{badge}</span>}
-          {step.formula && <span className="step-formula-label">{step.formula}</span>}
-        </div>
-        <h4 className="step-title">{step.title}</h4>
+        <h4 className="step-title">{displayTitle}</h4>
+        {displayFormula && (
+          <p className="step-formula">{displayFormula}</p>
+        )}
         <p className={`step-content ${!isCurrent ? 'step-content--clamped' : ''}`}>
-          {step.content}
+          {displayContent}
         </p>
       </div>
     </div>

@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useSupabase } from './SupabaseContext'
 
-const FREE_DAILY_LIMIT = 50
+/** 免费每日理解次数：够试几道真题，又能触达升级 */
+export const FREE_DAILY_LIMIT = 8
 
 function getToday() {
   return new Date().toISOString().slice(0, 10)
@@ -49,7 +50,7 @@ export function SubscriptionProvider({ children }) {
   const isPro = plan === 'pro' || plan === 'teacher'
   const isTeacher = plan === 'teacher'
   const dailyLimit = FREE_DAILY_LIMIT
-  const remaining = Math.max(0, dailyLimit - dailyUsage)
+  const remaining = isPro ? Infinity : Math.max(0, dailyLimit - dailyUsage)
 
   // Load subscription from Supabase when user logs in
   useEffect(() => {
@@ -112,30 +113,35 @@ export function SubscriptionProvider({ children }) {
     return () => document.removeEventListener('mathviz:show-paywall', handler)
   }, [])
 
-  // Feature gates — guests can use everything, just rate-limited
+  // Feature gates — 样例免费；自有题受每日额度限制；Pro 无限
   const checkCanGenerate = useCallback(() => {
+    if (isPro) return true
     if (dailyUsage >= dailyLimit) {
-      setPaywallReason('已达每日使用上限，登录后可继续使用')
+      setPaywallReason('今日免费次数已用完，升级 Pro 解锁无限理解')
       setShowPaywall(true)
       return false
     }
     return true
-  }, [dailyUsage])
+  }, [dailyUsage, dailyLimit, isPro])
 
   const checkCanAiExplain = useCallback(() => {
     return true // Guest-friendly: always allow
   }, [])
 
   const checkCanExportPpt = useCallback(() => {
-    return true // Guest-friendly: always allow
-  }, [])
+    if (isPro) return true
+    setPaywallReason('PPT 导出为 Pro / 教师版功能')
+    setShowPaywall(true)
+    return false
+  }, [isPro])
 
   const checkCanExportImage = useCallback(() => {
     return true // Guest-friendly: always allow
   }, [])
 
-  // Record usage
+  // Record usage（样例勿调用；仅自有题「开始理解」计数）
   const recordUsage = useCallback(async (action, problemText, workspaceId) => {
+    if (isPro) return
     const newCount = incrementLocalDailyUsage()
     setDailyUsage(newCount)
 
@@ -149,7 +155,7 @@ export function SubscriptionProvider({ children }) {
         })
       } catch { /* non-critical */ }
     }
-  }, [connected, user, supabase])
+  }, [connected, user, supabase, isPro])
 
   // Upgrade flow (requires login)
   const initiateUpgrade = useCallback(async (targetPlan, interval = 'monthly') => {

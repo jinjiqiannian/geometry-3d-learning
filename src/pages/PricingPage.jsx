@@ -6,22 +6,18 @@ import './PricingPage.css'
 
 // Feature comparison for the comparison table
 const FEATURE_ROWS = [
-  { feature: 'AI 解析题目', free: true, pro: true, teacher: true },
-  { feature: '3D 图形生成', free: true, pro: true, teacher: true },
+  { feature: '方法动画样例', free: '不限次', pro: '不限次', teacher: '不限次' },
+  { feature: '自有题理解', free: '每日 8 次', pro: '无限', teacher: '无限' },
   { feature: '分步讲解', free: true, pro: true, teacher: true },
-  { feature: '历史记录', free: '本地 50 条', pro: '云端无限', teacher: '云端无限' },
-  { feature: '题目分享', free: '链接分享', pro: '完整工作台分享', teacher: '完整工作台分享' },
-  { feature: '基础模型切换', free: true, pro: true, teacher: true },
-  { feature: '每日额度', free: '50 题', pro: '无限', teacher: '无限' },
-  { feature: '自动讲课模式', free: false, pro: true, teacher: true },
-  { feature: '自动生成讲稿', free: false, pro: true, teacher: true },
+  { feature: '3D / 动画演示', free: true, pro: true, teacher: true },
+  { feature: '历史记录', free: '本地', pro: '云端同步', teacher: '云端同步' },
+  { feature: '题目分享', free: '链接分享', pro: '完整工作台', teacher: '完整工作台' },
   { feature: 'PPT 课件导出', free: false, pro: true, teacher: true },
-  { feature: 'PDF 讲义导出', free: false, pro: true, teacher: true },
-  { feature: '高清图片导出', free: false, pro: true, teacher: true },
+  { feature: 'PDF / 高清图导出', free: false, pro: true, teacher: true },
   { feature: '错题本', free: false, pro: true, teacher: true },
   { feature: '学习分析', free: false, pro: true, teacher: true },
   { feature: '班级管理', free: false, pro: false, teacher: true },
-  { feature: '批量生成课件', free: false, pro: false, teacher: true },
+  { feature: '批量导出 PPT', free: false, pro: false, teacher: true },
   { feature: '学生统计', free: false, pro: false, teacher: true },
   { feature: '作业布置', free: false, pro: false, teacher: true },
 ]
@@ -55,7 +51,8 @@ export default function PricingPage() {
         </div>
         <h1 className="pp-hero-title">免费学习 · 支持开发者</h1>
         <p className="pp-hero-subtitle">
-          几何维度是一个AI立体几何学习工作台。<br />
+          理解引擎帮助学生真正理解抽象知识。<br />
+          当前开放立体几何；后续将扩展更多科目。
           核心功能<strong>永久免费</strong>，Pro会员是对产品持续开发的支持。
         </p>
 

@@ -280,6 +280,10 @@ function splitIntoLabels(str) {
       if (i + 1 < str.length && /\d/.test(str[i + 1])) {
         labels.push(ch + str[i + 1])
         i += 2
+      } else if (i + 1 < str.length && str[i + 1] === "'") {
+        // 保留撇号标签（如 A'）
+        labels.push(ch + "'")
+        i += 2
       } else {
         labels.push(ch)
         i += 1

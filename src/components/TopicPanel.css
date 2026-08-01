@@ -1,0 +1,1440 @@
+/* TopicPanel — 导数 / 圆锥具体演示 */
+
+.topic-panel .logic-step-why {
+  color: var(--lp-why);
+}
+
+.topic-demo {
+  margin-bottom: 0.85rem;
+}
+
+.topic-svg {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  display: block;
+  margin: 0 auto 0.5rem;
+}
+
+.topic-axis {
+  stroke: #c4bdb0;
+  stroke-width: 1;
+}
+
+.topic-curve {
+  stroke: #0f6b5c;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  transition: opacity 0.35s ease;
+}
+
+.topic-curve.is-dim {
+  opacity: 0.35;
+}
+
+.topic-ellipse {
+  stroke: #0f6b5c;
+  stroke-width: 2.5;
+}
+
+.topic-circle-ring {
+  stroke: #0f6b5c;
+  stroke-width: 2.5;
+  transition: r 0.45s ease;
+}
+
+.topic-circle-ring.is-grow {
+  animation: logic-factor-pop 0.4s ease both;
+}
+
+.topic-tangent {
+  stroke: #c44536;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.topic-seg {
+  stroke: #8a4b1a;
+  stroke-width: 2;
+  opacity: 0.35;
+  transition: opacity 0.3s ease;
+}
+
+.topic-seg.is-on {
+  opacity: 1;
+}
+
+.topic-dot {
+  fill: #c44536;
+}
+
+.topic-dot.is-pop,
+.topic-tangent.is-pop {
+  animation: logic-factor-pop 0.4s ease both;
+}
+
+.topic-svg-label {
+  font-size: 11px;
+  fill: #5c574e;
+}
+
+.topic-svg-accent {
+  fill: #0f6b5c;
+  font-weight: 700;
+}
+
+.topic-demo-caption {
+  margin: 0.35rem 0 0;
+  text-align: center;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: #8a4b1a;
+  animation: logic-film-in 0.35s ease both;
+}
+
+/* 逐项求导 */
+.topic-term-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin: 0.5rem 0;
+}
+
+.topic-term {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--lp-line, #e4dfd5);
+  background: #fff;
+  opacity: 0.4;
+  transition: opacity 0.3s ease, border-color 0.3s ease;
+}
+
+.topic-term.is-on {
+  opacity: 1;
+  border-color: #0f6b5c;
+}
+
+.topic-term-before {
+  font-family: var(--lp-font, Georgia, serif);
+  font-size: 1.1rem;
+}
+
+.topic-term-arrow {
+  color: #5c574e;
+}
+
+.topic-term-after {
+  font-family: var(--lp-font, Georgia, serif);
+  font-size: 1.1rem;
+  color: #0f6b5c;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.topic-term-after.is-show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* 单调性数轴 */
+.topic-numberline {
+  position: relative;
+  height: 4.5rem;
+  margin: 0.75rem 1rem 0.25rem;
+}
+
+.topic-nl-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 55%;
+  height: 3px;
+  background: #c4bdb0;
+  border-radius: 2px;
+}
+
+.topic-nl-mark {
+  position: absolute;
+  top: 55%;
+  transform: translate(-50%, -50%);
+  padding-top: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #5c574e;
+  opacity: 0.35;
+  transition: opacity 0.3s ease, color 0.3s ease;
+}
+
+.topic-nl-mark::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #c4bdb0;
+}
+
+.topic-nl-mark.is-on {
+  opacity: 1;
+  color: #0f6b5c;
+}
+
+.topic-nl-mark.is-on::before {
+  background: #0f6b5c;
+  box-shadow: 0 0 0 3px #e6f2ef;
+}
+
+.topic-nl-arrow {
+  position: absolute;
+  top: 8%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  font-weight: 600;
+  animation: logic-film-in 0.4s ease both;
+}
+
+.topic-nl-arrow.up {
+  color: #0f6b5c;
+}
+
+.topic-nl-arrow.down {
+  color: #c44536;
+}
+
+/* a b c 行 */
+.topic-abc-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 0.35rem 0;
+  font-family: var(--lp-font, Georgia, serif);
+  font-size: 1.25rem;
+}
+
+.topic-abc-row span {
+  opacity: 0.35;
+  transition: opacity 0.3s ease, color 0.3s ease;
+}
+
+.topic-abc-row span.is-on {
+  opacity: 1;
+  color: #0f6b5c;
+  font-weight: 700;
+}
+
+.topic-abc-op {
+  opacity: 0.7;
+}
+
+.topic-abc-c {
+  color: #c44536;
+}
+
+.topic-abc-ans {
+  margin-left: 0.35rem;
+  opacity: 1;
+  color: #0f6b5c;
+  animation: logic-factor-pop 0.4s ease both;
+}
+
+/* ── 物理演示 ─────────────────────────────────── */
+
+.phys-newton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin: 0.75rem 0;
+  min-height: 4rem;
+}
+
+.phys-box {
+  width: 3.2rem;
+  height: 3.2rem;
+  display: grid;
+  place-items: center;
+  border: 2px solid #0f6b5c;
+  background: #e6f2ef;
+  font-family: var(--lp-font, Georgia, serif);
+  font-weight: 700;
+  color: #0f6b5c;
+}
+
+.phys-force,
+.phys-acc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  font-weight: 700;
+  color: #5c574e;
+  opacity: 0.35;
+  transition: opacity 0.3s ease, color 0.3s ease;
+}
+
+.phys-force.is-on,
+.phys-acc.is-on {
+  opacity: 1;
+  color: #c44536;
+}
+
+.phys-arrow {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.phys-work {
+  position: relative;
+  margin: 0.75rem 0;
+  padding: 0.5rem;
+}
+
+.phys-track {
+  position: relative;
+  height: 3rem;
+  margin-top: 0.5rem;
+}
+
+.phys-track-line {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 70%;
+  height: 3px;
+  background: #c4bdb0;
+}
+
+.phys-block {
+  position: absolute;
+  left: 12%;
+  top: 20%;
+  font-size: 1.5rem;
+  color: #0f6b5c;
+  transition: left 0.55s ease;
+}
+
+.phys-block.is-move {
+  left: 62%;
+}
+
+.phys-s {
+  position: absolute;
+  right: 12%;
+  top: 78%;
+  font-size: 0.8rem;
+  color: #5c574e;
+}
+
+.phys-s.is-on {
+  color: #0f6b5c;
+  font-weight: 600;
+}
+
+.phys-track--wide {
+  margin: 0.75rem 0.5rem 0.25rem;
+}
+
+.phys-car {
+  position: absolute;
+  top: 8%;
+  font-size: 1.35rem;
+  color: #0f6b5c;
+  transition: left 0.55s ease;
+  z-index: 1;
+}
+
+.phys-car.is-run {
+  animation: logic-factor-pop 0.35s ease both;
+}
+
+.phys-pick-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.phys-pick-card {
+  padding: 0.35rem 0.55rem;
+  border: 1px solid #d9d2c6;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: #5c574e;
+  background: #fffcf7;
+  transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease;
+}
+
+.phys-pick-card.is-dim {
+  opacity: 0.45;
+}
+
+.phys-pick-card.is-on {
+  border-color: #0f6b5c;
+  color: #0f6b5c;
+  background: #e6f2ef;
+  font-weight: 600;
+}
+
+.phys-hang {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.phys-hang-mass {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 8px;
+  border: 2px solid #0f6b5c;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #0f6b5c;
+}
+
+.phys-hang-arrow {
+  font-size: 1.1rem;
+  color: #a39b8f;
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.phys-hang-arrow.is-on {
+  color: #b45309;
+  transform: translateY(2px);
+  font-weight: 700;
+}
+
+.phys-energy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.phys-energy-ball {
+  font-size: 1.75rem;
+  color: #0f6b5c;
+  transition: transform 0.4s ease;
+}
+
+.phys-energy-ball.is-fast {
+  transform: translateX(1.25rem);
+  animation: logic-factor-pop 0.35s ease both;
+}
+
+.phys-energy-tower {
+  position: relative;
+  width: 4rem;
+  height: 3.5rem;
+  border-bottom: 2px solid #c4bdb0;
+}
+
+.phys-energy-block {
+  position: absolute;
+  left: 50%;
+  bottom: 0.15rem;
+  transform: translateX(-50%);
+  width: 1.75rem;
+  height: 1.25rem;
+  border: 2px solid #0f6b5c;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0f6b5c;
+  transition: bottom 0.45s ease;
+  background: #fffcf7;
+}
+
+.phys-energy-block.is-up {
+  bottom: 1.6rem;
+}
+
+.phys-energy-h {
+  position: absolute;
+  right: -1.1rem;
+  bottom: 0.9rem;
+  font-size: 0.75rem;
+  color: #5c574e;
+}
+
+.phys-w-badge {
+  margin: 0.75rem auto 0;
+  width: fit-content;
+  padding: 0.35rem 0.75rem;
+  background: #e6f2ef;
+  border: 1px solid #0f6b5c;
+  color: #0f6b5c;
+  font-family: var(--lp-font, Georgia, serif);
+  font-weight: 700;
+}
+
+.phys-w-badge.is-pop {
+  animation: logic-factor-pop 0.4s ease both;
+}
+
+.phys-speed {
+  margin: 0.5rem 0;
+}
+
+.phys-speed-dial {
+  position: relative;
+  height: 1.1rem;
+  margin: 0.75rem 1.5rem;
+  background: #ebe6dc;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.phys-speed-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0f6b5c, #1a9a82);
+  transition: width 0.55s ease;
+}
+
+.phys-speed-label {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.phys-speed-eq {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+  font-family: var(--lp-font, Georgia, serif);
+  font-size: 1.2rem;
+}
+
+.phys-speed-eq span {
+  opacity: 0.35;
+  transition: opacity 0.3s ease, color 0.3s ease;
+}
+
+.phys-speed-eq span.is-on {
+  opacity: 1;
+  color: #0f6b5c;
+  font-weight: 700;
+}
+
+/* ── 电磁方法动画 ─────────────────────────────── */
+
+.phys-circuit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0.85rem 0 0.35rem;
+}
+
+.phys-circuit-cell {
+  min-width: 2.4rem;
+  height: 2.4rem;
+  display: grid;
+  place-items: center;
+  border: 2px solid #c4bdb0;
+  border-radius: 8px;
+  color: #5c574e;
+  font-weight: 700;
+  opacity: 0.4;
+  transition: opacity 0.3s ease, border-color 0.3s ease, color 0.3s ease, background 0.3s ease;
+}
+
+.phys-circuit-cell.is-on {
+  opacity: 1;
+  border-color: #0f6b5c;
+  color: #0f6b5c;
+  background: #e6f2ef;
+}
+
+.phys-circuit-u.is-on {
+  border-color: #b45309;
+  color: #b45309;
+  background: #fff7ed;
+}
+
+.phys-circuit-op {
+  font-weight: 700;
+  color: #8a8478;
+}
+
+.phys-circuit-wire {
+  height: 3px;
+  margin: 0.35rem 2rem 0;
+  background: #d9d2c6;
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.phys-circuit-wire.is-flow::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 28%;
+  background: linear-gradient(90deg, transparent, #0f6b5c);
+  animation: phys-flow 1.1s ease-in-out infinite;
+}
+
+@keyframes phys-flow {
+  from {
+    left: -30%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+.phys-efield {
+  position: relative;
+  height: 5.5rem;
+  margin: 0.75rem 1rem 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phys-efield-lines {
+  position: absolute;
+  inset: 0.4rem 8%;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.phys-efield-lines span {
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(180deg, #f0c4b8, #c44536);
+  opacity: 0.55;
+}
+
+.phys-efield-q {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  border: 2px solid #0f6b5c;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #0f6b5c;
+  background: #fffcf7;
+  z-index: 1;
+  opacity: 0.45;
+  transition: opacity 0.3s ease;
+}
+
+.phys-efield-q.is-on {
+  opacity: 1;
+}
+
+.phys-efield-f {
+  position: absolute;
+  right: 18%;
+  top: 42%;
+  font-weight: 700;
+  color: #c44536;
+  opacity: 0.25;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.phys-efield-f.is-on {
+  opacity: 1;
+  transform: translateX(0.35rem);
+}
+
+.phys-efield-e {
+  position: absolute;
+  bottom: 0.15rem;
+  padding: 0.25rem 0.55rem;
+  background: #e6f2ef;
+  border: 1px solid #0f6b5c;
+  color: #0f6b5c;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.phys-efield-e.is-pop {
+  animation: logic-factor-pop 0.4s ease both;
+}
+
+.phys-bfield {
+  position: relative;
+  height: 5.2rem;
+  margin: 0.75rem 1rem 0.35rem;
+  border: 1px dashed #c4bdb0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.phys-bfield-x {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  place-items: center;
+  color: #8a8478;
+  font-size: 1.1rem;
+  letter-spacing: 0.2rem;
+  opacity: 0.7;
+}
+
+.phys-bfield-dot {
+  position: absolute;
+  left: 18%;
+  top: 55%;
+  color: #0f6b5c;
+  font-size: 1.2rem;
+  transition: left 0.55s ease, top 0.55s ease;
+}
+
+.phys-bfield-dot.is-orbit {
+  animation: phys-orbit 1.6s linear infinite;
+}
+
+@keyframes phys-orbit {
+  0% {
+    left: 22%;
+    top: 55%;
+  }
+  25% {
+    left: 48%;
+    top: 22%;
+  }
+  50% {
+    left: 72%;
+    top: 55%;
+  }
+  75% {
+    left: 48%;
+    top: 78%;
+  }
+  100% {
+    left: 22%;
+    top: 55%;
+  }
+}
+
+.phys-bfield-f {
+  position: absolute;
+  right: 14%;
+  top: 18%;
+  font-weight: 700;
+  color: #c44536;
+  opacity: 0.25;
+  transition: opacity 0.3s ease;
+}
+
+.phys-bfield-f.is-on {
+  opacity: 1;
+}
+
+.phys-flux {
+  position: relative;
+  height: 5.2rem;
+  margin: 0.75rem 1.25rem 0.35rem;
+  border: 2px solid #0f6b5c;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fffcf7;
+}
+
+.phys-flux-coil {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #5c574e;
+  opacity: 0.55;
+  transition: opacity 0.3s ease, color 0.3s ease;
+}
+
+.phys-flux-coil.is-on {
+  opacity: 1;
+  color: #0f6b5c;
+}
+
+.phys-flux-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(196, 69, 54, 0.15), rgba(196, 69, 54, 0.45));
+  transition: height 0.55s ease;
+}
+
+.phys-flux-eps {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.45rem;
+  z-index: 2;
+  padding: 0.2rem 0.45rem;
+  background: #fff7ed;
+  border: 1px solid #b45309;
+  color: #b45309;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.phys-flux-eps.is-pop {
+  animation: logic-factor-pop 0.4s ease both;
+}
+
+/* ── 持续运动真动画（非 PPT）───────────────────── */
+
+.phys-live .phys-stage {
+  margin: 0.35rem 0 0.15rem;
+  min-height: 6.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phys-live.is-playing .phys-accel-box,
+.phys-live.is-playing .phys-work-slider,
+.phys-live.is-playing .phys-motion-car,
+.phys-live.is-playing .phys-motion-needle,
+.phys-live.is-playing .phys-ke-ball,
+.phys-live.is-playing .phys-pe-lift,
+.phys-live.is-playing .phys-efield-charge,
+.phys-live.is-playing .phys-lorentz-orbit,
+.phys-live.is-playing .phys-faraday-wave {
+  animation-duration: 2.4s;
+}
+
+/* 牛顿：单向加速 → 停顿 → 淡出复位（不折返） */
+.phys-accel-track {
+  position: relative;
+  width: min(100%, 280px);
+  height: 4.5rem;
+  border-bottom: 2px solid #c4bdb0;
+  overflow: hidden;
+}
+
+.phys-accel-force {
+  position: absolute;
+  left: 8%;
+  top: 0.35rem;
+  color: #c44536;
+  font-weight: 700;
+}
+
+.phys-accel-box {
+  position: absolute;
+  left: 8%;
+  bottom: 0.35rem;
+  width: 2.4rem;
+  height: 2.4rem;
+  display: grid;
+  place-items: center;
+  border: 2px solid #0f6b5c;
+  background: #e6f2ef;
+  font-weight: 700;
+  color: #0f6b5c;
+  animation: phys-accel-run 3.6s linear infinite;
+  will-change: left, opacity;
+}
+
+.phys-accel-a {
+  position: absolute;
+  right: 12%;
+  top: 0.5rem;
+  color: #b45309;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+@keyframes phys-accel-run {
+  0% {
+    left: 8%;
+    opacity: 1;
+  }
+  55% {
+    left: 72%;
+    opacity: 1;
+  }
+  72% {
+    left: 72%;
+    opacity: 1;
+  }
+  80% {
+    left: 72%;
+    opacity: 0;
+  }
+  81% {
+    left: 8%;
+    opacity: 0;
+  }
+  90%,
+  100% {
+    left: 8%;
+    opacity: 1;
+  }
+}
+
+/* 做功：单向推动 → 停顿 → 淡出复位 */
+.phys-work-live {
+  position: relative;
+  width: min(100%, 280px);
+  height: 4.8rem;
+}
+
+.phys-work-f {
+  position: absolute;
+  left: 6%;
+  top: 0.2rem;
+  color: #c44536;
+  font-weight: 700;
+}
+
+.phys-work-rail {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 2.1rem;
+  height: 3px;
+  background: #c4bdb0;
+}
+
+.phys-work-slider {
+  position: absolute;
+  top: -1.05rem;
+  left: 0;
+  font-size: 1.4rem;
+  color: #0f6b5c;
+  animation: phys-slide 3.6s linear infinite;
+  will-change: left, opacity;
+}
+
+.phys-work-s {
+  position: absolute;
+  right: 10%;
+  bottom: 0.2rem;
+  color: #5c574e;
+  font-size: 0.85rem;
+}
+
+.phys-work-w {
+  position: absolute;
+  left: 50%;
+  bottom: 0.15rem;
+  transform: translateX(-50%);
+  font-weight: 700;
+  color: #0f6b5c;
+  font-size: 0.85rem;
+}
+
+@keyframes phys-slide {
+  0% {
+    left: 0%;
+    opacity: 1;
+  }
+  55% {
+    left: 78%;
+    opacity: 1;
+  }
+  72% {
+    left: 78%;
+    opacity: 1;
+  }
+  80% {
+    left: 78%;
+    opacity: 0;
+  }
+  81% {
+    left: 0%;
+    opacity: 0;
+  }
+  90%,
+  100% {
+    left: 0%;
+    opacity: 1;
+  }
+}
+
+/* 运动学：小车单向冲刺 + 速度条同步 */
+.phys-motion-live {
+  width: min(100%, 300px);
+}
+
+.phys-motion-rail {
+  position: relative;
+  height: 2.8rem;
+  border-bottom: 2px solid #c4bdb0;
+  margin-bottom: 0.55rem;
+  overflow: hidden;
+}
+
+.phys-motion-car {
+  position: absolute;
+  bottom: 0.2rem;
+  left: 4%;
+  font-size: 1.5rem;
+  color: #0f6b5c;
+  animation: phys-car-boost 3.6s linear infinite;
+  will-change: left, opacity;
+}
+
+@keyframes phys-car-boost {
+  0% {
+    left: 4%;
+    opacity: 1;
+  }
+  55% {
+    left: 82%;
+    opacity: 1;
+  }
+  72% {
+    left: 82%;
+    opacity: 1;
+  }
+  80% {
+    left: 82%;
+    opacity: 0;
+  }
+  81% {
+    left: 4%;
+    opacity: 0;
+  }
+  90%,
+  100% {
+    left: 4%;
+    opacity: 1;
+  }
+}
+
+.phys-motion-meter {
+  position: relative;
+  height: 1.15rem;
+  margin: 0 0.5rem;
+  background: #ebe6dc;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.phys-motion-needle {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 14%;
+  background: linear-gradient(90deg, #0f6b5c, #1a9a82);
+  border-radius: 999px;
+  animation: phys-meter 3.6s linear infinite;
+  will-change: width, opacity;
+}
+
+.phys-motion-meter > span {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #5c574e;
+  z-index: 1;
+}
+
+@keyframes phys-meter {
+  0% {
+    width: 14%;
+    opacity: 1;
+  }
+  55% {
+    width: 88%;
+    opacity: 1;
+  }
+  72% {
+    width: 88%;
+    opacity: 1;
+  }
+  80% {
+    width: 88%;
+    opacity: 0.35;
+  }
+  81% {
+    width: 14%;
+    opacity: 0.35;
+  }
+  90%,
+  100% {
+    width: 14%;
+    opacity: 1;
+  }
+}
+
+/* 重力：静止示意，不晃 */
+.phys-weight-live {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.phys-weight-hook {
+  width: 2px;
+  height: 1.2rem;
+  background: #8a8478;
+}
+
+.phys-weight-mass {
+  width: 2.6rem;
+  height: 2.6rem;
+  border: 2px solid #0f6b5c;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #0f6b5c;
+}
+
+.phys-weight-g {
+  color: #c44536;
+  font-weight: 700;
+}
+
+/* 动能 / 势能 */
+.phys-ke-live {
+  position: relative;
+  width: min(100%, 260px);
+  height: 3.2rem;
+  border-bottom: 2px solid #c4bdb0;
+  overflow: hidden;
+}
+
+.phys-ke-ball {
+  position: absolute;
+  bottom: 0.35rem;
+  left: 4%;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: #0f6b5c;
+  animation: phys-ke-dash 3.6s linear infinite;
+  will-change: left, opacity;
+}
+
+@keyframes phys-ke-dash {
+  0% {
+    left: 4%;
+    opacity: 1;
+  }
+  55% {
+    left: 86%;
+    opacity: 1;
+  }
+  72% {
+    left: 86%;
+    opacity: 1;
+  }
+  80% {
+    left: 86%;
+    opacity: 0;
+  }
+  81% {
+    left: 4%;
+    opacity: 0;
+  }
+  90%,
+  100% {
+    left: 4%;
+    opacity: 1;
+  }
+}
+
+.phys-pe-live {
+  position: relative;
+  width: 5rem;
+  height: 4.8rem;
+  border-left: 2px solid #c4bdb0;
+  border-bottom: 2px solid #c4bdb0;
+}
+
+.phys-pe-lift {
+  position: absolute;
+  left: 0.55rem;
+  bottom: 0.25rem;
+  width: 1.8rem;
+  height: 1.3rem;
+  border: 2px solid #0f6b5c;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0f6b5c;
+  background: #fffcf7;
+  animation: phys-pe-lift 3.6s linear infinite;
+  will-change: bottom, opacity;
+}
+
+.phys-pe-h {
+  position: absolute;
+  right: -1.1rem;
+  top: 40%;
+  font-size: 0.8rem;
+  color: #5c574e;
+}
+
+@keyframes phys-pe-lift {
+  0% {
+    bottom: 0.25rem;
+    opacity: 1;
+  }
+  55% {
+    bottom: 2.9rem;
+    opacity: 1;
+  }
+  72% {
+    bottom: 2.9rem;
+    opacity: 1;
+  }
+  80% {
+    bottom: 2.9rem;
+    opacity: 0;
+  }
+  81% {
+    bottom: 0.25rem;
+    opacity: 0;
+  }
+  90%,
+  100% {
+    bottom: 0.25rem;
+    opacity: 1;
+  }
+}
+
+/* 电路 */
+.phys-ohm-live {
+  width: min(100%, 260px);
+  text-align: center;
+}
+
+.phys-ohm-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.phys-ohm-loop {
+  fill: none;
+  stroke: #0f6b5c;
+  stroke-width: 3;
+}
+
+.phys-ohm-label {
+  fill: #5c574e;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.phys-ohm-dot {
+  fill: #c44536;
+}
+
+.phys-ohm-eq {
+  margin-top: 0.25rem;
+  font-weight: 700;
+  color: #0f6b5c;
+}
+
+/* 电场：场线静止，电荷平稳往返 */
+.phys-efield-live {
+  position: relative;
+  width: min(100%, 280px);
+  height: 5rem;
+  overflow: hidden;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #fff7ed, #fffcf7);
+}
+
+.phys-efield-stream {
+  position: absolute;
+  inset: 0.4rem 0;
+  display: flex;
+  justify-content: space-evenly;
+  pointer-events: none;
+}
+
+.phys-efield-stream span {
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(196, 69, 54, 0.15), rgba(196, 69, 54, 0.55), rgba(196, 69, 54, 0.15));
+  opacity: 0.7;
+}
+
+.phys-efield-charge {
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  transform: translateY(-50%);
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  border: 2px solid #0f6b5c;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0f6b5c;
+  background: #fffcf7;
+  animation: phys-efield-drift 3.8s linear infinite;
+  z-index: 1;
+  will-change: left, opacity;
+}
+
+@keyframes phys-efield-drift {
+  0% {
+    left: 10%;
+    opacity: 1;
+  }
+  55% {
+    left: 76%;
+    opacity: 1;
+  }
+  72% {
+    left: 76%;
+    opacity: 1;
+  }
+  80% {
+    left: 76%;
+    opacity: 0;
+  }
+  81% {
+    left: 10%;
+    opacity: 0;
+  }
+  90%,
+  100% {
+    left: 10%;
+    opacity: 1;
+  }
+}
+
+/* 洛伦兹：匀速圆周 */
+.phys-lorentz-live {
+  position: relative;
+  width: 7.5rem;
+  height: 7.5rem;
+}
+
+.phys-lorentz-field {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #8a8478;
+  letter-spacing: 0.35rem;
+  font-size: 0.95rem;
+  opacity: 0.7;
+}
+
+.phys-lorentz-orbit {
+  position: absolute;
+  inset: 0.85rem;
+  border: 1.5px dashed rgba(15, 107, 92, 0.35);
+  border-radius: 50%;
+  animation: phys-spin 3.6s linear infinite;
+}
+
+.phys-lorentz-dot {
+  position: absolute;
+  top: -0.35rem;
+  left: 50%;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-left: -0.35rem;
+  border-radius: 50%;
+  background: #0f6b5c;
+  box-shadow: 0 0 0 3px rgba(15, 107, 92, 0.15);
+}
+
+@keyframes phys-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 法拉第：通量平稳起伏 */
+.phys-faraday-live {
+  position: relative;
+  width: min(100%, 240px);
+  height: 5rem;
+  border: 2px solid #0f6b5c;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.phys-faraday-coil {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+  font-weight: 700;
+  color: #0f6b5c;
+  font-size: 0.85rem;
+}
+
+.phys-faraday-wave {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 22%;
+  background: linear-gradient(180deg, rgba(196, 69, 54, 0.18), rgba(196, 69, 54, 0.5));
+  animation: phys-flux-breathe 3.6s linear infinite;
+  will-change: height, opacity;
+}
+
+@keyframes phys-flux-breathe {
+  0% {
+    height: 22%;
+    opacity: 1;
+  }
+  55% {
+    height: 72%;
+    opacity: 1;
+  }
+  72% {
+    height: 72%;
+    opacity: 1;
+  }
+  80% {
+    height: 72%;
+    opacity: 0.2;
+  }
+  81% {
+    height: 22%;
+    opacity: 0.2;
+  }
+  90%,
+  100% {
+    height: 22%;
+    opacity: 1;
+  }
+}
+
+.topic-demo-caption {
+  transition: opacity 0.2s ease;
+}
+

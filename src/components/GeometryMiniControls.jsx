@@ -1,20 +1,34 @@
-import { memo } from 'react'
+import { memo, useState, useRef, useEffect } from 'react'
 import './GeometryMiniControls.css'
 
 const GeometryMiniControls = memo(function GeometryMiniControls({
   showFaces,
   onToggleFaces,
-  showLabels,
-  onToggleLabels,
   onResetCamera,
   cameraHint,
-  onScreenshot,
-  onShare,
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false)
+      }
+    }
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside)
+    }, 0)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [menuOpen])
+
   return (
     <div className="geo-mini-controls">
       <div className="gmc-bar">
-
         <button
           className={`gmc-btn ${showFaces ? 'active' : ''}`}
           onClick={onToggleFaces}
@@ -23,27 +37,37 @@ const GeometryMiniControls = memo(function GeometryMiniControls({
           {showFaces ? '实体' : '线框'}
         </button>
 
-        <div className="gmc-divider" />
-
         {onResetCamera && (
-          <button className="gmc-btn gmc-btn-hint" onClick={onResetCamera} title={cameraHint || '重置视角'}>
-            重置
-          </button>
-        )}
-
-        {onScreenshot && (
-          <button className="gmc-btn" onClick={onScreenshot} title="截图保存">
-            截图
-          </button>
-        )}
-
-        {onShare && (
-          <button className="gmc-btn" onClick={onShare} title="分享链接">
-            分享
-          </button>
+          <div className="gmc-more" ref={menuRef}>
+            <button
+              className="gmc-btn gmc-btn-more"
+              onClick={() => setMenuOpen((v) => !v)}
+              title="更多"
+              aria-haspopup="true"
+              aria-expanded={menuOpen}
+            >
+              ···
+            </button>
+            {menuOpen && (
+              <div className="gmc-menu" role="menu">
+                <button
+                  className="gmc-menu-item"
+                  role="menuitem"
+                  onClick={() => {
+                    onResetCamera()
+                    setMenuOpen(false)
+                  }}
+                  title={cameraHint || '重置视角'}
+                >
+                  重置视角
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
   )
 })
+
 export default GeometryMiniControls

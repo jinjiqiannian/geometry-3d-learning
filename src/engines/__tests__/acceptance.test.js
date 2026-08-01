@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { validateAndCompleteSemantic, convertLegacyParsedToSemantic } from '../geometryValidator'
+import { validateAndCompleteSemantic, convertLegacyParsedToSemantic, parseProblemToSemantic } from '../geometryValidator'
 import { buildSceneIRFromSemantic } from '../sceneIRBuilder'
 
 const aiResponse = {
@@ -12,7 +12,7 @@ const aiResponse = {
     [1, -1, -1],
     [1, -1, 1],
     [-1, -1, 1],
-    [0, 0, 0],
+    [-1, -1, 0],
     [-0.5, 0, -0.5]
   ],
   edges: [
@@ -30,6 +30,7 @@ const aiResponse = {
   planes: [
     { label: 'BEF', points: ['B', 'E', 'F'] },
   ],
+  importantPlanes: ['BEF'],
   steps: [
     {
       index: 1,
@@ -107,6 +108,8 @@ describe('Acceptance Test: 四棱锥P-ABCD', () => {
       vertices: aiResponse.vertices,
       edges: aiResponse.edges,
       planes: aiResponse.planes,
+      importantPlanes: aiResponse.importantPlanes,
+      relations: aiResponse.relations,
     }
     semantic = convertLegacyParsedToSemantic(parsedData, aiResponse.steps)
     sceneIR = buildSceneIRFromSemantic(semantic)
@@ -290,5 +293,45 @@ describe('Acceptance Test: 四棱锥P-ABCD', () => {
     const answer = aiResponse.finalAnswer.value
     console.log(`验证: 最终答案是否为3 - ${answer === 3 ? 'PASS' : 'FAIL'}`)
     expect(answer).toBe(3)
+  })
+})
+
+describe('本地解析路径：F 点（"F on PA"）必须进入场景', () => {
+  const text = '四棱锥P-ABCD中，底面ABCD是平行四边形，E为AD的中点，F在PA上，PC平行于平面BEF，求AP:AF'
+
+  it('semantic.points 同时包含 E 和 F', () => {
+    const semantic = parseProblemToSemantic(text)
+    expect(semantic.relations).toContain('F on PA')
+    expect(semantic.points).toContain('E')
+    expect(semantic.points).toContain('F')
+  })
+
+  it('F 有坐标且与 PA 共线', () => {
+    const semantic = parseProblemToSemantic(text)
+    const p = semantic.pointPositions?.P
+    const a = semantic.pointPositions?.A
+    const f = semantic.pointPositions?.F
+    expect(p).toBeTruthy()
+    expect(a).toBeTruthy()
+    expect(f).toBeTruthy()
+    const pa = [a[0] - p[0], a[1] - p[1], a[2] - p[2]]
+    const pf = [f[0] - p[0], f[1] - p[1], f[2] - p[2]]
+    const cross = [
+      pf[1] * pa[2] - pf[2] * pa[1],
+      pf[2] * pa[0] - pf[0] * pa[2],
+      pf[0] * pa[1] - pf[1] * pa[0],
+    ]
+    expect(Math.abs(cross[0])).toBeLessThan(0.01)
+    expect(Math.abs(cross[1])).toBeLessThan(0.01)
+    expect(Math.abs(cross[2])).toBeLessThan(0.01)
+  })
+
+  it('SceneIR 中存在可见的 F 点', () => {
+    const semantic = parseProblemToSemantic(text)
+    const sceneIR = buildSceneIRFromSemantic(semantic)
+    const fPoint = sceneIR.points.find((pt) => pt.id === 'F')
+    expect(fPoint).toBeTruthy()
+    expect(fPoint.visible).toBe(true)
+    expect(fPoint.position).not.toBeNull()
   })
 })

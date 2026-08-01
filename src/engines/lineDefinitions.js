@@ -562,19 +562,15 @@ export const CATEGORY_ORDER = [
   '高线', '辅助构造线',
 ]
 
-// ── 线段样式映射 ────────────────────────────────────
-/** category → { color, dash, opacity }
- *  WebGL lineWidth 在 Windows 上限 1px，通过颜色+透明度区分粗细感
- */
 export const CATEGORY_STYLES = {
-  '棱':       { color: '#1a1a1a', dash: false, opacity: 1.0 },
-  '底面边':   { color: '#1a1a1a', dash: false, opacity: 1.0 },
-  '顶面边':   { color: '#1a1a1a', dash: false, opacity: 1.0 },
-  '侧棱':     { color: '#1a1a1a', dash: false, opacity: 1.0 },
-  '空间对角线': { color: '#888888', dash: true, opacity: 0.65 },
-  '面对角线': { color: '#888888', dash: true, opacity: 0.65 },
-  '高线':     { color: '#666666', dash: true, opacity: 0.55 },
-  '辅助构造线': { color: '#aaaaaa', dash: true, opacity: 0.45 },
+  '棱':       { color: '#333333', dash: false, opacity: 1.0 },
+  '底面边':   { color: '#333333', dash: false, opacity: 1.0 },
+  '顶面边':   { color: '#333333', dash: false, opacity: 1.0 },
+  '侧棱':     { color: '#333333', dash: false, opacity: 1.0 },
+  '空间对角线': { color: '#999999', dash: true, opacity: 0.8 },
+  '面对角线': { color: '#999999', dash: true, opacity: 0.8 },
+  '高线':     { color: '#888888', dash: true, opacity: 0.85 },
+  '辅助构造线': { color: '#BBBBBB', dash: true, opacity: 0.7 },
 }
 
 /** 返回样式对象，未匹配的返回默认样式 */

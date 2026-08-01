@@ -156,10 +156,33 @@ export const aiAPI = {
     })
   },
 
+  /** 拍照/截图 → 题干 + 构图 hint（图辅助，文字为准） */
+  async ocr(imageBase64: string) {
+    return request<ApiResponse<{
+      text: string
+      visionHints?: {
+        relations?: string[]
+        points?: string[]
+        planes?: string[]
+      } | null
+    }>>('/api/ai/ocr', {
+      method: 'POST',
+      body: { imageBase64 },
+    })
+  },
+
   async reason(problemText: string, parsedData: any) {
     return request<ApiResponse<any[]>>('/api/ai/reason', {
       method: 'POST',
       body: { problemText, parsedData },
+    })
+  },
+
+  /** 排组/导数/圆锥/物理 → ExplainIR（本地认不出时兜底） */
+  async explain(problemText: string, topic: 'combo' | 'derivative' | 'conic' | 'physics') {
+    return request<ApiResponse<Record<string, unknown>>>('/api/ai/explain', {
+      method: 'POST',
+      body: { problemText, topic },
     })
   },
 

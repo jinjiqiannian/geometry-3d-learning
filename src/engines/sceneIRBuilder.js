@@ -39,6 +39,62 @@ const STEP_ZERO_CONFIG = {
 function edgeId(a, b) {
  return a < b ? a + b : b + a;
 }
+// semantic.relations 字符串 → sceneIR.annotations 结构化对象
+// 支持: "E midpoint AD" / "F on PA" / "PC parallel plane BEF"
+function convertRelationsToAnnotations(relations) {
+  if (!Array.isArray(relations)) return [];
+  const annotations = [];
+  relations.forEach(rel => {
+    if (typeof rel !== 'string') return;
+    let m = rel.match(/^([A-Z][0-9]*) midpoint ([A-Z][0-9]*?)([A-Z][0-9]*)$/);
+    if (m) {
+      annotations.push({ type: 'midpoint', point: m[1], segment: [m[2], m[3]] });
+      return;
+    }
+    m = rel.match(/^([A-Z][0-9]*) on ([A-Z][0-9]*?)([A-Z][0-9]*)$/);
+    if (m) {
+      annotations.push({ type: 'on', point: m[1], segment: [m[2], m[3]] });
+      return;
+    }
+    m = rel.match(/^([A-Z][0-9]*[A-Z][0-9]*) parallel plane ([A-Z][0-9]*[A-Z][0-9]*[A-Z][0-9]*)$/);
+    if (m) {
+      annotations.push({ type: 'parallel', target: m[1], plane: m[2] });
+      return;
+    }
+    // 线线平行："AB parallel CD"
+    m = rel.match(/^([A-Z][0-9]*'?[A-Z][0-9]*'?) parallel ([A-Z][0-9]*'?[A-Z][0-9]*'?)$/);
+    if (m) {
+      annotations.push({ type: 'parallel', line1: m[1], line2: m[2] });
+      return;
+    }
+    // 线面垂直："PC perpendicular plane ABC"
+    m = rel.match(/^([A-Z][0-9]*'?[A-Z][0-9]*'?) perpendicular plane ([A-Z][0-9]*'?[A-Z][0-9]*'?[A-Z][0-9]*'?)$/);
+    if (m) {
+      annotations.push({ type: 'perpendicular', line: m[1], plane: m[2] });
+      return;
+    }
+    // 线线垂直："AB perpendicular CD"
+    m = rel.match(/^([A-Z][0-9]*'?[A-Z][0-9]*'?) perpendicular ([A-Z][0-9]*'?[A-Z][0-9]*'?)$/);
+    if (m) {
+      annotations.push({ type: 'perpendicular', line1: m[1], line2: m[2] });
+      return;
+    }
+    // 线面交点："G intersection PC BEF"
+    m = rel.match(/^([A-Z][0-9]*'?) intersection ([A-Z][0-9]*'?[A-Z][0-9]*'?) ([A-Z][0-9]*'?[A-Z][0-9]*'?[A-Z][0-9]*'?)$/);
+    if (m) {
+      annotations.push({ type: 'intersection', point: m[1], line: m[2], plane: m[3] });
+      return;
+    }
+    // 线线交点："G intersection AC BD"
+    m = rel.match(/^([A-Z][0-9]*'?) intersection ([A-Z][0-9]*'?[A-Z][0-9]*'?) ([A-Z][0-9]*'?[A-Z][0-9]*'?)$/);
+    if (m) {
+      annotations.push({ type: 'intersection', point: m[1], line1: m[2], line2: m[3] });
+      return;
+    }
+    annotations.push({ type: 'raw', text: rel });
+  });
+  return annotations;
+}
 export function buildBaseSceneIR(type, params, roleMap, pointPositions, edges) {
   const points = [];
   if (pointPositions) {
@@ -80,22 +136,26 @@ export function buildBaseSceneIR(type, params, roleMap, pointPositions, edges) {
   };
 }
 export function buildSceneIRFromSemantic(semantic) {
-  const validated = validateAndCompleteSemantic(semantic);
-  const labelToPosition = validated.pointPositions || {};
-  
-  const points = validated.points.map(point => ({
+  const labelToPosition = semantic.pointPositions || {};
+
+  const points = semantic.points.map(point => ({
     id: point,
     label: point,
-    position: labelToPosition[point] || [0, 0, 0],
-    visible: true,
+    // 明确为 null（无法推导坐标）时保留 null，不再回退 [0,0,0] 污染原点；
+    // 仅 undefined（未计算）走原兜底
+    position: labelToPosition[point] === null ? null : (labelToPosition[point] || [0, 0, 0]),
+    visible: labelToPosition[point] !== null,
   }));
   
   const edgeSet = new Set();
   const lines = [];
-  validated.edges.forEach(edge => {
+  semantic.edges.forEach(edge => {
     const key = edgeId(edge.from, edge.to);
     if (!edgeSet.has(key)) {
       edgeSet.add(key);
+      const normalizedLabel = edge.label && edge.label.length === 2 
+        ? (edge.label[0] < edge.label[1] ? edge.label : edge.label[1] + edge.label[0])
+        : edge.label;
       lines.push({
         id: edge.label || key,
         from: edge.from,
@@ -103,34 +163,42 @@ export function buildSceneIRFromSemantic(semantic) {
         category: edge.category || '棱',
         dashed: edge.dashed || false,
         visible: true,
-        highlighted: validated.importantLines.includes(edge.label || key),
+        highlighted: semantic.importantLines.includes(normalizedLabel || key),
       });
     }
   });
   
   const sections = [];
-  validated.planes.forEach((plane, i) => {
+  semantic.planes.forEach((plane, i) => {
     sections.push({
       id: 'plane_' + i,
       type: 'polygon',
       points: plane.points,
-      visible: validated.importantPlanes.includes(plane.label),
+      visible: semantic.importantPlanes.includes(plane.label),
       label: plane.label,
     });
   });
   
-  const highlightEdges = validated.importantLines || [];
-  const highlightPlanes = validated.importantPlanes || [];
-  
+  const highlightEdges = semantic.importantLines || [];
+  const highlightPlanes = semantic.importantPlanes || [];
+  const highlightPoints = semantic.highlightPoints || [];
+  const highlightLabels = semantic.highlightLabels || [];
+
   return {
+    type: semantic.shape,
+    size: semantic.size,
     points,
     lines,
-    faces: undefined,
+    faces: [],
     sections,
+    annotations: convertRelationsToAnnotations(semantic.relations),
+    labels: points.map(p => p.label),
     labelVisibility: {},
     highlightEdges,
     highlightPlanes,
-    highlightTags: validated.highlight || [],
+    highlightPoints,
+    highlightLabels,
+    highlightTags: semantic.highlight || [],
   };
 }
 export function applyStepToSceneIR(stepIndex, stepType, sceneOps, baseIR) {
@@ -229,16 +297,15 @@ export function applyStepToSceneIR(stepIndex, stepType, sceneOps, baseIR) {
  }
  });
  }
- if (sceneOps.showLabels) {
+ if (sceneOps.showLabels && sceneOps.showLabels.length > 0) {
  const labelSet = new Set(sceneOps.showLabels);
+ // 只保证列出的标签可见，不隐藏其余点（避免结论步字母消失）
  ir.points.forEach(p => {
- p.visible = labelSet.has(p.id);
- });
- if (ir.labelVisibility) {
- ir.points.forEach(p => {
- ir.labelVisibility[p.id] = labelSet.has(p.id);
- });
+ if (labelSet.has(p.id) || labelSet.has(p.label)) {
+ p.visible = true;
+ if (ir.labelVisibility) ir.labelVisibility[p.id] = true;
  }
+ });
  }
  if (sceneOps.planeHighlight) {
  if (!ir.sections)
@@ -280,6 +347,9 @@ export function buildSceneIRSequence(type, params, userLabels, steps) {
  animationSteps: [],
  };
  const validated = validateAndCompleteSemantic(semantic);
+ if (!validated.roleMap || !validated.pointPositions) {
+ console.warn('[SceneIRBuilder] Invalid semantic data passed to buildSceneIRSequence');
+ }
  const baseIR = buildBaseSceneIR(type, params, validated.roleMap, validated.pointPositions, validated.edges);
  const sequence = [];
  for (let i = 0; i < steps.length; i++) {
@@ -290,65 +360,144 @@ export function buildSceneIRSequence(type, params, userLabels, steps) {
  }
  return sequence;
 }
-export function buildSceneIRSequenceFromSemantic(semantic) {
- const baseIR = buildSceneIRFromSemantic(semantic);
- if (!semantic.animationSteps || semantic.animationSteps.length === 0) {
- return [baseIR];
- }
- const sequence = [baseIR];
- let currentIR = JSON.parse(JSON.stringify(baseIR));
- semantic.animationSteps.forEach((animStep, index) => {
- const nextIR = JSON.parse(JSON.stringify(currentIR));
- if (animStep.addElements) {
- if (animStep.addElements.points) {
- animStep.addElements.points.forEach(pointId => {
- const point = nextIR.points.find(p => p.id === pointId);
- if (point)
- point.visible = true;
- });
- }
- if (animStep.addElements.edges) {
- animStep.addElements.edges.forEach(edgeLabel => {
- const edge = nextIR.lines.find(l => l.id === edgeLabel);
- if (edge)
- edge.visible = true;
- });
- }
- if (animStep.addElements.highlightEdges) {
- animStep.addElements.highlightEdges.forEach(edgeLabel => {
- const edge = nextIR.lines.find(l => l.id === edgeLabel);
- if (edge)
- edge.highlighted = true;
- });
- }
- if (animStep.addElements.planes) {
- if (!nextIR.sections)
- nextIR.sections = [];
- animStep.addElements.planes.forEach(planeLabel => {
- if (!nextIR.sections.some(s => s.label === planeLabel)) {
- const plane = semantic.planes.find(p => p.label === planeLabel);
- if (plane) {
- nextIR.sections.push({
- id: 'plane_' + nextIR.sections.length,
- type: 'polygon',
- points: plane.points,
- visible: true,
- label: planeLabel,
- });
- }
- }
- });
- }
- if (animStep.addElements.highlightPoints) {
- animStep.addElements.highlightPoints.forEach(pointId => {
- const point = nextIR.points.find(p => p.id === pointId);
- if (point)
- point.highlighted = true;
- });
- }
- }
- sequence.push(nextIR);
- currentIR = nextIR;
- });
- return sequence;
+export function buildSceneIRSequenceFromSemantic(semantic, steps = []) {
+  const baseIR = buildSceneIRFromSemantic(semantic);
+  
+  if (steps.length === 0 && (!semantic.animationSteps || semantic.animationSteps.length === 0)) {
+    return [baseIR];
+  }
+  
+  const sequence = [baseIR];
+  let currentIR = JSON.parse(JSON.stringify(baseIR));
+  
+  if (steps.length > 0) {
+    steps.forEach((step, index) => {
+      const nextIR = JSON.parse(JSON.stringify(currentIR));
+      applySceneStateToIR(nextIR, step.sceneState, semantic);
+      sequence.push(nextIR);
+      currentIR = nextIR;
+    });
+  } else {
+    semantic.animationSteps.forEach((animStep, index) => {
+      const nextIR = JSON.parse(JSON.stringify(currentIR));
+      if (animStep.addElements) {
+        if (animStep.addElements.points) {
+          animStep.addElements.points.forEach(pointId => {
+            const point = nextIR.points.find(p => p.id === pointId);
+            if (point)
+              point.visible = true;
+          });
+        }
+        if (animStep.addElements.edges) {
+          animStep.addElements.edges.forEach(edgeLabel => {
+            const edge = nextIR.lines.find(l => l.id === edgeLabel);
+            if (edge)
+              edge.visible = true;
+          });
+        }
+        if (animStep.addElements.highlightEdges) {
+          animStep.addElements.highlightEdges.forEach(edgeLabel => {
+            const edge = nextIR.lines.find(l => l.id === edgeLabel);
+            if (edge)
+              edge.highlighted = true;
+          });
+        }
+        if (animStep.addElements.planes) {
+          if (!nextIR.sections)
+            nextIR.sections = [];
+          animStep.addElements.planes.forEach(planeLabel => {
+            if (!nextIR.sections.some(s => s.label === planeLabel)) {
+              const plane = semantic.planes.find(p => p.label === planeLabel);
+              if (plane) {
+                nextIR.sections.push({
+                  id: 'plane_' + nextIR.sections.length,
+                  type: 'polygon',
+                  points: plane.points,
+                  visible: true,
+                  label: planeLabel,
+                });
+              }
+            }
+          });
+        }
+        if (animStep.addElements.highlightPoints) {
+          animStep.addElements.highlightPoints.forEach(pointId => {
+            const point = nextIR.points.find(p => p.id === pointId);
+            if (point)
+              point.highlighted = true;
+          });
+        }
+      }
+      sequence.push(nextIR);
+      currentIR = nextIR;
+    });
+  }
+  
+  return sequence;
+}
+
+function applySceneStateToIR(ir, sceneState, semantic) {
+  if (!sceneState) return;
+  
+  // showLabels：只加可见，不隐藏已有字母（AI 常给残缺列表导致结论步丢标）
+  if (Array.isArray(sceneState.showLabels) && sceneState.showLabels.length > 0) {
+    const want = new Set(sceneState.showLabels);
+    ir.points.forEach(point => {
+      if (want.has(point.label) || want.has(point.id)) {
+        point.visible = true;
+      }
+    });
+  }
+  
+  if (sceneState.highlightEdges) {
+    ir.lines.forEach(line => {
+      const normalizedLineId = line.id.length === 2 
+        ? (line.id[0] < line.id[1] ? line.id : line.id[1] + line.id[0])
+        : line.id;
+      line.highlighted = sceneState.highlightEdges.some(edge => {
+        if (typeof edge === 'string') {
+          const normalizedEdge = edge.length === 2 
+            ? (edge[0] < edge[1] ? edge : edge[1] + edge[0])
+            : edge;
+          return normalizedLineId === normalizedEdge;
+        }
+        return line.from === edge.from && line.to === edge.to ||
+               line.from === edge.to && line.to === edge.from;
+      });
+    });
+  }
+  
+  if (sceneState.showAuxiliaryLines) {
+    if (!ir.sections) ir.sections = [];
+    sceneState.showAuxiliaryLines.forEach(auxLine => {
+      if (!ir.sections.some(s => s.points && 
+        s.points.length === 2 && 
+        ((s.points[0] === auxLine.from && s.points[1] === auxLine.to) ||
+         (s.points[0] === auxLine.to && s.points[1] === auxLine.from)))) {
+        ir.sections.push({
+          id: 'aux_' + ir.sections.length,
+          type: 'polygon',
+          points: [auxLine.from, auxLine.to],
+          visible: true,
+          label: 'aux_' + ir.sections.length,
+        });
+      }
+    });
+  }
+  
+  if (sceneState.highlightPlanes) {
+    if (ir.sections) {
+      ir.sections.forEach(section => {
+        section.visible = sceneState.highlightPlanes.includes(section.label);
+      });
+    }
+  }
+  
+  if (sceneState.camera) {
+    ir.camera = {
+      position: sceneState.camera.position || [4, 4, 6],
+      target: sceneState.camera.target || [0, 0, 0],
+      zoom: sceneState.camera.zoom || 1,
+    };
+  }
 }

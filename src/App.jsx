@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { createHashRouter, RouterProvider } from 'react-router-dom';
+import { createHashRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { SupabaseProvider } from './contexts/SupabaseContext';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
@@ -22,8 +22,6 @@ const ExamUploadPage = lazy(() => import('./pages/ExamUploadPage'));
 const ExamReportPage = lazy(() => import('./pages/ExamReportPage'));
 const LearningPlanPage = lazy(() => import('./pages/LearningPlanPage'));
 const EduMindProfile = lazy(() => import('./pages/edumind/ProfilePage'));
-const MathPage = lazy(() => import('./pages/MathPage'));
-const PhysicsPage = lazy(() => import('./pages/PhysicsPage'));
 const FeedbackAdminPage = lazy(() => import('./pages/FeedbackAdminPage'));
 
 // ── Suspense fallback ──
@@ -70,19 +68,11 @@ const router = createHashRouter([
       },
       {
         path: 'math',
-        element: (
-          <WrappedRoute>
-            <MathPage />
-          </WrappedRoute>
-        ),
+        element: <Navigate to="/" replace />,
       },
       {
         path: 'physics',
-        element: (
-          <WrappedRoute>
-            <PhysicsPage subjectId="physics" />
-          </WrappedRoute>
-        ),
+        element: <Navigate to="/" replace />,
       },
       {
         path: 'workspace',

@@ -16,6 +16,10 @@ const parseSchema = z.object({
   imageBase64: z.string().optional(),
 })
 
+const ocrSchema = z.object({
+  imageBase64: z.string().min(32, '请上传有效图片'),
+})
+
 const reasonSchema = z.object({
   problemText: z.string().min(3),
   parsedData: z.object({
@@ -45,6 +49,44 @@ const visualizeSchema = z.object({
 const narrateSchema = z.object({
   workspaceId: z.string().uuid('无效的workspace ID'),
 })
+
+const explainSchema = z.object({
+  problemText: z.string().min(3, '题目至少3个字符'),
+  topic: z.enum(['combo', 'derivative', 'conic', 'physics']),
+})
+
+// ═══════════════════════════════════════════════════════
+//  POST /api/ai/ocr — 拍照识题（可选登录）
+// ═══════════════════════════════════════════════════════
+aiRouter.post(
+  '/ocr',
+  optionalAuth,
+  dailyLimit('generate'),
+  async (req: Request, res: Response) => {
+    try {
+      const body = ocrSchema.parse(req.body)
+      const result = await aiService.extractProblemFromImage(
+        body.imageBase64,
+        req.userId
+      )
+      if (req.userId) {
+        await recordUsage(req.userId, 'generate', result.text.slice(0, 80))
+      }
+      res.json({
+        success: true,
+        data: {
+          text: result.text,
+          visionHints: result.visionHints || null,
+        },
+      })
+    } catch (err: any) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ success: false, error: err.errors[0]?.message })
+      }
+      res.status(500).json({ success: false, error: err.message })
+    }
+  }
+)
 
 // ═══════════════════════════════════════════════════════
 //  POST /api/ai/parse — 题目解析（所有人）
@@ -261,6 +303,34 @@ aiRouter.post(
       )
 
       res.json({ success: true, data: narration })
+    } catch (err: any) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ success: false, error: err.errors[0]?.message })
+      }
+      res.status(500).json({ success: false, error: err.message })
+    }
+  }
+)
+
+// ═══════════════════════════════════════════════════════
+//  POST /api/ai/explain — 排组/导数/圆锥 ExplainIR（可选登录）
+// ═══════════════════════════════════════════════════════
+aiRouter.post(
+  '/explain',
+  optionalAuth,
+  dailyLimit('generate'),
+  async (req: Request, res: Response) => {
+    try {
+      const body = explainSchema.parse(req.body)
+      const ir = await aiService.generateExplainIR(
+        body.problemText,
+        body.topic,
+        req.userId
+      )
+      if (req.userId) {
+        await recordUsage(req.userId, 'generate', body.problemText)
+      }
+      res.json({ success: true, data: ir })
     } catch (err: any) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ success: false, error: err.errors[0]?.message })

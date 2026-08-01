@@ -1,18 +1,26 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
 import Canvas3D from "../features/solid-geometry/Canvas3D";
 import GeometryMiniControls from "../components/GeometryMiniControls";
+import StepControls from "../components/StepControls";
 import { MEASURE_MODES } from "../features/solid-geometry/MeasureTool";
 import { ANNOTATION_MODES } from "../features/solid-geometry/AnnotationTool";
 import { VIEW_PRESETS } from "../features/solid-geometry/ViewControl";
 import ExplanationPanel from "../components/ExplanationPanel";
+import LogicPanel from "../components/LogicPanel";
+import TopicPanel from "../components/TopicPanel";
 import TeacherModePanel from "../components/TeacherModePanel";
+import {
+  PHYSICS_GROUPS,
+  PHYSICS_SECTIONS,
+} from "../engines/topics/physics.js";
 import { getLineDefinitions } from "../engines/lineDefinitions";
 import { isPolyhedral } from "../engines/geometryEngine";
-import { computeVerticesFromParams } from "../engines/constraintSolver";
+import { applyConstraints } from "../engines/geometryValidator";
 import { computeVisualIntent } from "../engines/visualIntent";
-import { createLabelMap, INTERNAL_LABELS } from "../engines/labelMapper";
+import { AnimationController } from "../engines/animationController";
+
 import {
   generateShareUrl,
   detectShareParam,
@@ -35,7 +43,47 @@ import {
   convertLegacyParsedToSemantic,
   parseProblemToSemantic,
 } from "../engines/geometryValidator";
+import { mergeVisionHints } from "../engines/mergeVisionHints";
+import {
+  mergeConsecutiveSteps,
+  mapCurrentStepToMergedIndex,
+} from "../components/mergeConsecutiveSteps";
 import "./WorkspacePage.css";
+import "../components/LogicPanel.css";
+
+/** 浏览器本地 OCR（CDN 加载 tesseract，不新增 npm 依赖） */
+function loadTesseractFromCdn() {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("非浏览器环境"));
+  }
+  if (window.Tesseract) return Promise.resolve(window.Tesseract);
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector("script[data-tesseract]");
+    if (existing) {
+      existing.addEventListener("load", () => resolve(window.Tesseract));
+      existing.addEventListener("error", () => reject(new Error("OCR 脚本加载失败")));
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    s.async = true;
+    s.dataset.tesseract = "1";
+    s.onload = () => {
+      if (window.Tesseract) resolve(window.Tesseract);
+      else reject(new Error("OCR 引擎未就绪"));
+    };
+    s.onerror = () => reject(new Error("OCR 脚本加载失败"));
+    document.head.appendChild(s);
+  });
+}
+
+async function runLocalImageOcr(dataUrl) {
+  const Tesseract = await loadTesseractFromCdn();
+  const result = await Tesseract.recognize(dataUrl, "chi_sim+eng", {
+    logger: () => {},
+  });
+  return (result?.data?.text || "").replace(/\s+\n/g, "\n").trim();
+}
 
 // ── Default constraint params ─────────────────────
 function defaultConstraintParams(type) {
@@ -75,19 +123,19 @@ function convertSceneStateToOps(sceneState) {
 
   // 高亮边：{from, to} → id
   if (sceneState.highlightEdges) {
-    ops.highlightLines = sceneState.highlightEdges.map(e => {
-      if (typeof e === 'string') return e;
+    ops.highlightLines = sceneState.highlightEdges.map((e) => {
+      if (typeof e === "string") return e;
       return `${e.from}${e.to}`;
     });
   }
 
   // 辅助线
   if (sceneState.showAuxiliaryLines) {
-    ops.addAuxLines = sceneState.showAuxiliaryLines.map(aux => ({
+    ops.addAuxLines = sceneState.showAuxiliaryLines.map((aux) => ({
       from: { pointId: aux.from },
       to: { pointId: aux.to },
       dashed: aux.dashed !== false,
-      color: aux.color || '#8b5cf6',
+      color: aux.color || "#8b5cf6",
     }));
   }
 
@@ -101,7 +149,7 @@ function convertSceneStateToOps(sceneState) {
 
 export default function WorkspacePage() {
   const { isGuest } = useSupabase();
-  const { checkCanGenerate, recordUsage, remaining, isPro, triggerPaywall } =
+  const { checkCanGenerate, recordUsage, remaining, isPro, triggerPaywall, checkCanExportPpt } =
     useSubscription();
   const { isDark } = useTheme();
   const [searchParams] = useSearchParams();
@@ -132,6 +180,13 @@ export default function WorkspacePage() {
   const [activeCut, setActiveCut] = useState(null);
   const [viewPreset, setViewPreset] = useState(VIEW_PRESETS.DEFAULT);
 
+  // ── 领域平级：数学 | 物理；物理 大组 → 专题 ──
+  const [domain, setDomain] = useState("math"); // math | physics
+  const [mathTopic, setMathTopic] = useState("combo"); // combo | geometry | derivative | conic
+  const [physicsGroup, setPhysicsGroup] = useState("mechanics"); // mechanics | electro
+  const [physicsTopic, setPhysicsTopic] = useState("phys_motion");
+  const subject = domain === "physics" ? physicsTopic : mathTopic;
+
   // ── Workspace state ──────────────────────────────
   const [problemText, setProblemText] = useState("");
   const [parsedData, setParsedData] = useState(null);
@@ -142,12 +197,11 @@ export default function WorkspacePage() {
   const [error, setError] = useState(null);
   const [pptLoading, setPptLoading] = useState(false);
   const [quickInput, setQuickInput] = useState("");
-  const [followUpLoading, setFollowUpLoading] = useState(false);
-  const [followUpAnswer, setFollowUpAnswer] = useState(null);
   const [cameraResetKey, setCameraResetKey] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const playTimerRef = useRef(null);
   const [shareToast, setShareToast] = useState("");
+  const animationControllerRef = useRef(null);
 
   // ── Streaming state ────────────────────────────────
   const [streamingReasoning, setStreamingReasoning] = useState("");
@@ -155,8 +209,15 @@ export default function WorkspacePage() {
   const abortStreamRef = useRef(null);
   const streamingReasoningRef = useRef(""); // 跟踪最新推理文本，避免闭包陈旧
 
-  // ── 常驻搜索栏 state ───────────────────────────────
+  // ── 常驻搜索栏 / 拍照识题 ─────────────────────────
   const [searchInput, setSearchInput] = useState("");
+  const [composeImage, setComposeImage] = useState(null);
+  const [ocrHint, setOcrHint] = useState("");
+  const [ocrBusy, setOcrBusy] = useState(false);
+  /** 智谱 VL 构图 hint；合并时文字优先 */
+  const visionHintsRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
 
   // ── WebGL 支持检测（同步，无状态切换） ──────────
   const [hasWebGL] = useState(() => {
@@ -169,14 +230,22 @@ export default function WorkspacePage() {
   });
 
   // ── 首次使用引导 ────────────────────────────────
-  const FIRST_VISIT_KEY = 'mathviz:first_visit'
+  const FIRST_VISIT_KEY = "mathviz:first_visit";
   const [showGuide, setShowGuide] = useState(() => {
-    try { return !localStorage.getItem(FIRST_VISIT_KEY) } catch { return false }
-  })
+    try {
+      return !localStorage.getItem(FIRST_VISIT_KEY);
+    } catch {
+      return false;
+    }
+  });
   const dismissGuide = useCallback(() => {
-    try { localStorage.setItem(FIRST_VISIT_KEY, '1') } catch { /* ignore */ }
-    setShowGuide(false)
-  }, [])
+    try {
+      localStorage.setItem(FIRST_VISIT_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setShowGuide(false);
+  }, []);
 
   // ── Mobile ──────────────────────────────────────
   const [isMobile, setIsMobile] = useState(() => {
@@ -298,7 +367,7 @@ export default function WorkspacePage() {
         size: geometry.params.size ?? 2,
         freeEdgeLengths: geometry.freeEdgeLengths || {},
       };
-      return computeVerticesFromParams(geometry.type, "free", modeParams);
+      return applyConstraints(geometry.type, "free", modeParams);
     }
     return null;
   }, [
@@ -319,7 +388,9 @@ export default function WorkspacePage() {
       lines
         .filter(
           (l) =>
-            ["棱", "底面边", "顶面边", "侧棱"].includes(l.category) && !l.dashed
+            (["棱", "底面边", "顶面边", "侧棱"].includes(l.category) &&
+              !l.dashed) ||
+            l.category === "空间对角线"
         )
         .map((l) => `${l.id}|${l.category}`)
     );
@@ -341,14 +412,13 @@ export default function WorkspacePage() {
       setLoading(true);
       setLoadingStage("parsing");
       setError(null);
-      setFollowUpAnswer(null);
       setStreamingReasoning("");
       setStreamingDone(false);
 
       const totalStart = performance.now();
 
       try {
-        // ── 例题模式：仅本地引擎（不调 AI）──
+        // ── 例题模式：仅本地引擎（不调 AI、不占免费额度）──
         if (useLocalOnly) {
           setLoadingStage("parsing");
           const semantic = parseProblemToSemantic(text);
@@ -357,7 +427,10 @@ export default function WorkspacePage() {
             size: semantic.size,
             labels: semantic.points,
             vertices: semantic.points,
-            highlightLines: semantic.importantLines.map(l => ({
+            relations: semantic.relations || [],
+            planes: semantic.planes || [],
+            importantPlanes: semantic.importantPlanes || [],
+            highlightLines: semantic.importantLines.map((l) => ({
               from: l[0],
               to: l[1],
               label: l,
@@ -367,11 +440,18 @@ export default function WorkspacePage() {
           };
           const resultSteps = generateLocalSteps(text, parsedData);
           applyResults(parsedData, resultSteps);
-          try { await recordUsage("generate", text); } catch {}
           saveToHistory(text, parsedData, resultSteps);
-          console.log(`[perf] Total solve (local only): ${(performance.now() - totalStart).toFixed(0)}ms`);
+          console.log(
+            `[perf] Total solve (local only): ${(performance.now() - totalStart).toFixed(0)}ms`
+          );
           setLoadingStage("done");
           setLoading(false);
+          return;
+        }
+
+        if (!checkCanGenerate()) {
+          setLoading(false);
+          setLoadingStage("idle");
           return;
         }
 
@@ -380,13 +460,37 @@ export default function WorkspacePage() {
         setStreamingReasoning("");
         setStreamingDone(false);
 
+        // 构图走本地 semantic（约束如 PA⊥底面），图 hint 仅补缺；AI 只负责推理步骤
+        let localSemantic = null;
+        try {
+          localSemantic = parseProblemToSemantic(text);
+          if (visionHintsRef.current) {
+            localSemantic = mergeVisionHints(
+              localSemantic,
+              visionHintsRef.current
+            );
+            localSemantic = validateAndCompleteSemantic(localSemantic);
+          }
+        } catch (e) {
+          console.warn("[geometry] local semantic failed:", e);
+        }
+
         const abort = aiAPI.solveStream(text, {
           onParsed: (parsed) => {
-            setParsedData(parsed);
+            const shape = localSemantic?.shape || parsed.type || "cube";
+            const size = localSemantic?.size || parsed.size || 2;
+            setParsedData({
+              ...parsed,
+              type: shape,
+              size,
+              labels: localSemantic?.points || parsed.labels,
+              relations: localSemantic?.relations || parsed.relations,
+              semantic: localSemantic || undefined,
+            });
             setGeometry({
-              type: parsed.type || "cube",
-              params: { size: parsed.size || 2 },
-              ...defaultConstraintParams(parsed.type || "cube"),
+              type: shape,
+              params: { size },
+              ...defaultConstraintParams(shape),
             });
           },
           onReasoning: (chunk) => {
@@ -397,23 +501,33 @@ export default function WorkspacePage() {
             setStreamingDone(true);
 
             if (parsed) {
-              // 保存推理过程到 parsedData，让 collapsible "AI 推理过程" 能显示
+              const shape = localSemantic?.shape || parsed.type || "cube";
+              const size = localSemantic?.size || parsed.size || 2;
+              // 保存推理过程到 parsedData；构图以本地 semantic 为准
               const parsedWithReasoning = {
                 ...parsed,
-                aiReasoning: streamingReasoningRef.current || parsed.aiReasoning || '',
+                type: shape,
+                size,
+                labels: localSemantic?.points || parsed.labels,
+                vertices: localSemantic?.points || parsed.vertices,
+                relations: localSemantic?.relations || parsed.relations,
+                semantic: localSemantic || undefined,
+                aiReasoning:
+                  streamingReasoningRef.current || parsed.aiReasoning || "",
               };
               setParsedData(parsedWithReasoning);
               setGeometry({
-                type: parsed.type || "cube",
-                params: { size: parsed.size || 2 },
-                ...defaultConstraintParams(parsed.type || "cube"),
+                type: shape,
+                params: { size },
+                ...defaultConstraintParams(shape),
               });
               setSteps(resultSteps);
               setCurrentStep(0);
 
               if (parsed?.highlightLines?.length > 0) {
                 const { lines: predefinedLines } = getLineDefinitions(
-                  parsed.type || "cube", { size: parsed.size || 2 }
+                  parsed.type || "cube",
+                  { size: parsed.size || 2 }
                 );
                 const newCustomLines = [];
                 parsed.highlightLines.forEach((hl) => {
@@ -423,8 +537,11 @@ export default function WorkspacePage() {
                   if (!exists) {
                     newCustomLines.push({
                       id: hl.label || `${hl.from}${hl.to}`,
-                      category: "AI高亮", from: hl.from, to: hl.to,
-                      dashed: false, custom: true,
+                      category: "AI高亮",
+                      from: hl.from,
+                      to: hl.to,
+                      dashed: false,
+                      custom: true,
                     });
                   }
                 });
@@ -432,15 +549,21 @@ export default function WorkspacePage() {
                   setCustomLines(newCustomLines);
                   setVisibleLines((prev) => {
                     const next = new Set(prev);
-                    newCustomLines.forEach((l) => next.add(`${l.id}|${l.category}`));
+                    newCustomLines.forEach((l) =>
+                      next.add(`${l.id}|${l.category}`)
+                    );
                     return next;
                   });
                 }
               }
 
               setLoadingStage("done");
-              console.log(`[perf] Total solve (AI stream): ${(performance.now() - totalStart).toFixed(0)}ms`);
-              try { recordUsage("generate", text); } catch {}
+              console.log(
+                `[perf] Total solve (AI stream): ${(performance.now() - totalStart).toFixed(0)}ms`
+              );
+              try {
+                recordUsage("generate", text);
+              } catch {}
               saveToHistory(text, parsed, resultSteps);
             }
             setLoading(false);
@@ -448,13 +571,20 @@ export default function WorkspacePage() {
           onError: (err) => {
             setError(null);
             console.warn("AI 解题失败，降级到本地模板:", err.message);
-            const semantic = parseProblemToSemantic(text);
+            let semantic = parseProblemToSemantic(text);
+            if (visionHintsRef.current) {
+              semantic = mergeVisionHints(semantic, visionHintsRef.current);
+              semantic = validateAndCompleteSemantic(semantic);
+            }
             const fallbackParsed = {
               type: semantic.shape,
               size: semantic.size,
               labels: semantic.points,
               vertices: semantic.points,
-              highlightLines: semantic.importantLines.map(l => ({
+              relations: semantic.relations || [],
+              planes: semantic.planes || [],
+              importantPlanes: semantic.importantPlanes || [],
+              highlightLines: semantic.importantLines.map((l) => ({
                 from: l[0],
                 to: l[1],
                 label: l,
@@ -475,13 +605,20 @@ export default function WorkspacePage() {
         const msg = err.message || "";
         setError(null);
         console.warn("解析异常，降级到本地模板:", msg);
-        const semantic = parseProblemToSemantic(text);
+        let semantic = parseProblemToSemantic(text);
+        if (visionHintsRef.current) {
+          semantic = mergeVisionHints(semantic, visionHintsRef.current);
+          semantic = validateAndCompleteSemantic(semantic);
+        }
         const fallbackParsed = {
           type: semantic.shape,
           size: semantic.size,
           labels: semantic.points,
           vertices: semantic.points,
-          highlightLines: semantic.importantLines.map(l => ({
+          relations: semantic.relations || [],
+          planes: semantic.planes || [],
+          importantPlanes: semantic.importantPlanes || [],
+          highlightLines: semantic.importantLines.map((l) => ({
             from: l[0],
             to: l[1],
             label: l,
@@ -496,7 +633,7 @@ export default function WorkspacePage() {
         setLoading(false);
       }
     },
-    [loading, recordUsage]
+    [loading, recordUsage, checkCanGenerate]
   );
 
   // ── Helper: Apply parsed data + steps to state ──
@@ -512,7 +649,8 @@ export default function WorkspacePage() {
 
     if (parsedData?.highlightLines?.length > 0) {
       const { lines: predefinedLines } = getLineDefinitions(
-        parsedData.type || "cube", { size: parsedData.size || 2 }
+        parsedData.type || "cube",
+        { size: parsedData.size || 2 }
       );
       const newCustomLines = [];
       parsedData.highlightLines.forEach((hl) => {
@@ -522,8 +660,11 @@ export default function WorkspacePage() {
         if (!exists) {
           newCustomLines.push({
             id: hl.label || `${hl.from}${hl.to}`,
-            category: "AI高亮", from: hl.from, to: hl.to,
-            dashed: false, custom: true,
+            category: "AI高亮",
+            from: hl.from,
+            to: hl.to,
+            dashed: false,
+            custom: true,
           });
         }
       });
@@ -573,60 +714,62 @@ export default function WorkspacePage() {
   //  以下变量严格按照依赖顺序声明 —— 前面的变量不能引用后面的变量
   // ═══════════════════════════════════════════════════════
 
-  // ── (1) labelMap — 题目标签 → 内部索引映射 ─────────
-  //  依赖: parsedData
-  const labelMap = useMemo(() => {
-    if (!parsedData?.vertices && !parsedData?.labels) return null;
-    const userLabels = parsedData.vertices || parsedData.labels || null;
-    const internalLabels =
-      INTERNAL_LABELS[parsedData.type] || INTERNAL_LABELS.cube;
-    return createLabelMap(userLabels, internalLabels);
-  }, [parsedData]);
+  // ── (3) visualIntent — 占位，合并组就绪后计算 ──
+  // （见下方 mergedGroups 之后）
 
-  // ── (2) vertexLabels — 自定义顶点标签（从题目解析）──
-  //  依赖: labelMap
-  const vertexLabels = useMemo(() => {
-    if (!labelMap) return null;
-    return labelMap.displayLabels;
-  }, [labelMap]);
+  // ── (3a) sceneIRSequence — 完整步骤序列 ──────────
+  const sceneIRSequence = useMemo(() => {
+    if (!steps.length || !parsedData?.type) return [];
 
-  // ── (3) visualIntent — Step→3D deterministic mapping ──
-  //  依赖: steps, parsedData, problemText, labelMap
+    // 本地路径：parseProblemToSemantic 已产出完整 semantic（relations/pointPositions 正确），
+    // 直接消费，避免 convertLegacyParsedToSemantic 重建时丢失字段；
+    // 仅 AI 路径 / 历史回放（无 semantic 附着）回退适配器转换
+    const semantic =
+      parsedData.semantic ?? convertLegacyParsedToSemantic(parsedData, steps);
+    return buildSceneIRSequenceFromSemantic(semantic, steps);
+  }, [steps, parsedData]);
+
+  // ── 合并卡映射：展示/播放按合并卡步进，currentStep 仍存原始 ProofStep 索引
+  const mergedGroups = useMemo(() => mergeConsecutiveSteps(steps), [steps]);
+  const mergedStepIndex = useMemo(
+    () => mapCurrentStepToMergedIndex(mergedGroups, currentStep),
+    [mergedGroups, currentStep]
+  );
+
+  // ── (3) visualIntent — 合并组取组内最后一步 ──
   const visualIntent = useMemo(() => {
-    const step = steps[currentStep];
+    const group = mergedGroups[mergedStepIndex];
+    const idx = group
+      ? group.originalIndices[group.originalIndices.length - 1]
+      : currentStep;
+    const step = steps[idx];
     if (!step || !parsedData) return null;
-    return computeVisualIntent(step, parsedData, problemText, labelMap);
-  }, [currentStep, steps, parsedData, problemText, labelMap]);
+    return computeVisualIntent(step, parsedData, problemText);
+  }, [mergedGroups, mergedStepIndex, currentStep, steps, parsedData, problemText]);
 
-  // ── (3a) sceneIR — Step→3D 场景状态机 ──────────
-  //  依赖: steps, parsedData
+  // ── (3b) sceneIR — 当前合并步骤组的场景状态（取组内最后一步） ──
   const sceneIR = useMemo(() => {
-    if (!steps.length || !parsedData?.type) return null;
-    
-    const semantic = convertLegacyParsedToSemantic(parsedData, steps);
-    const irSequence = buildSceneIRSequenceFromSemantic(semantic);
-    
-    if (irSequence.length > 0) {
-      const index = Math.min(currentStep, irSequence.length - 1);
-      return irSequence[index];
+    if (sceneIRSequence.length === 0) return null;
+    const group = mergedGroups[mergedStepIndex];
+    const displayIndex = group
+      ? group.originalIndices[group.originalIndices.length - 1]
+      : currentStep;
+    const index = Math.min(displayIndex, sceneIRSequence.length - 1);
+    return sceneIRSequence[index];
+  }, [sceneIRSequence, currentStep, mergedGroups, mergedStepIndex]);
+
+  // ── Animation Controller（仅同步，不按原始步数驱动播放） ──
+  useEffect(() => {
+    if (!animationControllerRef.current) {
+      animationControllerRef.current = new AnimationController(
+        Math.max(mergedGroups.length, 1),
+        () => {},
+        () => {}
+      );
+    } else {
+      animationControllerRef.current.setTotalSteps(Math.max(mergedGroups.length, 1));
     }
-    
-    const base = buildBaseSceneIR(
-      parsedData.type,
-      { size: parsedData.size || 2 },
-      semantic.roleMap,
-      semantic.pointPositions,
-      semantic.edges
-    );
-    const step = steps[currentStep];
-    if (step) {
-      const ops = step.sceneState ? convertSceneStateToOps(step.sceneState) : step.sceneOps;
-      if (ops) {
-        return applyStepToSceneIR(currentStep, step.type, ops, base);
-      }
-    }
-    return base;
-  }, [steps, currentStep, parsedData]);
+  }, [mergedGroups.length]);
 
   // ── (3b) 有效标签显示 — 渐进披露：第一步隐藏标签 ──
   const effectiveShowLabels = useMemo(() => {
@@ -636,11 +779,11 @@ export default function WorkspacePage() {
 
   // ── (3c) cameraTarget — 步骤类型对应的 3D 相机自动飞行目标 ──
   const STEP_CAMERA_PRESETS = {
-    observation:  [4, 4, 6],
-    conceptual:   [4, 4, 6],
+    observation: [4, 4, 6],
+    conceptual: [4, 4, 6],
     construction: [2.5, 2, 3.5],
-    calculation:  [1, 3, 5],
-    conclusion:   [5, 3, 5],
+    calculation: [1, 3, 5],
+    conclusion: [5, 3, 5],
   };
   const cameraTarget = useMemo(() => {
     const step = steps[currentStep];
@@ -653,8 +796,7 @@ export default function WorkspacePage() {
     const { lines } = getLineDefinitions(
       geometry.type,
       geometry.params,
-      customVertices,
-      vertexLabels
+      customVertices
     );
     const merged = [...lines, ...customLines];
     if (Object.keys(edgeColorOverrides).length > 0) {
@@ -672,7 +814,6 @@ export default function WorkspacePage() {
     customLines,
     edgeColorOverrides,
     customVertices,
-    vertexLabels,
   ]);
 
   // ── Step navigation ──────────────────────────────
@@ -681,12 +822,22 @@ export default function WorkspacePage() {
   }, []);
 
   const handleNextStep = useCallback(() => {
-    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
-  }, [steps.length]);
+    setCurrentStep((prev) => {
+      if (mergedGroups.length === 0) return prev;
+      const i = mapCurrentStepToMergedIndex(mergedGroups, prev);
+      if (i >= mergedGroups.length - 1) return prev;
+      return mergedGroups[i + 1].originalIndices[0];
+    });
+  }, [mergedGroups]);
 
   const handlePrevStep = useCallback(() => {
-    setCurrentStep((prev) => Math.max(prev - 1, 0));
-  }, []);
+    setCurrentStep((prev) => {
+      if (mergedGroups.length === 0) return prev;
+      const i = mapCurrentStepToMergedIndex(mergedGroups, prev);
+      if (i <= 0) return prev;
+      return mergedGroups[i - 1].originalIndices[0];
+    });
+  }, [mergedGroups]);
 
   // ── 常驻搜索栏提交 ──
   const handleSearchSubmit = useCallback(() => {
@@ -704,6 +855,121 @@ export default function WorkspacePage() {
     },
     [handleSearchSubmit]
   );
+
+  const compressComposeImage = useCallback((file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const max = 1280;
+          let w = img.width;
+          let h = img.height;
+          const scale = Math.min(1, max / Math.max(w, h));
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error("无法压缩图片"));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", 0.82));
+        };
+        img.onerror = () => reject(new Error("图片损坏"));
+        img.src = reader.result;
+      };
+      reader.onerror = () => reject(new Error("读取失败"));
+      reader.readAsDataURL(file);
+    });
+  }, []);
+
+  const handleComposeImagePick = useCallback(
+    async (e) => {
+      const file = e.target.files?.[0];
+      e.target.value = "";
+      if (!file || !file.type.startsWith("image/")) return;
+      try {
+        const dataUrl = await compressComposeImage(file);
+        setComposeImage(dataUrl);
+        setOcrBusy(true);
+        setOcrHint("正在识别题干…");
+
+        const applyText = (text, hint) => {
+          let t = (text || "").trim();
+          // 兜底：若误把整段 OCR JSON 填进题干，拆出 text / visionHints
+          if (t.startsWith("{") && /"text"\s*:/.test(t)) {
+            try {
+              const obj = JSON.parse(t);
+              if (typeof obj?.text === "string" && obj.text.trim()) {
+                if (obj.visionHints && !visionHintsRef.current) {
+                  visionHintsRef.current = obj.visionHints;
+                }
+                t = obj.text.trim();
+              }
+            } catch {
+              /* keep t */
+            }
+          }
+          if (t) {
+            setSearchInput(t);
+            setOcrHint(hint);
+            return true;
+          }
+          return false;
+        };
+
+        // 1) 服务端识图（Gemini / DeepSeek Vision）
+        try {
+          const res = await aiAPI.ocr(dataUrl);
+          if (res?.data?.visionHints) {
+            visionHintsRef.current = res.data.visionHints;
+          }
+          if (applyText(res?.data?.text, "已识别，请核对后点「开始理解」")) {
+            setOcrBusy(false);
+            return;
+          }
+        } catch (err) {
+          console.warn("[ocr] server failed:", err?.message);
+        }
+
+        // 2) 浏览器本地 OCR 降级（无需配置视觉 Key）
+        setOcrHint("云端识图不可用，正在本地识别…");
+        try {
+          const localText = await runLocalImageOcr(dataUrl);
+          if (
+            applyText(
+              localText,
+              "本地已识别（请仔细核对符号与点名）"
+            )
+          ) {
+            return;
+          }
+          setOcrHint("未识别出文字，请对照原图手动输入");
+        } catch (err) {
+          setOcrHint(
+            err?.message ||
+              "识别失败：可在 server/.env 配置 VISION_PROVIDER=zhipu 与 VISION_API_KEY，或手动输入题干"
+          );
+        }
+      } catch {
+        setOcrHint("图片读取失败，请重试");
+      } finally {
+        setOcrBusy(false);
+      }
+    },
+    [compressComposeImage]
+  );
+
+  const clearComposeImage = useCallback(() => {
+    setComposeImage(null);
+    setOcrHint("");
+    setOcrBusy(false);
+    visionHintsRef.current = null;
+  }, []);
 
   // ── Quick input submit (workspace empty state) ──
   const handleQuickSubmit = useCallback(() => {
@@ -724,6 +990,7 @@ export default function WorkspacePage() {
 
   // ── PPT 导出 ───────────────────────────────────
   const handleExportPPT = useCallback(async () => {
+    if (!checkCanExportPpt()) return;
     if (!canvasRef.current) return;
     setPptLoading(true);
     try {
@@ -737,43 +1004,53 @@ export default function WorkspacePage() {
     } finally {
       setPptLoading(false);
     }
-  }, [problemText, steps, parsedData, geometry]);
-
-  // ── 追问 ──
-  const handleAskFollowUp = useCallback(
-    async (question) => {
-      setFollowUpLoading(true);
-      setFollowUpAnswer(null);
-      try {
-        const combinedText = `${problemText}\n\n追问：${question}`;
-        const parseResult = parseProblemSync(combinedText);
-        if (parseResult) {
-          const steps = generateLocalSteps(combinedText, parseResult);
-          if (steps.length > 0) {
-            setFollowUpAnswer(
-              steps[0].content || steps[0].title || "抱歉，无法回答这个问题。"
-            );
-          } else {
-            setFollowUpAnswer("抱歉，无法回答这个问题，请尝试换一种方式提问。");
-          }
-        } else {
-          setFollowUpAnswer("抱歉，无法回答这个问题，请尝试换一种方式提问。");
-        }
-      } catch {
-        setFollowUpAnswer("追问失败，请重试。");
-      } finally {
-        setFollowUpLoading(false);
-      }
-    },
-    [problemText]
-  );
+  }, [problemText, steps, parsedData, geometry, checkCanExportPpt]);
 
   // ── 重置视角 ──
   const handleResetCamera = useCallback(() => {
     setCameraResetKey((k) => k + 1);
   }, []);
 
-  // ── 自动回放 ──
+  // ── 解题页返回空工作台（不回首页） ──
+  const handleBackToCompose = useCallback(() => {
+    try {
+      abortStreamRef.current?.();
+    } catch {
+      /* ignore */
+    }
+    if (playTimerRef.current) clearTimeout(playTimerRef.current);
+    setIsPlaying(false);
+    setProblemText("");
+    setParsedData(null);
+    setSteps([]);
+    setCurrentStep(0);
+    setLoading(false);
+    setLoadingStage("idle");
+    setError(null);
+    setSearchInput("");
+    setQuickInput("");
+    setComposeImage(null);
+    setOcrHint("");
+    setOcrBusy(false);
+    setStreamingReasoning("");
+    setStreamingDone(false);
+    setVisibleLines(new Set());
+    setCustomLines([]);
+    setShownLengthLabels(new Set());
+    setSearchedLine("");
+    setEdgeColorOverrides({});
+    setSelectedEdge(null);
+    setMeasurements([]);
+    setAnnotations([]);
+    setActiveCut(null);
+    setGeometry({
+      type: "cube",
+      params: { size: 2 },
+      ...defaultConstraintParams("cube"),
+    });
+  }, []);
+
+  // ── 自动回放：按合并后步骤组推进（一步一组，避免同卡步数空转） ──
   const handleTogglePlay = useCallback(() => {
     setIsPlaying((prev) => {
       if (prev) {
@@ -785,23 +1062,27 @@ export default function WorkspacePage() {
   }, []);
 
   useEffect(() => {
-    if (!isPlaying || steps.length === 0) return;
-    const advance = () => {
+    if (!isPlaying || mergedGroups.length === 0) return;
+
+    let cancelled = false;
+    const tick = () => {
+      if (cancelled) return;
       setCurrentStep((prev) => {
-        const next = prev + 1;
-        if (next >= steps.length) {
+        const i = mapCurrentStepToMergedIndex(mergedGroups, prev);
+        if (i >= mergedGroups.length - 1) {
           setIsPlaying(false);
           return prev;
         }
-        playTimerRef.current = setTimeout(advance, 3500);
-        return next;
+        return mergedGroups[i + 1].originalIndices[0];
       });
     };
-    playTimerRef.current = setTimeout(advance, 2000);
+
+    playTimerRef.current = setTimeout(tick, 2800);
     return () => {
+      cancelled = true;
       if (playTimerRef.current) clearTimeout(playTimerRef.current);
     };
-  }, [isPlaying, steps.length]);
+  }, [isPlaying, mergedGroups, currentStep]);
 
   // ── 重试 ──
   const handleRetry = useCallback(() => {
@@ -818,38 +1099,38 @@ export default function WorkspacePage() {
     { text: "正四棱锥底面边长4，高6，求体积", label: "棱锥体积" },
     { text: "圆柱底面半径2，高5，求侧面积和体积", label: "圆柱体积" },
     { text: "圆锥底面半径3，高4，求体积和母线长", label: "圆锥体积" },
-  ]
+  ];
   const handlePracticeMore = useCallback(() => {
-    const others = PRACTICE_EXAMPLES.filter(ex => ex.text !== problemText)
-    const pick = others[Math.floor(Math.random() * others.length)]
-    if (pick) handleParseProblem(pick.text)
-  }, [problemText, handleParseProblem])
+    const others = PRACTICE_EXAMPLES.filter((ex) => ex.text !== problemText);
+    const pick = others[Math.floor(Math.random() * others.length)];
+    if (pick) handleParseProblem(pick.text);
+  }, [problemText, handleParseProblem]);
 
   // ── 键盘快捷键 ──
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return
+      if (["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
 
       switch (e.key) {
-        case 'ArrowLeft':
-          e.preventDefault()
-          handlePrevStep()
-          break
-        case 'ArrowRight':
-          e.preventDefault()
-          handleNextStep()
-          break
-        case ' ':
+        case "ArrowLeft":
+          e.preventDefault();
+          handlePrevStep();
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          handleNextStep();
+          break;
+        case " ":
           if (steps.length > 0) {
-            e.preventDefault()
-            handleTogglePlay()
+            e.preventDefault();
+            handleTogglePlay();
           }
-          break
+          break;
       }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handlePrevStep, handleNextStep, handleTogglePlay, steps.length])
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handlePrevStep, handleNextStep, handleTogglePlay, steps.length]);
 
   // ── 截图导出 ──
   const handleScreenshot = useCallback(async () => {
@@ -861,14 +1142,14 @@ export default function WorkspacePage() {
         backgroundColor: isDark ? "#161616" : "#f8f9fb",
       });
       const link = document.createElement("a");
-      link.download = `几何维度-${new Date().toISOString().slice(0, 10)}.png`;
+      link.download = `理解引擎-${new Date().toISOString().slice(0, 10)}.png`;
       link.href = dataUrl;
       link.click();
     } catch {
       const canvas = canvasRef.current?.querySelector("canvas");
       if (canvas) {
         const link = document.createElement("a");
-        link.download = `几何维度-${new Date().toISOString().slice(0, 10)}.png`;
+        link.download = `理解引擎-${new Date().toISOString().slice(0, 10)}.png`;
         link.href = canvas.toDataURL("image/png");
         link.click();
       }
@@ -895,37 +1176,185 @@ export default function WorkspacePage() {
     setTimeout(() => setShareToast(""), 3000);
   }, [problemText, geometry, steps, parsedData]);
 
-  return (
-    <div className="workspace-page">
+  const isComposeIdle = !problemText && !loading;
 
-      {/* ── 搜索栏 ── */}
-      <div className="wp-search-bar">
-        <div className="wp-search-row">
-          <Link to="/math" className="wp-search-back" title="返回首页">←</Link>
-          <textarea
-            className="wp-search-input"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={handleSearchKeyDown}
-            placeholder="输入一道几何题，AI 将为你解析…"
-            rows={1}
-            spellCheck={false}
-            disabled={loading}
-          />
+  const composeExamples = [
+    {
+      text: "正方体棱长为2，求体对角线AG的长度",
+      label: "正方体对角线",
+      hint: "棱长 2 → 体对角线",
+    },
+    {
+      text: "球体半径为3，求体积和表面积",
+      label: "球体体积",
+      hint: "半径 3 → 体积与表面积",
+    },
+    {
+      text: "正四棱锥底面边长4，高6，求体积",
+      label: "棱锥体积",
+      hint: "底边 4 · 高 6",
+    },
+  ];
+
+  return (
+    <div
+      className={`workspace-page${subject === "geometry" ? " workspace-page--geometry" : ""}`}
+    >
+      {/* ── 一级：数学 | 物理 ── */}
+      <div className="wp-domain-bar" role="tablist" aria-label="学科">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={domain === "math"}
+          className={`wp-domain-tab${domain === "math" ? " is-active" : ""}`}
+          onClick={() => setDomain("math")}
+        >
+          数学
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={domain === "physics"}
+          className={`wp-domain-tab${domain === "physics" ? " is-active" : ""}`}
+          onClick={() => setDomain("physics")}
+        >
+          物理
+        </button>
+      </div>
+
+      {/* ── 二级：数学 / 物理各自专题 ── */}
+      {domain === "math" && (
+        <div className="wp-subject-bar" role="tablist" aria-label="数学专题">
           <button
-            className="wp-search-submit"
-            onClick={handleSearchSubmit}
-            disabled={searchInput.trim().length < 3 || loading}
+            type="button"
+            role="tab"
+            aria-selected={mathTopic === "combo"}
+            className={`wp-subject-tab${mathTopic === "combo" ? " is-active" : ""}`}
+            onClick={() => setMathTopic("combo")}
           >
-            {loading ? (loadingStage === "reasoning" ? "AI 推理中…" : "解析中…") : "解析"}
+            排列组合 / 概率
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mathTopic === "geometry"}
+            className={`wp-subject-tab${mathTopic === "geometry" ? " is-active" : ""}`}
+            onClick={() => setMathTopic("geometry")}
+          >
+            立体几何
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mathTopic === "derivative"}
+            className={`wp-subject-tab${mathTopic === "derivative" ? " is-active" : ""}`}
+            onClick={() => setMathTopic("derivative")}
+          >
+            导数
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mathTopic === "conic"}
+            className={`wp-subject-tab${mathTopic === "conic" ? " is-active" : ""}`}
+            onClick={() => setMathTopic("conic")}
+          >
+            圆锥曲线
+          </button>
+        </div>
+      )}
+      {domain === "physics" && (
+        <>
+          <div className="wp-subject-bar" role="tablist" aria-label="物理大组">
+            {PHYSICS_GROUPS.map((g) => (
+              <button
+                key={g.id}
+                type="button"
+                role="tab"
+                aria-selected={physicsGroup === g.id}
+                className={`wp-subject-tab${physicsGroup === g.id ? " is-active" : ""}`}
+                onClick={() => {
+                  setPhysicsGroup(g.id);
+                  setPhysicsTopic(g.topics[0]);
+                }}
+              >
+                {g.label}
+              </button>
+            ))}
+          </div>
+          <div
+            className="wp-subject-bar wp-subject-bar--sub"
+            role="tablist"
+            aria-label="物理专题"
+          >
+            {(
+              PHYSICS_GROUPS.find((g) => g.id === physicsGroup)?.topics || []
+            ).map((tid) => (
+              <button
+                key={tid}
+                type="button"
+                role="tab"
+                aria-selected={physicsTopic === tid}
+                className={`wp-subject-tab${physicsTopic === tid ? " is-active" : ""}`}
+                onClick={() => setPhysicsTopic(tid)}
+              >
+                {PHYSICS_SECTIONS[tid]?.navLabel || tid}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      {subject === "combo" ? (
+        <div className="wp-combo-shell">
+          <LogicPanel />
+        </div>
+      ) : subject === "derivative" ||
+        subject === "conic" ||
+        subject.startsWith("phys_") ? (
+        <div className="wp-combo-shell">
+          <TopicPanel key={subject} topic={subject} />
+        </div>
+      ) : (
+      <>
+      {/* ── 解题顶栏：返回搜题，不再重复搜题框 ── */}
+      {!isComposeIdle && (
+        <div className="wp-solve-bar">
+          <button
+            type="button"
+            className="wp-solve-back"
+            onClick={handleBackToCompose}
+          >
+            ← 换一道
+          </button>
+          {composeImage && (
+            <button
+              type="button"
+              className="wp-solve-original"
+              title="查看原题图"
+              onClick={() => window.open(composeImage, "_blank")}
+            >
+              <img src={composeImage} alt="" />
+              <span>原题</span>
+            </button>
+          )}
           {isMobile && (
             <button
+              type="button"
               className="wp-search-3d-toggle"
               onClick={() => setShow3D((prev) => !prev)}
               title={show3D ? "隐藏 3D" : "显示 3D"}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" />
                 <path d="M2 7l10 5 10-5" />
                 <path d="M12 22V12" />
@@ -933,10 +1362,10 @@ export default function WorkspacePage() {
             </button>
           )}
         </div>
-      </div>
+      )}
 
       {/* ── 升级引导条 ── */}
-      {!isPro && problemText && !loading && remaining <= 5 && remaining > 0 && (
+      {!isPro && problemText && !loading && Number.isFinite(remaining) && remaining <= 3 && remaining > 0 && (
         <div className="wp-upgrade-banner">
           <span className="wp-upgrade-banner-text">
             今日还剩 <strong>{remaining}</strong> 次免费使用
@@ -944,14 +1373,18 @@ export default function WorkspacePage() {
           {isGuest ? (
             <button
               className="wp-upgrade-banner-btn"
-              onClick={() => document.dispatchEvent(new CustomEvent('mathviz:show-auth'))}
+              onClick={() =>
+                document.dispatchEvent(new CustomEvent("mathviz:show-auth"))
+              }
             >
               登录增加额度 →
             </button>
           ) : (
             <button
               className="wp-upgrade-banner-btn"
-              onClick={() => triggerPaywall("免费额度即将用完，升级解锁无限使用")}
+              onClick={() =>
+                triggerPaywall("免费额度即将用完，升级解锁无限使用")
+              }
             >
               升级无限使用 →
             </button>
@@ -965,50 +1398,135 @@ export default function WorkspacePage() {
             {isGuest && (
               <button
                 className="wp-upgrade-banner-btn"
-                onClick={() => document.dispatchEvent(new CustomEvent('mathviz:show-auth'))}
+                onClick={() =>
+                  document.dispatchEvent(new CustomEvent("mathviz:show-auth"))
+                }
               >
                 登录继续使用
               </button>
             )}
             <button
-              className={`wp-upgrade-banner-btn ${isGuest ? 'secondary' : ''}`}
+              className={`wp-upgrade-banner-btn ${isGuest ? "secondary" : ""}`}
               onClick={() => triggerPaywall("已达每日使用上限，升级继续使用")}
             >
-              升级{isGuest ? ' →' : '继续使用 →'}
+              升级{isGuest ? " →" : "继续使用 →"}
             </button>
           </div>
         </div>
       )}
 
-      {/* ── Quick input: workspace 空状态（仅示例按钮） ── */}
-      {!problemText && !loading && (
-        <div className="wp-empty-state">
-          <div className="wp-empty-examples">
-            <span className="wp-empty-examples-label">快速体验（本地模板）</span>
-            <div className="wp-empty-examples-row">
-              {[
-                {
-                  text: "正方体棱长为2，求体对角线AG的长度",
-                  label: "正方体对角线",
-                },
-                { text: "球体半径为3，求体积和表面积", label: "球体体积" },
-                { text: "正四棱锥底面边长4，高6，求体积", label: "棱锥体积" },
-              ].map((ex) => (
-                <button
-                  key={ex.label}
-                  className="wp-empty-example-btn"
-                  onClick={() => handleParseProblem(ex.text, { useLocalOnly: true })}
-                >
-                  {ex.label} ✦
-                </button>
-              ))}
-            </div>
+      {/* ── 立体几何空状态：与 LogicPanel 同壳 ── */}
+      {isComposeIdle ? (
+        <div className="wp-combo-shell">
+          <div className="logic-panel">
+            <header className="logic-panel-head">
+              <p className="logic-panel-kicker">立体几何 · 空间结构可视化</p>
+              <h2 className="logic-panel-title">看清「空间里的关系」</h2>
+
+              <div className="logic-compose">
+                {composeImage && (
+                  <div className="wp-compose-preview" style={{ marginBottom: "0.5rem" }}>
+                    <img src={composeImage} alt="原题预览" />
+                    <button
+                      type="button"
+                      className="wp-compose-preview-clear"
+                      onClick={clearComposeImage}
+                      aria-label="移除图片"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+                <textarea
+                  className="logic-compose-input"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={handleSearchKeyDown}
+                  placeholder="粘贴立体几何题，或拍照后自动填入…"
+                  rows={3}
+                  spellCheck={false}
+                  autoFocus
+                  disabled={ocrBusy}
+                />
+                {ocrHint && (
+                  <p
+                    className={`logic-compose-error${ocrBusy ? "" : ""}`}
+                    style={ocrBusy ? { color: "#5c574e" } : undefined}
+                  >
+                    {ocrHint}
+                  </p>
+                )}
+                <div className="logic-compose-row">
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    hidden
+                    onChange={handleComposeImagePick}
+                  />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={handleComposeImagePick}
+                  />
+                  <button
+                    type="button"
+                    className="logic-type-tab"
+                    onClick={() => cameraInputRef.current?.click()}
+                    disabled={ocrBusy}
+                  >
+                    拍照
+                  </button>
+                  <button
+                    type="button"
+                    className="logic-type-tab"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={ocrBusy}
+                  >
+                    相册
+                  </button>
+                  <button
+                    type="button"
+                    className="logic-compose-submit"
+                    onClick={handleSearchSubmit}
+                    disabled={searchInput.trim().length < 3 || ocrBusy}
+                  >
+                    {ocrBusy ? "识别中…" : "开始理解"}
+                  </button>
+                  <span className="logic-compose-hint">Ctrl + Enter</span>
+                </div>
+              </div>
+
+              <div className="logic-examples-wrap">
+                <span className="logic-type-label">试样例</span>
+                <div className="logic-examples-grid">
+                  {composeExamples.map((ex) => (
+                    <button
+                      key={ex.label}
+                      type="button"
+                      className="logic-example-card"
+                      onClick={() =>
+                        handleParseProblem(ex.text, { useLocalOnly: true })
+                      }
+                    >
+                      <span className="logic-example-card-label">{ex.label}</span>
+                      <span className="logic-example-card-hint">{ex.hint}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </header>
+            <p className="logic-empty-hint">
+              输入题目后点「开始理解」，或点上方样例。
+            </p>
           </div>
         </div>
-      )}
-
-      {/* ── Unified layout: single Canvas, CSS-driven responsive ── */}
-      <div className={`wp-main ${isMobile ? "wp-main--mobile" : ""}`}>
+      ) : (
+      /* ── Unified layout: single Canvas, CSS-driven responsive ── */
+      <div className={`wp-main wp-main--geo ${isMobile ? "wp-main--mobile" : ""}`}>
         <div className="wp-explain-col">
           <ExplanationPanel
             steps={steps}
@@ -1022,13 +1540,8 @@ export default function WorkspacePage() {
             problemText={problemText}
             error={error}
             onRetry={handleRetry}
-            onAskFollowUp={handleAskFollowUp}
-            followUpLoading={followUpLoading}
-            followUpAnswer={followUpAnswer}
             onPlay={steps.length > 0 ? handleTogglePlay : undefined}
             isPlaying={isPlaying}
-            streamingReasoning={streamingReasoning}
-            streamingDone={streamingDone}
             onPracticeMore={handlePracticeMore}
           />
         </div>
@@ -1067,7 +1580,6 @@ export default function WorkspacePage() {
                 auxLines={visualIntent?.auxLines || []}
                 faceOpacity={visualIntent?.faceOpacity ?? 0.42}
                 nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
-                vertexLabels={vertexLabels}
                 cameraResetKey={cameraResetKey}
                 sphereOverlay={visualIntent?.sphereOverlay || null}
                 cameraTarget={cameraTarget}
@@ -1092,24 +1604,40 @@ export default function WorkspacePage() {
           <GeometryMiniControls
             showFaces={showFaces}
             onToggleFaces={() => setShowFaces((prev) => !prev)}
-            showLabels={effectiveShowLabels}
-            onToggleLabels={() => setShowLabels((prev) => !prev)}
             onResetCamera={handleResetCamera}
-            onScreenshot={handleScreenshot}
-            onShare={handleShare}
           />
+          {steps.length > 1 && (
+            <StepControls
+              currentStep={mergedStepIndex}
+              totalSteps={mergedGroups.length}
+              stepTitles={mergedGroups.map((g) => g.step.title)}
+              onNext={handleNextStep}
+              onPrevious={handlePrevStep}
+              onPlay={handleTogglePlay}
+              onPause={handleTogglePlay}
+              onSeek={(i) =>
+                handleStepClick(mergedGroups[i]?.originalIndices?.[0] ?? i)
+              }
+              isPlaying={isPlaying}
+            />
+          )}
         </div>
       </div>
+      )}
 
       {typeof TeacherModePanel !== "undefined" ? (
         <TeacherModePanel
-          totalSteps={steps.length}
-          currentStep={currentStep}
-          onStepChange={handleStepClick}
+          totalSteps={mergedGroups.length}
+          currentStep={mergedStepIndex}
+          onStepChange={(i) =>
+            handleStepClick(mergedGroups[i]?.originalIndices?.[0] ?? i)
+          }
           onExportPPT={handleExportPPT}
           pptLoading={pptLoading}
         />
       ) : null}
+      </>
+      )}
 
       {shareToast && (
         <div className="wp-share-toast">
@@ -1137,14 +1665,14 @@ export default function WorkspacePage() {
       {showGuide && (
         <div className="wp-guide-overlay" onClick={dismissGuide}>
           <div className="wp-guide-card" onClick={(e) => e.stopPropagation()}>
-            <h2 className="wp-guide-title">👋 欢迎来到几何维度</h2>
+            <h2 className="wp-guide-title">欢迎来到理解引擎</h2>
             <p className="wp-guide-subtitle">三步开始学习：</p>
             <div className="wp-guide-steps">
               <div className="wp-guide-step">
                 <span className="wp-guide-step-num">1</span>
                 <div>
                   <strong>输入题目</strong>
-                  <p>在上方输入框中输入一道几何题，点击"解析"</p>
+                  <p>在输入框中粘贴一道几何题，点击「开始理解」</p>
                 </div>
               </div>
               <div className="wp-guide-step">

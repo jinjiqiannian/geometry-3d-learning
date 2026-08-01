@@ -73,6 +73,7 @@ function solveCube(size = 2, params, problemType, type) {
         content: `算出来了！体积 = ${a}³ = ${volume}。记住：正方体体积就是棱长的立方。`,
         type: 'conclusion',
         formula: 'V = a³',
+        finalAnswer: { expression: 'V = a³', value: `${volume}`, unit: '立方单位' },
       })
       formula = 'V = a³'
       answer = volume
@@ -102,6 +103,7 @@ function solveCube(size = 2, params, problemType, type) {
         content: `正方体表面积是 ${surfaceArea}。记住：正方体表面积等于6倍一个面的面积。`,
         type: 'conclusion',
         formula: 'S全 = 6a²',
+        finalAnswer: { expression: 'S全 = 6a²', value: `${surfaceArea}`, unit: '平方单位' },
       })
       formula = 'S全 = 6a²'
       answer = surfaceArea
@@ -131,6 +133,7 @@ function solveCube(size = 2, params, problemType, type) {
         content: `答案：面对角线是 ${a}√2，体对角线是 ${a}√3。记住这两个常用结论！`,
         type: 'conclusion',
         formula: 'd体 = a√3',
+        finalAnswer: { expression: 'd体 = a√3', value: `${a}√3`, unit: '长度单位' },
       })
       formula = 'd体 = a√3'
       answer = spaceDiagonal
@@ -179,6 +182,7 @@ function solveCuboid(size, params, problemType, type) {
         content: `算出来了！体积 = ${a} × ${b} × ${c} = ${volume}。长方体体积就是长宽高相乘。`,
         type: 'conclusion',
         formula: 'V = abc',
+        finalAnswer: { expression: 'V = abc', value: `${volume}`, unit: '立方单位' },
       })
       formula = 'V = abc'
       answer = volume
@@ -208,6 +212,7 @@ function solveCuboid(size, params, problemType, type) {
         content: `长方体表面积是 ${surfaceArea}。记住：长方体表面积等于2倍的（长×宽+宽×高+长×高）。`,
         type: 'conclusion',
         formula: 'S全 = 2(ab + bc + ac)',
+        finalAnswer: { expression: 'S全 = 2(ab + bc + ac)', value: `${surfaceArea}`, unit: '平方单位' },
       })
       formula = 'S全 = 2(ab + bc + ac)'
       answer = surfaceArea
@@ -237,6 +242,7 @@ function solveCuboid(size, params, problemType, type) {
         content: `体对角线长度是 √(${a * a + b * b + c * c})。这就是三维空间的勾股定理！`,
         type: 'conclusion',
         formula: 'd = √(a² + b² + c²)',
+        finalAnswer: { expression: 'd = √(a² + b² + c²)', value: `√(${a * a + b * b + c * c})`, unit: '长度单位' },
       })
       formula = 'd = √(a² + b² + c²)'
       answer = spaceDiagonal
@@ -286,6 +292,7 @@ function solvePyramid(size, params, problemType, type) {
         content: `V = ⅓ × ${baseArea} × ${h} = ${volume}。`,
         type: 'conclusion',
         formula: 'V = ⅓S底h',
+        finalAnswer: { expression: 'V = ⅓S底h', value: `${volume}`, unit: '立方单位' },
       })
       formula = 'V = ⅓S底h'
       answer = volume
@@ -321,6 +328,7 @@ function solvePyramid(size, params, problemType, type) {
         content: `侧面积是 ${a}√(${h * h * 4 + a * a})。记住：侧面积等于底面周长乘斜高的一半。`,
         type: 'conclusion',
         formula: 'S侧 = 2ah\'',
+        finalAnswer: { expression: 'S侧 = 2ah\'', value: `${a}√(${h * h * 4 + a * a})`, unit: '平方单位' },
       })
       formula = 'S侧 = 2ah\''
       answer = lateralArea
@@ -356,6 +364,7 @@ function solvePyramid(size, params, problemType, type) {
         content: `正四棱锥表面积是 ${a}² + ${a}√(${h * h * 4 + a * a})。`,
         type: 'conclusion',
         formula: 'S全 = S底 + S侧',
+        finalAnswer: { expression: 'S全 = S底 + S侧', value: `${a}² + ${a}√(${h * h * 4 + a * a})`, unit: '平方单位' },
       })
       formula = 'S全 = S底 + S侧'
       answer = surfaceArea
@@ -392,6 +401,7 @@ function solvePyramid(size, params, problemType, type) {
         content: `侧棱PA长度是 √(${h * h + a * a / 2})。`,
         type: 'conclusion',
         formula: 'PA = √(h² + (a√2/2)²)',
+        finalAnswer: { expression: 'PA = √(h² + (a√2/2)²)', value: `√(${h * h + a * a / 2})`, unit: '长度单位' },
       })
       formula = 'PA = √(h² + (a√2/2)²)'
       answer = sideEdge
@@ -441,6 +451,7 @@ function solvePrism(size, params, problemType, type) {
         content: `计算得：V = ${baseArea} × ${h} = ${volume}。答案：${volume}。`,
         type: 'conclusion',
         formula: 'V = S底 × h',
+        finalAnswer: { expression: 'V = S底 × h', value: `${volume}`, unit: '立方单位' },
       })
       formula = 'V = S底 × h'
       answer = volume
@@ -470,6 +481,7 @@ function solvePrism(size, params, problemType, type) {
         content: `棱柱的体对角线长度为 √(${2 * a * a + h * h})。答案：√(${2 * a * a + h * h})。`,
         type: 'conclusion',
         formula: 'd体 = √(2a² + h²)',
+        finalAnswer: { expression: 'd体 = √(2a² + h²)', value: `√(${2 * a * a + h * h})`, unit: '长度单位' },
       })
       formula = 'd体 = √(2a² + h²)'
       answer = bodyDiagonal
@@ -518,6 +530,7 @@ function solveCylinder(size, params, problemType, type) {
         content: `V = π × ${r}² × ${h} = ${r * r * h}π。`,
         type: 'conclusion',
         formula: 'V = πr²h',
+        finalAnswer: { expression: 'V = πr²h', value: `${r * r * h}π`, unit: '立方单位' },
       })
       formula = 'V = πr²h'
       answer = volume
@@ -547,6 +560,7 @@ function solveCylinder(size, params, problemType, type) {
         content: `侧面积是 ${2 * r * h}π。记住：圆柱侧面积等于底面周长乘高。`,
         type: 'conclusion',
         formula: 'S侧 = 2πrh',
+        finalAnswer: { expression: 'S侧 = 2πrh', value: `${2 * r * h}π`, unit: '平方单位' },
       })
       formula = 'S侧 = 2πrh'
       answer = lateralArea
@@ -582,6 +596,7 @@ function solveCylinder(size, params, problemType, type) {
         content: `圆柱表面积是 ${2 * r * (r + h)}π。`,
         type: 'conclusion',
         formula: 'S全 = 2πr(r + h)',
+        finalAnswer: { expression: 'S全 = 2πr(r + h)', value: `${2 * r * (r + h)}π`, unit: '平方单位' },
       })
       formula = 'S全 = 2πr(r + h)'
       answer = surfaceArea
@@ -612,6 +627,7 @@ function solveCylinder(size, params, problemType, type) {
         content: `过圆柱轴线的截面面积是 ${2 * r * h}。记住：截面是长方形，面积等于直径乘高。`,
         type: 'conclusion',
         formula: 'S截面 = 2rh',
+        finalAnswer: { expression: 'S截面 = 2rh', value: `${2 * r * h}`, unit: '平方单位' },
       })
       formula = 'S截面 = 2rh'
       answer = sectionArea
@@ -661,6 +677,7 @@ function solveCone(size, params, problemType, type) {
         content: `V = ⅓ × π × ${r}² × ${h} = ${r * r * h / 3}π。`,
         type: 'conclusion',
         formula: 'V = ⅓πr²h',
+        finalAnswer: { expression: 'V = ⅓πr²h', value: `${r * r * h / 3}π`, unit: '立方单位' },
       })
       formula = 'V = ⅓πr²h'
       answer = volume
@@ -690,6 +707,7 @@ function solveCone(size, params, problemType, type) {
         content: `S侧 = π × ${r} × √(${r * r + h * h}) = ${r}π√(${r * r + h * h})。`,
         type: 'conclusion',
         formula: 'S侧 = πrl',
+        finalAnswer: { expression: 'S侧 = πrl', value: `${r}π√(${r * r + h * h})`, unit: '平方单位' },
       })
       formula = 'S侧 = πrl'
       answer = lateralArea
@@ -725,6 +743,7 @@ function solveCone(size, params, problemType, type) {
         content: `圆锥表面积是 ${r}π(${r} + √(${r * r + h * h}))。`,
         type: 'conclusion',
         formula: 'S全 = πr(r + l)',
+        finalAnswer: { expression: 'S全 = πr(r + l)', value: `${r}π(${r} + √(${r * r + h * h}))`, unit: '平方单位' },
       })
       formula = 'S全 = πr(r + l)'
       answer = surfaceArea
@@ -754,6 +773,7 @@ function solveCone(size, params, problemType, type) {
         content: `母线长是 √(${r * r + h * h})。母线很重要，算侧面积和表面积都需要它！`,
         type: 'conclusion',
         formula: 'l = √(r² + h²)',
+        finalAnswer: { expression: 'l = √(r² + h²)', value: `√(${r * r + h * h})`, unit: '长度单位' },
       })
       formula = 'l = √(r² + h²)'
       answer = slantHeight
@@ -793,6 +813,7 @@ function solveSphere(size, params, problemType, type) {
         content: `V = (4/3) × π × ${r}³ = ${4 * r * r * r / 3}π。`,
         type: 'conclusion',
         formula: 'V = (4/3)πr³',
+        finalAnswer: { expression: 'V = (4/3)πr³', value: `${4 * r * r * r / 3}π`, unit: '立方单位' },
       })
       formula = 'V = (4/3)πr³'
       answer = volume
@@ -816,6 +837,7 @@ function solveSphere(size, params, problemType, type) {
         content: `S = 4 × π × ${r}² = ${4 * r * r}π。`,
         type: 'conclusion',
         formula: 'S = 4πr²',
+        finalAnswer: { expression: 'S = 4πr²', value: `${4 * r * r}π`, unit: '平方单位' },
       })
       formula = 'S = 4πr²'
       answer = surfaceArea
@@ -859,6 +881,7 @@ function solveFrustum(size, params, problemType, type) {
         content: `V = ⅓ × π × ${h} × (${R}² + ${R}×${r} + ${r}²) = ${h * (R * R + R * r + r * r) / 3}π。`,
         type: 'conclusion',
         formula: 'V = ⅓πh(R² + Rr + r²)',
+        finalAnswer: { expression: 'V = ⅓πh(R² + Rr + r²)', value: `${h * (R * R + R * r + r * r) / 3}π`, unit: '立方单位' },
       })
       formula = 'V = ⅓πh(R² + Rr + r²)'
       answer = volume
@@ -888,6 +911,7 @@ function solveFrustum(size, params, problemType, type) {
         content: `S侧 = π × (${R} + ${r}) × √(${h * h + (R - r) * (R - r)}) = (${R + r})π√(${h * h + (R - r) * (R - r)})。`,
         type: 'conclusion',
         formula: 'S侧 = π(R + r)l',
+        finalAnswer: { expression: 'S侧 = π(R + r)l', value: `(${R + r})π√(${h * h + (R - r) * (R - r)})`, unit: '平方单位' },
       })
       formula = 'S侧 = π(R + r)l'
       answer = lateralArea

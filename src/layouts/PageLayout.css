@@ -7,7 +7,14 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: var(--bg-deep);
+  background: #f3f1ec;
+}
+
+/* 非首页：锁死视口高度，顶栏不随内容滚走 */
+.page-layout:not(.page-layout--facade) {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .page-main {
@@ -16,6 +23,19 @@
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
+  min-height: 0;
+}
+
+.page-layout:not(.page-layout--facade) .page-main {
+  overflow: hidden;
+}
+
+.page-layout--facade .page-main {
+  overflow: hidden;
+}
+
+.page-layout--facade .page-transition {
+  animation: none;
 }
 
 /* ── Page transition animation ───────────────────────── */
@@ -23,8 +43,13 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   animation: page-enter 0.3s ease-out;
   will-change: transform, opacity;
+}
+
+.page-layout:not(.page-layout--facade) .page-transition {
+  overflow: hidden;
 }
 
 @keyframes page-enter {

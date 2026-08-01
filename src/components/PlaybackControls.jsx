@@ -68,7 +68,7 @@ export default function PlaybackControls({
               })}
         </div>
         <span className="pc-indicator">
-          步骤 {currentStep + 1}/{totalSteps}
+          第 {currentStep + 1} 步 / 共 {totalSteps} 步
         </span>
       </div>
 

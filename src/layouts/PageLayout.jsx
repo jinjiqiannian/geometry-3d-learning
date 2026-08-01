@@ -8,11 +8,11 @@ import './PageLayout.css'
 
 export default function PageLayout() {
   const location = useLocation()
-  const isLandingPage = location.pathname === '/'
+  const isFacade = location.pathname === '/'
 
   return (
-    <div className="page-layout">
-      {!isLandingPage && <AppNavigation />}
+    <div className={`page-layout ${isFacade ? 'page-layout--facade' : ''}`}>
+      {!isFacade && <AppNavigation />}
 
       <main className="page-main">
         <div key={location.pathname} className="page-transition">
@@ -20,9 +20,8 @@ export default function PageLayout() {
         </div>
       </main>
 
-      {!isLandingPage && <MobileBottomNav />}
+      {!isFacade && <MobileBottomNav />}
 
-      {/* Global modals — render based on context state */}
       <PaywallModal />
       <AuthModal />
       <FeedbackModal />

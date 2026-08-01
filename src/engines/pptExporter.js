@@ -57,7 +57,7 @@ export async function generatePPT(workspace, canvasElement) {
     x: 1.2, y: 3.0, w: '80%', h: 1.5,
     fontSize: 20, color: PPT_THEME.secondary, fontFace: 'Microsoft YaHei',
   })
-  slide1.addText('由 几何维度 AI 生成', {
+  slide1.addText('由 理解引擎 AI 生成', {
     x: 0.8, y: 6.0, w: '40%', h: 0.5,
     fontSize: 11, color: PPT_THEME.accent, fontFace: 'Microsoft YaHei',
   })
@@ -147,13 +147,111 @@ export async function generatePPT(workspace, canvasElement) {
     })
   }
 
-  slide5.addText('由 几何维度 AI 生成 · jihewedu.cn', {
+  slide5.addText('由 理解引擎 AI 生成 · jihewedu.cn', {
     x: 0, y: 6.5, w: '100%', h: 0.5,
     fontSize: 10, color: PPT_THEME.accent, fontFace: 'Microsoft YaHei',
     align: 'center',
   })
 
   // ── 下载 ────────────────────────────────────────
-  const fileName = `几何维度-${(problemText || '讲解').slice(0, 30)}.pptx`
+  const fileName = `理解引擎-${(problemText || '讲解').slice(0, 30)}.pptx`
   await pptx.writeFile({ fileName })
+}
+
+/**
+ * 方法讲解 PPT（物理 / 导数 / 排组等 ExplainIR）— 无需 3D 画布
+ * @param {{ title?: string, goal?: string, coreIdea?: string, steps?: Array, answer?: string }} payload
+ */
+export async function generateExplainPPT(payload = {}) {
+  const {
+    title = '方法讲解',
+    goal = '',
+    coreIdea = '',
+    steps = [],
+    answer = '',
+  } = payload
+
+  const pptx = new PptxGenJS()
+  pptx.defineLayout({ name: 'CUSTOM', width: '13.333', height: '7.5' })
+  pptx.layout = 'CUSTOM'
+
+  const theme = {
+    primary: '0f6b5c',
+    secondary: '444456',
+    muted: '8a8478',
+    light: 'f7f5f0',
+    white: 'FFFFFF',
+    accent: 'c44536',
+  }
+
+  // 封面
+  const cover = pptx.addSlide()
+  cover.background = { color: theme.light }
+  cover.addText(title, {
+    x: 0.8, y: 1.4, w: 11.5, h: 0.7,
+    fontSize: 18, color: theme.primary, fontFace: 'Microsoft YaHei',
+  })
+  cover.addText(goal || '课堂方法演示', {
+    x: 0.8, y: 2.3, w: 11.5, h: 2,
+    fontSize: 28, bold: true, color: theme.primary, fontFace: 'Microsoft YaHei',
+  })
+  if (coreIdea) {
+    cover.addText(`核心：${coreIdea}`, {
+      x: 0.8, y: 4.6, w: 11.5, h: 1,
+      fontSize: 16, color: theme.secondary, fontFace: 'Microsoft YaHei',
+    })
+  }
+  cover.addText('MathViz · 理解引擎', {
+    x: 0.8, y: 6.5, w: 11.5, h: 0.4,
+    fontSize: 12, color: theme.muted, fontFace: 'Microsoft YaHei',
+  })
+
+  // 每步一页
+  for (const s of steps) {
+    const slide = pptx.addSlide()
+    slide.background = { color: theme.white }
+    slide.addText(`第 ${s.index ?? ''} 步 · ${s.title || '讲解'}`, {
+      x: 0.6, y: 0.4, w: 12, h: 0.7,
+      fontSize: 24, bold: true, color: theme.primary, fontFace: 'Microsoft YaHei',
+    })
+    slide.addText(s.content || '', {
+      x: 0.8, y: 1.4, w: 11.5, h: 2.2,
+      fontSize: 20, color: theme.secondary, fontFace: 'Microsoft YaHei',
+      valign: 'top',
+    })
+    if (s.formula) {
+      slide.addText(String(s.formula), {
+        x: 0.8, y: 3.8, w: 11.5, h: 0.8,
+        fontSize: 22, bold: true, color: theme.accent, fontFace: 'Microsoft YaHei',
+      })
+    }
+    if (s.why) {
+      slide.addText(`注意：${s.why}`, {
+        x: 0.8, y: 5.0, w: 11.5, h: 1.2,
+        fontSize: 16, color: theme.muted, fontFace: 'Microsoft YaHei',
+      })
+    }
+  }
+
+  // 结论页
+  const end = pptx.addSlide()
+  end.background = { color: theme.light }
+  end.addText('结论', {
+    x: 0.6, y: 1.8, w: 12, h: 0.8,
+    fontSize: 28, bold: true, color: theme.primary, fontFace: 'Microsoft YaHei',
+    align: 'center',
+  })
+  end.addText(answer || steps[steps.length - 1]?.content || '', {
+    x: 1.5, y: 3.0, w: 10, h: 1.5,
+    fontSize: 24, color: theme.secondary, fontFace: 'Microsoft YaHei',
+    align: 'center',
+  })
+  end.addText('可用于课堂投影 · MathViz', {
+    x: 0, y: 6.5, w: '100%', h: 0.4,
+    fontSize: 11, color: theme.muted, fontFace: 'Microsoft YaHei',
+    align: 'center',
+  })
+
+  const safe = String(goal || title || '讲解').replace(/[\\/:*?"<>|]/g, '').slice(0, 28)
+  await pptx.writeFile({ fileName: `MathViz-${safe || '方法讲解'}.pptx` })
 }

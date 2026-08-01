@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useMemo } from 'react'
+﻿import { createContext, useContext, useState, useCallback, useMemo } from 'react'
 import { useSupabase } from './SupabaseContext'
 import { useSubscription } from './SubscriptionContext'
 
@@ -45,9 +45,14 @@ export function WorkspaceProvider({ children }) {
       const { parseProblem } = await import('../engines/problemParser')
       const parsedData = await parseProblem(text, userApiKey || '')
 
-      // Generate local template steps
-      const { generateLocalSteps } = await import('../engines/explanationEngine')
-      const steps = generateLocalSteps(text, parsedData)
+      // V2 优先；失败则回退 V1（explanationEngine 模板路径保持不变）
+      const { tryV2Proof } = await import('../engines/proofEngine/v2/adapter.js')
+      const v2Steps = tryV2Proof(parsedData)
+      let steps = v2Steps
+      if (!steps) {
+        const { generateLocalSteps } = await import('../engines/explanationEngine')
+        steps = generateLocalSteps(text, parsedData)
+      }
 
       setWorkspace(prev => ({
         ...prev,

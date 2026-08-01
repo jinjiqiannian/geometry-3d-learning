@@ -9,14 +9,14 @@ export default function PricingCard({ plan, yearly = false }) {
   const isCurrent = currentPlan === plan.id
   const isFree = plan.id === 'free'
   const price = yearly && plan.stripeYearlyId
-    ? (plan.id === 'pro' ? 190 : plan.id === 'teacher' ? 290 : 0)
+    ? (plan.id === 'pro' ? 290 : plan.id === 'teacher' ? 180 : 0)
     : plan.price
   const period = isFree ? '' : (yearly ? '/年' : plan.period)
   const monthlyEquivalent = yearly && price > 0
     ? Math.round(price / 12)
     : null
-  const monthlyPrice = plan.price || 0
-  const yearlySavings = yearly && monthlyPrice > 0
+  const monthlyPrice = plan.id === 'teacher' ? Math.round((plan.price || 99) / 4) : (plan.price || 0)
+  const yearlySavings = yearly && monthlyPrice > 0 && plan.id === 'pro'
     ? (monthlyPrice * 12) - price
     : 0
 

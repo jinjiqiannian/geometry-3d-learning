@@ -2,11 +2,14 @@ import { useMemo, useCallback, useRef, useEffect, useState, memo } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Text, Billboard } from '@react-three/drei';
-import { createGeometry, getVertexAndEdgeInfo } from '../../engines/geometryEngine';
+import { createGeometry, getVertexAndEdgeInfo, createGeometryFromSceneIR } from '../../engines/geometryEngine';
 import { getLineDefinitions, resolvePoint, getLineStyle } from '../../engines/lineDefinitions';
 import { CAMERA_PRESETS } from '../../engines/visualIntent';
 import { normalizeSubscripts } from '../../engines/labelMapper';
-const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+import { HighlightEngine, HIGHLIGHT_COLORS_CONST } from '../../engines/highlightEngine';
+import AnnotationRenderer from '../../renderers/AnnotationRenderer';
+const easeInOutCubic = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const ANIMATION_DURATION = 600;
 function ring(radius, plane, seg = 64) {
  const pts = [];
  for (let i = 0; i <= seg; i++) {
@@ -22,7 +25,7 @@ function ring(radius, plane, seg = 64) {
  }
  return pts;
 }
-function useCurveData(type, s) {
+function useCurveData(type, s, sceneIRMode = false) {
  return useMemo(() => {
  const lines = [];
  if (type === 'sphere') {
@@ -31,10 +34,12 @@ function useCurveData(type, s) {
  lines.push(ring(s, 'yz'));
  }
  else if (type === 'cylinder') {
- lines.push(ring(s, 'xz').map(p => [p[0], s, p[2]]));
- lines.push(ring(s, 'xz').map(p => [p[0], -s, p[2]]));
- lines.push([[s, -s, 0], [s, s, 0]]);
- lines.push([[-s, -s, 0], [-s, s, 0]]);
+ // sceneIR 网格半径 s/2（geometryEngine 分支），非 sceneIR 网格半径 s
+ const cylR = sceneIRMode ? s / 2 : s;
+ lines.push(ring(cylR, 'xz').map(p => [p[0], s, p[2]]));
+ lines.push(ring(cylR, 'xz').map(p => [p[0], -s, p[2]]));
+ lines.push([[cylR, -s, 0], [cylR, s, 0]]);
+ lines.push([[-cylR, -s, 0], [-cylR, s, 0]]);
  }
  else if (type === 'cone') {
  lines.push(ring(s, 'xz').map(p => [p[0], -s, p[2]]));
@@ -50,7 +55,7 @@ function useCurveData(type, s) {
  lines.push([[-s, -s, 0], [-s / 2, s, 0]]);
  }
  return lines;
- }, [type, s]);
+ }, [type, s, sceneIRMode]);
 }
 function EdgeHitbox({ from, to, lineData, lineKey, visible, selected, hovered, onPointerOver, onPointerOut, onSelect }) {
  const fromVec = useMemo(() => new THREE.Vector3(...from), [from]);
@@ -100,7 +105,7 @@ function PlaneMesh({ points, color = '#4A90E2', opacity = 0.2 }) {
  <meshBasicMaterial color={color} transparent opacity={opacity} side={THREE.DoubleSide}/>
  </mesh>);
 }
-function SectionPolygon({ points, color = '#FF6B6B', opacity = 0.3 }) {
+function SectionPolygon({ points, color = '#FF6B6B', opacity = 0.3, renderOrder = 2 }) {
  const geometry = useMemo(() => {
  if (points.length < 3)
  return null;
@@ -116,15 +121,18 @@ function SectionPolygon({ points, color = '#FF6B6B', opacity = 0.3 }) {
  }, [points]);
  if (!geometry)
  return null;
- return (<mesh geometry={geometry}>
- <meshBasicMaterial color={color} transparent opacity={opacity} side={THREE.DoubleSide}/>
+ return (<mesh geometry={geometry} renderOrder={renderOrder}>
+ <meshBasicMaterial color={color} transparent opacity={opacity} side={THREE.DoubleSide} depthWrite={false}/>
  </mesh>);
 }
-function PointMarker({ position, highlighted = false, size = 0.15 }) {
- return (<mesh position={position}>
- <sphereGeometry args={[size, 16, 16]}/>
- <meshBasicMaterial color={highlighted ? '#FF6B6B' : '#1a1a1a'}/>
- </mesh>);
+function PointMarker({ position, highlighted = false, size = 0.035, color = null, opacity = 1 }) {
+ const core = color || (highlighted ? '#C2410C' : '#2A2A2A');
+ return (<group position={position}>
+ <mesh>
+ <sphereGeometry args={[size, 12, 12]}/>
+ <meshBasicMaterial color={core} transparent opacity={opacity}/>
+ </mesh>
+ </group>);
 }
 const Canvas3D = memo(function Canvas3D({
  geometry, showFaces = true, showLabels = true,
@@ -134,10 +142,10 @@ const Canvas3D = memo(function Canvas3D({
  customVertices,
  sceneIR = null,
  highlightEdgeIds = [],
- highlightColor = '#FF6B6B',
+ highlightColor = '#4A90E2',
  auxLines = [],
- faceOpacity = 0.42,
- nonHighlightOpacity = 0.25,
+ faceOpacity = 0.20,
+ nonHighlightOpacity = 1.0,
  vertexLabels = null,
  cameraResetKey = 0,
  cameraTarget = null,
@@ -153,10 +161,15 @@ const Canvas3D = memo(function Canvas3D({
  const { type, params } = geometry;
  const size = params.size ?? 2;
  const s = size / 2;
- const geoData = useMemo(() => createGeometry(type, params, customVertices), [type, size, customVertices]);
+ const geoData = useMemo(() => {
+ if (sceneIR) {
+ return createGeometryFromSceneIR(sceneIR);
+ }
+ return createGeometry(type, params, customVertices);
+}, [type, size, customVertices, sceneIR]);
  const edgeInfo = useMemo(() => getVertexAndEdgeInfo(type, params, customVertices, vertexLabels), [type, size, customVertices, vertexLabels]);
  const { points: pts } = useMemo(() => getLineDefinitions(type, params, customVertices, vertexLabels), [type, size, customVertices, vertexLabels]);
- const curveLines = useCurveData(type, s);
+ const curveLines = useCurveData(type, (sceneIR?.size ?? size) / 2, !!sceneIR);
  const isCurved = ['sphere', 'cylinder', 'cone', 'circularFrustum'].includes(type);
  const searchMatchSet = useMemo(() => {
  if (!searchedLine || !allLines)
@@ -186,45 +199,33 @@ const Canvas3D = memo(function Canvas3D({
  };
  }, [sceneIR, highlightEdgeIds, auxLines, faceOpacity, nonHighlightOpacity]);
  const highlightSet = useMemo(() => new Set(effectiveHighlightIds), [effectiveHighlightIds]);
- const hasHighlights = effectiveHighlightIds.length > 0;
+ const hasHighlights = effectiveHighlightIds.length > 0 || (sceneIR?.lines || []).some(l => l.highlighted);
  const sphereGeo = useMemo(() => {
  if (!sphereOverlay)
  return null;
  return new THREE.SphereGeometry(sphereOverlay.radius, 64, 32);
  }, [sphereOverlay?.radius]);
- const prevHighlights = useRef(new Set());
- const highlightStartTimes = useRef(new Map());
- const fadeOutHighlights = useRef(new Map());
- const [transitionTick, setTransitionTick] = useState(0);
- const animating = useRef(false);
+ const highlightEngine = useRef(new HighlightEngine());
+const [transitionTick, setTransitionTick] = useState(0);
+const animating = useRef(false);
+const sceneIRAnim = useRef({ camera: null });
  useEffect(() => {
- const newSet = new Set(effectiveHighlightIds);
- const oldSet = prevHighlights.current;
- const now = performance.now();
- let hasNew = false;
- newSet.forEach(id => {
- if (!oldSet.has(id)) {
- highlightStartTimes.current.set(id, now);
- hasNew = true;
+ highlightEngine.current.setColor(highlightColor);
+ const highlightPoints = sceneIR?.highlightPoints || [];
+ // 高亮线的真实来源：逐步更新的 per-line highlighted 标志 ∪ 基础 highlightEdges
+ // （applySceneStateToIR 只更新 per-line 标志、不同步 highlightEdges，二者会发散，故取并集）
+ const flaggedLines = (sceneIR?.lines || []).filter(l => l.highlighted).map(l => l.id);
+ const highlightLines = [...new Set([...flaggedLines, ...(sceneIR?.highlightEdges || [])])];
+ const highlightPlanes = sceneIR?.highlightPlanes || [];
+ const highlightLabels = sceneIR?.highlightLabels || [];
+ highlightEngine.current.setHighlights(highlightPoints, highlightLines, highlightPlanes, highlightLabels);
+ }, [effectiveHighlightIds, sceneIR, highlightColor]);
+ // 数据流验证：SceneIR.annotations 已到达 Canvas3D（第一阶段仅打印，不渲染）
+ useEffect(() => {
+ if (sceneIR?.annotations) {
+ console.debug('annotations', sceneIR.annotations);
  }
- });
- oldSet.forEach(id => {
- if (!newSet.has(id) && !fadeOutHighlights.current.has(id)) {
- fadeOutHighlights.current.set(id, {
- startTime: now,
- fromOpacity: 1.0,
- });
- hasNew = true;
- }
- });
- highlightStartTimes.current.forEach((_, id) => {
- if (!newSet.has(id))
- highlightStartTimes.current.delete(id);
- });
- prevHighlights.current = newSet;
- if (hasNew)
- animating.current = true;
- }, [effectiveHighlightIds]);
+ }, [sceneIR]);
  const currentFaceOpacity = useRef(effectiveFaceOpacity);
  const targetFaceOpacity = useRef(effectiveFaceOpacity);
  useEffect(() => {
@@ -277,7 +278,21 @@ const Canvas3D = memo(function Canvas3D({
  cameraAnimating.current = true;
  animating.current = true;
  }
- }, [cameraTarget]);
+}, [cameraTarget]);
+
+// 相机过渡：sceneIR.camera 变化时平滑移动相机
+// （点/线/截面的高亮与脉冲动画由 HighlightEngine 统一驱动，可见性变化随 sceneIR 即时渲染）
+useEffect(() => {
+ if (!sceneIR || !sceneIR.camera || !cameraRef.current) return;
+ const cam = cameraRef.current;
+ sceneIRAnim.current.camera = {
+ fromPos: [cam.position.x, cam.position.y, cam.position.z],
+ toPos: sceneIR.camera.position,
+ startTime: performance.now(),
+ duration: ANIMATION_DURATION,
+ };
+ animating.current = true;
+}, [sceneIR]);
  const frameSkip = useRef(0);
  const { camera } = useThree();
  const cameraRef = useRef(null);
@@ -287,21 +302,9 @@ const Canvas3D = memo(function Canvas3D({
  useFrame(() => {
  let anyActive = false;
  const now = performance.now();
- highlightStartTimes.current.forEach((startTime, id) => {
- if (now - startTime < 500)
+ if (highlightEngine.current.update()) {
  anyActive = true;
- });
- let fadeOutChanged = false;
- fadeOutHighlights.current.forEach((data, id) => {
- if (now - data.startTime < 350)
- anyActive = true;
- else {
- fadeOutHighlights.current.delete(id);
- fadeOutChanged = true;
  }
- });
- if (fadeOutChanged)
- anyActive = true;
  if (Math.abs(currentFaceOpacity.current - targetFaceOpacity.current) > 0.002) {
  currentFaceOpacity.current += (targetFaceOpacity.current - currentFaceOpacity.current) * 0.06;
  anyActive = true;
@@ -357,6 +360,26 @@ const Canvas3D = memo(function Canvas3D({
  anyActive = true;
  }
  }
+ 
+ if (sceneIRAnim.current.camera && cameraRef.current) {
+ const cam = cameraRef.current;
+ const anim = sceneIRAnim.current.camera;
+ const elapsed = now - anim.startTime;
+ if (elapsed >= anim.duration) {
+ cam.position.set(anim.toPos[0], anim.toPos[1], anim.toPos[2]);
+ cam.lookAt(0, 0, 0);
+ sceneIRAnim.current.camera = null;
+ } else {
+ const progress = elapsed / anim.duration;
+ const eased = easeInOutCubic(progress);
+ cam.position.x = anim.fromPos[0] + (anim.toPos[0] - anim.fromPos[0]) * eased;
+ cam.position.y = anim.fromPos[1] + (anim.toPos[1] - anim.fromPos[1]) * eased;
+ cam.position.z = anim.fromPos[2] + (anim.toPos[2] - anim.fromPos[2]) * eased;
+ cam.lookAt(0, 0, 0);
+ anyActive = true;
+ }
+ }
+ 
  if (anyActive) {
  frameSkip.current++;
  if (frameSkip.current % 3 === 0) {
@@ -450,43 +473,29 @@ const Canvas3D = memo(function Canvas3D({
  const selected = selectedEdge === key;
  const showLen = shownLengthLabels?.has(key) && visible;
  const style = getLineStyle(l.category);
- const isVisualHighlight = hasHighlights && highlightSet.has(l.id);
+ const lineState = highlightEngine.current.getLineState(l.id);
+ const ink = '#1f2430';
  let color, opacity;
  if (selected) {
  color = '#FF8C00';
  opacity = 1;
  }
  else if (hovered) {
- color = '#4A90E2';
+ color = '#2563eb';
  opacity = 1;
  }
  else if (searched) {
- color = '#2979ff';
+ color = '#2563eb';
  opacity = 1;
  }
- else if (isVisualHighlight) {
- color = highlightColor;
- const fader = fadeOutHighlights.current.get(l.id);
- if (fader) {
- const t = Math.min(1, (performance.now() - fader.startTime) / 300);
- opacity = fader.fromOpacity * (1 - easeOutCubic(t));
+ else if (lineState.highlighted) {
+ color = lineState.color || highlightColor || '#2563eb';
+ opacity = lineState.opacity ?? 1;
  }
- else {
- const startTime = highlightStartTimes.current.get(l.id);
- if (startTime) {
- const elapsed = performance.now() - startTime;
- const t = Math.min(1, elapsed / 400);
- opacity = 0.3 + 0.7 * easeOutCubic(t);
- }
- else {
- opacity = 1;
- }
- }
- }
- else if (hasHighlights && !isVisualHighlight) {
+ else if (hasHighlights && !lineState.highlighted) {
  const isStructural = ['棱', '底面边', '顶面边', '侧棱'].includes(l.category);
- color = style.color;
- opacity = isStructural ? 0.08 : 0;
+ color = ink;
+ opacity = isStructural ? 0.5 : 0.08;
  }
  else if (l.colorOverride) {
  color = l.colorOverride;
@@ -497,11 +506,11 @@ const Canvas3D = memo(function Canvas3D({
  opacity = style.opacity;
  }
  else if (visible) {
- color = style.color;
- opacity = style.opacity;
+ color = ink;
+ opacity = Math.max(style.opacity ?? 1, 0.9);
  }
  else {
- color = style.color;
+ color = ink;
  opacity = 0;
  }
  if (!hasHighlights && !selected && !hovered && !searched && effectiveNonHighlightOpacity < 1.0) {
@@ -514,7 +523,7 @@ const Canvas3D = memo(function Canvas3D({
  </line>
  {isEdge && (<EdgeHitbox from={l.from} to={l.to} lineData={l} lineKey={key} visible={visible} selected={selected} hovered={hovered} onPointerOver={handlePointerOver} onPointerOut={handlePointerOut} onSelect={handleSelect}/>)}
  {showLen && visible && (<Billboard position={l.mid} follow>
- <Text fontSize={0.14} color={isDark ? '#e8f4fc' : '#4a4a4a'} anchorX="center" anchorY="bottom" outlineWidth={0.02} outlineColor={isDark ? '#0d0d0d' : '#ffffff'}>
+ <Text fontSize={0.14} color={'#2a2a2a'} anchorX="center" anchorY="bottom" outlineWidth={0.02} outlineColor={'#f4f6f8'}>
  {l.id} = {l.length.toFixed(2)}
  </Text>
  </Billboard>)}
@@ -526,31 +535,124 @@ const Canvas3D = memo(function Canvas3D({
  return [];
  return sceneIR.points;
  }, [sceneIR]);
+ const pointsCentroid = useMemo(() => {
+ // position 为 null 的点不参与质心计算（安全跳过，不影响正常点）
+ const validPoints = sceneIRPoints.filter(p => p.position != null);
+ if (!validPoints.length)
+ return [0, 0, 0];
+ const sum = [0, 0, 0];
+ validPoints.forEach(p => {
+ sum[0] += p.position[0];
+ sum[1] += p.position[1];
+ sum[2] += p.position[2];
+ });
+ return [sum[0] / validPoints.length, sum[1] / validPoints.length, sum[2] / validPoints.length];
+ }, [sceneIRPoints]);
+ // 标签沿"质心→顶点"方向径向外移 + 轻微上移，避免压在几何体表面
+ const labelPosition = (pos) => {
+ if (pos == null)
+ return null; // null 坐标不创建 label position
+ const dx = pos[0] - pointsCentroid[0];
+ const dy = pos[1] - pointsCentroid[1];
+ const dz = pos[2] - pointsCentroid[2];
+ const len = Math.hypot(dx, dy, dz) || 1;
+ const out = 0.3;
+ return [pos[0] + (dx / len) * out, pos[1] + (dy / len) * out + 0.12, pos[2] + (dz / len) * out];
+ };
  const sceneIRSections = useMemo(() => {
  if (!sceneIR || !sceneIR.sections)
  return [];
  const pointMap = new Map(sceneIR.points.map(p => [p.id, p.position]));
  return sceneIR.sections.map(section => {
- const points = section.points.map(p => pointMap.get(p) || [0, 0, 0]);
+ // 明确为 null 的坐标安全跳过（不进入截面多边形）；未定义引用保持原 [0,0,0] 兜底
+ const points = section.points
+ .map(p => pointMap.get(p) === null ? null : (pointMap.get(p) || [0, 0, 0]))
+ .filter(pos => pos !== null);
  return { ...section, resolvedPoints: points };
  });
  }, [sceneIR]);
  return (<>
- <color attach="background" args={[isDark ? '#0d0d0d' : '#ffffff']}/>
+ <color attach="background" args={['#f4f6f8']}/>
+
+ <ambientLight intensity={0.9}/>
+ <directionalLight position={[5, 8, 6]} intensity={1.05}/>
+ <directionalLight position={[-6, -4, -5]} intensity={0.35}/>
 
  <perspectiveCamera makeDefault fov={50} position={[4, 4, 6]}/>
 
- {showFaces && (<mesh>
+ {sceneIR && (<>
+ {showFaces && (<mesh renderOrder={1}>
  <primitive attach="geometry" object={geoData}/>
- <meshBasicMaterial color={isDark ? '#4a4a4a' : '#d0d0d8'} transparent opacity={currentFaceOpacity.current} depthWrite={false} side={THREE.DoubleSide}/>
+ <meshLambertMaterial color={'#d8dde6'} transparent opacity={currentFaceOpacity.current} depthWrite={false} side={THREE.DoubleSide}/>
+ </mesh>)}
+ {sceneIRPoints.map((point, i) => {
+ const pointState = highlightEngine.current.getPointState(point.id);
+ const labelState = highlightEngine.current.getLabelState(point.id);
+ return (<group key={`ir-point-${i}`}>
+ {point.visible !== false && point.position != null && (<group scale={pointState.scale}>
+ <PointMarker position={point.position} highlighted={pointState.highlighted} color={pointState.color} opacity={pointState.opacity}/>
+ </group>)}
+ {point.visible !== false && point.position != null && showLabels && (<Billboard key={`label-${i}`} position={labelPosition(point.position)} follow>
+ <Text fontSize={0.35 * labelState.scale} color={labelState.color || '#1a1a1a'} anchorX="center" anchorY="middle" outlineWidth={0.035} outlineColor={'#f4f6f8'} opacity={labelState.opacity} transparent depthTest={false}>
+ {normalizeSubscripts(point.label)}
+ </Text>
+ </Billboard>)}
+ </group>);
+ })}
+ {resolvedLines.map(l => {
+ const lineState = highlightEngine.current.getLineState(l.id);
+ const isHL = lineState.highlighted || l.highlighted;
+ const isAux = l.category === '辅助线' || l.category === '辅助构造线';
+ const isStructural = ['棱', '底面边', '顶面边', '侧棱'].includes(l.category);
+ const style = getLineStyle(l.category);
+ // 教材图：结构棱始终深墨色；高亮用强调色；勿在暗底用 #333
+ const ink = '#1f2430';
+ let color, opacity, dashed = l.dashed || style.dash;
+ if (isHL) {
+ color = lineState.color || highlightColor || '#2563eb';
+ opacity = lineState.opacity ?? 1;
+ }
+ else if (isAux) {
+ color = l.color || '#7c3aed';
+ opacity = hasHighlights ? 0.45 : 0.85;
+ dashed = true;
+ }
+ else if (hasHighlights) {
+ color = ink;
+ opacity = isStructural ? 0.55 : 0.12;
+ }
+ else if (l.category === '母线') {
+ color = ink;
+ opacity = 0;
+ }
+ else {
+ color = isStructural ? ink : (style.color === '#333333' || style.color === '#999999' ? ink : style.color);
+ opacity = Math.max(style.opacity ?? 1, 0.85);
+ }
+ if (l.visible === false)
+ opacity = 0;
+ return (<line key={`ir-line-${l.id}`} geometry={l._geo} visible={opacity > 0.001} renderOrder={3}>
+ <lineBasicMaterial color={color} transparent opacity={opacity} dashed={dashed}/>
+ </line>);
+ })}
+ {sceneIRSections.map((section, i) => {
+ const planeState = highlightEngine.current.getPlaneState(section.label || `plane_${i}`);
+ return (<SectionPolygon key={`section-${i}`} points={section.resolvedPoints} color={planeState.color} opacity={planeState.opacity}/>);
+ })}
+ <AnnotationRenderer annotations={sceneIR.annotations} points={sceneIR.points} lines={sceneIR.lines}/>
+ </>)}
+
+ {!sceneIR && showFaces && (<mesh renderOrder={1}>
+ <primitive attach="geometry" object={geoData}/>
+ <meshLambertMaterial color={'#d8dde6'} transparent opacity={currentFaceOpacity.current} depthWrite={false} side={THREE.DoubleSide}/>
  </mesh>)}
 
- {sphereOverlay && sphereGeo && (<mesh>
+ {!sceneIR && sphereOverlay && sphereGeo && (<mesh>
  <primitive attach="geometry" object={sphereGeo}/>
  <meshBasicMaterial color={sphereOverlay.color || '#4A90E2'} transparent opacity={sphereOverlay.opacity ?? 0.15} depthWrite={false} wireframe={sphereOverlay.wireframe !== false}/>
  </mesh>)}
 
- {resolvedAuxLines.map((al, i) => {
+ {!sceneIR && resolvedAuxLines.map((al, i) => {
  const animData = auxAnimData.current.get(`aux-${al._origIndex}`);
  const lineOpacity = animData?.opacity ?? (effectiveAuxLines[al._origIndex] ? 0.7 : 0);
  return (<group key={`aux-${i}`}>
@@ -558,33 +660,27 @@ const Canvas3D = memo(function Canvas3D({
  new THREE.Vector3(al.from[0], al.from[1], al.from[2]),
  new THREE.Vector3(al.to[0], al.to[1], al.to[2]),
  ])}>
- <lineBasicMaterial color={al.color || '#4A90E2'} transparent opacity={lineOpacity} dashed={al.dashed !== false}/>
+ <lineBasicMaterial color={al.color || '#2563eb'} transparent opacity={lineOpacity} dashed={al.dashed !== false}/>
  </line>
  </group>);
  })}
 
- {!isCurved && resolvedLines.map(l => renderLine(l, lineKey(l)))}
+ {!sceneIR && !isCurved && resolvedLines.map(l => renderLine(l, lineKey(l)))}
 
- {isCurved && curveLines.map((pts, i) => (<line key={`curve-${i}`} points={pts} color={isDark ? '#888888' : '#aaaaaa'} lineWidth={1}/>))}
+ {isCurved && curveLines.map((pts, i) => {
+ const curveGeo = new THREE.BufferGeometry().setFromPoints(pts.map(p => new THREE.Vector3(p[0], p[1], p[2])));
+ return (<line key={`curve-${i}`} geometry={curveGeo} renderOrder={3}>
+ <lineBasicMaterial color={'#1f2430'} transparent opacity={0.9}/>
+ </line>);
+ })}
 
- {isCurved && resolvedLines.map(l => renderLine(l, lineKey(l)))}
-
- {sceneIRSections.map((section, i) => (<SectionPolygon key={`section-${i}`} points={section.resolvedPoints} color={section.type === 'polygon' ? '#4A90E2' : '#FF6B6B'} opacity={0.3}/>))}
-
- {sceneIRPoints.map((point, i) => (<group key={`ir-point-${i}`}>
- {point.visible !== false && (<PointMarker position={point.position} highlighted={point.highlighted}/>)}
- {point.visible !== false && showLabels && (<Billboard key={`label-${i}`} position={point.position} follow>
- <Text fontSize={0.28} color={isDark ? '#f5f5f5' : '#1d1d1f'} anchorX="center" anchorY="middle" outlineWidth={0.02} outlineColor={isDark ? '#0d0d0d' : '#ffffff'} opacity={labelOpacity} transparent>
- {normalizeSubscripts(point.label)}
- </Text>
- </Billboard>)}
- </group>))}
+ {!sceneIR && isCurved && resolvedLines.map(l => renderLine(l, lineKey(l)))}
 
  {!sceneIR && edgeInfo.vertices.map((v, i) => {
  const rawLabel = edgeInfo.labels[i] || String.fromCharCode(65 + i);
  const displayLabel = normalizeSubscripts(rawLabel);
- return (<Billboard key={`v-${i}`} position={v} follow>
- <Text fontSize={0.28} color={isDark ? '#f5f5f5' : '#1d1d1f'} anchorX="center" anchorY="middle" outlineWidth={0.02} outlineColor={isDark ? '#0d0d0d' : '#ffffff'} opacity={labelOpacity} transparent>
+ return (<Billboard key={`v-${i}`} position={labelPosition(v)} follow>
+ <Text fontSize={0.35} color={'#1a1a1a'} anchorX="center" anchorY="middle" outlineWidth={0.035} outlineColor={'#f4f6f8'} opacity={1.0} transparent depthTest={false}>
  {displayLabel}
  </Text>
  </Billboard>);

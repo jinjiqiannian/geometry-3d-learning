@@ -1,171 +1,109 @@
 import { useNavigate } from "react-router-dom";
-import { SUBJECTS } from "../constants";
+import BrandLogo from "../components/BrandLogo";
 import "./LandingPage.css";
 
-function GeometryLogo({ size = 48 }) {
+/** 右侧门面：品牌层叠视窗放大，不绑具体几何体 */
+function PosterArt() {
   return (
     <svg
-      className="landing-logo-svg"
-      viewBox="0 0 32 32"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      style={{ width: size, height: size }}
+      className="landing-poster-art"
+      viewBox="0 0 480 640"
+      aria-hidden="true"
     >
-      <path d="M16 2L3 9v14l13 7 13-7V9L16 2z" />
-      <path d="M3 9l13 7 13-7" />
-      <path d="M16 23V9" />
-      <path d="M8 13.5l8 4 8-4" />
-      <path d="M8 18.5l8 4 8-4" />
+      {/* 淡网格：结构感 */}
+      <g className="lp-grid">
+        {Array.from({ length: 9 }, (_, i) => {
+          const x = 48 + i * 48;
+          return <line key={`v${i}`} x1={x} y1="40" x2={x} y2="600" />;
+        })}
+        {Array.from({ length: 12 }, (_, i) => {
+          const y = 40 + i * 48;
+          return <line key={`h${i}`} x1="48" y1={y} x2="432" y2={y} />;
+        })}
+      </g>
+
+      {/* 后平面 */}
+      <g className="lp-plane-back">
+        <rect className="lp-plane" x="78" y="168" width="220" height="220" rx="6" />
+      </g>
+      {/* 前平面 */}
+      <g className="lp-plane-front">
+        <rect className="lp-plane" x="168" y="118" width="220" height="220" rx="6" />
+      </g>
+
+      {/* 洞察斜线 */}
+      <path
+        className="lp-slash"
+        d="M148 348 L368 168"
+        pathLength="1"
+      />
+
+      {/* 细节点缀 */}
+      <circle className="lp-node" cx="148" cy="348" r="3.2" />
+      <circle className="lp-node" cx="368" cy="168" r="3.2" />
     </svg>
   );
 }
-
-function SubjectIcon({ type, size = 18 }) {
-  const icons = {
-    math: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{ width: size, height: size }}
-      >
-        <path d="M16 2L3 9v14l13 7 13-7V9L16 2z" />
-        <path d="M3 9l13 7 13-7" />
-        <path d="M16 23V9" />
-      </svg>
-    ),
-    physics: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{ width: size, height: size }}
-      >
-        <circle cx="12" cy="12" r="10" />
-        <circle cx="12" cy="12" r="4" />
-        <line x1="12" y1="2" x2="12" y2="6" />
-        <line x1="12" y1="18" x2="12" y2="22" />
-        <line x1="2" y1="12" x2="6" y2="12" />
-        <line x1="18" y1="12" x2="22" y2="12" />
-      </svg>
-    ),
-    chemistry: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{ width: size, height: size }}
-      >
-        <circle cx="12" cy="8" r="3" />
-        <circle cx="8" cy="16" r="3" />
-        <circle cx="16" cy="16" r="3" />
-        <path d="M12 11L12 13" />
-        <path d="M12 13L8 13" />
-        <path d="M12 13L16 13" />
-      </svg>
-    ),
-    biology: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{ width: size, height: size }}
-      >
-        <ellipse cx="12" cy="12" rx="8" ry="10" />
-        <path d="M12 4L12 20" />
-        <path d="M6 8L18 8" />
-        <path d="M6 12L18 12" />
-        <path d="M6 16L18 16" />
-        <circle cx="12" cy="12" r="2" />
-      </svg>
-    ),
-  };
-  return icons[type] || icons.math;
-}
-
-const FEATURES = [
-  {
-    id: "ai",
-    icon: "✦",
-    title: "AI 智能解析",
-    desc: "输入题目，AI 自动识别并生成解题步骤",
-  },
-  {
-    id: "d3",
-    icon: "◈",
-    title: "3D 动态演示",
-    desc: "交互式三维模型，自由旋转缩放",
-  },
-  {
-    id: "nb",
-    icon: "📋",
-    title: "智能错题本",
-    desc: "自动记录错题，针对性巩固薄弱点",
-  },
-  {
-    id: "te",
-    icon: "◆",
-    title: "教师模式",
-    desc: "板书式分步讲解，高效备课授课",
-  },
-];
 
 export default function LandingPage() {
   const navigate = useNavigate();
 
   return (
     <div className="landing">
-      <div className="landing-glow" aria-hidden="true" />
+      <div className="landing-stage">
+        <section className="landing-copy">
+          <div className="landing-brand-row">
+            <BrandLogo className="landing-logo-svg" size={42} />
+            <div className="landing-brand-text">
+              <p className="landing-brand">理解引擎</p>
+              <p className="landing-brand-en">Understanding Engine</p>
+            </div>
+          </div>
 
-      <div className="landing-bg-orb landing-bg-orb-1" aria-hidden="true" />
-      <div className="landing-bg-orb landing-bg-orb-2" aria-hidden="true" />
-      <div className="landing-bg-grid" aria-hidden="true" />
+          <h1 className="landing-headline">
+            把抽象知识
+            <br />
+            <em>变得看得见</em>
+          </h1>
 
-      <section className="landing-hero">
-        <h1 className="landing-hero-title">
-          <span className="landing-hero-line-1">AI 驱动的</span>
-          <span className="landing-hero-line-2">3D 学习平台</span>
-        </h1>
-        <p className="landing-hero-subtitle">
-          输入题目，AI 带你一步步理解空间几何
-        </p>
+          <p className="landing-support">
+            先看清结构，再学会推理。数学已开放；物理、化学等科目将按同一理解能力接入。
+          </p>
 
-        <button
-          className="landing-hero-cta"
-          onClick={() => navigate("/math")}
-        >
-          <span>开始学习</span>
-        </button>
-
-        <div className="landing-hero-subjects">
-          {SUBJECTS.map((s) => (
+          <div className="landing-cta-row">
             <button
-              key={s.id}
-              className="landing-hero-subject-chip"
-              onClick={() => navigate(s.path)}
-              style={{ borderColor: `${s.color}30`, color: s.color }}
+              type="button"
+              className="landing-submit"
+              onClick={() => navigate("/workspace")}
             >
-              <SubjectIcon type={s.icon} size={14} />
-              {s.name}
+              进入工作台
             </button>
-          ))}
-        </div>
-      </section>
+            <button
+              type="button"
+              className="landing-ghost"
+              onClick={() => navigate("/history")}
+            >
+              学习记录
+            </button>
+          </div>
+
+          <ul className="landing-pillars">
+            <li>构图</li>
+            <li>推理</li>
+            <li>讲解</li>
+            <li>检验</li>
+          </ul>
+        </section>
+
+        <aside className="landing-poster" aria-hidden="true">
+          <div className="landing-poster-glow" />
+          <PosterArt />
+          <div className="landing-poster-caption">
+            <span>SEE</span>
+            <span>看见结构</span>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

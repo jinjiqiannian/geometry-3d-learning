@@ -23,7 +23,7 @@ export default function CoreIdeaCard({ steps, parsedData, loading, loadingStage 
 
   return (
     <div className="core-idea-card">
-      <div className="core-idea-card-label">💡 核心思路</div>
+      <div className="core-idea-card-label">核心思路</div>
       <p className="core-idea-card-text">{content}</p>
     </div>
   )

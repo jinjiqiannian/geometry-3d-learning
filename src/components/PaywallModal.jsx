@@ -35,10 +35,10 @@ export default function PaywallModal() {
     setShowPaywall(false)
   }
 
-  const proPrice = yearly ? 190 : (proPlan?.price || 19)
-  const teacherPrice = yearly ? 290 : (teacherPlan?.price || 29)
-  const proMonthly = yearly ? '¥16/月' : '¥19/月'
-  const teacherMonthly = yearly ? '¥24/月' : '¥29/月'
+  const proPrice = yearly ? 290 : (proPlan?.price || 29)
+  const teacherPrice = yearly ? 180 : (teacherPlan?.price || 99)
+  const proMonthly = yearly ? '¥24/月' : `¥${proPlan?.price || 29}/月`
+  const teacherMonthly = yearly ? '¥15/月' : '¥99/学期'
 
   return (
     <div className="paywall-overlay" onClick={handleClose}>
@@ -82,7 +82,7 @@ export default function PaywallModal() {
           <div className="paywall-plan pro">
             <div className="paywall-plan-header">
               <span className="paywall-plan-name">专业版</span>
-              {yearly && <span className="paywall-plan-save">省 ¥{19 * 12 - 190}</span>}
+              {yearly && <span className="paywall-plan-save">年付更省</span>}
             </div>
             <div className="paywall-plan-price">
               <span className="paywall-plan-currency">¥</span>
@@ -91,11 +91,11 @@ export default function PaywallModal() {
             </div>
             <p className="paywall-plan-equiv">{proMonthly}{yearly ? '（年付）' : ''}</p>
             <ul className="paywall-plan-features">
-              <li>★ 无限额度 — 取消每日限制</li>
-              <li>★ 高级教师模式 — 自动讲课</li>
+              <li>★ 无限额度 — 取消每日 8 次限制</li>
+              <li>★ 方法动画全开 — 物理 / 数学专题</li>
+              <li>★ PPT 课件导出 — 课堂一键用</li>
               <li>★ 错题本 — 自动收集管理</li>
-              <li>★ 学习分析 — 掌握度统计</li>
-              <li>PPT/PDF/图片导出</li>
+              <li>学习分析 · PDF / 图片导出</li>
               <li>云端同步 · 高级分享</li>
             </ul>
             <button className="paywall-plan-btn" onClick={() => handleUpgrade('pro')}>
@@ -107,21 +107,21 @@ export default function PaywallModal() {
           <div className="paywall-plan teacher">
             <div className="paywall-plan-header">
               <span className="paywall-plan-name">教师版</span>
-              {yearly && <span className="paywall-plan-save">省 ¥{29 * 12 - 290}</span>}
+              {yearly && <span className="paywall-plan-save">年付更省</span>}
             </div>
             <div className="paywall-plan-price">
               <span className="paywall-plan-currency">¥</span>
               <span className="paywall-plan-amount">{teacherPrice}</span>
-              <span className="paywall-plan-period">{yearly ? '/年' : '/月'}</span>
+              <span className="paywall-plan-period">{yearly ? '/年' : (teacherPlan?.period || '/学期')}</span>
             </div>
             <p className="paywall-plan-equiv">{teacherMonthly}{yearly ? '（年付）' : ''}</p>
             <ul className="paywall-plan-features">
               <li>Pro 全部功能</li>
+              <li>★ 批量导出 PPT — 整章课件</li>
               <li>★ 班级管理 — 创建班级</li>
-              <li>★ 批量生成课件</li>
               <li>★ 学生学习统计</li>
-              <li>作业布置与自动批改</li>
-              <li>全班学习数据仪表盘</li>
+              <li>作业布置与跟练</li>
+              <li>薄弱方法看板</li>
             </ul>
             <button className="paywall-plan-btn teacher-btn" onClick={() => handleUpgrade('teacher')}>
               升级教师版

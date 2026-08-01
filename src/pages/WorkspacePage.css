@@ -1,14 +1,16 @@
 /* ═══════════════════════════════════════════════════════
-   WorkspacePage — ChatGPT 风格 · 左讲解 · 右 3D
+   WorkspacePage — 教材风：纸面讲解 + 构图视口
    ═══════════════════════════════════════════════════════ */
 
 .workspace-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
   overflow: hidden;
-  background: var(--bg-deep);
+  background: #f3f1ec;
+  color: #121212;
 }
 
 /* ── Unified layout (CSS-driven responsive, single Canvas) ── */
@@ -19,21 +21,103 @@
   min-height: 0;
 }
 
-/* 左侧：讲解面板 */
-.wp-explain-col {
-  width: 420px;
-  min-width: 320px;
-  max-width: 480px;
-  overflow-y: auto;
-  border-right: 1px solid var(--border-subtle);
-  background: var(--bg-surface);
+/* 一级：数学 | 物理 */
+.wp-domain-bar {
+  display: flex;
+  gap: 0;
+  flex-shrink: 0;
+  border-bottom: 1px solid #e4dfd5;
+  background: #f7f4ee;
+  padding: 0 0.75rem;
 }
 
-/* 右侧：3D 场景 — 全生命周期只 mount 一次 */
+.wp-domain-tab {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: #5c574e;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.75rem 1.15rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.wp-domain-tab.is-active {
+  color: #0f6b5c;
+  border-bottom-color: #0f6b5c;
+  background: #fffcf7;
+}
+
+/* 二级：数学专题 */
+.wp-subject-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  flex-shrink: 0;
+  border-bottom: 1px solid #e4dfd5;
+  background: #fffcf7;
+  padding: 0 0.75rem;
+}
+
+.wp-subject-tab {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: #5c574e;
+  font-size: 0.8125rem;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.wp-subject-tab.is-active {
+  color: #0f6b5c;
+  border-bottom-color: #0f6b5c;
+  font-weight: 600;
+}
+
+.wp-subject-bar--sub {
+  background: #f7f4ee;
+  border-bottom-color: #e4dfd5;
+}
+
+.wp-subject-bar--sub .wp-subject-tab {
+  font-size: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  color: #6b6560;
+}
+
+.wp-subject-bar--sub .wp-subject-tab.is-active {
+  color: #0f6b5c;
+  border-bottom-color: #0f6b5c;
+}
+
+.wp-combo-shell {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 左侧：讲解面板 */
+.wp-explain-col {
+  width: 440px;
+  min-width: 320px;
+  max-width: 520px;
+  overflow-y: auto;
+  border-right: 1px solid #e4dfd5;
+  background: #fffcf7;
+}
+
+/* 右侧：3D 场景 — 与门面同色纸面 */
 .wp-canvas-col {
   flex: 1;
   position: relative;
-  background: var(--bg-deep);
+  background: #f3f1ec;
   overflow: hidden;
 }
 
@@ -165,7 +249,337 @@
   }
 }
 
-/* ── Empty state ──────────────────────────────────── */
+/* ── 立体几何：与其他专题同一纸面壳 ─────────────── */
+.workspace-page--geometry .wp-explain-col {
+  background: #fffcf7;
+  border-right: 1px solid #e4dfd5;
+}
+
+.workspace-page--geometry .wp-canvas-col {
+  background: #f3f1ec;
+}
+
+.workspace-page--geometry .wp-solve-bar {
+  background: #fffcf7;
+  border-bottom: 1px solid #e4dfd5;
+}
+
+.wp-main--geo {
+  background: #f3f1ec;
+}
+
+/* ── Compose idle（旧居中样式保留兼容，几何已改用 logic-panel） ── */
+.workspace-page--compose {
+  background: #f3f1ec;
+}
+
+.wp-compose {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px 64px;
+  position: relative;
+  overflow: auto;
+}
+
+.wp-compose-back {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: #8a847a;
+  text-decoration: none;
+  font-size: 0.88rem;
+  letter-spacing: 0.06em;
+  transition: color 0.2s ease;
+}
+
+.wp-compose-back:hover {
+  color: #121212;
+}
+
+.wp-compose-inner {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  animation: wp-compose-in 0.55s ease both;
+}
+
+.wp-compose-kicker {
+  margin: 0 0 12px;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5c574e;
+}
+
+.wp-compose-title {
+  margin: 0 0 12px;
+  font-family: "Source Han Serif SC", "Noto Serif SC", "Songti SC", Georgia, serif;
+  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  font-weight: 600;
+  line-height: 1.25;
+  color: #1a1a1a;
+  letter-spacing: -0.02em;
+}
+
+.wp-compose-sub {
+  margin: 0 0 28px;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #5c574e;
+}
+
+.wp-compose-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  background: #fffcf7;
+  border: 1px solid #e4dfd5;
+  border-radius: 2px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wp-compose-box:focus-within {
+  border-color: #0f6b5c;
+  box-shadow: 0 0 0 3px #e6f2ef;
+}
+
+.wp-compose-preview {
+  position: relative;
+  margin: 14px 14px 0;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #ebe6dc;
+  max-height: 160px;
+}
+
+.wp-compose-preview img {
+  display: block;
+  width: 100%;
+  max-height: 160px;
+  object-fit: contain;
+  background: #ebe6dc;
+}
+
+.wp-compose-preview-clear {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 2px;
+  background: rgba(18, 18, 18, 0.72);
+  color: #fffcf7;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.wp-compose-input {
+  width: 100%;
+  border: none;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: #121212;
+  background: transparent;
+  min-height: 112px;
+  padding: 18px 18px 8px;
+}
+
+.wp-compose-input::placeholder {
+  color: #b0a99c;
+}
+
+.wp-compose-ocr-hint {
+  margin: 0;
+  padding: 0 18px 8px;
+  font-size: 0.78rem;
+  color: #8a847a;
+}
+
+.wp-compose-ocr-hint.is-busy {
+  color: #c2410c;
+}
+
+.wp-compose-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid #ebe6dc;
+  background: rgba(243, 241, 236, 0.55);
+}
+
+.wp-compose-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wp-compose-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: #5c574f;
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.wp-compose-tool:hover:not(:disabled) {
+  color: #121212;
+  background: rgba(18, 18, 18, 0.05);
+}
+
+.wp-compose-tool:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.wp-compose-submit {
+  align-self: auto;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 2px;
+  background: #0f6b5c;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.wp-compose-submit:hover:not(:disabled) {
+  background: #0c584c;
+  transform: translateY(-1px);
+}
+
+.wp-compose-submit:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.wp-solve-original {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  margin-right: 8px;
+  padding: 2px 10px 2px 2px;
+  border: 1px solid #e4dfd5;
+  border-radius: 2px;
+  background: #fffcf7;
+  color: #5c574f;
+  font-size: 0.75rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.wp-solve-original img {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 1px;
+}
+
+.wp-solve-original:hover {
+  border-color: #121212;
+  color: #121212;
+}
+
+.wp-compose-examples {
+  margin-top: 28px;
+}
+
+.wp-compose-examples-label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  color: #8a847a;
+}
+
+.wp-compose-examples-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.wp-compose-example {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid #e4dfd5;
+  border-radius: 2px;
+  background: #fffcf7;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: #5c574e;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.wp-compose-example:hover {
+  border-color: #0f6b5c;
+  background: #e6f2ef;
+  color: #0f6b5c;
+}
+
+.wp-compose-example-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: inherit;
+}
+
+.wp-compose-example-hint {
+  font-size: 0.75rem;
+  color: #8a847a;
+  line-height: 1.4;
+}
+
+@keyframes wp-compose-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 720px) {
+  .wp-compose-examples-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wp-compose {
+    padding: 64px 16px 40px;
+    justify-content: flex-start;
+  }
+}
+
+/* ── Empty state (legacy chips，保留兜底) ─────────── */
 .wp-empty-state {
   width: 100%;
   max-width: 100%;
@@ -280,9 +694,8 @@
 
 @media (max-width: 767px) {
   .workspace-page {
-    height: auto;
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100%;
+    min-height: 0;
   }
 
   .wp-main {
@@ -392,18 +805,47 @@
   }
 }
 
-/* ── 搜索栏 ──────────────────────────────────────── */
+/* ── 解题顶栏（无搜题框） ─────────────────────────── */
+.wp-solve-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 20px;
+  border-bottom: 1px solid #e4dfd5;
+  background: #fffcf7;
+  flex-shrink: 0;
+}
+
+.wp-solve-back {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #8a847a;
+  font-size: 0.88rem;
+  font-family: inherit;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.wp-solve-back:hover {
+  color: #121212;
+}
+
+/* ── 搜索栏（compose 以外遗留样式） ──────────────── */
 .wp-search-bar {
-  padding: 8px 16px;
-  border-bottom: 1px solid var(--border-subtle);
-  background: var(--bg-base);
+  padding: 10px 20px;
+  border-bottom: 1px solid #e4dfd5;
+  background: #fffcf7;
   flex-shrink: 0;
 }
 
 .wp-search-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  max-width: 960px;
 }
 
 .wp-search-back {
@@ -412,27 +854,32 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  text-decoration: none;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: #8a847a;
   font-size: 16px;
-  transition: all var(--transition-fast);
+  cursor: pointer;
+  font-family: inherit;
+  transition: color var(--transition-fast);
   flex-shrink: 0;
 }
 
 .wp-search-back:hover {
-  background: var(--accent-subtle);
-  color: var(--text-primary);
+  background: transparent;
+  color: #121212;
 }
 
 .wp-search-input {
   flex: 1;
-  padding: 8px 12px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-  font-size: var(--text-sm);
+  padding: 10px 0;
+  border: none;
+  border-bottom: 1.5px solid #cfc8bc;
+  border-radius: 0;
+  background: transparent;
+  color: #121212;
+  font-size: 0.9rem;
   font-family: inherit;
   line-height: 1.5;
   resize: none;
@@ -441,30 +888,33 @@
 }
 
 .wp-search-input:focus {
-  border-color: var(--accent);
+  border-color: #121212;
 }
 
 .wp-search-input::placeholder {
-  color: var(--text-muted);
+  color: #8a847a;
 }
 
 .wp-search-submit {
-  padding: 8px 20px;
-  border-radius: 999px;
+  padding: 8px 18px;
+  border-radius: 2px;
   border: none;
-  background: var(--accent);
-  color: #fff;
-  font-size: var(--text-sm);
+  background: #121212;
+  color: #fffcf7;
+  font-size: 0.85rem;
   font-weight: 550;
   cursor: pointer;
   font-family: inherit;
+  letter-spacing: 0.04em;
   white-space: nowrap;
-  transition: opacity var(--transition-fast);
+  transition: background 0.15s ease, opacity 0.15s ease;
   flex-shrink: 0;
 }
 
 .wp-search-submit:hover:not(:disabled) {
-  opacity: 0.88;
+  background: #2a2a2a;
+  color: #fffcf7;
+  opacity: 1;
 }
 
 .wp-search-submit:disabled {
@@ -478,10 +928,10 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-surface);
-  color: var(--text-secondary);
+  border-radius: 2px;
+  border: 1px solid #d0d6e0;
+  background: #fff;
+  color: #5a6472;
   cursor: pointer;
   transition: all var(--transition-fast);
   flex-shrink: 0;

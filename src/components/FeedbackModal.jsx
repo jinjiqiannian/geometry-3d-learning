@@ -151,7 +151,7 @@ export default function FeedbackModal() {
             </div>
 
             <h2 className="fb-title">意见反馈</h2>
-            <p className="fb-desc">帮助我们把几何维度做得更好</p>
+            <p className="fb-desc">帮助我们把理解引擎做得更好</p>
 
             <form className="fb-form" onSubmit={handleSubmit}>
               {/* 反馈类型 */}

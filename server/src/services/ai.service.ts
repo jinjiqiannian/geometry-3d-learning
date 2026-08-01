@@ -18,8 +18,8 @@ import type { ParsedProblem, Step, SceneState, NarrationPhrase } from '../types/
 
 // ── Constants ──────────────────────────────────────
 const DEEPSEEK_BASE = 'https://api.deepseek.com/v1'
-const FLASH_MODEL = 'deepseek-chat'
-const PRO_MODEL = 'deepseek-reasoner'  // DeepSeek V4 Pro 推理模型
+const FLASH_MODEL = 'deepseek-v4-flash'
+const PRO_MODEL = 'deepseek-v4-pro'
 
 const MAX_RETRIES = 3
 const RETRY_BASE_MS = 1000
@@ -102,6 +102,8 @@ interface DeepSeekStreamOptions {
   user: string
   maxTokens: number
   temperature?: number
+  /** V4：解题推理开启 thinking；解析/轻量任务可关 */
+  thinking?: boolean
 }
 
 /**
@@ -134,6 +136,9 @@ export async function* callDeepSeekStream(options: DeepSeekStreamOptions): Async
           max_tokens: options.maxTokens,
           temperature: options.temperature ?? 0.3,
           stream: true,
+          ...(options.thinking
+            ? { thinking: { type: 'enabled' }, reasoning_effort: 'high' }
+            : {}),
         }),
       })
 
@@ -178,7 +183,7 @@ export async function* callDeepSeekStream(options: DeepSeekStreamOptions): Async
               fullText += delta.content
               yield delta.content
             }
-            // 如果有 reasoning_content（deepseek-reasoner 模型），也 yield
+            // V4 thinking / 旧 reasoner：reasoning_content 一并流式输出
             if ((delta as any)?.reasoning_content) {
               const rc = (delta as any).reasoning_content
               yield rc
@@ -227,6 +232,7 @@ interface DeepSeekCallOptions {
   user: string
   maxTokens: number
   temperature?: number
+  thinking?: boolean
 }
 
 export async function callDeepSeek(options: DeepSeekCallOptions): Promise<{
@@ -257,6 +263,9 @@ export async function callDeepSeek(options: DeepSeekCallOptions): Promise<{
           max_tokens: options.maxTokens,
           temperature: options.temperature ?? 0.3,
           stream: false,
+          ...(options.thinking
+            ? { thinking: { type: 'enabled' }, reasoning_effort: 'high' }
+            : {}),
         }),
       })
 
@@ -610,6 +619,407 @@ export async function parseProblem(
 }
 
 // ═══════════════════════════════════════════════════════
+//  OCR — 题目图片 → 题干文字 + 构图 hint（图只辅助，文字为准）
+// ═══════════════════════════════════════════════════════
+
+export interface VisionHints {
+  /** 与前端 extractRelations 同格式，如 "E midpoint PD" */
+  relations?: string[]
+  points?: string[]
+  planes?: string[]
+}
+
+export interface OcrResult {
+  text: string
+  visionHints?: VisionHints
+}
+
+const OCR_SYSTEM_PROMPT = `你是中学立体几何 OCR + 读图助手。用户上传题目照片/截图。
+
+输出严格 JSON（不要 markdown 代码块、不要解题）：
+{
+  "text": "完整题干纯文本（含(1)(2)小问），保留 P-ABCD、⊥、∥、√ 等符号",
+  "visionHints": {
+    "relations": ["E midpoint PD", "PA perpendicular plane ABCD"],
+    "points": ["P","A","B","C","D","E"],
+    "planes": ["ABCD","PAC","AEC"]
+  }
+}
+
+rules:
+1. text 必须完整、以卷面文字为准；图中关系写进 visionHints，不要编造文字没有的题干。
+2. relations 只用：
+   - "E midpoint AD"
+   - "F on PA"
+   - "AB parallel CD" / "PC parallel plane BEF"
+   - "AB perpendicular CD" / "PA perpendicular plane ABCD"
+   - "O intersection AC BD"
+3. 看不清的字段省略；visionHints 可为空对象。`
+
+/** 规范化视觉 OCR 模型输出 → OcrResult（失败时绝不把整段 JSON 当题干） */
+function normalizeOcrPayload(raw: string): OcrResult {
+  let cleaned = String(raw || '')
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim()
+  if (!cleaned) throw new Error('未能识别出文字，请手动补全题干')
+
+  const pickHints = (vh: any): VisionHints | undefined => {
+    if (!vh || typeof vh !== 'object') return undefined
+    return {
+      relations: Array.isArray(vh.relations)
+        ? vh.relations.filter((r: unknown) => typeof r === 'string')
+        : undefined,
+      points: Array.isArray(vh.points)
+        ? vh.points.filter((p: unknown) => typeof p === 'string')
+        : undefined,
+      planes: Array.isArray(vh.planes)
+        ? vh.planes.filter((p: unknown) => typeof p === 'string')
+        : undefined,
+    }
+  }
+
+  const fromObj = (obj: any): OcrResult | null => {
+    if (!obj || typeof obj !== 'object') return null
+    if (typeof obj.text !== 'string' || !obj.text.trim()) return null
+    return { text: obj.text.trim(), visionHints: pickHints(obj.visionHints) }
+  }
+
+  // 1) 直接 JSON.parse
+  try {
+    const hit = fromObj(JSON.parse(cleaned))
+    if (hit) return hit
+  } catch { /* continue */ }
+
+  // 2) 从混杂文本中抽出顶层 {...}
+  try {
+    const hit = fromObj(extractJSON(cleaned))
+    if (hit) return hit
+  } catch { /* continue */ }
+
+  // 3) 仍是 JSON 外壳但解析失败：尽量抠 "text":"..." 字段，避免把 visionHints 显示进搜索框
+  if (/^\s*\{/.test(cleaned) && /"text"\s*:/.test(cleaned)) {
+    const m = cleaned.match(/"text"\s*:\s*"((?:\\.|[^"\\])*)"/)
+    if (m?.[1]) {
+      const text = m[1]
+        .replace(/\\n/g, '\n')
+        .replace(/\\"/g, '"')
+        .replace(/\\\\/g, '\\')
+        .trim()
+      if (text) return { text }
+    }
+    console.warn('[ocr] JSON 外壳无法完整解析，已拒绝把原始 JSON 写入题干')
+    throw new Error('识图结果格式异常，请重试或手动输入题干')
+  }
+
+  return { text: cleaned }
+}
+
+/**
+ * 拆分「总述 + (1)(2)…」小问，避免多小问证明串题。
+ */
+export function splitSubProblems(text: string): {
+  stem: string
+  parts: { id: string; text: string }[]
+} {
+  const src = (text || '').trim()
+  if (!src) return { stem: '', parts: [] }
+
+  // 匹配小问起点：(1) （1） 1、 1. １．
+  const markerRe =
+    /(?:^|[\n\r；;。])\s*([(（]?\s*[1-9１-９]\s*[)）、.．:：])/g
+  const starts: { index: number; label: string }[] = []
+  let m: RegExpExecArray | null
+  while ((m = markerRe.exec(src)) !== null) {
+    const label = m[1]
+    const index = m.index + m[0].length - label.length
+    // 跳过题号如「16.」若后面不是求证/求/若（弱启发）：仍收录，靠「至少 2 段」过滤
+    starts.push({ index, label })
+  }
+
+  // 去重相近起点
+  const uniq: { index: number; label: string }[] = []
+  for (const s of starts) {
+    if (uniq.length && s.index - uniq[uniq.length - 1].index < 2) continue
+    uniq.push(s)
+  }
+
+  if (uniq.length < 2) {
+    return { stem: src, parts: [] }
+  }
+
+  const stem = src.slice(0, uniq[0].index).trim()
+  const parts = uniq.map((s, i) => {
+    const end = i + 1 < uniq.length ? uniq[i + 1].index : src.length
+    const chunk = src.slice(s.index, end).trim()
+    const raw = (s.label.match(/[1-9１-９]/) || ['1'])[0]
+    const id =
+      raw >= '１' && raw <= '９'
+        ? String(raw.charCodeAt(0) - '０'.charCodeAt(0))
+        : raw
+    return { id, text: chunk }
+  })
+
+  return { stem, parts }
+}
+
+function buildReasonUserPrompt(text: string, parsed: ParsedProblem): string {
+  const { stem, parts } = splitSubProblems(text)
+  const base = `题目：${text}\n\n几何体类型：${parsed.type}\n已知参数：${JSON.stringify({
+    size: parsed.size,
+    labels: parsed.labels,
+    highlightLines: parsed.highlightLines,
+    extraParams: parsed.extraParams,
+  })}`
+
+  if (parts.length === 0) {
+    return `${base}\n\n请为这道题生成分步解题讲解。`
+  }
+
+  const list = parts.map((p) => `(${p.id}) ${p.text}`).join('\n')
+  return `${base}
+
+本题含 ${parts.length} 个小问，必须分开作答，禁止串题：
+【总述/已知】${stem || '（见题干前半）'}
+【小问】
+${list}
+
+要求：
+1. 先写共用已知与构图（observation），再按 (1)(2)… 分别证明/计算
+2. 属于某小问的步骤 title 必须以「(1)」「(2)」等形式开头
+3. 每个 step 增加 "part" 字段：0=共用，1/2/…=对应小问编号
+4. 不要把后一小问的结论写进前一小问；每个小问结束有 conclusion`
+}
+
+
+async function extractWithGemini(dataUrl: string, userId?: string): Promise<OcrResult> {
+  const key = env.GEMINI_API_KEY
+  if (!key) throw new Error('NO_GEMINI')
+
+  const pure = dataUrl.replace(/^data:image\/\w+;base64,/, '')
+  const mime = (dataUrl.match(/^data:(image\/[\w+]+);/) || [])[1] || 'image/jpeg'
+  const model = process.env.GEMINI_OCR_MODEL || 'gemini-2.0-flash'
+  const url =
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: OCR_SYSTEM_PROMPT + '\n\n请按 JSON 提取题干与 visionHints：' },
+            { inline_data: { mime_type: mime, data: pure } },
+          ],
+        },
+      ],
+      generationConfig: { temperature: 0.1, maxOutputTokens: 1200 },
+    }),
+  })
+
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}))
+    const msg = (errBody as any)?.error?.message || `Gemini OCR 失败 (${response.status})`
+    throw new Error(msg)
+  }
+
+  const data = await response.json()
+  const text = (data?.candidates?.[0]?.content?.parts || [])
+    .map((p: any) => p.text || '')
+    .join('')
+    .trim()
+  if (!text) throw new Error('未能识别出文字')
+  if (userId) trackCost(userId, model, 800, Math.ceil(text.length / 4))
+  return normalizeOcrPayload(text)
+}
+
+async function extractWithOpenAICompatibleVision(
+  dataUrl: string,
+  userId?: string
+): Promise<OcrResult> {
+  const presets: Record<string, { base: string; model: string }> = {
+    // 通义千问 VL（国内好申请）https://dashscope.console.aliyun.com/
+    qwen: {
+      base: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      model: 'qwen-vl-plus',
+    },
+    // 智谱 GLM-4V（有免费额度）https://open.bigmodel.cn/
+    zhipu: {
+      base: 'https://open.bigmodel.cn/api/paas/v4',
+      model: 'glm-4v-flash',
+    },
+    // OpenAI
+    openai: {
+      base: 'https://api.openai.com/v1',
+      model: 'gpt-4o-mini',
+    },
+    // 硅基流动（可跑多模态开源模型）https://cloud.siliconflow.cn/
+    siliconflow: {
+      base: 'https://api.siliconflow.cn/v1',
+      model: 'Qwen/Qwen2.5-VL-32B-Instruct',
+    },
+    // Moonshot / Kimi
+    moonshot: {
+      base: 'https://api.moonshot.cn/v1',
+      model: 'moonshot-v1-8k-vision-preview',
+    },
+  }
+
+  const provider = env.VISION_PROVIDER
+  const preset = provider ? presets[provider] : undefined
+  const apiKey = env.VISION_API_KEY
+  if (!apiKey) throw new Error('NO_VISION')
+
+  const base = (env.VISION_API_BASE || preset?.base || '').replace(/\/$/, '')
+  const model = env.VISION_API_MODEL || preset?.model || ''
+  if (!base || !model) {
+    throw new Error(
+      '请设置 VISION_PROVIDER（qwen/zhipu/openai/siliconflow/moonshot），或同时设置 VISION_API_BASE + VISION_API_MODEL'
+    )
+  }
+
+  const response = await fetch(`${base}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: OCR_SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: '请按 JSON 提取完整题干 text 与构图 visionHints：' },
+            { type: 'image_url', image_url: { url: dataUrl } },
+          ],
+        },
+      ],
+      // 智谱 glm-4v 等上限 1024
+      max_tokens: 1024,
+      temperature: 0.1,
+    }),
+  })
+
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}))
+    throw new Error(
+      (errBody as any)?.error?.message ||
+        `视觉 OCR 失败 (${response.status}, ${provider || 'custom'})`
+    )
+  }
+
+  const data = await response.json()
+  const text = (data?.choices?.[0]?.message?.content || '').trim()
+  if (!text) throw new Error('未能识别出文字，请手动补全题干')
+  const tokensIn = data?.usage?.prompt_tokens || 0
+  const tokensOut = data?.usage?.completion_tokens || 0
+  if (userId) trackCost(userId, model, tokensIn, tokensOut)
+  return normalizeOcrPayload(text)
+}
+
+async function extractWithDeepSeekVision(dataUrl: string, userId?: string): Promise<OcrResult> {
+  if (!env.DEEPSEEK_API_KEY) throw new Error('NO_DEEPSEEK')
+  const visionModel = process.env.DEEPSEEK_VISION_MODEL || ''
+  if (!visionModel) {
+    throw new Error('NO_DEEPSEEK_VISION')
+  }
+
+  const response = await fetch(`${DEEPSEEK_BASE}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${env.DEEPSEEK_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: visionModel,
+      messages: [
+        { role: 'system', content: OCR_SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: '请按 JSON 提取完整题干 text 与构图 visionHints：' },
+            { type: 'image_url', image_url: { url: dataUrl } },
+          ],
+        },
+      ],
+      max_tokens: 1200,
+      temperature: 0.1,
+    }),
+  })
+
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}))
+    throw new Error((errBody as any)?.error?.message || `OCR 失败 (${response.status})`)
+  }
+
+  const data = await response.json()
+  const text = (data?.choices?.[0]?.message?.content || '').trim()
+  if (!text) throw new Error('未能识别出文字，请手动补全题干')
+  const tokensIn = data?.usage?.prompt_tokens || 0
+  const tokensOut = data?.usage?.completion_tokens || 0
+  if (userId) trackCost(userId, visionModel, tokensIn, tokensOut)
+  return normalizeOcrPayload(text)
+}
+
+export async function extractProblemFromImage(
+  imageBase64: string,
+  userId?: string
+): Promise<OcrResult> {
+  if (!imageBase64 || imageBase64.length < 32) {
+    throw new Error('图片无效')
+  }
+
+  const dataUrl = imageBase64.startsWith('data:')
+    ? imageBase64
+    : `data:image/jpeg;base64,${imageBase64}`
+
+  const errors: string[] = []
+
+  // 1) OpenAI 兼容视觉（通义 / 智谱 / OpenAI / 硅基流动…）
+  if (env.VISION_API_KEY) {
+    try {
+      return await extractWithOpenAICompatibleVision(dataUrl, userId)
+    } catch (err: any) {
+      if (err?.message !== 'NO_VISION') {
+        console.warn('[ocr] vision-compat failed:', err?.message)
+        errors.push(err?.message || 'vision-compat')
+      }
+    }
+  }
+
+  // 2) Gemini
+  if (env.GEMINI_API_KEY) {
+    try {
+      return await extractWithGemini(dataUrl, userId)
+    } catch (err: any) {
+      if (err?.message !== 'NO_GEMINI') {
+        console.warn('[ocr] Gemini failed:', err?.message)
+        errors.push(err?.message || 'gemini')
+      }
+    }
+  }
+
+  // 3) DeepSeek 显式视觉模型
+  try {
+    return await extractWithDeepSeekVision(dataUrl, userId)
+  } catch (err: any) {
+    if (err?.message !== 'NO_DEEPSEEK' && err?.message !== 'NO_DEEPSEEK_VISION') {
+      console.warn('[ocr] DeepSeek vision failed:', err?.message)
+      errors.push(err?.message || 'deepseek-vision')
+    }
+  }
+
+  throw new Error(
+    errors[0] ||
+      '未配置识图 AI。请在 server/.env 设置 VISION_PROVIDER=zhipu（或 qwen）和 VISION_API_KEY'
+  )
+}
+
+// ═══════════════════════════════════════════════════════
 //  Layer 2: Pro — 解题推理（Pro/Teacher only）
 // ═══════════════════════════════════════════════════════
 
@@ -676,8 +1086,9 @@ const REASON_SYSTEM_PROMPT = `你是一个顶尖的中学数学老师，专门�
 4. finalAnswer 字段必须包含题目要求的最终答案，expression 是答案表达式，value 是答案数值
 5. 如果题目要求的是比例（如 AP/AF），请根据推导结果计算出最终数值答案
 6. type: observation=观察分析, construction=作图构造, calculation=计算推导, conclusion=结论
-7. 4-6个步骤，计算步骤中写出完整算式
-8. 先输出 [REASON] 前缀的推理过程，再输出 JSON 对象`
+7. 单小问 4-6 步；多小问时共用条件 1-2 步 + 每小问 3-5 步，总步数可超过 6
+8. 若题含 (1)(2)…：必须按小问分段，title 以「(1)」「(2)」开头，step.part=小问号（共用为 0），禁止把不同小问的证明混在同一段
+9. 先输出 [REASON] 前缀的推理过程，再输出 JSON 对象`
 
 export interface ReasoningResult {
   steps: Step[]
@@ -701,16 +1112,17 @@ export async function generateReasoning(
     return cached
   }
 
-  console.log('  🧠 AI reason: calling DeepSeek Flash...')
+  console.log('  🧠 AI reason: calling DeepSeek V4 Pro...')
 
-  const prompt = `题目：${text}\n\n几何体类型：${parsed.type}\n已知参数：${JSON.stringify({ size: parsed.size, labels: parsed.labels, highlightLines: parsed.highlightLines, extraParams: parsed.extraParams })}\n\n请为这道题生成分步解题讲解。`
+  const prompt = buildReasonUserPrompt(text, parsed)
 
   const { text: responseText, tokensIn, tokensOut } = await callDeepSeek({
-    model: FLASH_MODEL,
+    model: PRO_MODEL,
     system: REASON_SYSTEM_PROMPT,
     user: prompt,
-    maxTokens: 4096,
+    maxTokens: 8192,
     temperature: 0.3,
+    thinking: true,
   })
 
   const response = extractJSON(responseText) as { steps?: Step[]; finalAnswer?: { expression: string; value: string } }
@@ -906,17 +1318,17 @@ export async function* solveCompleteStream(
       }
     }
 
-    // Layer 2: Stream AI Reasoning
-    const normalized = normalizeText(text)
-    const prompt = `题目：${text}\n\n几何体类型：${parsed.type}\n已知参数：${JSON.stringify({ size: parsed.size, labels: parsed.labels, highlightLines: parsed.highlightLines, extraParams: parsed.extraParams })}\n\n请为这道题生成分步解题讲解。`
+    // Layer 2: Stream AI Reasoning（多小问时按 part 拆分提示）
+    const prompt = buildReasonUserPrompt(text, parsed)
 
     let fullResponse = ''
     for await (const chunk of callDeepSeekStream({
-      model: FLASH_MODEL,
+      model: PRO_MODEL,
       system: REASON_SYSTEM_PROMPT,
       user: prompt,
-      maxTokens: 4096,
+      maxTokens: 8192,
       temperature: 0.3,
+      thinking: true,
     })) {
       if (typeof chunk === 'string') {
         fullResponse += chunk
@@ -929,26 +1341,35 @@ export async function* solveCompleteStream(
       }
     }
 
-    // Parse final JSON from response
-    // Find the JSON array — it starts after the reasoning section
-    const parsedSteps = extractJSON(fullResponse)
-    const steps = (Array.isArray(parsedSteps) ? parsedSteps : []).map((s: any, i: number) => ({
+    // Parse final JSON from response（兼容 steps 数组 或 { steps, finalAnswer }）
+    const parsedOut = extractJSON(fullResponse)
+    const rawSteps = Array.isArray(parsedOut)
+      ? parsedOut
+      : Array.isArray(parsedOut?.steps)
+        ? parsedOut.steps
+        : []
+    const steps = rawSteps.map((s: any, i: number) => ({
       step: s.step || i + 1,
       title: s.title || `步骤 ${i + 1}`,
       content: s.content || '',
       type: s.type || 'observation',
+      part: typeof s.part === 'number' ? s.part : undefined,
       sceneState: s.sceneState || undefined,
     }))
+
+    if (steps.length === 0) {
+      throw new Error('AI 未返回有效解题步骤')
+    }
 
     // Cache the result
     const normalized2 = normalizeText(text)
     cache.set(`reason_${hashText(normalized2)}`, steps)
 
     if (userId) {
-      trackCost(userId, FLASH_MODEL, 0, fullResponse.length) // approximate token count
+      trackCost(userId, PRO_MODEL, 0, fullResponse.length) // approximate token count
     }
 
-    yield { type: 'done', data: { parsed, steps } }
+    yield { type: 'done', data: { parsed, steps, finalAnswer: parsedOut?.finalAnswer ?? null } }
   } catch (err: any) {
     yield { type: 'error', data: { message: err.message || '推理失败' } }
   }
@@ -1151,4 +1572,89 @@ function generateLocalTemplateSteps(parsed: ParsedProblem): Step[] {
   }
 
   return templates[type] || templates.cube
+}
+
+// ═══════════════════════════════════════════════════════
+//  ExplainIR — 排组/概率 · 导数 · 圆锥曲线（Flash JSON）
+// ═══════════════════════════════════════════════════════
+
+const EXPLAIN_TOPIC_HINT: Record<string, string> = {
+  combo:
+    '排列组合与概率。重点讲清「为什么乘/加、有序还是无序」。problemType 用 multiply_add | perm_comb | classical_prob。',
+  derivative:
+    '导数。重点拆计算步骤与易错点（求导、切线、单调性）。problemType 用 deriv_poly | deriv_tangent | deriv_mono 或自拟短名。',
+  conic:
+    '圆锥曲线。重点认 a,b,c 与公式（椭圆减、双曲线加）。problemType 用 ellipse_e | hyper_focus | circle_r 或自拟短名。',
+  physics:
+    '高中物理力学。重点拆清公式选用与代入（匀变速、F=ma、功）。problemType 用 phys_kinematic | phys_newton | phys_work 或自拟短名。',
+}
+
+/**
+ * 生成与前端 LogicIR / ExplainIR 同形的步骤+思路树 JSON
+ */
+export async function generateExplainIR(
+  problemText: string,
+  topic: 'combo' | 'derivative' | 'conic' | 'physics',
+  _userId?: string
+): Promise<Record<string, unknown>> {
+  const cacheKey = hashText(`explain:${topic}:` + normalizeText(problemText))
+  const cached = cache.get(cacheKey)
+  if (cached) return cached
+
+  const system = `你是高中数学老师。只输出一个 JSON 对象，不要 markdown，不要其它文字。
+目标：把题目拆成「能看懂为什么」的步骤，并给出思路树节点。
+
+JSON 形状（字段名必须一致）:
+{
+  "version": 1,
+  "problemType": "短英文题型名",
+  "topic": "${topic}",
+  "goal": "题干或求什么",
+  "coreIdea": "一句话核心思路",
+  "rootId": "root",
+  "nodes": [
+    { "id": "root", "label": "节点文案", "kind": "choice", "children": ["a"], "why": "为什么" }
+  ],
+  "steps": [
+    {
+      "index": 1,
+      "title": "短标题",
+      "content": "学生可读讲解",
+      "why": "这一步为什么这样做（必填）",
+      "formula": "可选公式",
+      "highlightNodeIds": ["root"]
+    }
+  ],
+  "answer": "最终答案字符串"
+}
+
+规则:
+- steps 3~6 步；每步必须有 why
+- nodes 形成树：rootId 存在，children 只引用已有 id
+- highlightNodeIds 对应该步要高亮的节点
+- 数学用 Unicode（² ³ √ −）或纯文本分数 3/5
+- ${EXPLAIN_TOPIC_HINT[topic] || ''}`
+
+  const result = await callDeepSeek({
+    model: FLASH_MODEL,
+    system,
+    user: problemText,
+    maxTokens: 2000,
+    temperature: 0.2,
+  })
+
+  const ir = extractJSON(result.text)
+  if (!ir || typeof ir !== 'object') {
+    throw new Error('AI 未返回有效 ExplainIR')
+  }
+  if (!Array.isArray(ir.steps) || !Array.isArray(ir.nodes)) {
+    throw new Error('ExplainIR 缺少 steps/nodes')
+  }
+  ir.version = 1
+  ir.topic = topic
+  if (!ir.rootId) ir.rootId = 'root'
+  if (!ir.goal) ir.goal = problemText
+
+  cache.set(cacheKey, ir)
+  return ir
 }

@@ -193,11 +193,18 @@ export function parseProblemSync(text) {
   // 先尝试本地关键词匹配（快速路径）
   const quickResult = quickMatch(trimmed);
   if (quickResult && quickResult.confidence >= 0.7) {
+    quickResult.relations = extractRelations(trimmed);
+    const goal = extractGoalRatio(trimmed);
+    if (goal) quickResult.goal = goal;
     return quickResult;
   }
 
   // 返回增强的本地默认结果
-  return generateFallbackResult(trimmed);
+  const fallback = generateFallbackResult(trimmed);
+  fallback.relations = extractRelations(trimmed);
+  const goal = extractGoalRatio(trimmed);
+  if (goal) fallback.goal = goal;
+  return fallback;
 }
 
 /**
@@ -217,11 +224,18 @@ export async function parseProblem(text, apiKey, provider = "deepseek", model = 
 
   const quickResult = quickMatch(trimmed);
   if (quickResult && quickResult.confidence >= 0.7) {
+    quickResult.relations = extractRelations(trimmed);
+    const goal = extractGoalRatio(trimmed);
+    if (goal) quickResult.goal = goal;
     return quickResult;
   }
 
   if (!apiKey || apiKey.trim() === "") {
-    return generateFallbackResult(trimmed);
+    const fallback = generateFallbackResult(trimmed);
+    fallback.relations = extractRelations(trimmed);
+    const goal = extractGoalRatio(trimmed);
+    if (goal) fallback.goal = goal;
+    return fallback;
   }
 
   const { text: rawText } = await callAI({
@@ -405,67 +419,150 @@ function detectSubType(text, type) {
   return "general";
 }
 
-export function quickMatch(text) {
-  const t = text.toLowerCase();
+// ── 边名提取（通用，支持Unicode下标） ──
+// 从题目文本提取被提及的线段（如 "体对角线AG" → {from:'A',to:'G',label:'AG'}）
+export function extractEdgeRefs(text) {
+  const lines = [];
+  const seen = new Set();
 
-  // ── 边名提取（通用，支持Unicode下标） ──
-  function extractEdgeRefs(text) {
-    const lines = [];
-    const seen = new Set();
-
-    // 模式1: 关键词后跟边名（如 "异面直线 A₁B 与 B₁C"）
-    const pattern1 =
-      /(?:对角线|异面直线|线段|求|求长|计算|证明|夹角|与|等于|=|已知)\s*([A-Za-z][₀₁₂₃₄₅₆₇₈₉'ᵢ]*(?:[A-Za-z][₀₁₂₃₄₅₆₇₈₉'ᵢ]*)?)/g;
-    let m;
-    while ((m = pattern1.exec(text)) !== null) {
-      const raw = m[1].replace(/\s/g, "");
-      const normalized = normalizeSubscripts(raw);
-      if (normalized.length >= 2 && !seen.has(normalized)) {
-        seen.add(normalized);
-        // 标签，尝试分割：A₁B → 找出前缀和后缀
-        const tokens = splitEdgeTokens(normalized);
-        if (tokens) {
-          lines.push({
-            from: tokens[0],
-            to: tokens[1],
-            label: normalized,
-            reason: "题目提及",
-          });
-        }
+  // 模式1: 关键词后跟边名（如 "异面直线 A₁B 与 B₁C"）
+  const pattern1 =
+    /(?:对角线|异面直线|线段|求|求长|计算|证明|夹角|与|等于|=|已知)\s*([A-Za-z][₀₁₂₃₄₅₆₇₈₉'ᵢ]*(?:[A-Za-z][₀₁₂₃₄₅₆₇₈₉'ᵢ]*)?)/g;
+  let m;
+  while ((m = pattern1.exec(text)) !== null) {
+    const raw = m[1].replace(/\s/g, "");
+    const normalized = normalizeSubscripts(raw);
+    if (normalized.length >= 2 && !seen.has(normalized)) {
+      seen.add(normalized);
+      const tokens = splitEdgeTokens(normalized);
+      if (tokens) {
+        lines.push({ from: tokens[0], to: tokens[1], label: normalized, reason: "题目提及" });
       }
-    }
-
-    // 模式2: 通用相邻字母对（回退）
-    if (lines.length === 0) {
-      const pattern2 = /([A-Za-z])[₀₁₂₃₄₅₆₇₈₉]*([A-Za-z])/g;
-      while ((m = pattern2.exec(text)) !== null) {
-        const a = normalizeSubscripts(m[1]);
-        const b = normalizeSubscripts(m[2]);
-        const label = a + b;
-        if (!seen.has(label)) {
-          seen.add(label);
-          lines.push({ from: a, to: b, label, reason: "题目提及" });
-        }
-      }
-    }
-
-    return lines;
-
-    // 辅助：将规范化边名分割为两个 token
-    // "A1B" → ["A1", "B"], "AB" → ["A", "B"], "B1C" → ["B1", "C"]
-    function splitEdgeTokens(s) {
-      if (s.length < 2) return null;
-      // 尝试匹配首字符+数字（如A1）作为第一个 token
-      if (s.length >= 3 && /\d/.test(s[1])) {
-        return [s[0] + s[1], s.slice(2)];
-      }
-      // 简单两个字符
-      if (s.length === 2) {
-        return [s[0], s[1]];
-      }
-      return null;
     }
   }
+
+  // 模式2: 通用相邻字母对（回退）
+  if (lines.length === 0) {
+    const pattern2 = /([A-Za-z])[₀₁₂₃₄₅₆₇₈₉]*([A-Za-z])/g;
+    while ((m = pattern2.exec(text)) !== null) {
+      const a = normalizeSubscripts(m[1]);
+      const b = normalizeSubscripts(m[2]);
+      const label = a + b;
+      if (!seen.has(label)) {
+        seen.add(label);
+        lines.push({ from: a, to: b, label, reason: "题目提及" });
+      }
+    }
+  }
+
+  return lines;
+}
+
+// 辅助：将规范化边名分割为两个 token
+// "A1B" → ["A1", "B"], "AB" → ["A", "B"], "B1C" → ["B1", "C"]
+function splitEdgeTokens(s) {
+  if (s.length < 2) return null;
+  if (s.length >= 3 && /\d/.test(s[1])) {
+    return [s[0] + s[1], s.slice(2)];
+  }
+  if (s.length === 2) {
+    return [s[0], s[1]];
+  }
+  return null;
+}
+
+/**
+ * 从题目文本提取几何关系（文字 → relation 字符串，不计算坐标）
+ * 输出格式与 SceneIRBuilder convertRelationsToAnnotations 对齐：
+ *   "E midpoint AD" / "F on PA" / "AB parallel CD" / "PC parallel plane BEF"
+ *   "AB perpendicular CD" / "G intersection PC BEF" / "O intersection AC BD"
+ */
+export function extractRelations(text) {
+  if (!text) return [];
+  const relations = [];
+  const seen = new Set();
+  const add = (r) => {
+    if (!seen.has(r)) {
+      seen.add(r);
+      relations.push(r);
+    }
+  };
+  const L = "[A-Z][0-9]*'?"; // 单点标签（A、A1、A'）
+  const SEG = `${L}${L}`; // 线段（两点）
+  const PLANE = `${L}${L}${L}`; // 平面（三点）
+
+  // 1. 中点："E 是 AD 中点" / "M 是 AB 的中点" / "M 为 AB 中点"
+  const midRe = new RegExp(`(${L})\\s*(?:是|为|作)\\s*(${SEG})\\s*的?中点`, "g");
+  let m;
+  while ((m = midRe.exec(text)) !== null) {
+    add(`${m[1]} midpoint ${m[2]}`);
+  }
+
+  // 1b. 点在线段上："F 在 PA 上" / "F 在棱 PA 上" / "F 位于线段 PA 上"
+  const onRe = new RegExp(`(${L})\\s*(?:在|位于)\\s*(?:棱|边|线段|直线)?\\s*(${SEG})\\s*上`, "g");
+  while ((m = onRe.exec(text)) !== null) {
+    add(`${m[1]} on ${m[2]}`);
+  }
+
+  // 2a. 线面平行："PC ∥ 平面 BEF" / "PC 平行于平面 BEF"
+  const paraPlaneRe = new RegExp(`(${SEG})\\s*(?:平行于|平行|∥)\\s*平面\\s*(${PLANE})`, "g");
+  while ((m = paraPlaneRe.exec(text)) !== null) {
+    add(`${m[1]} parallel plane ${m[2]}`);
+  }
+  // 2b. 线线平行："AB 平行 CD" / "AB ∥ CD"
+  const paraLineRe = new RegExp(`(${SEG})\\s*(?:平行于|平行|∥)\\s*(${SEG})(?!\\s*平面)`, "g");
+  while ((m = paraLineRe.exec(text)) !== null) {
+    add(`${m[1]} parallel ${m[2]}`);
+  }
+
+  // 3a. 线面垂直："PC 垂直 平面 ABC" / "PA⊥底面ABCD"（教材常用「底面」）
+  const perpPlaneRe = new RegExp(
+    `(${SEG})\\s*(?:垂直于|垂直|⟂|⊥)\\s*(?:底面|平面)\\s*([A-Z][0-9]*'?(?:[A-Z][0-9]*'?){2,3})`,
+    "g"
+  );
+  while ((m = perpPlaneRe.exec(text)) !== null) {
+    add(`${m[1]} perpendicular plane ${m[2]}`);
+  }
+  // 3b. 线线垂直："AB 垂直 CD"（支持 ⟂/⊥；排除已匹配的「垂直…平面/底面」）
+  const perpLineRe = new RegExp(
+    `(${SEG})\\s*(?:垂直于|垂直|⟂|⊥)\\s*(${SEG})(?!\\s*(?:底面|平面))`,
+    "g"
+  );
+  while ((m = perpLineRe.exec(text)) !== null) {
+    add(`${m[1]} perpendicular ${m[2]}`);
+  }
+
+  // 4a. 线面交点："PC 与平面 BEF 交于 G"
+  const intPlaneRe = new RegExp(`(${SEG})\\s*与\\s*平面\\s*(${PLANE})\\s*(?:交于|相交于|交点是|交点为)\\s*(${L})`, "g");
+  while ((m = intPlaneRe.exec(text)) !== null) {
+    add(`${m[3]} intersection ${m[1]} ${m[2]}`);
+  }
+  // 4b. 线线交点："AC 与 BD 交于 O" / "AC 与 BD 相交于 O"
+  const intLineRe = new RegExp(`(${SEG})\\s*与\\s*(${SEG})\\s*(?:交于|相交于)\\s*(${L})`, "g");
+  while ((m = intLineRe.exec(text)) !== null) {
+    add(`${m[3]} intersection ${m[1]} ${m[2]}`);
+  }
+
+  return relations;
+}
+
+/**
+ * 从题目文本提取目标比例（"求AP/AF的值" / "求 AP:AF"）
+ * @returns {{type:'ratio', subjects:[string,string]}|null}
+ */
+export function extractGoalRatio(text) {
+  if (!text) return null;
+  const L = "[A-Z][0-9]*'?";
+  const SEG = `${L}${L}`;
+  const m = text.match(
+    new RegExp(`(?:求|证明?|计算)[^A-Z]{0,10}(${SEG})\\s*[/∶:：比]\\s*(${SEG})`)
+  );
+  if (!m) return null;
+  return { type: "ratio", subjects: [m[1], m[2]] };
+}
+
+export function quickMatch(text) {
+  const t = text.toLowerCase();
 
   // 正方体
   const cubeMatch = t.match(/正方体|立方体|cube/);
@@ -763,6 +860,37 @@ export function quickMatch(text) {
     };
   }
 
+  // 圆台
+  const frustumMatch = t.match(/圆台|frustum/);
+  if (frustumMatch) {
+    const upperMatch = t.match(/上底面?半径[为是]?\s*(\d+(?:\.\d+)?)/);
+    const lowerMatch = t.match(/下底面?半径[为是]?\s*(\d+(?:\.\d+)?)/);
+    const hMatch = t.match(/高[为是]?\s*(\d+(?:\.\d+)?)/);
+    const sizeMatch = t.match(/半径[为是]?\s*(\d+(?:\.\d+)?)/);
+    const upperRadius = upperMatch
+      ? parseFloat(upperMatch[1])
+      : sizeMatch
+        ? parseFloat(sizeMatch[1])
+        : 2;
+    const lowerRadius = lowerMatch ? parseFloat(lowerMatch[1]) : undefined;
+    const height = hMatch ? parseFloat(hMatch[1]) : undefined;
+    const size = upperRadius; // 兼容 solveFrustum：R = size 优先
+    return {
+      type: "circularFrustum",
+      size,
+      subType: "default",
+      labels: ["O", "O'", "A", "B", "C", "D", "A'", "B'", "C'", "D'"],
+      highlightLines: [],
+      params: { size, upperRadius, lowerRadius, height },
+      annotations: [],
+      explanation:
+        `圆台，上底半径 ${upperRadius}` +
+        (lowerRadius != null ? `，下底半径 ${lowerRadius}` : "") +
+        (height != null ? `，高 ${height}` : ""),
+      confidence: upperMatch ? 0.85 : 0.6,
+    };
+  }
+
   return null; // 需要 API 解析
 }
 
@@ -1057,15 +1185,25 @@ function generateFallbackResult(text) {
   }
 
   if (/圆台|frustum/.test(t)) {
+    const upperMatch = t.match(/上底面?半径[为是]?\s*(\d+(?:\.\d+)?)/);
+    const lowerMatch = t.match(/下底面?半径[为是]?\s*(\d+(?:\.\d+)?)/);
+    const hMatch = t.match(/高[为是]?\s*(\d+(?:\.\d+)?)/);
+    const upperRadius = upperMatch ? parseFloat(upperMatch[1]) : size;
+    const lowerRadius = lowerMatch ? parseFloat(lowerMatch[1]) : undefined;
+    const height = hMatch ? parseFloat(hMatch[1]) : undefined;
     return {
       type: "circularFrustum",
-      size,
+      size: upperRadius, // 兼容 solveFrustum：R = size 优先
       subType: "default",
-      labels: ["O", "O'", "A", "B", "C", "D"],
+      labels: ["O", "O'", "A", "B", "C", "D", "A'", "B'", "C'", "D'"],
       highlightLines: [],
-      params: { size },
+      params: { size: upperRadius, upperRadius, lowerRadius, height },
       annotations: [],
-      explanation: `圆台（本地解析）`,
+      explanation:
+        `圆台，上底半径 ${upperRadius}` +
+        (lowerRadius != null ? `，下底半径 ${lowerRadius}` : "") +
+        (height != null ? `，高 ${height}` : "") +
+        "（本地解析）",
       confidence: 0.7,
     };
   }

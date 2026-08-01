@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>几何维度 — 3D AI 几何解题</title>
-    <meta name="description" content="AI 几何讲题助手：输入一道几何题，自动生成 3D 可视化分步讲解。支持正方体、球体、圆柱、圆锥、棱锥、棱柱等所有立体几何题型。" />
+    <title>理解引擎 — 把抽象知识讲透</title>
+    <meta name="description" content="理解引擎：帮助学生真正理解抽象知识。当前开放立体几何 — 输入题目，自动构图、推理与逐步讲解。后续将扩展物理、化学等科目。" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="几何维度" />
+    <meta name="apple-mobile-web-app-title" content="理解引擎" />
 
     <!-- ══════════════════════════════════════════════
          Security headers (GitHub Pages can't set HTTP headers,
@@ -19,13 +19,13 @@
     <meta http-equiv="Content-Security-Policy"
           content="
             default-src 'self';
-            script-src 'self' 'unsafe-inline' blob: https://js.stripe.com;
+            script-src 'self' 'unsafe-inline' blob: https://js.stripe.com https://cdn.jsdelivr.net;
             style-src 'self' 'unsafe-inline';
             img-src 'self' data: blob: https:;
             font-src 'self';
             connect-src 'self' https: wss: ws: http://localhost:*;
             frame-src 'self' https://js.stripe.com https://hooks.stripe.com;
-            worker-src 'self' blob:;
+            worker-src 'self' blob: https://cdn.jsdelivr.net;
             form-action 'self';
             base-uri 'self';
             object-src 'none';
@@ -37,7 +37,7 @@
     <!-- Restrict referrer information -->
     <meta name="referrer" content="strict-origin-when-cross-origin" />
 
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='6' y='4' width='16' height='16' fill='none' stroke='%234A90E2' stroke-width='2' opacity='0.5'/><rect x='10' y='8' width='16' height='16' fill='none' stroke='%234A90E2' stroke-width='2.5'/><line x1='6' y1='4' x2='10' y2='8' stroke='%234A90E2' stroke-width='1.5'/><line x1='22' y1='4' x2='26' y2='8' stroke='%234A90E2' stroke-width='1.5'/><line x1='6' y1='20' x2='10' y2='24' stroke='%234A90E2' stroke-width='1.5'/><line x1='22' y1='20' x2='26' y2='24' stroke='%234A90E2' stroke-width='1.5'/></svg>" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <style>
       /* ══════════════════════════════════════════════════
          Critical inline styles — no external CSS needed
@@ -225,7 +225,7 @@
         function buildLoader() {
           var div = document.createElement('div');
           div.id = 'mathviz-boot-loader';
-          div.innerHTML = '<div class="boot-spinner"></div><div class="boot-text">几何维度加载中…</div>';
+          div.innerHTML = '<div class="boot-spinner"></div><div class="boot-text">理解引擎加载中…</div>';
           document.body.appendChild(div);
           loaderEl = div;
         }
@@ -246,7 +246,7 @@
           var reloadBtn = div.querySelector('#mathviz-boot-reload-btn');
           if (reloadBtn) reloadBtn.addEventListener('click', function() { location.reload(); });
           errorEl = div;
-          div.classList.add('show');
+          // 仅预创建 DOM，不立刻 show；由 showError / 超时路径再显示
         }
 
         function init() {
@@ -280,7 +280,9 @@
         }
 
         // Catch script load errors (e.g. 404 on main JS bundle)
+        // App 已挂载后忽略：OCR 等可选 CDN 脚本失败不得盖住整页
         window.addEventListener('error', function(e) {
+          if (mounted || window.__MATHVIZ_MOUNTED__ || errored) return;
           if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
             showError('核心资源加载失败，请刷新重试。');
           }

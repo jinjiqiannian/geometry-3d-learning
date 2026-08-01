@@ -1,0 +1,867 @@
+/* LogicPanel — 排组/概率逻辑可视化 MVP */
+
+.logic-panel {
+  --lp-ink: #1a1a1a;
+  --lp-muted: #5c574e;
+  --lp-line: #e4dfd5;
+  --lp-paper: #fffcf7;
+  --lp-bg: #f3f1ec;
+  --lp-accent: #0f6b5c;
+  --lp-accent-soft: #e6f2ef;
+  --lp-why: #8a4b1a;
+  --lp-font: "Source Han Serif SC", "Noto Serif SC", "Songti SC", Georgia, serif;
+  --lp-sans: "DM Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  padding: 1.25rem 1.5rem 2rem;
+  background: var(--lp-bg);
+  color: var(--lp-ink);
+  font-family: var(--lp-sans);
+}
+
+.logic-panel-kicker {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lp-muted);
+}
+
+.logic-panel-title {
+  margin: 0.35rem 0 1rem;
+  font-family: var(--lp-font);
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.logic-compose {
+  margin-bottom: 1rem;
+}
+
+.logic-compose-input {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 4.5rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--lp-line);
+  background: var(--lp-paper);
+  color: var(--lp-ink);
+  font-family: var(--lp-sans);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  border-radius: 2px;
+}
+
+.logic-compose-input:focus {
+  outline: 2px solid var(--lp-accent-soft);
+  border-color: var(--lp-accent);
+}
+
+.logic-compose-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.logic-compose-submit {
+  border: none;
+  background: var(--lp-accent);
+  color: #fff;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.logic-compose-hint {
+  font-size: 0.75rem;
+  color: var(--lp-muted);
+}
+
+.logic-compose-error {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: #8b2e2e;
+}
+
+.logic-type-label {
+  font-size: 0.75rem;
+  color: var(--lp-muted);
+  align-self: center;
+  margin-right: 0.25rem;
+}
+
+.logic-examples-wrap {
+  margin-bottom: 0.5rem;
+}
+
+.logic-examples-wrap .logic-type-label {
+  display: block;
+  margin: 0 0 0.5rem;
+}
+
+/* 与几何页一致的样例卡片网格 */
+.logic-examples-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+@media (max-width: 720px) {
+  .logic-examples-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.logic-example-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--lp-line);
+  border-radius: 2px;
+  background: var(--lp-paper);
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--lp-muted);
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.logic-example-card:hover,
+.logic-example-card.is-active {
+  border-color: var(--lp-accent);
+  background: var(--lp-accent-soft);
+  color: var(--lp-accent);
+}
+
+.logic-example-card-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: inherit;
+}
+
+.logic-example-card-hint {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: #8a847a;
+}
+
+.logic-example-card:hover .logic-example-card-hint,
+.logic-example-card.is-active .logic-example-card-hint {
+  color: #5a8f84;
+}
+
+.logic-empty-hint {
+  margin: 1.5rem 0 0;
+  font-size: 0.9rem;
+  color: var(--lp-muted);
+  line-height: 1.5;
+}
+
+.logic-type-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.logic-type-tab {
+  border: 1px solid var(--lp-line);
+  background: var(--lp-paper);
+  color: var(--lp-muted);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.logic-type-tab.is-active {
+  border-color: var(--lp-accent);
+  color: var(--lp-accent);
+  background: var(--lp-accent-soft);
+}
+
+.logic-goal {
+  margin: 0 0 0.75rem;
+  padding: 0.85rem 1rem;
+  background: var(--lp-paper);
+  border-left: 3px solid var(--lp-accent);
+  font-family: var(--lp-font);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.logic-core {
+  margin: 0 0 1.25rem;
+  font-size: 0.95rem;
+  color: var(--lp-muted);
+  line-height: 1.5;
+}
+
+.logic-core span {
+  display: inline-block;
+  margin-right: 0.5rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: var(--lp-accent);
+  background: var(--lp-accent-soft);
+  vertical-align: middle;
+}
+
+.logic-body {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(260px, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+  min-height: 0;
+}
+
+@media (max-width: 860px) {
+  .logic-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.logic-section-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--lp-muted);
+}
+
+.logic-steps,
+.logic-viz {
+  background: var(--lp-paper);
+  border: 1px solid var(--lp-line);
+  padding: 1rem;
+  min-height: 280px;
+}
+
+.logic-step-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.logic-step {
+  display: flex;
+  gap: 0.65rem;
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 0.65rem 0.5rem;
+  cursor: pointer;
+  color: inherit;
+  border-radius: 2px;
+}
+
+.logic-step:hover {
+  background: var(--lp-bg);
+}
+
+.logic-step.is-current {
+  border-color: var(--lp-accent);
+  background: var(--lp-accent-soft);
+}
+
+.logic-step.is-done {
+  opacity: 0.72;
+}
+
+.logic-play-btn {
+  border: 1px solid var(--lp-accent);
+  background: var(--lp-accent);
+  color: #fff;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.logic-play-btn.is-playing {
+  background: var(--lp-paper);
+  color: var(--lp-accent);
+}
+
+.logic-film-caption {
+  margin-bottom: 0.85rem;
+  padding: 0.75rem 0.85rem;
+  border-left: 3px solid var(--lp-why);
+  background: linear-gradient(90deg, #faf6f0, transparent);
+  animation: logic-film-in 0.45s ease both;
+}
+
+.logic-film-beat {
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--lp-muted);
+}
+
+.logic-film-why {
+  margin: 0;
+  font-family: var(--lp-font);
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: var(--lp-why);
+}
+
+.logic-film-formula {
+  display: inline-block;
+  margin-top: 0.4rem;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.85rem;
+  background: var(--lp-bg);
+  border: 1px solid var(--lp-line);
+}
+
+.logic-grow-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.25rem;
+  margin-bottom: 1rem;
+  padding: 0.65rem 0.75rem;
+  background: var(--lp-accent-soft);
+  border: 1px solid #b7d9d1;
+  font-family: var(--lp-font);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--lp-accent);
+}
+
+.logic-grow-factor {
+  display: inline-flex;
+  align-items: baseline;
+  animation: logic-factor-pop 0.4s ease both;
+}
+
+.logic-grow-op {
+  margin: 0 0.2rem;
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+.logic-grow-num {
+  min-width: 1.2em;
+  text-align: center;
+}
+
+.logic-grow-product {
+  margin-left: 0.15rem;
+  animation: logic-factor-pop 0.45s 0.1s ease both;
+}
+
+@keyframes logic-film-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes logic-factor-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes logic-node-grow {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.logic-step-idx {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--lp-accent);
+  border: 1px solid var(--lp-accent);
+  border-radius: 50%;
+}
+
+.logic-step-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.logic-step-main strong {
+  display: block;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.logic-step-main p {
+  margin: 0 0 0.35rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--lp-ink);
+}
+
+.logic-step-main .logic-step-why {
+  color: var(--lp-why);
+  font-size: 0.8125rem;
+}
+
+.logic-step-formula {
+  display: inline-block;
+  margin-top: 0.15rem;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.8rem;
+  background: var(--lp-bg);
+  border: 1px solid var(--lp-line);
+}
+
+.logic-step-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--lp-line);
+}
+
+.logic-step-nav button {
+  border: 1px solid var(--lp-line);
+  background: var(--lp-bg);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.logic-step-nav button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.logic-answer {
+  margin-left: auto;
+  font-family: var(--lp-font);
+  font-weight: 600;
+  color: var(--lp-accent);
+}
+
+/* Tree */
+.logic-tree-root,
+.logic-tree-branch {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.logic-tree-branch {
+  margin-left: 1rem;
+  padding-left: 0.85rem;
+  border-left: 2px solid var(--lp-line);
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.logic-tree-card {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--lp-line);
+  background: var(--lp-bg);
+  border-radius: 2px;
+  transition: border-color 0.25s ease, background 0.25s ease, opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.logic-tree-node.is-pending > .logic-tree-card {
+  opacity: 0.28;
+  filter: grayscale(0.4);
+  transform: scale(0.98);
+}
+
+.logic-tree-node.is-revealed > .logic-tree-card {
+  animation: logic-node-grow 0.4s ease both;
+}
+
+.logic-tree-node.is-on > .logic-tree-card {
+  border-color: var(--lp-accent);
+  background: var(--lp-accent-soft);
+  box-shadow: 0 0 0 1px var(--lp-accent);
+  opacity: 1;
+  filter: none;
+  transform: scale(1);
+}
+
+.logic-tree-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.logic-tree-count {
+  margin-left: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--lp-accent);
+}
+
+.logic-tree-why {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--lp-why);
+}
+
+/* ── 具体演示舞台 ─────────────────────────────── */
+
+.demo-stage {
+  margin-bottom: 1rem;
+  padding: 0.9rem;
+  border: 1px solid var(--lp-line);
+  background: linear-gradient(165deg, #fff 0%, #f7f4ee 100%);
+  animation: logic-film-in 0.4s ease both;
+}
+
+.demo-stage-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--lp-muted);
+}
+
+.demo-people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
+.demo-person {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid #c4bdb0;
+  background: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--lp-ink);
+  transition: transform 0.35s ease, opacity 0.35s ease, border-color 0.35s ease,
+    background 0.35s ease;
+}
+
+.demo-person.is-idle {
+  opacity: 1;
+}
+
+.demo-person.is-used {
+  opacity: 0.25;
+  transform: scale(0.85);
+}
+
+.demo-person.is-picked {
+  border-color: var(--lp-accent);
+  background: var(--lp-accent-soft);
+  color: var(--lp-accent);
+  transform: translateY(-4px);
+}
+
+.demo-person.is-folded {
+  transform: scale(0.9);
+}
+
+.demo-person--seat {
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 1rem;
+  margin: 0.35rem auto;
+}
+
+.demo-person--seat.is-ghost {
+  opacity: 0.35;
+  border-style: dashed;
+}
+
+.demo-person--seat.is-arrive {
+  animation: logic-factor-pop 0.45s ease both;
+  border-color: var(--lp-accent);
+  background: var(--lp-accent-soft);
+  color: var(--lp-accent);
+}
+
+.demo-seats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.demo-seat {
+  min-width: 5.5rem;
+  padding: 0.55rem 0.65rem;
+  text-align: center;
+  border: 1px solid var(--lp-line);
+  background: var(--lp-paper);
+  border-radius: 2px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.demo-seat.is-filled {
+  border-color: var(--lp-accent);
+  box-shadow: 0 0 0 1px var(--lp-accent-soft);
+}
+
+.demo-seat-role {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--lp-muted);
+}
+
+.demo-seat-hint {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--lp-accent);
+}
+
+.demo-seat-times {
+  font-family: var(--lp-font);
+  font-size: 1.5rem;
+  color: var(--lp-accent);
+  font-weight: 600;
+}
+
+.demo-perm-result {
+  margin: 0.85rem 0 0;
+  text-align: center;
+  font-family: var(--lp-font);
+  font-size: 1.15rem;
+  color: var(--lp-accent);
+  animation: logic-film-in 0.4s ease both;
+}
+
+.demo-perm-result span {
+  display: block;
+  margin-top: 0.25rem;
+  font-family: var(--lp-sans);
+  font-size: 0.75rem;
+  color: var(--lp-why);
+  font-weight: 400;
+}
+
+/* 组合 */
+.demo-comb-board {
+  margin-top: 0.75rem;
+  min-height: 5.5rem;
+  position: relative;
+}
+
+.demo-pair,
+.demo-set {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.demo-pair.is-show,
+.demo-set.is-show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.demo-pair.is-hide {
+  opacity: 0;
+  position: absolute;
+  inset: 0;
+}
+
+.demo-pair-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--lp-muted);
+  margin-bottom: 0.35rem;
+  text-align: center;
+}
+
+.demo-pair-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.demo-chip {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--lp-line);
+  background: #fff;
+  font-size: 0.85rem;
+  animation: logic-factor-pop 0.4s ease both;
+}
+
+.demo-pair-note {
+  display: block;
+  margin-top: 0.4rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--lp-why);
+}
+
+.demo-set-bubble {
+  margin: 0 auto;
+  width: fit-content;
+  padding: 0.65rem 1.1rem;
+  border: 2px solid var(--lp-accent);
+  background: var(--lp-accent-soft);
+  font-family: var(--lp-font);
+  font-size: 1.15rem;
+  color: var(--lp-accent);
+  animation: logic-factor-pop 0.45s ease both;
+}
+
+/* 概率抽球 */
+.demo-bag {
+  padding: 0.65rem;
+  border: 2px dashed #c4bdb0;
+  border-radius: 4px;
+  background: #faf8f4;
+  text-align: center;
+}
+
+.demo-bag-label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--lp-muted);
+  margin-bottom: 0.4rem;
+}
+
+.demo-balls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: center;
+  min-height: 2rem;
+}
+
+.demo-ball {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  display: inline-block;
+  transition: transform 0.5s ease, opacity 0.45s ease;
+}
+
+.demo-ball--red {
+  background: #c44536;
+}
+
+.demo-ball--white {
+  background: #f5f2ea;
+  border-color: #b0a898;
+}
+
+.demo-ball.is-drawn {
+  opacity: 0;
+  transform: translateY(-18px) scale(0.4);
+}
+
+.demo-ball.is-empty {
+  opacity: 0.2;
+  border-style: dashed;
+  background: transparent;
+}
+
+.demo-draws {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.85rem;
+}
+
+.demo-draw-slot {
+  text-align: center;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--lp-line);
+  background: #fff;
+  min-width: 3.5rem;
+  opacity: 0.55;
+  transition: opacity 0.3s ease, border-color 0.3s ease;
+}
+
+.demo-draw-slot.is-filled {
+  opacity: 1;
+  border-color: var(--lp-accent);
+}
+
+.demo-draw-label {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--lp-muted);
+  margin-bottom: 0.25rem;
+}
+
+.demo-draw-frac {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--lp-accent);
+  font-weight: 600;
+}
+
+.demo-draw-mul {
+  font-family: var(--lp-font);
+  font-size: 1.25rem;
+  color: var(--lp-accent);
+}
+
+.demo-draw-ans {
+  font-family: var(--lp-font);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--lp-accent);
+  animation: logic-factor-pop 0.4s ease both;
+}
+
+.demo-prob[data-phase='draw1'] .demo-ball.is-slot1,
+.demo-prob[data-phase='draw2'] .demo-ball.is-slot1,
+.demo-prob[data-phase='done'] .demo-ball.is-slot1 {
+  /* drawn state handled by is-drawn */
+}

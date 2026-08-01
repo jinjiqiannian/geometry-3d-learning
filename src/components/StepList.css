@@ -10,3 +10,24 @@
   flex-direction: column;
   gap: 1px;
 }
+
+.step-list-item {
+  position: relative;
+}
+
+/* 原始步骤索引锚点（供 scrollIntoView 定位，不占布局） */
+.step-index-anchor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* 合并后的多行 content / formula */
+.step-list .step-content,
+.step-list .step-formula {
+  white-space: pre-line;
+}

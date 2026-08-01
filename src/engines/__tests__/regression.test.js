@@ -27,6 +27,11 @@ describe('Regression Tests', () => {
       planes: [
         { label: 'BEF', points: ['B', 'E', 'F'] },
       ],
+      relations: [
+        'E midpoint AD',
+        'F on PA',
+      ],
+      importantLines: ['PC'],
     }
 
     const steps = [
@@ -132,6 +137,9 @@ describe('Regression Tests', () => {
         { from: 'B1', to: 'C1', label: 'B1C1' },
         { from: 'C1', to: 'D1', label: 'C1D1' },
         { from: 'D1', to: 'A1', label: 'D1A1' },
+      ],
+      relations: [
+        'M midpoint AA1',
       ],
     }
 
