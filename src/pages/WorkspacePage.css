@@ -144,21 +144,27 @@
 
 .wp-main--mobile .wp-canvas-col {
   width: 100%;
-  height: 40vh;
-  min-height: 260px;
-  max-height: 50vh;
+  height: 180px;
+  min-height: 160px;
+  max-height: 200px;
   flex-shrink: 0;
 }
 
+/* 手势提示改到角落，避免压住讲解区 */
 .wp-main--mobile .wp-canvas-col::after {
-  content: '双指缩放 · 单指旋转';
+  content: '拖动旋转';
   position: absolute;
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 8px;
+  right: 8px;
+  bottom: auto;
+  left: auto;
+  transform: none;
   font-size: 10px;
-  color: var(--text-muted);
-  opacity: 0.5;
+  color: #5c574e;
+  background: rgba(255, 252, 247, 0.88);
+  padding: 2px 6px;
+  border-radius: 2px;
+  opacity: 0.85;
   pointer-events: none;
   z-index: 10;
 }
@@ -700,6 +706,12 @@
     overflow: visible;
   }
 
+  /* 解题中隐藏学科 Tab，把高度留给 3D + 步骤 */
+  .workspace-page--solving .wp-domain-bar,
+  .workspace-page--solving .wp-subject-bar {
+    display: none;
+  }
+
   .wp-combo-shell {
     overflow: visible;
     flex: 1 0 auto;
@@ -721,22 +733,28 @@
     min-height: 0;
     height: auto;
     overflow: visible;
+    padding-bottom: 88px; /* 底部导航 + 安全区 */
   }
 
-  /* 立体几何：3D 在上方，步骤在下方 */
+  /* 竖屏：小高度 3D 置顶，步骤占主要阅读区 */
   .wp-main--mobile.wp-main--geo .wp-canvas-col:not(.wp-canvas--hidden) {
     order: -1;
     width: 100%;
-    height: 36vh;
-    min-height: 200px;
-    max-height: 40vh;
+    height: 180px;
+    min-height: 160px;
+    max-height: 200px;
     flex-shrink: 0;
-    touch-action: none; /* 仅画布内手势，不抢整页滑动 */
+    touch-action: none;
+    border-bottom: 1px solid #e4dfd5;
   }
 
   .wp-solve-bar {
     padding: 8px 12px;
     gap: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #fffcf7;
   }
 
   .wp-solve-back {
@@ -760,6 +778,52 @@
     padding: 8px 12px;
     font-size: 0.8125rem;
     min-height: 40px;
+  }
+}
+
+/* 横屏手机：左右分栏，避免 3D 压扁步骤 */
+@media (max-width: 900px) and (orientation: landscape) {
+  .workspace-page--solving .wp-domain-bar,
+  .workspace-page--solving .wp-subject-bar {
+    display: none;
+  }
+
+  .workspace-page--solving {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .workspace-page--solving .wp-main--mobile.wp-main--geo {
+    flex-direction: row;
+    height: calc(100dvh - 48px);
+    overflow: hidden;
+  }
+
+  .workspace-page--solving .wp-main--mobile.wp-main--geo .wp-canvas-col:not(.wp-canvas--hidden) {
+    order: 0;
+    width: 42%;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    border-bottom: none;
+    border-right: 1px solid #e4dfd5;
+  }
+
+  .workspace-page--solving .wp-main--mobile.wp-main--geo .wp-canvas-col::after {
+    display: none;
+  }
+
+  .workspace-page--solving .wp-main--mobile.wp-main--geo .wp-explain-col {
+    width: 58%;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 72px;
+  }
+
+  .workspace-page--solving .wp-solve-bar {
+    position: sticky;
+    top: 0;
   }
 }
 

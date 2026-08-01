@@ -226,6 +226,7 @@
     overflow: visible;
     border-left: none;
     border-top: none;
+    padding-bottom: 8px;
   }
 
   .ep-step-timeline-section,
@@ -242,6 +243,32 @@
   .ep-problem-text {
     font-size: 0.9rem;
     word-break: break-word;
+  }
+
+  .playback-controls {
+    position: sticky;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    z-index: 15;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04);
+  }
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .explanation-panel {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .ep-step-timeline-section,
+  .ep-steps-wrap {
+    overflow: visible;
+  }
+
+  .playback-controls {
+    position: sticky;
+    bottom: 0;
+    z-index: 15;
   }
 }
 

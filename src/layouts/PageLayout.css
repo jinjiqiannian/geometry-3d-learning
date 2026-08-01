@@ -61,6 +61,23 @@
   }
 }
 
+/* 横屏解题：重新锁视口，才能左右分栏滚动讲解 */
+@media (max-width: 900px) and (orientation: landscape) {
+  .page-layout:not(.page-layout--facade):has(.workspace-page--solving) {
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .page-layout:not(.page-layout--facade):has(.workspace-page--solving) .page-main,
+  .page-layout:not(.page-layout--facade):has(.workspace-page--solving) .page-transition {
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    padding-bottom: 0;
+  }
+}
+
 /* ── Page transition animation ───────────────────────── */
 .page-transition {
   flex: 1;

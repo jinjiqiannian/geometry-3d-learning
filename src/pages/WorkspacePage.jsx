@@ -1186,7 +1186,7 @@ export default function WorkspacePage() {
 
   return (
     <div
-      className={`workspace-page${subject === "geometry" ? " workspace-page--geometry" : ""}`}
+      className={`workspace-page${subject === "geometry" ? " workspace-page--geometry" : ""}${subject === "geometry" && !isComposeIdle ? " workspace-page--solving" : ""}`}
     >
       {/* ── 一级：数学 | 物理 ── */}
       <div className="wp-domain-bar" role="tablist" aria-label="学科">
