@@ -695,20 +695,32 @@
 
 @media (max-width: 767px) {
   .workspace-page {
-    height: 100%;
+    height: auto;
     min-height: 0;
+    overflow: visible;
+  }
+
+  .wp-combo-shell {
+    overflow: visible;
+    flex: 1 0 auto;
+    height: auto;
   }
 
   .wp-main {
     flex-direction: column;
+    overflow: visible;
+    height: auto;
+    flex: 1 0 auto;
   }
 
   .wp-main--mobile .wp-explain-col {
     width: 100%;
     min-width: 0;
     max-width: none;
-    flex: 1;
+    flex: 1 0 auto;
     min-height: 0;
+    height: auto;
+    overflow: visible;
   }
 
   /* 立体几何：3D 在上方，步骤在下方 */
@@ -718,6 +730,8 @@
     height: 36vh;
     min-height: 200px;
     max-height: 40vh;
+    flex-shrink: 0;
+    touch-action: none; /* 仅画布内手势，不抢整页滑动 */
   }
 
   .wp-solve-bar {

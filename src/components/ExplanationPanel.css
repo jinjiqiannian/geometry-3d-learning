@@ -215,17 +215,24 @@
   font-family: var(--font-math), Georgia, serif;
 }
 
-/* Mobile：铺满讲解列，勿再锁 50vh（3D 隐藏时会留下大块空白） */
+/* Mobile：高度随内容，整页上下滑（勿再 overflow:hidden 锁死） */
 @media (max-width: 767px) {
   .explanation-panel {
     width: 100%;
-    flex: 1;
-    flex-shrink: 1;
+    flex: 1 0 auto;
     min-height: 0;
     max-height: none;
-    height: 100%;
+    height: auto;
+    overflow: visible;
     border-left: none;
     border-top: none;
+  }
+
+  .ep-step-timeline-section,
+  .ep-steps-wrap {
+    overflow: visible;
+    flex: 1 0 auto;
+    max-height: none;
   }
 
   .ep-problem {

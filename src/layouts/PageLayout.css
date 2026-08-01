@@ -38,14 +38,26 @@
   animation: none;
 }
 
-/* 移动端：底部 Tab 占位由 page-main 承担，避免 height:100dvh + padding 裁切 */
+/* 移动端：放开整页滚动（桌面仍锁视口做左右分栏） */
 @media (max-width: 767px) {
   .page-layout:not(.page-layout--facade) {
+    height: auto;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: visible;
     padding-bottom: 0;
   }
 
-  .page-layout:not(.page-layout--facade) .page-main {
+  .page-layout:not(.page-layout--facade) .page-main,
+  .page-layout:not(.page-layout--facade) .page-transition {
+    overflow: visible;
+    flex: 1 0 auto;
+    min-height: 0;
     padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .page-layout:not(.page-layout--facade) .page-transition {
+    padding-bottom: 0; /* 只给 page-main 留底栏，避免双倍空白 */
   }
 }
 
