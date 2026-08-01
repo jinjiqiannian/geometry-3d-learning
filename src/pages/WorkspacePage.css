@@ -685,7 +685,8 @@
 }
 
 /* ── Responsive ───────────────────────────────────── */
-@media (max-width: 900px) {
+/* 仅平板：手机勿锁死 360px，否则与全宽列冲突 */
+@media (max-width: 900px) and (min-width: 768px) {
   .wp-explain-col {
     width: 360px;
     min-width: 280px;
@@ -702,20 +703,49 @@
     flex-direction: column;
   }
 
+  .wp-main--mobile .wp-explain-col {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* 立体几何：3D 在上方，步骤在下方 */
+  .wp-main--mobile.wp-main--geo .wp-canvas-col:not(.wp-canvas--hidden) {
+    order: -1;
+    width: 100%;
+    height: 36vh;
+    min-height: 200px;
+    max-height: 40vh;
+  }
+
+  .wp-solve-bar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .wp-solve-back {
+    min-height: 40px;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
   .wp-quick-input-bar {
     padding: 8px 10px;
     gap: 6px;
   }
 
   .wp-quick-input {
-    font-size: var(--text-xs);
-    padding: 6px 10px;
+    font-size: 16px;
+    padding: 8px 10px;
     min-height: 40px;
   }
 
   .wp-quick-submit {
-    padding: 6px 12px;
-    font-size: 11px;
+    padding: 8px 12px;
+    font-size: 0.8125rem;
+    min-height: 40px;
   }
 }
 

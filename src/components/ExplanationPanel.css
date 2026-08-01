@@ -215,14 +215,26 @@
   font-family: var(--font-math), Georgia, serif;
 }
 
-/* Mobile */
+/* Mobile：铺满讲解列，勿再锁 50vh（3D 隐藏时会留下大块空白） */
 @media (max-width: 767px) {
   .explanation-panel {
     width: 100%;
-    flex-shrink: 0;
-    max-height: 50vh;
+    flex: 1;
+    flex-shrink: 1;
+    min-height: 0;
+    max-height: none;
+    height: 100%;
     border-left: none;
-    border-top: 1px solid var(--border-subtle);
+    border-top: none;
+  }
+
+  .ep-problem {
+    padding: 12px 14px 10px;
+  }
+
+  .ep-problem-text {
+    font-size: 0.9rem;
+    word-break: break-word;
   }
 }
 

@@ -256,18 +256,6 @@ export default function WorkspacePage() {
     }
   });
   const [show3D, setShow3D] = useState(true);
-  const [mobile3DAutoCollapsed, setMobile3DAutoCollapsed] = useState(false);
-  useEffect(() => {
-    if (
-      isMobile &&
-      loadingStage === "done" &&
-      steps.length > 0 &&
-      !mobile3DAutoCollapsed
-    ) {
-      setShow3D(false);
-      setMobile3DAutoCollapsed(true);
-    }
-  }, [isMobile, loadingStage, steps.length, mobile3DAutoCollapsed]);
 
   useEffect(() => {
     let timer = null;
