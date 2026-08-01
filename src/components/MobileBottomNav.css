@@ -193,13 +193,9 @@
   margin-top: 1px;
 }
 
-/* 移动端：显示底部导航，为 Tab Bar 腾出空间 */
+/* 移动端：显示底部导航（留白见 PageLayout.css） */
 @media (max-width: 767px) {
   .mobile-bottom-nav {
     display: flex;
-  }
-
-  .page-layout {
-    padding-bottom: 64px;
   }
 }

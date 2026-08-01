@@ -865,3 +865,86 @@
 .demo-prob[data-phase='done'] .demo-ball.is-slot1 {
   /* drawn state handled by is-drawn */
 }
+
+/* ── Mobile：390 优先，演示先见，防横向溢出 ── */
+@media (max-width: 767px) {
+  .logic-panel {
+    padding: 0.75rem 0.85rem 5.5rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .logic-panel-title {
+    font-size: 1.25rem;
+    margin: 0.25rem 0 0.75rem;
+  }
+
+  .logic-compose-input {
+    font-size: 16px; /* 避免 iOS 聚焦放大 */
+    min-height: 4rem;
+  }
+
+  .logic-compose-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .logic-compose-submit {
+    min-height: 44px;
+    padding: 0.55rem 1.15rem;
+  }
+
+  .logic-compose-hint {
+    flex: 1 1 100%;
+    line-height: 1.4;
+  }
+
+  .logic-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  /* 手机上先看动画，再看步骤 */
+  .logic-viz {
+    order: -1;
+    min-height: 0;
+    padding: 0.75rem;
+  }
+
+  .logic-steps {
+    min-height: 0;
+    padding: 0.75rem;
+  }
+
+  .logic-goal,
+  .logic-core {
+    font-size: 0.9rem;
+    word-break: break-word;
+  }
+
+  .logic-step-nav {
+    gap: 0.4rem;
+  }
+
+  .logic-step-nav button {
+    min-height: 40px;
+    padding: 0.45rem 0.7rem;
+  }
+
+  .logic-answer {
+    margin-left: 0;
+    width: 100%;
+    margin-top: 0.25rem;
+  }
+
+  .logic-examples-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wp-upgrade-banner {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.55rem 0.65rem;
+    margin-bottom: 0.65rem;
+  }
+}

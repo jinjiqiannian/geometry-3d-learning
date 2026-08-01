@@ -38,6 +38,17 @@
   animation: none;
 }
 
+/* 移动端：底部 Tab 占位由 page-main 承担，避免 height:100dvh + padding 裁切 */
+@media (max-width: 767px) {
+  .page-layout:not(.page-layout--facade) {
+    padding-bottom: 0;
+  }
+
+  .page-layout:not(.page-layout--facade) .page-main {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* ── Page transition animation ───────────────────────── */
 .page-transition {
   flex: 1;
