@@ -215,7 +215,7 @@
   font-family: var(--font-math), Georgia, serif;
 }
 
-/* Mobile：高度随内容，整页上下滑（勿再 overflow:hidden 锁死） */
+/* Mobile：默认随内容；解题中见下方 .workspace-page--solving 一屏聚焦 */
 @media (max-width: 767px) {
   .explanation-panel {
     width: 100%;
@@ -250,6 +250,81 @@
     bottom: calc(64px + env(safe-area-inset-bottom, 0px));
     z-index: 15;
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04);
+  }
+
+  /* 一屏理解：只留题目摘要 + 当前步 + 步进条 */
+  .workspace-page--solving .explanation-panel {
+    height: 100%;
+    max-height: 100%;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding-bottom: 0;
+  }
+
+  .workspace-page--solving .progress-header:not(:has(.ph-stage)):not(:has(.ph-error)) {
+    display: none;
+  }
+
+  .workspace-page--solving .core-idea-card {
+    display: none;
+  }
+
+  .workspace-page--solving .ep-problem {
+    flex-shrink: 0;
+    padding: 6px 12px;
+  }
+
+  .workspace-page--solving .ep-problem-label {
+    display: none;
+  }
+
+  .workspace-page--solving .ep-problem-text {
+    font-size: 0.78rem;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+
+  .workspace-page--solving .ep-steps-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .workspace-page--solving .ep-step-timeline-section {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .workspace-page--solving .step-list-item:not(:has(.step-card.current)) {
+    display: none;
+  }
+
+  .workspace-page--solving .step-card.current {
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    padding: 10px 10px 10px 6px;
+  }
+
+  .workspace-page--solving .playback-controls {
+    position: relative;
+    bottom: auto;
+    flex-shrink: 0;
+    padding: 8px 10px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .workspace-page--solving .ep-practice-more {
+    flex-shrink: 0;
   }
 }
 

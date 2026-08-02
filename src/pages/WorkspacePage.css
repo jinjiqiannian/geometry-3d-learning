@@ -121,6 +121,17 @@
   overflow: hidden;
 }
 
+/* 桌面：步进条叠在画布内，不挤出图下方 */
+.wp-canvas-col .step-controls {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 12;
+  max-width: calc(100% - 24px);
+  box-sizing: border-box;
+}
+
 /* 移动端折叠 3D — 用 CSS display 代替 unmount，保护 WebGL context */
 .wp-canvas--hidden {
   display: none;
@@ -143,30 +154,22 @@
 }
 
 .wp-main--mobile .wp-canvas-col {
+  flex: 0 0 168px;
   width: 100%;
-  height: 180px;
-  min-height: 160px;
-  max-height: 200px;
-  flex-shrink: 0;
+  height: 168px;
+  min-height: 168px;
+  max-height: 168px;
+  overflow: hidden;
 }
 
-/* 手势提示改到角落，避免压住讲解区 */
+/* 手机：去掉画布手势文案（图下/图上浮字易显脏） */
 .wp-main--mobile .wp-canvas-col::after {
-  content: '拖动旋转';
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  bottom: auto;
-  left: auto;
-  transform: none;
-  font-size: 10px;
-  color: #5c574e;
-  background: rgba(255, 252, 247, 0.88);
-  padding: 2px 6px;
-  border-radius: 2px;
-  opacity: 0.85;
-  pointer-events: none;
-  z-index: 10;
+  content: none;
+  display: none;
+}
+
+.wp-main--mobile .wp-canvas-col .step-controls {
+  display: none;
 }
 
 /* ── Upgrade banner ────────────────────────────────── */
@@ -706,10 +709,82 @@
     overflow: visible;
   }
 
-  /* 解题中隐藏学科 Tab，把高度留给 3D + 步骤 */
+  /* 解题中：锁一屏（顶栏下～底栏上），图+当前步同屏，禁止整页长滚 */
+  .workspace-page--solving {
+    position: fixed;
+    top: 48px;
+    left: 0;
+    right: 0;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+    height: auto;
+    max-height: none;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: #f3f1ec;
+  }
+
   .workspace-page--solving .wp-domain-bar,
   .workspace-page--solving .wp-subject-bar {
     display: none;
+  }
+
+  .workspace-page--solving .wp-combo-shell {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .workspace-page--solving .wp-main {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+    flex-direction: column;
+  }
+
+  .workspace-page--solving .wp-main--mobile .wp-explain-col {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    overflow: hidden;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  /* 竖屏：3D 置顶，高度随屏，留给步骤至少一半 */
+  .workspace-page--solving .wp-main--mobile.wp-main--geo .wp-canvas-col:not(.wp-canvas--hidden) {
+    order: -1;
+    flex: 0 0 30vh;
+    width: 100%;
+    height: 30vh;
+    min-height: 120px;
+    max-height: 180px;
+    overflow: hidden;
+    touch-action: none;
+    border-bottom: 1px solid #e4dfd5;
+  }
+
+  .workspace-page--solving .wp-main--mobile.wp-main--geo .wp-canvas-col::after {
+    content: none;
+    display: none;
+  }
+
+  .workspace-page--solving .wp-solve-bar {
+    flex-shrink: 0;
+    padding: 6px 10px;
+    gap: 8px;
+    position: relative;
+    top: auto;
+    z-index: 20;
+    background: #fffcf7;
   }
 
   .wp-combo-shell {
@@ -736,16 +811,22 @@
     padding-bottom: 88px; /* 底部导航 + 安全区 */
   }
 
-  /* 竖屏：小高度 3D 置顶，步骤占主要阅读区 */
+  /* 未解题：矮画布（若出现） */
   .wp-main--mobile.wp-main--geo .wp-canvas-col:not(.wp-canvas--hidden) {
     order: -1;
+    flex: 0 0 168px;
     width: 100%;
-    height: 180px;
-    min-height: 160px;
-    max-height: 200px;
-    flex-shrink: 0;
+    height: 168px;
+    min-height: 168px;
+    max-height: 168px;
+    overflow: hidden;
     touch-action: none;
     border-bottom: 1px solid #e4dfd5;
+  }
+
+  .wp-main--mobile.wp-main--geo .wp-canvas-col::after {
+    content: none;
+    display: none;
   }
 
   .wp-solve-bar {

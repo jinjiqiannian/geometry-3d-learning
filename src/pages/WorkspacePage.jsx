@@ -1594,7 +1594,8 @@ export default function WorkspacePage() {
             onToggleFaces={() => setShowFaces((prev) => !prev)}
             onResetCamera={handleResetCamera}
           />
-          {steps.length > 1 && (
+          {/* 手机端用 ExplanationPanel 的 PlaybackControls，避免图下再叠一层步进条 */}
+          {!isMobile && steps.length > 1 && (
             <StepControls
               currentStep={mergedStepIndex}
               totalSteps={mergedGroups.length}
