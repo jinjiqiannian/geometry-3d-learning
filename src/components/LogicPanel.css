@@ -461,15 +461,48 @@
 }
 
 .logic-step-nav button {
-  border: 1px solid var(--lp-line);
-  background: var(--lp-bg);
-  padding: 0.4rem 0.75rem;
+  border: 1px solid #1a1a1a;
+  background: #fffcf7;
+  color: #1a1a1a;
+  padding: 0.45rem 0.85rem;
   font-size: 0.8125rem;
+  font-weight: 550;
   cursor: pointer;
+  min-height: 36px;
+}
+
+.logic-step-nav button:hover:not(:disabled) {
+  background: #1a1a1a;
+  color: #fffcf7;
 }
 
 .logic-step-nav button:disabled {
-  opacity: 0.4;
+  opacity: 1;
+  color: #8a847a;
+  border-color: #cfc8bc;
+  background: #f3f1ec;
+  cursor: not-allowed;
+}
+
+/* 必须压过 .logic-step-nav button，否则白字叠浅底 */
+.logic-step-nav .logic-play-btn {
+  border-color: var(--lp-accent);
+  background: var(--lp-accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.logic-step-nav .logic-play-btn:hover:not(:disabled) {
+  background: #0b5347;
+  border-color: #0b5347;
+  color: #fff;
+}
+
+.logic-step-nav .logic-play-btn:disabled {
+  opacity: 1;
+  background: #9bb8b2;
+  border-color: #9bb8b2;
+  color: #fff;
   cursor: not-allowed;
 }
 

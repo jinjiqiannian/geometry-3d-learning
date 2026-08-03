@@ -1080,20 +1080,6 @@ export default function WorkspacePage() {
     handleParseProblem(problemText);
   }, [problemText, loading, handleParseProblem]);
 
-  // ── 再来一题 ──
-  const PRACTICE_EXAMPLES = [
-    { text: "正方体棱长为2，求体对角线AG的长度", label: "正方体对角线" },
-    { text: "球体半径为3，求体积和表面积", label: "球体体积" },
-    { text: "正四棱锥底面边长4，高6，求体积", label: "棱锥体积" },
-    { text: "圆柱底面半径2，高5，求侧面积和体积", label: "圆柱体积" },
-    { text: "圆锥底面半径3，高4，求体积和母线长", label: "圆锥体积" },
-  ];
-  const handlePracticeMore = useCallback(() => {
-    const others = PRACTICE_EXAMPLES.filter((ex) => ex.text !== problemText);
-    const pick = others[Math.floor(Math.random() * others.length)];
-    if (pick) handleParseProblem(pick.text);
-  }, [problemText, handleParseProblem]);
-
   // ── 键盘快捷键 ──
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -1530,7 +1516,6 @@ export default function WorkspacePage() {
             onRetry={handleRetry}
             onPlay={steps.length > 0 ? handleTogglePlay : undefined}
             isPlaying={isPlaying}
-            onPracticeMore={handlePracticeMore}
           />
         </div>
 

@@ -52,9 +52,9 @@ export default function PaywallModal() {
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </svg>
           </div>
-          <h2 className="paywall-title">支持开发者 · 解锁高级功能</h2>
+          <h2 className="paywall-title">继续讲透 · 少卡额度</h2>
           <p className="paywall-subtitle">
-            Pro 会员不是买答案，是对产品持续开发的支持
+            免费能学会；Pro 是多练、多导出、少打断
           </p>
           {paywallReason && (
             <p className="paywall-reason">{paywallReason}</p>
@@ -91,12 +91,12 @@ export default function PaywallModal() {
             </div>
             <p className="paywall-plan-equiv">{proMonthly}{yearly ? '（年付）' : ''}</p>
             <ul className="paywall-plan-features">
-              <li>★ 无限额度 — 取消每日 8 次限制</li>
-              <li>★ 方法动画全开 — 物理 / 数学专题</li>
-              <li>★ PPT 课件导出 — 课堂一键用</li>
-              <li>★ 错题本 — 自动收集管理</li>
-              <li>学习分析 · PDF / 图片导出</li>
-              <li>云端同步 · 高级分享</li>
+              <li>★ 讲题不限次 — 样例免费，自拟题不再掐在 8 次</li>
+              <li>★ 方法演示看懂 — 排组 / 几何 / 物理跟着步骤动</li>
+              <li>★ 一键导出 PPT — 复习、课堂直接播</li>
+              <li>★ 错题自动归档 — 下次对着练</li>
+              <li>学习记录可回看</li>
+              <li>优先体验新专题</li>
             </ul>
             <button className="paywall-plan-btn" onClick={() => handleUpgrade('pro')}>
               升级 Pro
@@ -116,12 +116,12 @@ export default function PaywallModal() {
             </div>
             <p className="paywall-plan-equiv">{teacherMonthly}{yearly ? '（年付）' : ''}</p>
             <ul className="paywall-plan-features">
-              <li>Pro 全部功能</li>
-              <li>★ 批量导出 PPT — 整章课件</li>
-              <li>★ 班级管理 — 创建班级</li>
-              <li>★ 学生学习统计</li>
-              <li>作业布置与跟练</li>
-              <li>薄弱方法看板</li>
+              <li>含 Pro 全部能力</li>
+              <li>★ 整章批量出 PPT — 备课少搬一次</li>
+              <li>★ 班级一眼看进度</li>
+              <li>★ 看清谁卡在哪一步</li>
+              <li>布置跟练题更省事</li>
+              <li>薄弱方法集中练</li>
             </ul>
             <button className="paywall-plan-btn teacher-btn" onClick={() => handleUpgrade('teacher')}>
               升级教师版
@@ -135,7 +135,7 @@ export default function PaywallModal() {
             {remaining > 0 ? '继续免费使用' : '关闭'}
           </button>
           <p className="paywall-footer-note">
-            7 天无理由退款 · 随时取消 · 不是买答案，是支持开发者
+            7 天无理由退款 · 随时取消 · 核心讲题可继续免费用
           </p>
         </div>
       </div>
