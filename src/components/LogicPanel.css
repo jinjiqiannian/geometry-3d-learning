@@ -936,6 +936,8 @@
   .logic-body {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
+    width: 100%;
     gap: 0.85rem;
   }
 
@@ -943,11 +945,15 @@
   .logic-viz {
     order: -1;
     min-height: 0;
+    width: 100%;
+    box-sizing: border-box;
     padding: 0.75rem;
   }
 
   .logic-steps {
     min-height: 0;
+    width: 100%;
+    box-sizing: border-box;
     padding: 0.75rem;
   }
 
@@ -983,58 +989,30 @@
     margin-bottom: 0.65rem;
   }
 
-  /* 一屏理解：演示置顶 + 只留当前步 + 底栏步进 */
+  /* 有结果：全宽铺开，演示不裁切；隐藏输入头减少重复 */
   .logic-panel:has(.logic-body) {
-    height: 100%;
-    max-height: 100%;
+    height: auto;
+    max-height: none;
     min-height: 0;
-    overflow: hidden;
-    padding: 0.5rem 0.7rem 0.55rem;
+    overflow: visible;
+    padding: 0.55rem 0.7rem calc(1.25rem + 64px + env(safe-area-inset-bottom, 0px));
   }
 
-  .logic-panel:has(.logic-body) .logic-panel-kicker,
-  .logic-panel:has(.logic-body) .logic-panel-title,
-  .logic-panel:has(.logic-body) .logic-examples-wrap,
-  .logic-panel:has(.logic-body) .logic-compose-hint,
-  .logic-panel:has(.logic-body) .wp-upgrade-banner,
+  .logic-panel:has(.logic-body) .logic-panel-head {
+    display: none;
+  }
+
   .logic-panel:has(.logic-body) .logic-core {
     display: none;
   }
 
-  .logic-panel:has(.logic-body) .logic-panel-head {
-    flex-shrink: 0;
-    margin: 0;
-  }
-
-  .logic-panel:has(.logic-body) .logic-compose {
-    margin-bottom: 0.35rem;
-  }
-
-  .logic-panel:has(.logic-body) .logic-compose-input {
-    min-height: 0;
-    height: 2.25rem;
-    padding: 0.35rem 0.55rem;
-    font-size: 14px;
-    resize: none;
-    overflow: hidden;
-  }
-
-  .logic-panel:has(.logic-body) .logic-compose-row {
-    flex-wrap: nowrap;
-    gap: 0.4rem;
-  }
-
-  .logic-panel:has(.logic-body) .logic-compose-submit {
-    min-height: 36px;
-    padding: 0.3rem 0.75rem;
-    font-size: 0.8rem;
-  }
-
   .logic-panel:has(.logic-body) .logic-goal {
     flex-shrink: 0;
-    margin: 0 0 0.35rem;
-    font-size: 0.78rem;
-    line-height: 1.35;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0 0 0.45rem;
+    font-size: 0.82rem;
+    line-height: 1.4;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
@@ -1042,19 +1020,23 @@
   }
 
   .logic-panel:has(.logic-body) .logic-body {
-    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    flex: 1 0 auto;
     min-height: 0;
-    overflow: hidden;
-    gap: 0.45rem;
+    overflow: visible;
+    gap: 0.55rem;
   }
 
   .logic-panel:has(.logic-body) .logic-viz {
     order: -1;
     flex: 0 0 auto;
-    max-height: 34vh;
-    min-height: 0;
-    overflow: hidden;
-    padding: 0.5rem 0.6rem;
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    padding: 0.65rem 0.7rem;
   }
 
   .logic-panel:has(.logic-body) .logic-viz > .logic-section-title,
@@ -1065,28 +1047,27 @@
 
   .logic-panel:has(.logic-body) .demo-stage {
     margin: 0;
-    max-height: 28vh;
-    overflow: hidden;
+    max-height: none;
+    overflow: visible;
   }
 
   .logic-panel:has(.logic-body) .demo-stage-title {
-    font-size: 0.72rem;
-    margin-bottom: 0.35rem;
+    font-size: 0.75rem;
+    margin-bottom: 0.4rem;
   }
 
   .logic-panel:has(.logic-body) .logic-grow-strip {
-    margin-top: 0.35rem;
-    transform: scale(0.92);
-    transform-origin: left center;
+    margin-top: 0.4rem;
   }
 
   .logic-panel:has(.logic-body) .logic-steps {
-    flex: 1;
+    flex: 0 0 auto;
+    width: 100%;
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
     display: flex;
     flex-direction: column;
-    padding: 0.45rem 0.55rem;
+    padding: 0.55rem 0.65rem;
   }
 
   .logic-panel:has(.logic-body) .logic-steps > .logic-section-title {
@@ -1094,10 +1075,8 @@
   }
 
   .logic-panel:has(.logic-body) .logic-step-list {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    flex: 0 0 auto;
+    overflow: visible;
     gap: 0;
   }
 
@@ -1108,13 +1087,16 @@
   .logic-panel:has(.logic-body) .logic-step.is-current {
     border: none;
     background: transparent;
-    padding: 0.2rem 0;
+    padding: 0.15rem 0;
+    width: 100%;
   }
 
   .logic-panel:has(.logic-body) .logic-step-nav {
     flex-shrink: 0;
-    margin-top: 0.35rem;
-    padding-top: 0.35rem;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 0.45rem;
+    padding: 0.45rem 0 0;
     border-top: 1px solid var(--lp-line);
   }
 
@@ -1126,6 +1108,6 @@
     width: auto;
     margin: 0;
     margin-left: auto;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
   }
 }

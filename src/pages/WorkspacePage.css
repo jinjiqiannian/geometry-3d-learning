@@ -709,9 +709,8 @@
     overflow: visible;
   }
 
-  /* 解题中：锁一屏（几何 --solving / 其他专题 :has(.logic-body)） */
-  .workspace-page--solving,
-  .workspace-page:has(.logic-body) {
+  /* 解题中：仅几何 --solving 锁一屏；排组/专题用面板内滚动，避免演示被裁切 */
+  .workspace-page--solving {
     position: fixed;
     top: 48px;
     left: 0;
@@ -727,14 +726,11 @@
   }
 
   .workspace-page--solving .wp-domain-bar,
-  .workspace-page--solving .wp-subject-bar,
-  .workspace-page:has(.logic-body) .wp-domain-bar,
-  .workspace-page:has(.logic-body) .wp-subject-bar {
+  .workspace-page--solving .wp-subject-bar {
     display: none;
   }
 
-  .workspace-page--solving .wp-combo-shell,
-  .workspace-page:has(.logic-body) .wp-combo-shell {
+  .workspace-page--solving .wp-combo-shell {
     flex: 1;
     min-height: 0;
     height: 100%;
