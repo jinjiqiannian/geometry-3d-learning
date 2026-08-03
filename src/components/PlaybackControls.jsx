@@ -5,8 +5,6 @@ export default function PlaybackControls({
   totalSteps = 0,
   onNext,
   onPrev,
-  onPlay,
-  isPlaying = false,
   onStepClick,
 }) {
   if (totalSteps === 0) return null
@@ -22,17 +20,6 @@ export default function PlaybackControls({
         <span className="pc-btn-icon">◀</span>
         <span className="pc-btn-label">上一步</span>
       </button>
-
-      {onPlay && (
-        <button
-          className={`pc-btn pc-btn-play ${isPlaying ? 'active' : ''}`}
-          onClick={onPlay}
-          aria-label={isPlaying ? '暂停' : '自动回放'}
-        >
-          <span className="pc-btn-icon">{isPlaying ? '⏸' : '▶'}</span>
-          <span className="pc-btn-label">{isPlaying ? '暂停' : '演示'}</span>
-        </button>
-      )}
 
       {/* 步奏圆点指示器 */}
       <div className="pc-dots-container">

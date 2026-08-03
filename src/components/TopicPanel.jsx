@@ -812,6 +812,22 @@ export default function TopicPanel({ topic }) {
 
   return (
     <div className="logic-panel topic-panel">
+      {ir && (
+        <div className="logic-solving-bar">
+          <button
+            type="button"
+            className="logic-solving-back"
+            onClick={() => {
+              setIr(null)
+              setCurrentStep(0)
+              setError('')
+            }}
+          >
+            ← 换一道
+          </button>
+          <span className="logic-solving-meta">答案 {ir.answer}</span>
+        </div>
+      )}
       <header className="logic-panel-head">
         <p className="logic-panel-kicker">{meta.kicker} · 动画演示</p>
         <h2 className="logic-panel-title">{meta.title}</h2>

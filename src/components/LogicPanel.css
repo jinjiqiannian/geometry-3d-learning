@@ -513,6 +513,10 @@
   color: var(--lp-accent);
 }
 
+.logic-solving-bar {
+  display: none;
+}
+
 /* Tree */
 .logic-tree-root,
 .logic-tree-branch {
@@ -996,6 +1000,36 @@
     min-height: 0;
     overflow: visible;
     padding: 0.55rem 0.7rem calc(1.25rem + 64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .logic-panel:has(.logic-body) .logic-solving-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-shrink: 0;
+    margin: 0 0 0.45rem;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid var(--lp-line);
+  }
+
+  .logic-solving-back {
+    border: 1px solid #1a1a1a;
+    background: #fffcf7;
+    color: #1a1a1a;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 550;
+    font-family: inherit;
+    cursor: pointer;
+    min-height: 40px;
+  }
+
+  .logic-solving-meta {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--lp-accent);
+    font-family: var(--lp-font);
   }
 
   .logic-panel:has(.logic-body) .logic-panel-head {

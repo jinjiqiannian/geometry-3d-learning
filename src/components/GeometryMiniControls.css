@@ -93,13 +93,14 @@
 /* Mobile */
 @media (max-width: 767px) {
   .geo-mini-controls {
-    top: 8px;
-    left: 8px;
+    top: 6px;
+    left: 6px;
   }
 
   .gmc-btn {
-    padding: 4px 8px;
-    font-size: 10px;
-    min-width: 36px;
+    padding: 6px 10px;
+    font-size: 11px;
+    min-width: 40px;
+    min-height: 32px;
   }
 }

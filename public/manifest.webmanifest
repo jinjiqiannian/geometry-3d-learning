@@ -1,0 +1,20 @@
+{
+  "name": "理解引擎",
+  "short_name": "理解引擎",
+  "description": "把抽象知识讲透 — 几何 / 排组 / 物理方法演示",
+  "start_url": "/#/workspace",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f3f1ec",
+  "theme_color": "#0f6b5c",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

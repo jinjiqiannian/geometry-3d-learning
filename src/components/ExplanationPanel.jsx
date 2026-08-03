@@ -19,8 +19,6 @@ const ExplanationPanel = memo(function ExplanationPanel({
   problemText = '',
   error = null,
   onRetry = null,
-  onPlay,
-  isPlaying = false,
 }) {
   const currentStepData = steps[currentStep]
   const showAnswer = currentStepData?.type === 'conclusion' && !loading
@@ -87,8 +85,6 @@ const ExplanationPanel = memo(function ExplanationPanel({
             totalSteps={mergedGroups.length}
             onNext={onNext}
             onPrev={onPrev}
-            onPlay={onPlay}
-            isPlaying={isPlaying}
             onStepClick={(i) => onStepClick?.(mergedGroups[i]?.originalIndices?.[0] ?? i)}
           />
         </div>

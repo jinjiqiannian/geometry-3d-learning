@@ -307,8 +307,22 @@
 
 /* Mobile */
 @media (max-width: 600px) {
+  .paywall-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
   .paywall-modal {
-    padding: 28px 20px 20px;
+    padding: 20px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+    max-width: none;
+    width: 100%;
+    max-height: min(92dvh, 100%);
+    border-radius: 16px 16px 0 0;
+    text-align: left;
+  }
+
+  .paywall-header {
+    text-align: center;
   }
 
   .paywall-plans {
@@ -317,14 +331,24 @@
   }
 
   .paywall-plan {
-    padding: 16px 14px;
+    padding: 14px 12px;
   }
 
   .paywall-plan-amount {
-    font-size: 30px;
+    font-size: 28px;
   }
 
   .paywall-title {
-    font-size: var(--text-lg);
+    font-size: 1.15rem;
+  }
+
+  .paywall-plan-btn {
+    min-height: 44px;
+    font-size: 0.9375rem;
+  }
+
+  .paywall-footer-btn {
+    min-height: 44px;
+    width: 100%;
   }
 }

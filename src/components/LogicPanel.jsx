@@ -379,6 +379,22 @@ export default function LogicPanel() {
 
   return (
     <div className="logic-panel">
+      {ir && (
+        <div className="logic-solving-bar">
+          <button
+            type="button"
+            className="logic-solving-back"
+            onClick={() => {
+              setIr(null)
+              setCurrentStep(0)
+              setError('')
+            }}
+          >
+            ← 换一道
+          </button>
+          <span className="logic-solving-meta">答案 {ir.answer}</span>
+        </div>
+      )}
       <header className="logic-panel-head">
         <p className="logic-panel-kicker">排列组合 · 概率 · 逻辑生长动画</p>
         <h2 className="logic-panel-title">看清「为什么这样选」</h2>

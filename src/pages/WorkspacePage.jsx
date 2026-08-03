@@ -1514,8 +1514,6 @@ export default function WorkspacePage() {
             problemText={problemText}
             error={error}
             onRetry={handleRetry}
-            onPlay={steps.length > 0 ? handleTogglePlay : undefined}
-            isPlaying={isPlaying}
           />
         </div>
 

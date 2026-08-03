@@ -258,7 +258,9 @@
     max-height: 100%;
     flex: 1;
     min-height: 0;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding-bottom: 0;
   }
 
@@ -289,18 +291,17 @@
   }
 
   .workspace-page--solving .ep-steps-wrap {
-    flex: 1;
+    flex: 1 0 auto;
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
     display: flex;
     flex-direction: column;
   }
 
   .workspace-page--solving .ep-step-timeline-section {
-    flex: 1;
+    flex: 1 0 auto;
     min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: visible;
   }
 
   .workspace-page--solving .step-list-item:not(:has(.step-card.current)) {
@@ -316,11 +317,12 @@
   }
 
   .workspace-page--solving .playback-controls {
-    position: relative;
-    bottom: auto;
+    position: sticky;
+    bottom: 0;
     flex-shrink: 0;
     padding: 8px 10px;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+    background: #fffcf7;
   }
 
   .workspace-page--solving .ep-practice-more {
