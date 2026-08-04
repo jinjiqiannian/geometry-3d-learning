@@ -272,13 +272,8 @@ const sceneIRAnim = useRef({ camera: null });
  }, [showLabels]);
  const cameraTargetPos = useRef(new THREE.Vector3(4, 4, 6));
  const cameraAnimating = useRef(false);
- useEffect(() => {
- if (cameraTarget && cameraTarget.length === 3) {
- cameraTargetPos.current.set(cameraTarget[0], cameraTarget[1], cameraTarget[2]);
- cameraAnimating.current = true;
- animating.current = true;
- }
-}, [cameraTarget]);
+ const controlsRef = useRef(null);
+ // 步骤切换不再夺镜头；仅重置/视角预设会飞镜
 
  const frameSkip = useRef(0);
  const { camera } = useThree();
@@ -288,7 +283,6 @@ const sceneIRAnim = useRef({ camera: null });
  }, [camera]);
  useFrame(() => {
  let anyActive = false;
- const now = performance.now();
  if (highlightEngine.current.update()) {
  anyActive = true;
  }
@@ -338,6 +332,11 @@ const sceneIRAnim = useRef({ camera: null });
  if (dist < 0.02) {
  cameraAnimating.current = false;
  cam.position.copy(target);
+ cam.lookAt(0, 0, 0);
+ if (controlsRef.current) {
+ controlsRef.current.target.set(0, 0, 0);
+ controlsRef.current.update();
+ }
  }
  else {
  cam.position.x += dx * 0.055;
@@ -347,26 +346,7 @@ const sceneIRAnim = useRef({ camera: null });
  anyActive = true;
  }
  }
- 
- if (sceneIRAnim.current.camera && cameraRef.current) {
- const cam = cameraRef.current;
- const anim = sceneIRAnim.current.camera;
- const elapsed = now - anim.startTime;
- if (elapsed >= anim.duration) {
- cam.position.set(anim.toPos[0], anim.toPos[1], anim.toPos[2]);
- cam.lookAt(0, 0, 0);
- sceneIRAnim.current.camera = null;
- } else {
- const progress = elapsed / anim.duration;
- const eased = easeInOutCubic(progress);
- cam.position.x = anim.fromPos[0] + (anim.toPos[0] - anim.fromPos[0]) * eased;
- cam.position.y = anim.fromPos[1] + (anim.toPos[1] - anim.fromPos[1]) * eased;
- cam.position.z = anim.fromPos[2] + (anim.toPos[2] - anim.fromPos[2]) * eased;
- cam.lookAt(0, 0, 0);
- anyActive = true;
- }
- }
- 
+
  if (anyActive) {
  frameSkip.current++;
  if (frameSkip.current % 3 === 0) {
@@ -403,7 +383,13 @@ const sceneIRAnim = useRef({ camera: null });
  bottom: [0, -6, 0],
  isometric: [4, 4, 4],
  }), []);
+ // 跳过首次挂载，避免与 Canvas 初始相机打架；仅手动重置/切预设时飞镜
+ const cameraBootstrapped = useRef(false);
  useEffect(() => {
+ if (!cameraBootstrapped.current) {
+ cameraBootstrapped.current = true;
+ return;
+ }
  const target = viewPresets[viewPreset] || CAMERA_PRESETS.overview;
  if (cameraRef2.current) {
  cameraTargetPos.current.set(target[0], target[1], target[2]);
@@ -565,8 +551,6 @@ const sceneIRAnim = useRef({ camera: null });
  <directionalLight position={[5, 8, 6]} intensity={1.05}/>
  <directionalLight position={[-6, -4, -5]} intensity={0.35}/>
 
- <perspectiveCamera makeDefault fov={50} position={[4, 4, 6]}/>
-
  {sceneIR && (<>
  {showFaces && (<mesh renderOrder={1}>
  <primitive attach="geometry" object={geoData}/>
@@ -673,7 +657,13 @@ const sceneIRAnim = useRef({ camera: null });
  </Billboard>);
  })}
 
- <OrbitControls enableZoom enablePan enableRotate/>
+ <OrbitControls
+ ref={controlsRef}
+ makeDefault
+ enableZoom
+ enablePan
+ enableRotate
+/>
  </>);
 });
 export default Canvas3D;

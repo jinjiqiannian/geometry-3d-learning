@@ -1512,6 +1512,7 @@ export default function WorkspacePage() {
           {hasWebGL ? (
             <Canvas
               style={{ width: "100%", height: "100%" }}
+              camera={{ position: [4, 4, 6], fov: 50 }}
               gl={{
                 preserveDrawingBuffer: true,
                 antialias: true,
