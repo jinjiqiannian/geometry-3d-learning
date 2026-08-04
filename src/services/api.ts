@@ -3,7 +3,11 @@
 //  自动附加 JWT token，处理 401 跳转
 // ═══════════════════════════════════════════════════════
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+// 本地开发默认打本机后端；线上未配置时走同域 /api（Vercel Serverless，无需 Railway）
+const API_BASE = (
+  import.meta.env.VITE_API_URL ??
+  (import.meta.env.PROD ? '' : 'http://localhost:3001')
+).replace(/\/$/, '')
 
 // ── Token management ───────────────────────────────
 
@@ -229,7 +233,10 @@ export const aiAPI = {
       onError?: (err: Error) => void
     }
   ): () => void {
-    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+    const API_BASE = (
+      import.meta.env.VITE_API_URL ??
+      (import.meta.env.PROD ? '' : 'http://localhost:3001')
+    ).replace(/\/$/, '')
     const controller = new AbortController()
 
     const run = async () => {

@@ -988,7 +988,8 @@ export default function WorkspacePage() {
           return false;
         };
 
-        // 1) 服务端识图（Gemini / DeepSeek Vision）
+        // 1) 服务端识图（智谱 / Gemini / DeepSeek Vision）
+        let cloudErr = null;
         try {
           const res = await withTimeout(
             aiAPI.ocr(dataUrl),
@@ -1003,7 +1004,21 @@ export default function WorkspacePage() {
             return;
           }
         } catch (err) {
+          cloudErr = err;
           console.warn("[ocr] server failed:", err?.message);
+        }
+
+        // 后端连不上时不要空等本地中文模型（常见于未启动 server）
+        const cloudMsg = String(cloudErr?.message || "");
+        if (
+          /Failed to fetch|NetworkError|Network request failed|云端识图超时|Load failed|ECONNREFUSED|fetch/i.test(
+            cloudMsg
+          )
+        ) {
+          setOcrHint(
+            "云端识图连不上：请另开终端执行 cd server && npm run dev，然后重新上传。也可手动输入题干后点「开始理解」"
+          );
+          return;
         }
 
         // 2) 浏览器本地 OCR 降级（无需配置视觉 Key）
