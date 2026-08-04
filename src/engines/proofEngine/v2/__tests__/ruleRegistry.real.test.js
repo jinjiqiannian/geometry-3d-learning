@@ -15,6 +15,10 @@ const REQUIRED_IDS = [
   'collinear_propagation',
   'plane_membership',
   'plane_intersection_line',
+  'rhombus_diagonals_perpendicular',
+  'line_perp_plane_property',
+  'line_perp_plane_criterion',
+  'line_parallel_plane_criterion',
 ]
 
 describe('ruleRegistry.real', () => {

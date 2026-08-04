@@ -55,13 +55,28 @@ export const lineParallelPlaneProperty = {
         if (!touchesPlane1) continue
         if (!ixLine || ixLine.length !== 2) continue
 
-        const already = findFacts(facts, 'parallel').some((p) => {
-          const ps = p.subjects || []
+        const plane2 = a === plane1 ? b : b === plane1 ? a : (a.includes(plane1) ? b : a)
+        // 定理前提：过直线 l 的平面 β 与 α 相交 — 要求 l ⊂ β（plane2）
+        const onPlanes = findFacts(facts, 'on_plane')
+        const plane2Fact = findFacts(facts, 'plane').find(
+          (pl) => planeName(pl) === plane2 || (pl.subjects || []).join('') === plane2
+        )
+        const pts2 = plane2Fact?.subjects || (plane2.length >= 3 ? plane2.split('') : [])
+        const [p, q] = line.split('')
+        const lineInPlane2 =
+          (pts2.includes(p) && pts2.includes(q))
+          || (
+            onPlanes.some((o) => o.subjects?.[0] === p && o.subjects?.[1] === plane2)
+            && onPlanes.some((o) => o.subjects?.[0] === q && o.subjects?.[1] === plane2)
+          )
+        if (!lineInPlane2) continue
+
+        const already = findFacts(facts, 'parallel').some((pFact) => {
+          const ps = pFact.subjects || []
           return (ps.includes(line) && ps.includes(ixLine))
         })
         if (already) continue
 
-        const plane2 = a === plane1 ? b : b === plane1 ? a : (a.includes(plane1) ? b : a)
         matches.push({ line, intersectionLine: ixLine, plane1, plane2 })
       }
     }

@@ -629,6 +629,9 @@ export default function WorkspacePage() {
               })),
               explanation: semantic.shape,
               semantic,
+              goal: semantic.goal,
+              goals: semantic.goals,
+              baseShape: semantic.baseShape,
             };
             const fallbackSteps = generateLocalSteps(text, fallbackParsed);
             applyResults(fallbackParsed, fallbackSteps);
@@ -663,6 +666,9 @@ export default function WorkspacePage() {
           })),
           explanation: semantic.shape,
           semantic,
+          goal: semantic.goal,
+          goals: semantic.goals,
+          baseShape: semantic.baseShape,
         };
         const fallbackSteps = generateLocalSteps(text, fallbackParsed);
         applyResults(fallbackParsed, fallbackSteps);

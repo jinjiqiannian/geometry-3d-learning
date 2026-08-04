@@ -1438,6 +1438,9 @@ export function generateLocalSteps(problemText, parsedData) {
     importantPlanes: parsedData?.importantPlanes || [],
     semantic: parsedData?.semantic || {},
     vertices: parsedData?.vertices || [],
+    goal: parsedData?.goal || parsedData?.semantic?.goal,
+    goals: parsedData?.goals || parsedData?.semantic?.goals,
+    baseShape: parsedData?.baseShape || parsedData?.semantic?.baseShape,
   };
 
   // ── Proof Engine 优先路径 ──

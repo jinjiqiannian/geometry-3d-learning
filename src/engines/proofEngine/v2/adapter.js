@@ -83,6 +83,14 @@ function parseRelationToken(relation) {
     }
   }
 
+  if (tokens[1] === 'perpendicular' && tokens[2] === 'plane' && tokens[3]) {
+    return {
+      type: 'perpendicular',
+      subjects: [tokens[0], tokens[3]],
+      description: relation,
+    }
+  }
+
   if (tokens[1] === 'perpendicular') {
     return {
       type: 'perpendicular',
@@ -155,6 +163,15 @@ export function seedFactsFromParsedData(factRegistry, parsedData) {
     })
   }
 
+  const baseShape = semantic.baseShape || parsedData?.baseShape
+  if (baseShape) {
+    factRegistry.addFact({
+      type: 'shape',
+      subjects: [baseShape],
+      description: `baseShape: ${baseShape}`,
+    })
+  }
+
   const points = semantic.points || parsedData?.vertices || parsedData?.labels || []
   for (const p of points) {
     factRegistry.addFact({ type: 'point', subjects: [p], description: `point ${p}` })
@@ -170,7 +187,19 @@ export function seedFactsFromParsedData(factRegistry, parsedData) {
     })
   }
 
-  const planes = semantic.planes || parsedData?.planes || []
+  const planes = [...(semantic.planes || parsedData?.planes || [])]
+  const goalList = []
+  if (Array.isArray(parsedData?.goals)) goalList.push(...parsedData.goals)
+  else if (Array.isArray(semantic.goals)) goalList.push(...semantic.goals)
+  else if (parsedData?.goal) goalList.push(parsedData.goal)
+  else if (semantic.goal) goalList.push(semantic.goal)
+  for (const g of goalList) {
+    const plane = g?.subjects?.[1]
+    if (typeof plane === 'string' && plane.length >= 3 && !planes.some((p) => (p.label || p.subjects?.join?.('')) === plane)) {
+      planes.push({ label: plane, points: plane.split('') })
+    }
+  }
+
   for (const pl of planes) {
     const pts = pl.points || pl.subjects || []
     if (!pts.length) continue
@@ -220,7 +249,7 @@ function normSeg(label) {
 }
 
 /**
- * 从题目结构推断 goal（求哪些量），不硬编码答案数值。
+ * 从题目结构推断 goal（求哪些量 / 求证什么），不硬编码答案数值。
  * 无显式目标时返回 null：让 scheduler 跑到收敛，由调用方检查结论事实。
  * （禁止"任意 slash-ratio 即达成"的弱 goal —— 会被 AG/CG 等中间比例提前满足）
  */
@@ -228,21 +257,63 @@ export function buildGoal(parsedData) {
   if (typeof parsedData?.goal === 'function') return parsedData.goal
   if (parsedData?.goal?.id) return parsedData.goal
 
-  // 显式目标：{ type:'ratio', subjects:['AP','AF'] } — 只检查事实存在，不规定比值
-  if (parsedData?.goal?.type === 'ratio' && Array.isArray(parsedData.goal.subjects)) {
-    const want = parsedData.goal.subjects.map(normSeg)
-    return (factRegistry) =>
-      factRegistry.getAllFacts().some((f) => {
-        if (f.type !== 'ratio') return false
-        const s = (f.subjects || []).map(normSeg)
-        if (want.length === 1) {
-          return s[0] === want[0] && (f.values || []).length > 0
-        }
-        return want.every((w) => s.includes(w)) && (f.values || []).length > 0
-      })
+  const list = []
+  if (Array.isArray(parsedData?.goals) && parsedData.goals.length) {
+    list.push(...parsedData.goals)
+  } else if (parsedData?.goal) {
+    list.push(parsedData.goal)
+  } else if (Array.isArray(parsedData?.semantic?.goals) && parsedData.semantic.goals.length) {
+    list.push(...parsedData.semantic.goals)
+  } else if (parsedData?.semantic?.goal) {
+    list.push(parsedData.semantic.goal)
   }
 
-  return null
+  if (list.length === 0) return null
+
+  const checkers = list.map((g) => {
+    if (g?.type === 'ratio' && Array.isArray(g.subjects)) {
+      const want = g.subjects.map(normSeg)
+      return (factRegistry) =>
+        factRegistry.getAllFacts().some((f) => {
+          if (f.type !== 'ratio') return false
+          const s = (f.subjects || []).map(normSeg)
+          if (want.length === 1) {
+            return s[0] === want[0] && (f.values || []).length > 0
+          }
+          return want.every((w) => s.includes(w)) && (f.values || []).length > 0
+        })
+    }
+    if (
+      (g?.type === 'perpendicular' || g?.type === 'parallel') &&
+      Array.isArray(g.subjects) &&
+      g.subjects.length >= 2
+    ) {
+      const line = normSeg(g.subjects[0])
+      const plane = g.subjects[1]
+      return (factRegistry) =>
+        factRegistry.getAllFacts().some((f) => {
+          if (f.type !== g.type) return false
+          const s = f.subjects || []
+          const hasLine = s.some((x) => normSeg(x) === line || x === g.subjects[0])
+          const hasPlane = s.includes(plane)
+          return hasLine && hasPlane
+        })
+    }
+    return null
+  }).filter(Boolean)
+
+  if (checkers.length === 0) return null
+  if (checkers.length === 1) return checkers[0]
+  return (factRegistry) => checkers.every((fn) => fn(factRegistry))
+}
+
+function isProofGoal(parsedData) {
+  const g = parsedData?.goal || parsedData?.semantic?.goal
+  const gs = parsedData?.goals || parsedData?.semantic?.goals
+  if (Array.isArray(gs) && gs.some((x) => x?.type === 'perpendicular' || x?.type === 'parallel')) {
+    return true
+  }
+  return g?.type === 'perpendicular' || g?.type === 'parallel'
 }
 
 function toProofSteps(steps) {
@@ -276,7 +347,14 @@ export function tryV2Proof(parsedData) {
       logV2Fallback(V2_FALLBACK_STAGES.SEED_GATE, { reason: 'semantic unavailable' })
       return null
     }
-    const normalized = parsedData.semantic ? parsedData : { ...parsedData, semantic }
+    const normalized = {
+      ...(parsedData.semantic ? parsedData : { ...parsedData, semantic }),
+      semantic,
+      goal: parsedData.goal || semantic.goal,
+      goals: parsedData.goals || semantic.goals,
+      baseShape: parsedData.baseShape || semantic.baseShape,
+      relations: parsedData.relations || semantic.relations,
+    }
 
     const hasRelations =
       (semantic.relations && semantic.relations.length > 0)
@@ -316,7 +394,32 @@ export function tryV2Proof(parsedData) {
 
     // GOAL_REACHED：完整成功
     if (result.status === SCHEDULER_STATUS.GOAL_REACHED) {
-      return toProofSteps(result.proofSteps)
+      let steps = result.proofSteps
+      // 求证题压缩展示：只保留判定链关键步骤，去掉平面归属/交线噪声
+      if (isProofGoal(normalized)) {
+        const keep = new Set([
+          'diagonal_bisect',
+          'rhombus_diagonals_perpendicular',
+          'line_perp_plane_property',
+          'line_perp_plane_criterion',
+          'triangle_midsegment',
+          'line_parallel_plane_criterion',
+        ])
+        const filtered = steps.filter((s) => keep.has(s.rule))
+        if (filtered.length > 0) steps = filtered
+      }
+      return toProofSteps(steps)
+    }
+
+    // 求证题禁止用中间比例冒充成功
+    if (isProofGoal(normalized)) {
+      logV2Fallback(V2_FALLBACK_STAGES.NO_GOAL, {
+        status: result.status,
+        rounds: result.rounds,
+        proofStepCount: result.proofSteps.length,
+        reason: 'proof goal not reached',
+      })
+      return null
     }
 
     // 若已推出带数值的 slash-ratio，也视为可用（goal 未配置时）

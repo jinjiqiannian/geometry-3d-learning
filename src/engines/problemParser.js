@@ -193,18 +193,12 @@ export function parseProblemSync(text) {
   // 先尝试本地关键词匹配（快速路径）
   const quickResult = quickMatch(trimmed);
   if (quickResult && quickResult.confidence >= 0.7) {
-    quickResult.relations = extractRelations(trimmed);
-    const goal = extractGoalRatio(trimmed);
-    if (goal) quickResult.goal = goal;
-    return quickResult;
+    return attachGeometryMeta(quickResult, trimmed);
   }
 
   // 返回增强的本地默认结果
   const fallback = generateFallbackResult(trimmed);
-  fallback.relations = extractRelations(trimmed);
-  const goal = extractGoalRatio(trimmed);
-  if (goal) fallback.goal = goal;
-  return fallback;
+  return attachGeometryMeta(fallback, trimmed);
 }
 
 /**
@@ -224,18 +218,12 @@ export async function parseProblem(text, apiKey, provider = "deepseek", model = 
 
   const quickResult = quickMatch(trimmed);
   if (quickResult && quickResult.confidence >= 0.7) {
-    quickResult.relations = extractRelations(trimmed);
-    const goal = extractGoalRatio(trimmed);
-    if (goal) quickResult.goal = goal;
-    return quickResult;
+    return attachGeometryMeta(quickResult, trimmed);
   }
 
   if (!apiKey || apiKey.trim() === "") {
     const fallback = generateFallbackResult(trimmed);
-    fallback.relations = extractRelations(trimmed);
-    const goal = extractGoalRatio(trimmed);
-    if (goal) fallback.goal = goal;
-    return fallback;
+    return attachGeometryMeta(fallback, trimmed);
   }
 
   const { text: rawText } = await callAI({
@@ -472,6 +460,17 @@ function splitEdgeTokens(s) {
 }
 
 /**
+ * 拆分「已知」与「求证」——求证句不得当作已知条件注入。
+ * @returns {{ given: string, prove: string }}
+ */
+export function splitGivenAndProve(text) {
+  const src = String(text || "");
+  const idx = src.search(/求证|证明/);
+  if (idx < 0) return { given: src, prove: "" };
+  return { given: src.slice(0, idx), prove: src.slice(idx) };
+}
+
+/**
  * 从题目文本提取几何关系（文字 → relation 字符串，不计算坐标）
  * 输出格式与 SceneIRBuilder convertRelationsToAnnotations 对齐：
  *   "E midpoint AD" / "F on PA" / "AB parallel CD" / "PC parallel plane BEF"
@@ -546,19 +545,90 @@ export function extractRelations(text) {
   return relations;
 }
 
+/** 只提取「求证」之前的已知关系，避免把结论当前提。 */
+export function extractGivenRelations(text) {
+  const { given } = splitGivenAndProve(text);
+  return extractRelations(given);
+}
+
+/**
+ * 从「求证/证明」段落提取证明目标（线面垂直 / 线面平行）。
+ * @returns {Array<{type:'perpendicular'|'parallel', subjects:[string,string]}>}
+ */
+export function extractProofGoals(text) {
+  if (!text) return [];
+  const { prove } = splitGivenAndProve(text);
+  if (!prove) return [];
+
+  const goals = [];
+  const seen = new Set();
+  const add = (g) => {
+    const key = `${g.type}|${g.subjects.join("|")}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    goals.push(g);
+  };
+
+  const L = "[A-Z][0-9]*'?";
+  const SEG = `${L}${L}`;
+  const PLANE = `[A-Z][0-9]*'?(?:[A-Z][0-9]*'?){2,3}`;
+
+  let m;
+  const perpPlaneRe = new RegExp(
+    `(${SEG})\\s*(?:垂直于|垂直|⟂|⊥)\\s*(?:底面|平面)\\s*(${PLANE})`,
+    "g"
+  );
+  while ((m = perpPlaneRe.exec(prove)) !== null) {
+    add({ type: "perpendicular", subjects: [m[1], m[2]] });
+  }
+
+  const paraPlaneRe = new RegExp(
+    `(${SEG})\\s*(?:平行于|平行|∥)\\s*(?:底面|平面)\\s*(${PLANE})`,
+    "g"
+  );
+  while ((m = paraPlaneRe.exec(prove)) !== null) {
+    add({ type: "parallel", subjects: [m[1], m[2]] });
+  }
+
+  return goals;
+}
+
 /**
  * 从题目文本提取目标比例（"求AP/AF的值" / "求 AP:AF"）
  * @returns {{type:'ratio', subjects:[string,string]}|null}
  */
 export function extractGoalRatio(text) {
   if (!text) return null;
+  // 求证题优先走证明目标，避免「证明」字样误触发比例解析
+  if (extractProofGoals(text).length > 0) return null;
   const L = "[A-Z][0-9]*'?";
   const SEG = `${L}${L}`;
   const m = text.match(
-    new RegExp(`(?:求|证明?|计算)[^A-Z]{0,10}(${SEG})\\s*[/∶:：比]\\s*(${SEG})`)
+    new RegExp(`(?:求|计算)[^A-Z]{0,10}(${SEG})\\s*[/∶:：比]\\s*(${SEG})`)
   );
   if (!m) return null;
   return { type: "ratio", subjects: [m[1], m[2]] };
+}
+
+/** 把已知关系 / 证明目标 / 底面形状挂到 parse 结果上 */
+export function attachGeometryMeta(result, text) {
+  if (!result || typeof result !== "object") return result;
+  result.relations = extractGivenRelations(text);
+  const proofGoals = extractProofGoals(text);
+  if (proofGoals.length === 1) {
+    result.goal = proofGoals[0];
+    delete result.goals;
+  } else if (proofGoals.length > 1) {
+    result.goals = proofGoals;
+    result.goal = proofGoals[0];
+  } else {
+    const ratioGoal = extractGoalRatio(text);
+    if (ratioGoal) result.goal = ratioGoal;
+  }
+  if (/菱形/.test(String(text || ""))) {
+    result.baseShape = "rhombus";
+  }
+  return result;
 }
 
 export function quickMatch(text) {

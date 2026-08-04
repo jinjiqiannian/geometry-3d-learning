@@ -16,7 +16,7 @@ function seedPyramid(fr) {
 }
 
 describe('V2-D Real Rule Execution', () => {
-  it('ALL_V2_RULES has 13 rules', () => { expect(ALL_V2_RULES.length).toBe(13) })
+  it('ALL_V2_RULES has 17 rules', () => { expect(ALL_V2_RULES.length).toBe(17) })
   it('registerAllRules registers >= 10 rules', () => {
     const rr = createRuleRegistry(); registerAllRules(rr)
     expect(rr.size()).toBeGreaterThanOrEqual(10)

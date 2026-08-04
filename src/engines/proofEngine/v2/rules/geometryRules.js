@@ -37,7 +37,7 @@ export const diagonalBisect = {
   priority: 10,
   condition({ facts }) {
     const shapes = findFacts(facts, 'shape')
-    const baseShapes = ['pyramid', 'square', 'parallelogram', 'rectangle', 'cube', 'cuboid']
+    const baseShapes = ['pyramid', 'square', 'parallelogram', 'rectangle', 'cube', 'cuboid', 'rhombus']
     const hasShape = shapes.some((s) => baseShapes.includes(s.subjects?.[0]))
     if (!hasShape) return false
     const midpoints = findFacts(facts, 'midpoint')
@@ -56,7 +56,7 @@ export const diagonalBisect = {
       ],
       proofSteps: [{
         title: '构造对角线交点',
-        content: '连接 AC 和 BD，因 ABCD 为正方形/平行四边形，对角线互相平分于 O。',
+        content: '连接 AC 和 BD，因 ABCD 为平行四边形（菱形/矩形/正方形均适用），对角线互相平分于 O。',
         formula: '平行四边形对角线互相平分',
         type: 'construction',
         rule: 'diagonal_bisect',
@@ -590,6 +590,306 @@ export const parallelTransitive = {
         formula: '平行于同一直线的两直线平行',
         type: 'inference',
         rule: 'parallel_transitive',
+      })
+    }
+    return { facts, proofSteps: steps }
+  },
+}
+
+/** 菱形对角线互相垂直 */
+export const rhombusDiagonalsPerpendicular = {
+  id: 'rhombus_diagonals_perpendicular',
+  name: '菱形对角线互相垂直',
+  description: '菱形的对角线互相垂直',
+  tier: RULE_TIERS.THEOREM,
+  premises: [],
+  conclusion: 'perpendicular',
+  tags: ['rhombus', 'diagonal', 'perpendicular'],
+  priority: 9,
+  condition({ facts }) {
+    const shapes = findFacts(facts, 'shape')
+    const isRhombus = shapes.some((s) => s.subjects?.[0] === 'rhombus')
+    if (!isRhombus) return false
+    const already = findFacts(facts, 'perpendicular').some((f) => {
+      const s = f.subjects || []
+      return (s.includes('AC') && s.includes('BD')) || (s.includes('BD') && s.includes('AC'))
+    })
+    if (already) return false
+    return { derived: true }
+  },
+  apply() {
+    return {
+      facts: [
+        { type: 'perpendicular', subjects: ['AC', 'BD'], description: 'AC ⊥ BD（菱形对角线）' },
+        { type: 'line', subjects: ['A', 'C'], description: '对角线 AC' },
+        { type: 'line', subjects: ['B', 'D'], description: '对角线 BD' },
+      ],
+      proofSteps: [{
+        title: '菱形对角线互相垂直',
+        content: '∵ 底面 ABCD 是菱形，∴ 对角线 AC ⊥ BD。',
+        formula: '菱形对角线互相垂直',
+        type: 'inference',
+        rule: 'rhombus_diagonals_perpendicular',
+      }],
+    }
+  },
+}
+
+/**
+ * 线面垂直性质：若 l ⊥ 平面 α，m ⊂ α，则 l ⊥ m
+ */
+export const linePerpPlaneProperty = {
+  id: 'line_perp_plane_property',
+  name: '线面垂直性质定理',
+  description: '直线垂直于平面则垂直于平面内任意直线',
+  tier: RULE_TIERS.THEOREM,
+  premises: [],
+  conclusion: 'perpendicular',
+  tags: ['perpendicular', 'plane', 'line'],
+  priority: 8,
+  condition({ facts }) {
+    const perps = findFacts(facts, 'perpendicular')
+    const planes = findFacts(facts, 'plane')
+    const matches = []
+    for (const pf of perps) {
+      const s = pf.subjects || []
+      if (s.length < 2) continue
+      let line = null
+      let planeLabel = null
+      if (s[0].length === 2 && s[1].length >= 3) {
+        line = s[0]; planeLabel = s[1]
+      } else if (s[1].length === 2 && s[0].length >= 3) {
+        line = s[1]; planeLabel = s[0]
+      } else continue
+
+      const planeFact = planes.find((pl) => planeName(pl) === planeLabel || (pl.subjects || []).join('') === planeLabel)
+      if (!planeFact) continue
+      const pts = planeFact.subjects || []
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const m = lineKey(pts[i], pts[j])
+          const already = perps.some((p) => {
+            const ps = p.subjects || []
+            return (ps.includes(line) && (ps.includes(m) || ps.includes(pts[i] + pts[j]) || ps.includes(pts[j] + pts[i])))
+          })
+          if (already) continue
+          matches.push({ line, planeLabel, other: m })
+        }
+      }
+    }
+    return matches.length > 0 ? matches : false
+  },
+  apply(matchResults) {
+    const facts = []; const steps = []
+    const byLine = new Map()
+    for (const m of matchResults) {
+      const arr = byLine.get(m.line) || []
+      arr.push(m)
+      byLine.set(m.line, arr)
+    }
+    for (const [, arr] of byLine) {
+      // 证明题只需对角线方向的性质（AC/BD），避免面内边全展开
+      const pick = arr.filter((m) => m.other === 'AC' || m.other === 'BD')
+      const use = pick.length > 0 ? pick : arr.slice(0, 1)
+      for (const m of use) {
+        facts.push({
+          type: 'perpendicular',
+          subjects: [m.line, m.other],
+          description: `${m.line} ⊥ ${m.other}`,
+        })
+        steps.push({
+          title: '应用线面垂直性质',
+          content: `∵ ${m.line} ⊥ 平面${m.planeLabel}，${m.other} ⊂ 平面${m.planeLabel}，∴ ${m.line} ⊥ ${m.other}。`,
+          formula: '线 ⊥ 面 ⇒ 线 ⊥ 面内直线',
+          type: 'inference',
+          rule: 'line_perp_plane_property',
+        })
+      }
+    }
+    return { facts, proofSteps: steps }
+  },
+}
+
+/**
+ * 线面垂直判定：直线垂直于平面内两条相交直线 ⇒ 直线 ⊥ 平面
+ */
+export const linePerpPlaneCriterion = {
+  id: 'line_perp_plane_criterion',
+  name: '线面垂直判定定理',
+  description: '直线垂直于平面内两条相交直线，则垂直于该平面',
+  tier: RULE_TIERS.THEOREM,
+  premises: [],
+  conclusion: 'perpendicular',
+  tags: ['perpendicular', 'plane', 'criterion'],
+  priority: 7,
+  condition({ facts }) {
+    const perps = findFacts(facts, 'perpendicular')
+    const planes = findFacts(facts, 'plane')
+    const matches = []
+    for (const pl of planes) {
+      const name = planeName(pl)
+      const pts = pl.subjects || []
+      if (pts.length < 3) continue
+      const linePerps = []
+      for (const pf of perps) {
+        const s = pf.subjects || []
+        if (s.length !== 2) continue
+        if (!(s[0].length === 2 && s[1].length === 2)) continue
+        const L = s[0]; const M = s[1]
+        const mPts = M.split('')
+        if (mPts.length === 2 && pts.includes(mPts[0]) && pts.includes(mPts[1])) {
+          linePerps.push({ L, M })
+        }
+        const lPts = L.split('')
+        if (lPts.length === 2 && pts.includes(lPts[0]) && pts.includes(lPts[1])) {
+          linePerps.push({ L: M, M: L })
+        }
+      }
+      const byL = new Map()
+      for (const item of linePerps) {
+        const arr = byL.get(item.L) || []
+        arr.push(item.M)
+        byL.set(item.L, arr)
+      }
+      for (const [L, Ms] of byL) {
+        const uniq = [...new Set(Ms.map((x) => lineKey(x[0], x[1])))]
+        if (uniq.length < 2) continue
+        let found = null
+        for (let i = 0; i < uniq.length; i++) {
+          for (let j = i + 1; j < uniq.length; j++) {
+            const a = uniq[i].split('')
+            const b = uniq[j].split('')
+            if (a.some((p) => b.includes(p))) {
+              found = { m1: uniq[i], m2: uniq[j] }
+              break
+            }
+          }
+          if (found) break
+        }
+        if (!found) continue
+        const already = perps.some((p) => {
+          const s = p.subjects || []
+          return (s.includes(L) && s.includes(name)) || (s.includes(name) && s.includes(L))
+        })
+        if (already) continue
+        matches.push({ line: L, plane: name, m1: found.m1, m2: found.m2 })
+      }
+    }
+    return matches.length > 0 ? matches : false
+  },
+  apply(matchResults) {
+    const facts = []; const steps = []
+    for (const m of matchResults) {
+      facts.push({
+        type: 'perpendicular',
+        subjects: [m.line, m.plane],
+        description: `${m.line} ⊥ 平面${m.plane}`,
+      })
+      steps.push({
+        title: '应用线面垂直判定定理',
+        content: `∵ ${m.line} ⊥ ${m.m1}，${m.line} ⊥ ${m.m2}，且 ${m.m1} ∩ ${m.m2} ≠ ∅，${m.m1},${m.m2} ⊂ 平面${m.plane}，∴ ${m.line} ⊥ 平面${m.plane}。`,
+        formula: '线 ⊥ 面内两相交直线 ⇒ 线 ⊥ 面',
+        type: 'conclusion',
+        rule: 'line_perp_plane_criterion',
+      })
+    }
+    return { facts, proofSteps: steps }
+  },
+}
+
+/**
+ * 线面平行判定：直线平行于平面内一条直线，且本身不在平面内 ⇒ 线 ∥ 面
+ */
+export const lineParallelPlaneCriterion = {
+  id: 'line_parallel_plane_criterion',
+  name: '线面平行判定定理',
+  description: '直线平行于平面内一直线且不在平面内，则平行于平面',
+  tier: RULE_TIERS.THEOREM,
+  premises: [],
+  conclusion: 'parallel',
+  tags: ['parallel', 'plane', 'criterion'],
+  priority: 6,
+  condition({ facts }) {
+    const parallels = findFacts(facts, 'parallel')
+    const onPlanes = findFacts(facts, 'on_plane')
+    const midpoints = findFacts(facts, 'midpoint')
+    const planes = findFacts(facts, 'plane')
+    const matches = []
+
+    for (const pf of parallels) {
+      const s = pf.subjects || []
+      if (s.length !== 2) continue
+      if (!(s[0].length === 2 && s[1].length === 2)) continue
+      const [l1, l2] = s
+      for (const pl of planes) {
+        const name = planeName(pl)
+        const pts = pl.subjects || []
+        const already = parallels.some((p) => {
+          const ps = p.subjects || []
+          return (ps.includes(l1) && ps.includes(name)) || (ps.includes(l2) && ps.includes(name))
+        })
+        if (already) continue
+
+        const pointOn = (pt) => {
+          if (onPlanes.some((o) => o.subjects?.[0] === pt && o.subjects?.[1] === name)) return true
+          if (pts.includes(pt)) return true
+          // 平面一边的中点也在平面内（如 O 为 AC 中点 ⊂ 平面 AEC）
+          return midpoints.some((mf) => {
+            const [mid, a, b] = mf.subjects || []
+            return mid === pt && pts.includes(a) && pts.includes(b)
+          })
+        }
+        const endpointsOn = (seg) => {
+          if (seg.length !== 2) return false
+          const [a, b] = seg.split('')
+          return pointOn(a) && pointOn(b)
+        }
+
+    // 仅保留「线 ∥ 面内一线 ⇒ 线 ∥ 目标证明平面」类结论，避免 EO∥侧面 噪声
+        if (endpointsOn(l2) && name.length >= 3) {
+          const [a, b] = l1.split('')
+          if (!pointOn(a) || !pointOn(b)) {
+            const midPts = new Set(midpoints.map((mf) => mf.subjects?.[0]).filter(Boolean))
+            const inPlaneIsMidseg = l2.split('').some((p) => midPts.has(p))
+            if (inPlaneIsMidseg) {
+              matches.push({ line: l1, inPlaneLine: l2, plane: name })
+            }
+          }
+        }
+        if (endpointsOn(l1) && name.length >= 3) {
+          const [a, b] = l2.split('')
+          if (!pointOn(a) || !pointOn(b)) {
+            const midPts = new Set(midpoints.map((mf) => mf.subjects?.[0]).filter(Boolean))
+            const inPlaneIsMidseg = l1.split('').some((p) => midPts.has(p))
+            if (inPlaneIsMidseg) {
+              matches.push({ line: l2, inPlaneLine: l1, plane: name })
+            }
+          }
+        }
+      }
+    }
+    const seen = new Set()
+    const uniq = []
+    for (const m of matches) {
+      const k = `${m.line}|${m.plane}`
+      if (!seen.has(k)) { seen.add(k); uniq.push(m) }
+    }
+    return uniq.length > 0 ? uniq : false
+  },
+  apply(matchResults) {
+    const facts = []; const steps = []
+    for (const m of matchResults) {
+      facts.push({
+        type: 'parallel',
+        subjects: [m.line, m.plane],
+        description: `${m.line} ∥ 平面${m.plane}`,
+      })
+      steps.push({
+        title: '应用线面平行判定定理',
+        content: `∵ ${m.line} ∥ ${m.inPlaneLine}，${m.inPlaneLine} ⊂ 平面${m.plane}，且 ${m.line} ⊄ 平面${m.plane}，∴ ${m.line} ∥ 平面${m.plane}。`,
+        formula: '线 ∥ 面内直线 ⇒ 线 ∥ 面',
+        type: 'conclusion',
+        rule: 'line_parallel_plane_criterion',
       })
     }
     return { facts, proofSteps: steps }
