@@ -31,6 +31,35 @@
   padding: 0 0.75rem;
 }
 
+.wp-hub-route-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: #8a5a2b;
+}
+
+.wp-hub-sample-tag {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: #8a847a;
+  margin-bottom: 0.2rem;
+}
+
+.wp-hub-samples {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 720px) {
+  .wp-hub-samples {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.workspace-page--hub .wp-domain-bar,
+.workspace-page--hub .wp-subject-bar {
+  opacity: 0.92;
+}
+
 .wp-domain-tab {
   appearance: none;
   border: none;

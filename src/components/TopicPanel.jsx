@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   TOPICS,
   TOPIC_EXAMPLES,
@@ -698,12 +698,15 @@ function ConicDemo({ problemType, stepIndex, filmKey, answer }) {
 /**
  * 导数 / 圆锥曲线：步骤 + 具体演示动画 + 思路树
  */
-export default function TopicPanel({ topic }) {
+/**
+ * @param {{ topic: string, boot?: { type: 'sample'|'text', key?: string, text?: string, nonce: number }, onBackToHub?: () => void }} props
+ */
+export default function TopicPanel({ topic, boot, onBackToHub }) {
   const meta = TOPICS[topic]
   const examples = TOPIC_EXAMPLES[topic]
   const labels = TOPIC_EXAMPLE_LABELS[topic]
   const hints = EXAMPLE_HINTS[topic] || {}
-  const exampleKeys = Object.keys(examples)
+  const exampleKeys = Object.keys(examples || {})
   const {
     checkCanGenerate,
     recordUsage,
@@ -720,6 +723,7 @@ export default function TopicPanel({ topic }) {
   const [loading, setLoading] = useState(false)
   const [pptLoading, setPptLoading] = useState(false)
   const [filmKey, setFilmKey] = useState(0)
+  const bootNonceRef = useRef(null)
 
   const byId = useMemo(() => buildChildrenMap(ir?.nodes), [ir])
   const root = ir ? byId[ir.rootId] : null
@@ -742,14 +746,15 @@ export default function TopicPanel({ topic }) {
 
   /** 样例免费：不占额度，先体验方法动画 */
   const selectExample = (key) => {
+    if (!examples?.[key]) return
     setInput(examples[key].goal)
     applyIr(examples[key])
   }
 
-  const handleSolve = async () => {
-    const text = input.trim()
+  const solveText = async (raw) => {
+    const text = String(raw || '').trim()
     if (text.length < 4) {
-      setError(`请先输入一道${meta.label}题`)
+      setError(`请先输入一道${meta?.label || ''}题`)
       return
     }
     if (!checkCanGenerate()) return
@@ -775,11 +780,30 @@ export default function TopicPanel({ topic }) {
       applyIr(next)
       await recordUsage('generate', text)
     } catch (e) {
-      setError(e?.message || meta.hint)
+      setError(e?.message || meta?.hint)
     } finally {
       setLoading(false)
     }
   }
+
+  const handleSolve = async () => {
+    await solveText(input)
+  }
+
+  /** Hub 传入样例 / 题目后自动开讲 */
+  useEffect(() => {
+    if (!boot || boot.nonce == null || boot.nonce === bootNonceRef.current) return
+    bootNonceRef.current = boot.nonce
+    if (boot.type === 'sample' && boot.key && examples?.[boot.key]) {
+      selectExample(boot.key)
+      return
+    }
+    if (boot.type === 'text' && boot.text) {
+      setInput(boot.text)
+      void solveText(boot.text)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- boot.nonce 驱动一次
+  }, [boot, topic])
 
   const goStep = (i) => {
     setCurrentStep(i)
@@ -821,6 +845,8 @@ export default function TopicPanel({ topic }) {
               setIr(null)
               setCurrentStep(0)
               setError('')
+              setInput('')
+              if (onBackToHub) onBackToHub()
             }}
           >
             ← 换一道

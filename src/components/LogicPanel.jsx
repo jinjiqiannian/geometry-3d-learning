@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { MVP_EXAMPLES, PROBLEM_TYPES, validateLogicIR } from '../engines/logicIR/schema.js'
 import { solveLogicProblem } from '../engines/logicIR/solve.js'
 import { useSubscription } from '../contexts/SubscriptionContext'
@@ -247,7 +247,10 @@ function LogicTreeNode({ node, byId, highlighted, revealed, depth }) {
 /**
  * 排组/概率：LogicIR +「逻辑生长」动画（与竞品文字步骤差异化）
  */
-export default function LogicPanel() {
+/**
+ * @param {{ boot?: { type: 'sample'|'text', key?: string, text?: string, nonce: number }, onBackToHub?: () => void }} props
+ */
+export default function LogicPanel({ boot, onBackToHub } = {}) {
   const {
     checkCanGenerate,
     recordUsage,
@@ -263,6 +266,7 @@ export default function LogicPanel() {
   const [loading, setLoading] = useState(false)
   const [pptLoading, setPptLoading] = useState(false)
   const [filmKey, setFilmKey] = useState(0)
+  const bootNonceRef = useRef(null)
 
   const { byId } = useMemo(
     () => buildChildrenMap(ir?.nodes || []),
@@ -312,8 +316,8 @@ export default function LogicPanel() {
     applyIr(MVP_EXAMPLES[type])
   }
 
-  const handleSolve = async () => {
-    const text = input.trim()
+  const solveText = async (raw) => {
+    const text = String(raw || '').trim()
     if (text.length < 4) {
       setError('请先粘贴或输入一道排列组合 / 概率题')
       return
@@ -348,6 +352,25 @@ export default function LogicPanel() {
       setLoading(false)
     }
   }
+
+  const handleSolve = async () => {
+    await solveText(input)
+  }
+
+  /** Hub 传入样例 / 题目后自动开讲 */
+  useEffect(() => {
+    if (!boot || boot.nonce == null || boot.nonce === bootNonceRef.current) return
+    bootNonceRef.current = boot.nonce
+    if (boot.type === 'sample' && boot.key && MVP_EXAMPLES[boot.key]) {
+      selectType(boot.key)
+      return
+    }
+    if (boot.type === 'text' && boot.text) {
+      setInput(boot.text)
+      void solveText(boot.text)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- boot.nonce 驱动一次
+  }, [boot])
 
   const handleExportPPT = async () => {
     if (!ir || !checkCanExportPpt()) return
@@ -388,6 +411,8 @@ export default function LogicPanel() {
               setIr(null)
               setCurrentStep(0)
               setError('')
+              setInput('')
+              if (onBackToHub) onBackToHub()
             }}
           >
             ← 换一道

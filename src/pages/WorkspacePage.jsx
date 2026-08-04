@@ -48,8 +48,23 @@ import {
   mergeConsecutiveSteps,
   mapCurrentStepToMergedIndex,
 } from "../components/mergeConsecutiveSteps";
+import {
+  detectSubject,
+  resolveSubjectNav,
+  HUB_SAMPLES,
+} from "../engines/subjectRouter.js";
 import "./WorkspacePage.css";
 import "../components/LogicPanel.css";
+
+function withTimeout(promise, ms, message) {
+  let timer;
+  return Promise.race([
+    promise.finally(() => clearTimeout(timer)),
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), ms);
+    }),
+  ]);
+}
 
 /** 浏览器本地 OCR（CDN 加载 tesseract，不新增 npm 依赖） */
 function loadTesseractFromCdn() {
@@ -60,8 +75,28 @@ function loadTesseractFromCdn() {
   return new Promise((resolve, reject) => {
     const existing = document.querySelector("script[data-tesseract]");
     if (existing) {
-      existing.addEventListener("load", () => resolve(window.Tesseract));
-      existing.addEventListener("error", () => reject(new Error("OCR 脚本加载失败")));
+      if (window.Tesseract) {
+        resolve(window.Tesseract);
+        return;
+      }
+      // 脚本已失败或卡住时，监听不会再触发 → 直接拒绝，避免永久挂起
+      if (existing.dataset.tesseractFailed === "1") {
+        reject(new Error("OCR 脚本加载失败"));
+        return;
+      }
+      const onLoad = () => {
+        if (window.Tesseract) resolve(window.Tesseract);
+        else reject(new Error("OCR 引擎未就绪"));
+      };
+      existing.addEventListener("load", onLoad, { once: true });
+      existing.addEventListener(
+        "error",
+        () => {
+          existing.dataset.tesseractFailed = "1";
+          reject(new Error("OCR 脚本加载失败"));
+        },
+        { once: true }
+      );
       return;
     }
     const s = document.createElement("script");
@@ -72,16 +107,25 @@ function loadTesseractFromCdn() {
       if (window.Tesseract) resolve(window.Tesseract);
       else reject(new Error("OCR 引擎未就绪"));
     };
-    s.onerror = () => reject(new Error("OCR 脚本加载失败"));
+    s.onerror = () => {
+      s.dataset.tesseractFailed = "1";
+      reject(new Error("OCR 脚本加载失败"));
+    };
     document.head.appendChild(s);
   });
 }
 
 async function runLocalImageOcr(dataUrl) {
-  const Tesseract = await loadTesseractFromCdn();
-  const result = await Tesseract.recognize(dataUrl, "chi_sim+eng", {
-    logger: () => {},
-  });
+  const Tesseract = await withTimeout(
+    loadTesseractFromCdn(),
+    12000,
+    "本地 OCR 引擎加载超时"
+  );
+  const result = await withTimeout(
+    Tesseract.recognize(dataUrl, "chi_sim+eng", { logger: () => {} }),
+    25000,
+    "本地识别超时（中文模型下载较慢或网络受限）"
+  );
   return (result?.data?.text || "").replace(/\s+\n/g, "\n").trim();
 }
 
@@ -186,6 +230,12 @@ export default function WorkspacePage() {
   const [physicsGroup, setPhysicsGroup] = useState("mechanics"); // mechanics | electro
   const [physicsTopic, setPhysicsTopic] = useState("phys_motion");
   const subject = domain === "physics" ? physicsTopic : mathTopic;
+
+  /** 统一入口：首屏 Hub；解题后才强调专题 Tab */
+  const [hubActive, setHubActive] = useState(true);
+  const [showTopicNav, setShowTopicNav] = useState(false);
+  const [panelBoot, setPanelBoot] = useState(null);
+  const [routeHint, setRouteHint] = useState("");
 
   // ── Workspace state ──────────────────────────────
   const [problemText, setProblemText] = useState("");
@@ -815,12 +865,52 @@ export default function WorkspacePage() {
     });
   }, [mergedGroups]);
 
-  // ── 常驻搜索栏提交 ──
+  // ── 统一入口提交：识别专题后开讲 ──
+  const applySubjectNav = useCallback((subjectId) => {
+    const nav = resolveSubjectNav(subjectId);
+    setDomain(nav.domain);
+    setMathTopic(nav.mathTopic);
+    setPhysicsTopic(nav.physicsTopic);
+    setPhysicsGroup(nav.physicsGroup);
+  }, []);
+
+  const leaveHubWithBoot = useCallback(
+    (subjectId, boot) => {
+      applySubjectNav(subjectId);
+      setPanelBoot(boot);
+      setHubActive(false);
+      setShowTopicNav(true);
+    },
+    [applySubjectNav],
+  );
+
   const handleSearchSubmit = useCallback(() => {
     const trimmed = searchInput.trim();
     if (trimmed.length < 3 || loading) return;
-    handleParseProblem(trimmed, { useLocalOnly: false });
-  }, [searchInput, loading, handleParseProblem]);
+    const detected = detectSubject(trimmed);
+    setRouteHint(
+      detected.confidence === "low" ? detected.hint || "" : "",
+    );
+    if (detected.subject === "geometry") {
+      applySubjectNav("geometry");
+      setHubActive(false);
+      setShowTopicNav(true);
+      setPanelBoot(null);
+      handleParseProblem(trimmed, { useLocalOnly: false });
+      return;
+    }
+    leaveHubWithBoot(detected.subject, {
+      type: "text",
+      text: trimmed,
+      nonce: Date.now(),
+    });
+  }, [
+    searchInput,
+    loading,
+    applySubjectNav,
+    leaveHubWithBoot,
+    handleParseProblem,
+  ]);
 
   const handleSearchKeyDown = useCallback(
     (e) => {
@@ -900,7 +990,11 @@ export default function WorkspacePage() {
 
         // 1) 服务端识图（Gemini / DeepSeek Vision）
         try {
-          const res = await aiAPI.ocr(dataUrl);
+          const res = await withTimeout(
+            aiAPI.ocr(dataUrl),
+            20000,
+            "云端识图超时"
+          );
           if (res?.data?.visionHints) {
             visionHintsRef.current = res.data.visionHints;
           }
@@ -927,8 +1021,9 @@ export default function WorkspacePage() {
           setOcrHint("未识别出文字，请对照原图手动输入");
         } catch (err) {
           setOcrHint(
-            err?.message ||
-              "识别失败：可在 server/.env 配置 VISION_PROVIDER=zhipu 与 VISION_API_KEY，或手动输入题干"
+            err?.message
+              ? `${err.message}。请对照图片手动输入题干后点「开始理解」`
+              : "识别失败，请对照图片手动输入题干"
           );
         }
       } catch {
@@ -987,7 +1082,7 @@ export default function WorkspacePage() {
     setCameraResetKey((k) => k + 1);
   }, []);
 
-  // ── 解题页返回空工作台（不回首页） ──
+  // ── 解题页返回统一 Hub ──
   const handleBackToCompose = useCallback(() => {
     try {
       abortStreamRef.current?.();
@@ -1024,7 +1119,51 @@ export default function WorkspacePage() {
       params: { size: 2 },
       ...defaultConstraintParams("cube"),
     });
+    setHubActive(true);
+    setShowTopicNav(false);
+    setPanelBoot(null);
+    setRouteHint("");
   }, []);
+
+  const handleHubSample = useCallback(
+    (sample) => {
+      setRouteHint("");
+      if (sample.subject === "geometry") {
+        applySubjectNav("geometry");
+        setHubActive(false);
+        setShowTopicNav(true);
+        setPanelBoot(null);
+        handleParseProblem(sample.text, { useLocalOnly: true });
+        return;
+      }
+      leaveHubWithBoot(sample.subject, {
+        type: "sample",
+        key: sample.sampleKey,
+        nonce: Date.now(),
+      });
+    },
+    [applySubjectNav, leaveHubWithBoot, handleParseProblem],
+  );
+
+  const handleTopicTabClick = useCallback(
+    (nextSubject) => {
+      applySubjectNav(nextSubject);
+      setPanelBoot(null);
+      if (hubActive) {
+        if (nextSubject === "geometry") {
+          setShowTopicNav(false);
+          return;
+        }
+        setHubActive(false);
+        setShowTopicNav(true);
+        return;
+      }
+      if (nextSubject === "geometry") {
+        handleBackToCompose();
+      }
+    },
+    [applySubjectNav, hubActive, handleBackToCompose],
+  );
 
   // ── 自动回放：按合并后步骤组推进（一步一组，避免同卡步数空转） ──
   const handleTogglePlay = useCallback(() => {
@@ -1139,143 +1278,278 @@ export default function WorkspacePage() {
   }, [problemText, geometry, steps, parsedData]);
 
   const isComposeIdle = !problemText && !loading;
+  const showNavBars = !hubActive || showTopicNav;
 
-  const composeExamples = [
-    {
-      text: "正方体棱长为2，求体对角线AG的长度",
-      label: "正方体对角线",
-      hint: "棱长 2 → 体对角线",
-    },
-    {
-      text: "球体半径为3，求体积和表面积",
-      label: "球体体积",
-      hint: "半径 3 → 体积与表面积",
-    },
-    {
-      text: "正四棱锥底面边长4，高6，求体积",
-      label: "棱锥体积",
-      hint: "底边 4 · 高 6",
-    },
-  ];
+  // 几何无题时回到 Hub，避免空画布
+  useEffect(() => {
+    if (!hubActive && subject === "geometry" && isComposeIdle) {
+      setHubActive(true);
+      setShowTopicNav(false);
+      setPanelBoot(null);
+    }
+  }, [hubActive, subject, isComposeIdle]);
 
   return (
     <div
-      className={`workspace-page${subject === "geometry" ? " workspace-page--geometry" : ""}${subject === "geometry" && !isComposeIdle ? " workspace-page--solving" : ""}`}
+      className={`workspace-page${hubActive ? " workspace-page--hub" : ""}${!hubActive && subject === "geometry" ? " workspace-page--geometry" : ""}${!hubActive && subject === "geometry" && !isComposeIdle ? " workspace-page--solving" : ""}`}
     >
-      {/* ── 一级：数学 | 物理 ── */}
-      <div className="wp-domain-bar" role="tablist" aria-label="学科">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={domain === "math"}
-          className={`wp-domain-tab${domain === "math" ? " is-active" : ""}`}
-          onClick={() => setDomain("math")}
-        >
-          数学
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={domain === "physics"}
-          className={`wp-domain-tab${domain === "physics" ? " is-active" : ""}`}
-          onClick={() => setDomain("physics")}
-        >
-          物理
-        </button>
-      </div>
-
-      {/* ── 二级：数学 / 物理各自专题 ── */}
-      {domain === "math" && (
-        <div className="wp-subject-bar" role="tablist" aria-label="数学专题">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mathTopic === "combo"}
-            className={`wp-subject-tab${mathTopic === "combo" ? " is-active" : ""}`}
-            onClick={() => setMathTopic("combo")}
-          >
-            排列组合 / 概率
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mathTopic === "geometry"}
-            className={`wp-subject-tab${mathTopic === "geometry" ? " is-active" : ""}`}
-            onClick={() => setMathTopic("geometry")}
-          >
-            立体几何
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mathTopic === "derivative"}
-            className={`wp-subject-tab${mathTopic === "derivative" ? " is-active" : ""}`}
-            onClick={() => setMathTopic("derivative")}
-          >
-            导数
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mathTopic === "conic"}
-            className={`wp-subject-tab${mathTopic === "conic" ? " is-active" : ""}`}
-            onClick={() => setMathTopic("conic")}
-          >
-            圆锥曲线
-          </button>
-        </div>
-      )}
-      {domain === "physics" && (
+      {showNavBars && (
         <>
-          <div className="wp-subject-bar" role="tablist" aria-label="物理大组">
-            {PHYSICS_GROUPS.map((g) => (
+          <div className="wp-domain-bar" role="tablist" aria-label="学科">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={domain === "math"}
+              className={`wp-domain-tab${domain === "math" ? " is-active" : ""}`}
+              onClick={() => {
+                setDomain("math");
+                setPanelBoot(null);
+                if (hubActive && mathTopic !== "geometry") {
+                  setHubActive(false);
+                  setShowTopicNav(true);
+                }
+              }}
+            >
+              数学
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={domain === "physics"}
+              className={`wp-domain-tab${domain === "physics" ? " is-active" : ""}`}
+              onClick={() => {
+                setDomain("physics");
+                setPanelBoot(null);
+                if (hubActive) {
+                  setHubActive(false);
+                  setShowTopicNav(true);
+                }
+              }}
+            >
+              物理
+            </button>
+          </div>
+
+          {domain === "math" && (
+            <div className="wp-subject-bar" role="tablist" aria-label="数学专题">
               <button
-                key={g.id}
                 type="button"
                 role="tab"
-                aria-selected={physicsGroup === g.id}
-                className={`wp-subject-tab${physicsGroup === g.id ? " is-active" : ""}`}
-                onClick={() => {
-                  setPhysicsGroup(g.id);
-                  setPhysicsTopic(g.topics[0]);
-                }}
+                aria-selected={mathTopic === "combo"}
+                className={`wp-subject-tab${mathTopic === "combo" ? " is-active" : ""}`}
+                onClick={() => handleTopicTabClick("combo")}
               >
-                {g.label}
+                排列组合 / 概率
               </button>
-            ))}
-          </div>
-          <div
-            className="wp-subject-bar wp-subject-bar--sub"
-            role="tablist"
-            aria-label="物理专题"
-          >
-            {(
-              PHYSICS_GROUPS.find((g) => g.id === physicsGroup)?.topics || []
-            ).map((tid) => (
               <button
-                key={tid}
                 type="button"
                 role="tab"
-                aria-selected={physicsTopic === tid}
-                className={`wp-subject-tab${physicsTopic === tid ? " is-active" : ""}`}
-                onClick={() => setPhysicsTopic(tid)}
+                aria-selected={mathTopic === "geometry"}
+                className={`wp-subject-tab${mathTopic === "geometry" ? " is-active" : ""}`}
+                onClick={() => handleTopicTabClick("geometry")}
               >
-                {PHYSICS_SECTIONS[tid]?.navLabel || tid}
+                立体几何
               </button>
-            ))}
-          </div>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mathTopic === "derivative"}
+                className={`wp-subject-tab${mathTopic === "derivative" ? " is-active" : ""}`}
+                onClick={() => handleTopicTabClick("derivative")}
+              >
+                导数
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mathTopic === "conic"}
+                className={`wp-subject-tab${mathTopic === "conic" ? " is-active" : ""}`}
+                onClick={() => handleTopicTabClick("conic")}
+              >
+                圆锥曲线
+              </button>
+            </div>
+          )}
+          {domain === "physics" && (
+            <>
+              <div className="wp-subject-bar" role="tablist" aria-label="物理大组">
+                {PHYSICS_GROUPS.map((g) => (
+                  <button
+                    key={g.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={physicsGroup === g.id}
+                    className={`wp-subject-tab${physicsGroup === g.id ? " is-active" : ""}`}
+                    onClick={() => {
+                      setPhysicsGroup(g.id);
+                      setPhysicsTopic(g.topics[0]);
+                      setPanelBoot(null);
+                      if (hubActive) {
+                        setHubActive(false);
+                        setShowTopicNav(true);
+                      }
+                    }}
+                  >
+                    {g.label}
+                  </button>
+                ))}
+              </div>
+              <div
+                className="wp-subject-bar wp-subject-bar--sub"
+                role="tablist"
+                aria-label="物理专题"
+              >
+                {(
+                  PHYSICS_GROUPS.find((g) => g.id === physicsGroup)?.topics || []
+                ).map((tid) => (
+                  <button
+                    key={tid}
+                    type="button"
+                    role="tab"
+                    aria-selected={physicsTopic === tid}
+                    className={`wp-subject-tab${physicsTopic === tid ? " is-active" : ""}`}
+                    onClick={() => {
+                      setPhysicsTopic(tid);
+                      setPanelBoot(null);
+                      if (hubActive) {
+                        setHubActive(false);
+                        setShowTopicNav(true);
+                      }
+                    }}
+                  >
+                    {PHYSICS_SECTIONS[tid]?.navLabel || tid}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
 
-      {subject === "combo" ? (
+      {hubActive ? (
         <div className="wp-combo-shell">
-          <LogicPanel />
+          <div className="logic-panel wp-hub-panel">
+            <header className="logic-panel-head">
+              <p className="logic-panel-kicker">统一入口 · 粘贴即讲</p>
+              <h2 className="logic-panel-title">不用找板块，直接开讲</h2>
+
+              <div className="logic-compose">
+                {composeImage && (
+                  <div className="wp-compose-preview" style={{ marginBottom: "0.5rem" }}>
+                    <img src={composeImage} alt="原题预览" />
+                    <button
+                      type="button"
+                      className="wp-compose-preview-clear"
+                      onClick={clearComposeImage}
+                      aria-label="移除图片"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+                <textarea
+                  className="logic-compose-input"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={handleSearchKeyDown}
+                  placeholder="粘贴任意题目：立体几何 / 排组 / 导数 / 圆锥曲线 / 物理…"
+                  rows={3}
+                  spellCheck={false}
+                  autoFocus
+                  disabled={ocrBusy}
+                />
+                {ocrHint && (
+                  <p
+                    className="logic-compose-error"
+                    style={ocrBusy ? { color: "#5c574e" } : undefined}
+                  >
+                    {ocrHint}
+                  </p>
+                )}
+                {routeHint && (
+                  <p className="wp-hub-route-hint">{routeHint}</p>
+                )}
+                <div className="logic-compose-row">
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    hidden
+                    onChange={handleComposeImagePick}
+                  />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={handleComposeImagePick}
+                  />
+                  <button
+                    type="button"
+                    className="logic-type-tab"
+                    onClick={() => cameraInputRef.current?.click()}
+                    disabled={ocrBusy}
+                  >
+                    拍照
+                  </button>
+                  <button
+                    type="button"
+                    className="logic-type-tab"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={ocrBusy}
+                  >
+                    相册
+                  </button>
+                  <button
+                    type="button"
+                    className="logic-compose-submit"
+                    onClick={handleSearchSubmit}
+                    disabled={searchInput.trim().length < 3 || ocrBusy}
+                  >
+                    {ocrBusy ? "识别中…" : "开始理解"}
+                  </button>
+                  <span className="logic-compose-hint">Ctrl + Enter</span>
+                </div>
+              </div>
+
+              <div className="logic-examples-wrap">
+                <span className="logic-type-label">热门样例</span>
+                <div className="logic-examples-grid wp-hub-samples">
+                  {HUB_SAMPLES.map((ex) => (
+                    <button
+                      key={ex.id}
+                      type="button"
+                      className="logic-example-card"
+                      onClick={() => handleHubSample(ex)}
+                    >
+                      <span className="wp-hub-sample-tag">{ex.tag}</span>
+                      <span className="logic-example-card-label">{ex.label}</span>
+                      <span className="logic-example-card-hint">{ex.hint}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </header>
+            <p className="logic-empty-hint">
+              粘贴题目自动识别专题，或点上方跨科样例直接开讲。
+            </p>
+          </div>
+        </div>
+      ) : subject === "combo" ? (
+        <div className="wp-combo-shell">
+          <LogicPanel boot={panelBoot} onBackToHub={handleBackToCompose} />
         </div>
       ) : subject === "derivative" ||
         subject === "conic" ||
         subject.startsWith("phys_") ? (
         <div className="wp-combo-shell">
-          <TopicPanel key={subject} topic={subject} />
+          <TopicPanel
+            key={subject}
+            topic={subject}
+            boot={panelBoot}
+            onBackToHub={handleBackToCompose}
+          />
         </div>
       ) : (
       <>
@@ -1377,117 +1651,7 @@ export default function WorkspacePage() {
         </div>
       )}
 
-      {/* ── 立体几何空状态：与 LogicPanel 同壳 ── */}
-      {isComposeIdle ? (
-        <div className="wp-combo-shell">
-          <div className="logic-panel">
-            <header className="logic-panel-head">
-              <p className="logic-panel-kicker">立体几何 · 空间结构可视化</p>
-              <h2 className="logic-panel-title">看清「空间里的关系」</h2>
-
-              <div className="logic-compose">
-                {composeImage && (
-                  <div className="wp-compose-preview" style={{ marginBottom: "0.5rem" }}>
-                    <img src={composeImage} alt="原题预览" />
-                    <button
-                      type="button"
-                      className="wp-compose-preview-clear"
-                      onClick={clearComposeImage}
-                      aria-label="移除图片"
-                    >
-                      ×
-                    </button>
-                  </div>
-                )}
-                <textarea
-                  className="logic-compose-input"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyDown={handleSearchKeyDown}
-                  placeholder="粘贴立体几何题，或拍照后自动填入…"
-                  rows={3}
-                  spellCheck={false}
-                  autoFocus
-                  disabled={ocrBusy}
-                />
-                {ocrHint && (
-                  <p
-                    className={`logic-compose-error${ocrBusy ? "" : ""}`}
-                    style={ocrBusy ? { color: "#5c574e" } : undefined}
-                  >
-                    {ocrHint}
-                  </p>
-                )}
-                <div className="logic-compose-row">
-                  <input
-                    ref={cameraInputRef}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    hidden
-                    onChange={handleComposeImagePick}
-                  />
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    onChange={handleComposeImagePick}
-                  />
-                  <button
-                    type="button"
-                    className="logic-type-tab"
-                    onClick={() => cameraInputRef.current?.click()}
-                    disabled={ocrBusy}
-                  >
-                    拍照
-                  </button>
-                  <button
-                    type="button"
-                    className="logic-type-tab"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={ocrBusy}
-                  >
-                    相册
-                  </button>
-                  <button
-                    type="button"
-                    className="logic-compose-submit"
-                    onClick={handleSearchSubmit}
-                    disabled={searchInput.trim().length < 3 || ocrBusy}
-                  >
-                    {ocrBusy ? "识别中…" : "开始理解"}
-                  </button>
-                  <span className="logic-compose-hint">Ctrl + Enter</span>
-                </div>
-              </div>
-
-              <div className="logic-examples-wrap">
-                <span className="logic-type-label">试样例</span>
-                <div className="logic-examples-grid">
-                  {composeExamples.map((ex) => (
-                    <button
-                      key={ex.label}
-                      type="button"
-                      className="logic-example-card"
-                      onClick={() =>
-                        handleParseProblem(ex.text, { useLocalOnly: true })
-                      }
-                    >
-                      <span className="logic-example-card-label">{ex.label}</span>
-                      <span className="logic-example-card-hint">{ex.hint}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </header>
-            <p className="logic-empty-hint">
-              输入题目后点「开始理解」，或点上方样例。
-            </p>
-          </div>
-        </div>
-      ) : (
-      /* ── Unified layout: single Canvas, CSS-driven responsive ── */
+      {/* 几何解题态：single Canvas, CSS-driven responsive */}
       <div className={`wp-main wp-main--geo ${isMobile ? "wp-main--mobile" : ""}`}>
         <div className="wp-explain-col">
           <ExplanationPanel
@@ -1584,7 +1748,6 @@ export default function WorkspacePage() {
           )}
         </div>
       </div>
-      )}
 
       {typeof TeacherModePanel !== "undefined" ? (
         <TeacherModePanel
@@ -1633,7 +1796,7 @@ export default function WorkspacePage() {
                 <span className="wp-guide-step-num">1</span>
                 <div>
                   <strong>输入题目</strong>
-                  <p>在输入框中粘贴一道几何题，点击「开始理解」</p>
+                  <p>粘贴任意题目或点热门样例，自动识别专题并开讲</p>
                 </div>
               </div>
               <div className="wp-guide-step">
