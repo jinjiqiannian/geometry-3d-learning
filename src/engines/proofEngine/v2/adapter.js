@@ -189,10 +189,15 @@ export function seedFactsFromParsedData(factRegistry, parsedData) {
 
   const planes = [...(semantic.planes || parsedData?.planes || [])]
   const goalList = []
-  if (Array.isArray(parsedData?.goals)) goalList.push(...parsedData.goals)
-  else if (Array.isArray(semantic.goals)) goalList.push(...semantic.goals)
-  else if (parsedData?.goal) goalList.push(parsedData.goal)
-  else if (semantic.goal) goalList.push(semantic.goal)
+  if (Array.isArray(parsedData?.goals) && parsedData.goals.length) {
+    goalList.push(...parsedData.goals)
+  } else if (Array.isArray(semantic.goals) && semantic.goals.length) {
+    goalList.push(...semantic.goals)
+  } else if (parsedData?.goal) {
+    goalList.push(parsedData.goal)
+  } else if (semantic.goal) {
+    goalList.push(semantic.goal)
+  }
   for (const g of goalList) {
     const plane = g?.subjects?.[1]
     if (typeof plane === 'string' && plane.length >= 3 && !planes.some((p) => (p.label || p.subjects?.join?.('')) === plane)) {
@@ -347,11 +352,18 @@ export function tryV2Proof(parsedData) {
       logV2Fallback(V2_FALLBACK_STAGES.SEED_GATE, { reason: 'semantic unavailable' })
       return null
     }
+    // 注意：goals: [] 在 JS 里是 truthy，不能用 ||，否则会丢掉 semantic.goals
+    const goals =
+      Array.isArray(parsedData.goals) && parsedData.goals.length > 0
+        ? parsedData.goals
+        : Array.isArray(semantic.goals) && semantic.goals.length > 0
+          ? semantic.goals
+          : undefined
     const normalized = {
       ...(parsedData.semantic ? parsedData : { ...parsedData, semantic }),
       semantic,
       goal: parsedData.goal || semantic.goal,
-      goals: parsedData.goals || semantic.goals,
+      goals,
       baseShape: parsedData.baseShape || semantic.baseShape,
       relations: parsedData.relations || semantic.relations,
     }

@@ -470,6 +470,19 @@ export function splitGivenAndProve(text) {
   return { given: src.slice(0, idx), prove: src.slice(idx) };
 }
 
+/** OCR / LaTeX / 全角符号 → 统一 ⊥∥，便于关系与求证目标抽取 */
+export function normalizeGeometrySymbols(text) {
+  return String(text || "")
+    .replace(/\$([^$]*)\$/g, "$1")
+    .replace(/\\parallel\b/gi, "∥")
+    .replace(/\\perp\b/gi, "⊥")
+    .replace(/\|\|/g, "∥")
+    .replace(/\/\//g, "∥")
+    .replace(/／\s*／/g, "∥")
+    .replace(/[‖⫽]/g, "∥")
+    .replace(/[⟂]/g, "⊥");
+}
+
 /**
  * 从题目文本提取几何关系（文字 → relation 字符串，不计算坐标）
  * 输出格式与 SceneIRBuilder convertRelationsToAnnotations 对齐：
@@ -478,6 +491,7 @@ export function splitGivenAndProve(text) {
  */
 export function extractRelations(text) {
   if (!text) return [];
+  text = normalizeGeometrySymbols(text);
   const relations = [];
   const seen = new Set();
   const add = (r) => {
@@ -503,28 +517,34 @@ export function extractRelations(text) {
     add(`${m[1]} on ${m[2]}`);
   }
 
-  // 2a. 线面平行："PC ∥ 平面 BEF" / "PC 平行于平面 BEF"
-  const paraPlaneRe = new RegExp(`(${SEG})\\s*(?:平行于|平行|∥)\\s*平面\\s*(${PLANE})`, "g");
+  // 2a. 线面平行："PC ∥ 平面 BEF" / "PC//平面BEF" / "PC∥面BEF"
+  const paraPlaneRe = new RegExp(
+    `(${SEG})\\s*(?:平行于|平行|∥)\\s*(?:底面|平面|面)\\s*(${PLANE})`,
+    "g"
+  );
   while ((m = paraPlaneRe.exec(text)) !== null) {
     add(`${m[1]} parallel plane ${m[2]}`);
   }
   // 2b. 线线平行："AB 平行 CD" / "AB ∥ CD"
-  const paraLineRe = new RegExp(`(${SEG})\\s*(?:平行于|平行|∥)\\s*(${SEG})(?!\\s*平面)`, "g");
+  const paraLineRe = new RegExp(
+    `(${SEG})\\s*(?:平行于|平行|∥)\\s*(${SEG})(?!\\s*(?:底面|平面|面))`,
+    "g"
+  );
   while ((m = paraLineRe.exec(text)) !== null) {
     add(`${m[1]} parallel ${m[2]}`);
   }
 
   // 3a. 线面垂直："PC 垂直 平面 ABC" / "PA⊥底面ABCD"（教材常用「底面」）
   const perpPlaneRe = new RegExp(
-    `(${SEG})\\s*(?:垂直于|垂直|⟂|⊥)\\s*(?:底面|平面)\\s*([A-Z][0-9]*'?(?:[A-Z][0-9]*'?){2,3})`,
+    `(${SEG})\\s*(?:垂直于|垂直|⊥)\\s*(?:底面|平面|面)\\s*([A-Z][0-9]*'?(?:[A-Z][0-9]*'?){2,3})`,
     "g"
   );
   while ((m = perpPlaneRe.exec(text)) !== null) {
     add(`${m[1]} perpendicular plane ${m[2]}`);
   }
-  // 3b. 线线垂直："AB 垂直 CD"（支持 ⟂/⊥；排除已匹配的「垂直…平面/底面」）
+  // 3b. 线线垂直："AB 垂直 CD"（支持 ⊥；排除已匹配的「垂直…平面/底面」）
   const perpLineRe = new RegExp(
-    `(${SEG})\\s*(?:垂直于|垂直|⟂|⊥)\\s*(${SEG})(?!\\s*(?:底面|平面))`,
+    `(${SEG})\\s*(?:垂直于|垂直|⊥)\\s*(${SEG})(?!\\s*(?:底面|平面|面))`,
     "g"
   );
   while ((m = perpLineRe.exec(text)) !== null) {
@@ -557,8 +577,9 @@ export function extractGivenRelations(text) {
  */
 export function extractProofGoals(text) {
   if (!text) return [];
-  const { prove } = splitGivenAndProve(text);
-  if (!prove) return [];
+  const { prove: proveRaw } = splitGivenAndProve(text);
+  if (!proveRaw) return [];
+  const prove = normalizeGeometrySymbols(proveRaw);
 
   const goals = [];
   const seen = new Set();
@@ -575,7 +596,7 @@ export function extractProofGoals(text) {
 
   let m;
   const perpPlaneRe = new RegExp(
-    `(${SEG})\\s*(?:垂直于|垂直|⟂|⊥)\\s*(?:底面|平面)\\s*(${PLANE})`,
+    `(${SEG})\\s*(?:垂直于|垂直|⊥)\\s*(?:底面|平面|面)\\s*(${PLANE})`,
     "g"
   );
   while ((m = perpPlaneRe.exec(prove)) !== null) {
@@ -583,7 +604,7 @@ export function extractProofGoals(text) {
   }
 
   const paraPlaneRe = new RegExp(
-    `(${SEG})\\s*(?:平行于|平行|∥)\\s*(?:底面|平面)\\s*(${PLANE})`,
+    `(${SEG})\\s*(?:平行于|平行|∥)\\s*(?:底面|平面|面)\\s*(${PLANE})`,
     "g"
   );
   while ((m = paraPlaneRe.exec(prove)) !== null) {

@@ -87,6 +87,40 @@ describe('菱形四棱锥双求证（parse → V2）', () => {
     expect(steps.length).toBeLessThan(60)
   })
 
+  it('OCR/LaTeX 变体也能抽出第二问 goal', () => {
+    const variants = [
+      '如图，在四棱锥P-ABCD中，底面ABCD是菱形，PA⊥平面ABCD，E为PD的中点。(1)求证:BD⊥平面PAC；(2)求证:PB//平面AEC。',
+      '如图，在四棱锥P-ABCD中，底面ABCD是菱形，PA⊥平面ABCD，E为PD的中点。(1)求证:BD⊥平面PAC；(2)求证:PB||平面AEC。',
+      '如图，在四棱锥P-ABCD中，底面ABCD是菱形，PA⊥平面ABCD，E为PD的中点。(1)求证:BD⊥平面PAC；(2)求证:PB\\parallel平面AEC。',
+      '如图，在四棱锥P-ABCD中，底面ABCD是菱形，PA⊥平面ABCD，E为PD的中点。(1)求证:BD⊥平面PAC；(2)求证:PB∥面AEC。',
+    ]
+    for (const ocrText of variants) {
+      const parsed = parseProblemSync(ocrText)
+      expect(parsed.goals).toEqual(
+        expect.arrayContaining([
+          { type: 'perpendicular', subjects: ['BD', 'PAC'] },
+          { type: 'parallel', subjects: ['PB', 'AEC'] },
+        ])
+      )
+      const semantic = parseProblemToSemantic(ocrText)
+      const steps = tryV2Proof({
+        type: semantic.shape,
+        labels: semantic.points,
+        vertices: semantic.points,
+        relations: semantic.relations,
+        planes: semantic.planes,
+        semantic,
+        goal: semantic.goal,
+        goals: semantic.goals,
+        baseShape: semantic.baseShape,
+      })
+      expect(steps).not.toBeNull()
+      const text = allText(steps)
+      expect(text).toMatch(/线面垂直判定|BD\s*⊥\s*平面\s*PAC/)
+      expect(text).toMatch(/线面平行判定|(?:PB|BP)\s*∥\s*平面\s*AEC/)
+    }
+  })
+
   it('线上降级路径 generateLocalSteps 也走正确证明', () => {
     const semantic = parseProblemToSemantic(PROBLEM_TEXT)
     const steps = generateLocalSteps(PROBLEM_TEXT, {
