@@ -280,19 +280,6 @@ const sceneIRAnim = useRef({ camera: null });
  }
 }, [cameraTarget]);
 
-// 相机过渡：sceneIR.camera 变化时平滑移动相机
-// （点/线/截面的高亮与脉冲动画由 HighlightEngine 统一驱动，可见性变化随 sceneIR 即时渲染）
-useEffect(() => {
- if (!sceneIR || !sceneIR.camera || !cameraRef.current) return;
- const cam = cameraRef.current;
- sceneIRAnim.current.camera = {
- fromPos: [cam.position.x, cam.position.y, cam.position.z],
- toPos: sceneIR.camera.position,
- startTime: performance.now(),
- duration: ANIMATION_DURATION,
- };
- animating.current = true;
-}, [sceneIR]);
  const frameSkip = useRef(0);
  const { camera } = useThree();
  const cameraRef = useRef(null);

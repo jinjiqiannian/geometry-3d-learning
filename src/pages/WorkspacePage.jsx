@@ -765,20 +765,8 @@ export default function WorkspacePage() {
     return showLabels;
   }, [visualIntent?.hideLabels, showLabels]);
 
-  // ── (3c) cameraTarget — 步骤类型对应的 3D 相机自动飞行目标 ──
-  const STEP_CAMERA_PRESETS = {
-    observation: [4, 4, 6],
-    conceptual: [4, 4, 6],
-    construction: [2.5, 2, 3.5],
-    calculation: [1, 3, 5],
-    conclusion: [5, 3, 5],
-  };
-  const cameraTarget = useMemo(() => {
-    const step = steps[currentStep];
-    if (!step) return null;
-    return STEP_CAMERA_PRESETS[step.type] || STEP_CAMERA_PRESETS.observation;
-  }, [steps, currentStep]);
-
+  // ── 相机：不跟步骤自动飞镜，用户每步可自由旋转；仅「重置」按钮改视角 ──
+  const cameraTarget = null;
   // ── (4) mergedLines — 合并的边定义 ─────────────────
   const mergedLines = useMemo(() => {
     const { lines } = getLineDefinitions(
