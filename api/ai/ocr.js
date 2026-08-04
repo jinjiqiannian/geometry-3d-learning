@@ -102,6 +102,7 @@ function normalizeOcrPayload(raw) {
 }
 
 export const config = {
+  runtime: 'nodejs',
   api: {
     bodyParser: {
       sizeLimit: '4mb',
@@ -110,14 +111,47 @@ export const config = {
   maxDuration: 30,
 }
 
+function readVisionKey() {
+  return (
+    process.env.VISION_API_KEY ||
+    process.env.ZHIPU_API_KEY ||
+    process.env.GLM_API_KEY ||
+    ''
+  ).trim()
+}
+
+function visionEnvDiag() {
+  const names = Object.keys(process.env)
+    .filter((k) => /VISION|ZHIPU|GLM|OCR/i.test(k))
+    .sort()
+  const apiKey = readVisionKey()
+  return {
+    ok: true,
+    hasVisionApiKey: apiKey.length > 0,
+    visionApiKeyLength: apiKey.length,
+    provider: process.env.VISION_PROVIDER || null,
+    visionRelatedEnvNames: names,
+    hint:
+      apiKey.length > 0
+        ? 'Key 已注入，可上传识图'
+        : 'Key 未注入：请确认变量加在绑定 www.jiheweidu.cn 的那个 Vercel 项目里，删掉后重加，再 Deployments → 推送新部署（不要只 Redeploy 旧缓存）',
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end()
   }
+
+  // 浏览器打开此地址可检查 Key 是否注入（不泄露密钥内容）
+  if (req.method === 'GET') {
+    return res.status(200).json(visionEnvDiag())
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: '只用 POST' })
   }
@@ -132,11 +166,12 @@ export default async function handler(req, res) {
       ? String(imageBase64)
       : `data:image/jpeg;base64,${imageBase64}`
 
-    const apiKey = process.env.VISION_API_KEY || ''
+    const apiKey = readVisionKey()
     if (!apiKey) {
       return res.status(500).json({
         success: false,
-        error: '未配置识图 Key：请在 Vercel 设置 VISION_API_KEY',
+        error: '未配置识图 Key：请在绑定 jiheweidu.cn 的 Vercel 项目设置 VISION_API_KEY 后重新部署',
+        diag: visionEnvDiag(),
       })
     }
 

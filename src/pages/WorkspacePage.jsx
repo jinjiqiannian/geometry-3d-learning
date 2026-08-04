@@ -1008,15 +1008,22 @@ export default function WorkspacePage() {
           console.warn("[ocr] server failed:", err?.message);
         }
 
-        // 后端连不上时不要空等本地中文模型（常见于未启动 server）
         const cloudMsg = String(cloudErr?.message || "");
+        // 服务端明确报错（如未配置 Key）时直接提示，避免空等本地 OCR
+        if (
+          cloudMsg &&
+          /未配置|识图 Key|VISION_|视觉 OCR|识图失败|Daily limit/i.test(cloudMsg)
+        ) {
+          setOcrHint(`${cloudMsg}。也可手动输入题干后点「开始理解」`);
+          return;
+        }
         if (
           /Failed to fetch|NetworkError|Network request failed|云端识图超时|Load failed|ECONNREFUSED|fetch/i.test(
             cloudMsg
           )
         ) {
           setOcrHint(
-            "云端识图连不上：请另开终端执行 cd server && npm run dev，然后重新上传。也可手动输入题干后点「开始理解」"
+            "云端识图连不上。也可手动输入题干后点「开始理解」"
           );
           return;
         }
