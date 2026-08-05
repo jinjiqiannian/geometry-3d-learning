@@ -919,8 +919,7 @@ function solveConic(text) {
   if (paraY || paraX) {
     const openRight = Boolean(paraY)
     const coeff = Number((paraY || paraX)[1])
-    const p = coeff / 2 // 标准 y²=2px → 焦点(p/2,0)；若写成 y²=4ax 则 4a=coeff
-    // 教材常用 y²=2px，焦点 (p/2, 0)；若 y²=4ax 则 a=coeff/4
+    // 教材常用 y²=2px；写成 y²=4ax 则 a=coeff/4
     const a = coeff / 4
     const focus = openRight ? `(${a},0)` : `(0,${a})`
     const directrix = openRight ? `x=${-a}` : `y=${-a}`
