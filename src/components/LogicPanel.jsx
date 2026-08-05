@@ -3,7 +3,6 @@ import { MVP_EXAMPLES, PROBLEM_TYPES, validateLogicIR } from '../engines/logicIR
 import { solveLogicProblem } from '../engines/logicIR/solve.js'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { aiAPI } from '../services/api'
-import { LearningDemoRail } from './learning/LearningDemoParts.jsx'
 import './LogicPanel.css'
 
 const TYPE_LABELS = {
@@ -629,11 +628,6 @@ export default function LogicPanel({ boot, onBackToHub } = {}) {
 
         <section className="logic-viz" aria-label="逻辑生长舞台">
           <h3 className="logic-section-title">具体演示（跟步骤变）</h3>
-          <LearningDemoRail
-            stepIndex={currentStep}
-            totalSteps={ir.steps.length}
-            trackId="combo"
-          />
 
           <DemoStage
             problemType={ir.problemType}
