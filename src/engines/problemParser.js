@@ -1105,16 +1105,24 @@ function generateFallbackResult(text) {
   if (/长方体|cuboid/.test(t)) {
     const extractedLabels = extractVerticesFromText(text);
     const labels = extractedLabels || ["A", "B", "C", "D", "E", "F", "G", "H"];
+    const dims = t.match(
+      /长[为是]?\s*(\d+(?:\.\d+)?)[、,，\s]*宽[为是]?\s*(\d+(?:\.\d+)?)[、,，\s]*高[为是]?\s*(\d+(?:\.\d+)?)/,
+    );
+    const a = dims ? parseFloat(dims[1]) : size;
+    const b = dims ? parseFloat(dims[2]) : size;
+    const c = dims ? parseFloat(dims[3]) : size;
     return {
       type: "cuboid",
-      size,
+      size: a,
       subType: detectSubType(text, "cuboid"),
       labels,
       vertices: labels,
       highlightLines: extractEdgeRefs(text),
-      params: { size },
+      params: { size: a, a, b, c, length: a, width: b, height: c },
       annotations: [],
-      explanation: `长方体，棱长 ${size}（本地解析）`,
+      explanation: dims
+        ? `长方体，长${a} 宽${b} 高${c}（本地解析）`
+        : `长方体，棱长 ${size}（本地解析）`,
       confidence: 0.85,
     };
   }

@@ -144,9 +144,10 @@ function solveCube(size = 2, params, problemType, type) {
 }
 
 function solveCuboid(size, params, problemType, type) {
-  const a = size || params.a || params.size || 2
-  const b = params.b || params.width || 2
-  const c = params.c || params.height || params.depth || 2
+  // 优先长宽高；勿用单独抽到的「高」盖掉长宽
+  const a = params.a ?? params.length ?? size ?? params.size ?? 2
+  const b = params.b ?? params.width ?? a
+  const c = params.c ?? params.height ?? params.depth ?? a
 
   const volume = a * b * c
   const surfaceArea = 2 * (a * b + b * c + a * c)

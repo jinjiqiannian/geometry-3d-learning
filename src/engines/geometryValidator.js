@@ -842,7 +842,31 @@ export function parseProblemToSemantic(problemText) {
     }
   }
   const sizeMatch = problemText.match(/(?:棱长|边长|半径|高)[为是]?\s*(\d+(?:\.\d+)?)/);
-  const size = sizeMatch ? parseFloat(sizeMatch[1]) : 2;
+  let size = sizeMatch ? parseFloat(sizeMatch[1]) : 2;
+  /** @type {Record<string, number>} */
+  let params = { size };
+  // 长方体作业题：长3、宽4、高5 — 勿把「高」当成唯一 size
+  if (shape === 'cuboid') {
+    const dims = problemText.match(
+      /长[为是]?\s*(\d+(?:\.\d+)?)[、,，\s]*宽[为是]?\s*(\d+(?:\.\d+)?)[、,，\s]*高[为是]?\s*(\d+(?:\.\d+)?)/,
+    );
+    if (dims) {
+      const a = parseFloat(dims[1]);
+      const b = parseFloat(dims[2]);
+      const c = parseFloat(dims[3]);
+      size = a;
+      params = { size: a, a, b, c, length: a, width: b, height: c };
+    } else {
+      const lengthMatch = problemText.match(/(?:^|[体，,、\s])长[为是]?\s*(\d+(?:\.\d+)?)/);
+      const widthMatch = problemText.match(/宽[为是]?\s*(\d+(?:\.\d+)?)/);
+      const heightMatch = problemText.match(/高[为是]?\s*(\d+(?:\.\d+)?)/);
+      const a = lengthMatch ? parseFloat(lengthMatch[1]) : size;
+      const b = widthMatch ? parseFloat(widthMatch[1]) : a;
+      const c = heightMatch ? parseFloat(heightMatch[1]) : a;
+      size = a;
+      params = { size: a, a, b, c, length: a, width: b, height: c };
+    }
+  }
   const basePoints = getBasePoints(shape);
   // "根据题目来"：优先用题目中实际出现的顶点标签（如 ABCD-EFGH），否则回退到默认顶点
   const extractedLabels = extractVerticesFromText(problemText);
@@ -853,6 +877,7 @@ export function parseProblemToSemantic(problemText) {
   const semantic = {
     shape,
     size,
+    params,
     points,
     edges: [],
     faces: [],
