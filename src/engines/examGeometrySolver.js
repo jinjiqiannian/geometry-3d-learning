@@ -171,7 +171,9 @@ export function solveExamGeometry(problemText, parsedData = {}) {
       ? 'dihedral_angle'
       : /点到.*平面.*距离|点面距离/.test(problemText)
         ? 'point_plane_distance'
-        : /线面角|直线.*平面.*角|与平面.*所成角/.test(problemText)
+        : /线面角|直线.*(?:平面|底面).*角|(?:与|和)(?:平面|底面).*(?:所成|夹)角/.test(
+              problemText
+            )
           ? 'line_plane_angle'
           : null)
 
@@ -273,16 +275,28 @@ function solveLinePlane(text, points, a) {
 }
 
 function solveDihedral(text, points, a) {
-  // 默认：平面 ACC1A1 与底面 ABCD（高考经典）
+  // 高考常见写法：二面角 A₁-BC-A / A1-BC-A（棱为中间两点）
   let plane1 = ['A', 'C', 'C1']
   let plane2 = ['A', 'B', 'C']
-  const planes = [...String(text).matchAll(/平面\s*([A-Da-d₁1'₂2'₃3']{3,8})/g)]
-  if (planes.length >= 2) {
-    plane1 = extractPlane(`平面${planes[0][1]}`)
-    plane2 = extractPlane(`平面${planes[1][1]}`)
-  } else if (/ACC|对角面/.test(text)) {
-    plane1 = ['A', 'C', 'C1']
-    plane2 = ['A', 'B', 'C']
+  const dash = String(text).match(
+    /二面角\s*([A-Da-d][₁1']?)\s*[-–—]\s*([A-Da-d][₁1']?)([A-Da-d][₁1']?)\s*[-–—]\s*([A-Da-d][₁1']?)/,
+  )
+  if (dash) {
+    const p = normalizeLabel(dash[1])
+    const e0 = normalizeLabel(dash[2])
+    const e1 = normalizeLabel(dash[3])
+    const q = normalizeLabel(dash[4])
+    plane1 = [p, e0, e1]
+    plane2 = [q, e0, e1]
+  } else {
+    const planes = [...String(text).matchAll(/平面\s*([A-Da-d₁1'₂2'₃3']{3,8})/g)]
+    if (planes.length >= 2) {
+      plane1 = extractPlane(`平面${planes[0][1]}`)
+      plane2 = extractPlane(`平面${planes[1][1]}`)
+    } else if (/ACC|对角面/.test(text)) {
+      plane1 = ['A', 'C', 'C1']
+      plane2 = ['A', 'B', 'C']
+    }
   }
 
   const a0 = pt(points, plane1[0])
@@ -298,10 +312,14 @@ function solveDihedral(text, points, a) {
   const cos = dihedralAngleCos(n1, n2)
   if (cos == null) return null
   const sin = Math.sqrt(Math.max(0, 1 - cos * cos))
+  const tan = cos > 1e-9 ? sin / cos : null
 
   let answerExpr
   let answerVal
-  if (wantSin(text)) {
+  if (wantTan(text) && tan != null) {
+    answerVal = simplifySinCos(tan)
+    answerExpr = `tanθ = ${answerVal}`
+  } else if (wantSin(text)) {
     answerVal = simplifySinCos(sin)
     answerExpr = `sinθ = ${answerVal}`
   } else {

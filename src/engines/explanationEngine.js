@@ -1320,7 +1320,13 @@ function detectProblemType(type, text) {
 
   if (type === "cube") {
     if (/二面角|dihedral/.test(t)) return "dihedral_angle";
-    if (/线面角|直线.*平面.*角/.test(t)) return "line_plane_angle";
+    // 所成角优先于「对角线」关键字（高考基础：对角线与底面所成角）
+    if (
+      /线面角|直线.*(?:平面|底面).*角|(?:与|和)(?:平面|底面).*(?:所成|夹)角/.test(
+        t
+      )
+    )
+      return "line_plane_angle";
     if (/点.*到.*(平面|面).*距离|等体积法/.test(t))
       return "point_plane_distance";
     if (/内接|内切/.test(t)) return "inscribed";

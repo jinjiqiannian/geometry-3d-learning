@@ -59,7 +59,16 @@ export function solveLogicProblem(text) {
   if (raw.includes('代表') && /5\s*人/.test(raw) && /2\s*人/.test(raw)) {
     return structuredClone(EXAMPLE_PERM_COMB)
   }
-  if (raw.includes('红') && raw.includes('白') && raw.includes('不放回')) {
+  // 先走通用古典概率（至少一红 / 先红后白 / 放回…），再回落样例
+  const classical = tryClassicalProb(raw)
+  if (classical) return classical
+
+  if (
+    raw.includes('红') &&
+    raw.includes('白') &&
+    raw.includes('不放回') &&
+    /都是红|全红|两.*红|红红|两次都红/.test(raw)
+  ) {
     const m = raw.match(/(\d+)\s*红.*?(\d+)\s*白/)
     if (m && m[1] === '3' && m[2] === '2') {
       return structuredClone(EXAMPLE_CLASSICAL_PROB)
@@ -67,7 +76,6 @@ export function solveLogicProblem(text) {
   }
 
   return (
-    tryClassicalProb(raw) ||
     tryOrderedOfficers(raw) ||
     tryCombination(raw) ||
     tryMultiplyClothes(raw) ||
@@ -92,10 +100,11 @@ function tryClassicalProb(text) {
 
   const withReplace = /放回/.test(text) && !/不放回/.test(text)
   const wantRW =
-    /先红后白|第一次红.*第二次白|红.*白/.test(text) &&
-    !/都是红|全红|两.*红|红红/.test(text)
-  const wantAtLeastOneRed = /至少.*红|不全白/.test(text)
-  const wantBothRed = /都是红|全红|两.*红|红红|两次都红/.test(text) || (!wantRW && !wantAtLeastOneRed)
+    /先红后白|第一次.*红.*第二次.*白|红后白/.test(text)
+  const wantAtLeastOneRed = /至少.*(?:一)?红|不全白/.test(text)
+  const wantBothRed =
+    /都是红|全红|两.*红|红红|两次都红/.test(text) ||
+    (!wantRW && !wantAtLeastOneRed)
 
   if (wantAtLeastOneRed && !withReplace) {
     if (white < 2) return null
@@ -367,7 +376,8 @@ function tryClassifyAdd(text) {
 function tryOrderedOfficers(text) {
   const hasOrder =
     /(正|副).*(正|副)/.test(text) ||
-    /班长.*副|正副|主席.*书记|有序|排列|名次|冠军.*亚军/.test(text)
+    /班长.*副|正副|主席.*书记|有序|排列|名次|冠军.*亚军/.test(text) ||
+    /班长.*委员|委员.*委员|各\s*[1一]\s*人/.test(text)
   if (!hasOrder) return null
 
   const nMatch =
@@ -378,10 +388,19 @@ function tryOrderedOfficers(text) {
   const n = Number(nMatch[1])
   if (n < 2 || n > 30) return null
 
-  // 默认两职：正副；若写「选 k 人且有序」用 k
+  // 默认两职：正副；若写「选 k 人且有序」用 k；若「班长、…、…各1人」数职务
   let k = 2
-  const kMatch = text.match(/选\s*(\d+)\s*人/)
-  if (kMatch && !/(正|副)/.test(text)) k = Number(kMatch[1])
+  const roleList = text.match(/选([^，。？?\n]{2,48}?)各\s*[1一]\s*人/)
+  if (roleList) {
+    const parts = roleList[1]
+      .split(/[、,，]/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+    if (parts.length >= 2) k = parts.length
+  } else {
+    const kMatch = text.match(/选\s*(\d+)\s*人/)
+    if (kMatch && !/(正|副)/.test(text)) k = Number(kMatch[1])
+  }
   if (k < 2 || k > n) k = 2
 
   const counts = []

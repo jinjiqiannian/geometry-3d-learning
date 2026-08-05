@@ -536,8 +536,10 @@ function solveDerivative(text) {
     if (/x\s*³|x\^3|x3/.test(text) && /−\s*3x|-3x/.test(text) && /x\s*=\s*1/.test(text)) {
       return structuredClone(EX_DERIV_TANGENT)
     }
-    // 高考基础：y=x^n 在 x=x0 处切线；或 y=ax^2+bx+c
-    const at = text.match(/x\s*=\s*(-?\d+)/)
+    // 高考基础 / 作业：y=x^n 在 x=x0 或点(x0,y0) 处切线
+    const at =
+      text.match(/x\s*=\s*(-?\d+)/) ||
+      text.match(/点\s*\(\s*(-?\d+)\s*[,，]\s*-?\d+\s*\)/)
     const x0 = at ? Number(at[1]) : null
     if (x0 != null) {
       const pow = text.match(
@@ -720,7 +722,7 @@ function solveDerivative(text) {
         answer: ans,
       }
     }
-    // ax^2+bx+c
+    // ax^2+bx+c（含首项系数）
     const quad = text.match(
       /f\s*\(\s*x\s*\)\s*=\s*(\d*)\s*x\s*(?:\^2|²)\s*([+-])\s*(\d*)\s*x\s*([+-])\s*(\d+)/i,
     )
@@ -806,6 +808,15 @@ function solveDerivative(text) {
         answer: ans,
       }
     }
+    // 作业常见：f(x)=ax²+bx+c 用中文减号
+    const quad2 = text.match(
+      /f\s*\(\s*x\s*\)\s*=\s*(\d+)x\s*(?:\^2|²)\s*([+\-−])\s*(\d+)x\s*([+\-−])\s*(\d+)/i,
+    )
+    if (quad2) {
+      return solveDerivative(
+        text.replace(/−/g, '-').replace(/f\s*\(\s*x\s*\)\s*=/, 'f(x)='),
+      )
+    }
   }
   // 贴进样例题干
   if (text.includes('x³−3x') || text.includes('x^3-3x')) {
@@ -838,6 +849,9 @@ function solveConic(text) {
     if (cExact != null && aExact != null) {
       const fr = simplify(cExact, aExact)
       eStr = fr.d === 1 ? String(fr.n) : `${fr.n}/${fr.d}`
+    } else if (aExact != null) {
+      // 作业/高考基础常见：e=√(a²−b²)/a，如 √7/4
+      eStr = `√${a2 - b2}/${aExact}`
     } else {
       eStr = (c / a).toFixed(4).replace(/0+$/, '').replace(/\.$/, '')
     }
