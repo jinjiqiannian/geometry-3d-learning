@@ -9,6 +9,17 @@ import {
 } from '../engines/topics/explainIR.js'
 import { useSubscription } from '../contexts/SubscriptionContext'
 import { aiAPI } from '../services/api'
+import {
+  DemoStageShell,
+  FormulaChip,
+  StepAnswer,
+  LearningDemoRail,
+} from './learning/LearningDemoParts.jsx'
+import {
+  stepToLearningPhase,
+  resolveLearningTrack,
+  phaseFlags,
+} from '../engines/learningDemo.js'
 import './LogicPanel.css'
 import './TopicPanel.css'
 
@@ -98,14 +109,16 @@ function TreeNode({ node, byId, highlighted, revealed, depth }) {
   )
 }
 
-/** 导数 / 圆锥 / 物理 — 物理为持续运动；步骤只换讲解 */
-function TopicDemoStage({ topic, problemType, stepIndex, filmKey, answer }) {
+/** 解题步骤 → 演示分阶（统一四段式） */
+function TopicDemoStage({ topic, problemType, stepIndex, totalSteps, step, filmKey, answer }) {
   if (isPhysicsTopic(topic)) {
     return (
       <PhysicsDemo
         key={filmKey}
         problemType={problemType}
         stepIndex={stepIndex}
+        totalSteps={totalSteps}
+        step={step}
         answer={answer}
       />
     )
@@ -115,6 +128,8 @@ function TopicDemoStage({ topic, problemType, stepIndex, filmKey, answer }) {
       <DerivativeDemo
         problemType={problemType}
         stepIndex={stepIndex}
+        totalSteps={totalSteps}
+        step={step}
         filmKey={filmKey}
         answer={answer}
       />
@@ -124,6 +139,8 @@ function TopicDemoStage({ topic, problemType, stepIndex, filmKey, answer }) {
     <ConicDemo
       problemType={problemType}
       stepIndex={stepIndex}
+      totalSteps={totalSteps}
+      step={step}
       filmKey={filmKey}
       answer={answer}
     />
@@ -211,27 +228,14 @@ function physCaption(problemType, stepIndex, answer) {
   return lines[Math.min(n, lines.length - 1)]
 }
 
-/** 解题步骤 → 演示分阶：认场景 → 出公式 → 代入 → 结论运动 */
-function physPhase(stepIndex) {
-  const n = stepIndex ?? 0
-  if (n <= 0) return 'setup'
-  if (n === 1) return 'formula'
-  if (n === 2) return 'plug'
-  return 'done'
-}
-
-function PhysFormulaChip({ text, show }) {
-  if (!show) return null
-  return <div className="phys-formula-chip is-pop">{text}</div>
-}
-
-function PhysicsDemo({ problemType, stepIndex, answer }) {
-  const phase = physPhase(stepIndex)
-  const playing = phase === 'plug' || phase === 'done'
-  const live = `phys-live${playing ? ' is-playing' : ''} is-phase-${phase}`
+/** 物理演示 — 统一四段式，代入步才开运动 */
+function PhysicsDemo({ problemType, stepIndex, totalSteps, step, answer }) {
+  const phase = stepToLearningPhase(stepIndex, totalSteps)
+  const { showFormula, showAnswer, playing } = phaseFlags(phase)
+  const live = `phys-live topic-demo ld-stage${playing ? ' is-playing' : ''}`
   const caption = physCaption(problemType, stepIndex, answer)
-  const showFormula = phase !== 'setup'
-  const showAnswer = phase === 'done'
+  const formula = step?.formula
+  const why = step?.why
 
   if (problemType === 'phys_newton' || problemType === 'phys_find_F') {
     const formula = problemType === 'phys_find_F' ? 'F = ma' : 'a = F / m'
@@ -245,8 +249,8 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
             <div className={`phys-accel-a${showFormula ? ' is-on' : ''}`}>a</div>
           </div>
         </div>
-        <PhysFormulaChip text={formula} show={showFormula} />
-        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
+        <FormulaChip text={formula} show={showFormula} />
+        <StepAnswer text={answer} show={showAnswer} />
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -266,8 +270,8 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
             <span className={`phys-work-w${showFormula ? ' is-on' : ''}`}>W=Fs</span>
           </div>
         </div>
-        <PhysFormulaChip text="W = F · s" show={showFormula} />
-        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
+        <FormulaChip text="W = F · s" show={showFormula} />
+        <StepAnswer text={answer} show={showAnswer} />
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -304,8 +308,8 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
             </div>
           </div>
         </div>
-        <PhysFormulaChip text={formula} show={showFormula} />
-        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
+        <FormulaChip text={formula} show={showFormula} />
+        <StepAnswer text={answer} show={showAnswer} />
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -322,8 +326,8 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
             <div className={`phys-weight-g${showFormula ? ' is-on' : ''}`}>↓ G</div>
           </div>
         </div>
-        <PhysFormulaChip text="G = mg" show={showFormula} />
-        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
+        <FormulaChip text="G = mg" show={showFormula} />
+        <StepAnswer text={answer} show={showAnswer} />
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -352,8 +356,8 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
             </div>
           )}
         </div>
-        <PhysFormulaChip text={isKe ? 'Ek = ½mv²' : 'Ep = mgh'} show={showFormula} />
-        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
+        <FormulaChip text={isKe ? 'Ek = ½mv²' : 'Ep = mgh'} show={showFormula} />
+        <StepAnswer text={answer} show={showAnswer} />
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -401,8 +405,8 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
             <div className={`phys-ohm-eq${showFormula ? ' is-on' : ''}`}>U = IR</div>
           </div>
         </div>
-        <PhysFormulaChip text="U = IR" show={showFormula} />
-        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
+        <FormulaChip text="U = IR" show={showFormula} />
+        <StepAnswer text={answer} show={showAnswer} />
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -420,8 +424,8 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
             <div className="phys-efield-charge">+q</div>
           </div>
         </div>
-        <PhysFormulaChip text="E = F / q" show={showFormula} />
-        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
+        <FormulaChip text="E = F / q" show={showFormula} />
+        <StepAnswer text={answer} show={showAnswer} />
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -439,8 +443,8 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
             </div>
           </div>
         </div>
-        <PhysFormulaChip text="F = qvB" show={showFormula} />
-        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
+        <FormulaChip text="F = qvB" show={showFormula} />
+        <StepAnswer text={answer} show={showAnswer} />
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -456,8 +460,8 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
             <div className="phys-faraday-wave" />
           </div>
         </div>
-        <PhysFormulaChip text="ε = |ΔΦ / Δt|" show={showFormula} />
-        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
+        <FormulaChip text="ε = |ΔΦ / Δt|" show={showFormula} />
+        <StepAnswer text={answer} show={showAnswer} />
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -471,31 +475,52 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
   )
 }
 
-function DerivativeDemo({ problemType, stepIndex, filmKey, answer }) {
+function DerivativeDemo({ problemType, stepIndex, totalSteps, step, filmKey, answer }) {
+  const why = step?.why
+  const formula = step?.formula
+
   if (problemType === 'deriv_tangent') {
-    const phase =
+    const visPhase =
       stepIndex <= 0 ? 'curve' : stepIndex === 1 ? 'slope' : stepIndex === 2 ? 'point' : 'line'
+    const caption =
+      visPhase === 'curve'
+        ? '先有曲线，切线斜率来自导数'
+        : visPhase === 'slope'
+          ? '算出斜率 k = f′(x₀)'
+          : visPhase === 'point'
+            ? '再找切点 (x₀, f(x₀))'
+            : `点斜式画出切线 → ${answer}`
     return (
-      <div key={filmKey} className="demo-stage topic-demo" data-phase={phase}>
-        <p className="demo-stage-title">演示：切线三步</p>
+      <DemoStageShell
+        key={filmKey}
+        trackId="derivative"
+        stepIndex={stepIndex}
+        totalSteps={totalSteps}
+        title="演示：切线三步"
+        formula={formula || 'y − y₀ = k(x − x₀)'}
+        answer={answer}
+        why={why}
+        caption={caption}
+        className="topic-demo"
+      >
         <svg className="topic-svg" viewBox="0 0 280 140" aria-hidden="true">
           <line x1="20" y1="70" x2="260" y2="70" className="topic-axis" />
           <line x1="140" y1="10" x2="140" y2="130" className="topic-axis" />
           {/* y = x³−3x 示意：过 (1,-2) 附近的三次形 */}
           <path
-            className={`topic-curve${phase !== 'curve' ? ' is-dim' : ''}`}
+            className={`topic-curve${visPhase !== 'curve' ? ' is-dim' : ''}`}
             d="M 40 90 C 80 20, 100 20, 140 70 C 180 120, 200 120, 240 50"
             fill="none"
           />
-          {phase !== 'curve' && (
+          {visPhase !== 'curve' && (
             <text x="168" y="28" className="topic-svg-label">
               k = f′(1)
             </text>
           )}
-          {(phase === 'point' || phase === 'line') && (
+          {(visPhase === 'point' || visPhase === 'line') && (
             <circle cx="175" cy="95" r="5" className="topic-dot is-pop" />
           )}
-          {phase === 'line' && (
+          {visPhase === 'line' && (
             <line
               x1="40"
               y1="95"
@@ -504,37 +529,49 @@ function DerivativeDemo({ problemType, stepIndex, filmKey, answer }) {
               className="topic-tangent is-pop"
             />
           )}
-          {phase === 'line' && (
+          {visPhase === 'line' && (
             <text x="200" y="88" className="topic-svg-label topic-svg-accent">
               y = −2
             </text>
           )}
         </svg>
-        <p className="topic-demo-caption">
-          {phase === 'curve' && '先有曲线，切线斜率来自导数'}
-          {phase === 'slope' && '算出斜率 k = f′(x₀)'}
-          {phase === 'point' && '再找切点 (x₀, f(x₀))'}
-          {phase === 'line' && `点斜式画出切线 → ${answer}`}
-        </p>
-      </div>
+      </DemoStageShell>
     )
   }
 
   if (problemType === 'deriv_mono') {
-    const phase =
+    const visPhase =
       stepIndex <= 0 ? 'factor' : stepIndex === 1 ? 'zeros' : stepIndex === 2 ? 'sign' : 'done'
+    const caption =
+      visPhase === 'factor'
+        ? 'f′ 因式分解，看清零点'
+        : visPhase === 'zeros'
+          ? '临界点把实轴切开'
+          : visPhase === 'sign'
+            ? '每段取试验点，读 f′ 正负'
+            : answer
     return (
-      <div key={filmKey} className="demo-stage topic-demo" data-phase={phase}>
-        <p className="demo-stage-title">演示：单调性数轴</p>
+      <DemoStageShell
+        key={filmKey}
+        trackId="derivative"
+        stepIndex={stepIndex}
+        totalSteps={totalSteps}
+        title="演示：单调性数轴"
+        formula={formula || "f′(x)=0"}
+        answer={answer}
+        why={why}
+        caption={caption}
+        className="topic-demo"
+      >
         <div className="topic-numberline">
           <div className="topic-nl-track" />
-          <span className={`topic-nl-mark${phase !== 'factor' ? ' is-on' : ''}`} style={{ left: '28%' }}>
+          <span className={`topic-nl-mark${visPhase !== 'factor' ? ' is-on' : ''}`} style={{ left: '28%' }}>
             −1
           </span>
-          <span className={`topic-nl-mark${phase !== 'factor' ? ' is-on' : ''}`} style={{ left: '72%' }}>
+          <span className={`topic-nl-mark${visPhase !== 'factor' ? ' is-on' : ''}`} style={{ left: '72%' }}>
             1
           </span>
-          {(phase === 'sign' || phase === 'done') && (
+          {(visPhase === 'sign' || visPhase === 'done') && (
             <>
               <span className="topic-nl-arrow up" style={{ left: '10%' }}>
                 ↗ 增
@@ -548,55 +585,81 @@ function DerivativeDemo({ problemType, stepIndex, filmKey, answer }) {
             </>
           )}
         </div>
-        <p className="topic-demo-caption">
-          {phase === 'factor' && 'f′ 因式分解，看清零点'}
-          {phase === 'zeros' && '临界点把实轴切开'}
-          {phase === 'sign' && '每段取试验点，读 f′ 正负'}
-          {phase === 'done' && answer}
-        </p>
-      </div>
+      </DemoStageShell>
     )
   }
 
-  // deriv_poly 默认
-  const phase =
+  const visPhase =
     stepIndex <= 0 ? 'split' : stepIndex === 1 ? 't1' : stepIndex === 2 ? 't2' : 'merge'
+  const caption =
+    visPhase === 'split'
+      ? '拆开每一项，分别求导'
+      : visPhase === 't1'
+        ? '幂法则：(xⁿ)′ = n xⁿ⁻¹'
+        : visPhase === 't2'
+          ? '一次项：系数就是导数'
+          : `合并 → f′(x) = ${answer}`
   return (
-    <div key={filmKey} className="demo-stage topic-demo" data-phase={phase}>
-      <p className="demo-stage-title">演示：逐项求导</p>
+    <DemoStageShell
+      key={filmKey}
+      trackId="derivative"
+      stepIndex={stepIndex}
+      totalSteps={totalSteps}
+      title="演示：逐项求导"
+      formula={formula || "(xⁿ)′ = n xⁿ⁻¹"}
+      answer={answer}
+      why={why}
+      caption={caption}
+      className="topic-demo"
+    >
       <div className="topic-term-row">
-        <div className={`topic-term${phase === 'split' || phase === 't1' || phase === 'merge' ? ' is-on' : ''}`}>
+        <div className={`topic-term${visPhase === 'split' || visPhase === 't1' || visPhase === 'merge' ? ' is-on' : ''}`}>
           <span className="topic-term-before">x³</span>
           <span className="topic-term-arrow">→</span>
-          <span className={`topic-term-after${phase === 't1' || phase === 'merge' ? ' is-show' : ''}`}>
+          <span className={`topic-term-after${visPhase === 't1' || visPhase === 'merge' ? ' is-show' : ''}`}>
             3x²
           </span>
         </div>
-        <div className={`topic-term${phase === 'split' || phase === 't2' || phase === 'merge' ? ' is-on' : ''}`}>
+        <div className={`topic-term${visPhase === 'split' || visPhase === 't2' || visPhase === 'merge' ? ' is-on' : ''}`}>
           <span className="topic-term-before">−3x</span>
           <span className="topic-term-arrow">→</span>
-          <span className={`topic-term-after${phase === 't2' || phase === 'merge' ? ' is-show' : ''}`}>
+          <span className={`topic-term-after${visPhase === 't2' || visPhase === 'merge' ? ' is-show' : ''}`}>
             −3
           </span>
         </div>
       </div>
-      <p className="topic-demo-caption">
-        {phase === 'split' && '拆开每一项，分别求导'}
-        {phase === 't1' && '幂法则：(xⁿ)′ = n xⁿ⁻¹'}
-        {phase === 't2' && '一次项：系数就是导数'}
-        {phase === 'merge' && `合并 → f′(x) = ${answer}`}
-      </p>
-    </div>
+    </DemoStageShell>
   )
 }
 
-function ConicDemo({ problemType, stepIndex, filmKey, answer }) {
+function ConicDemo({ problemType, stepIndex, totalSteps, step, filmKey, answer }) {
+  const why = step?.why
+  const formula = step?.formula
+
   if (problemType === 'hyper_focus') {
-    const phase =
+    const visPhase =
       stepIndex <= 0 ? 'type' : stepIndex === 1 ? 'ab' : stepIndex === 2 ? 'c' : 'foci'
+    const caption =
+      visPhase === 'type'
+        ? '正项在 x → 焦点在 x 轴'
+        : visPhase === 'ab'
+          ? '读出 a²、b²'
+          : visPhase === 'c'
+            ? '双曲线：c² = a² + b²（加）'
+            : `焦点 ${answer}`
     return (
-      <div key={filmKey} className="demo-stage topic-demo" data-phase={phase}>
-        <p className="demo-stage-title">演示：双曲线焦点</p>
+      <DemoStageShell
+        key={filmKey}
+        trackId="conic"
+        stepIndex={stepIndex}
+        totalSteps={totalSteps}
+        title="演示：双曲线焦点"
+        formula={formula || 'c² = a² + b²'}
+        answer={answer}
+        why={why}
+        caption={caption}
+        className="topic-demo"
+      >
         <svg className="topic-svg" viewBox="0 0 280 140" aria-hidden="true">
           <line x1="20" y1="70" x2="260" y2="70" className="topic-axis" />
           <line x1="140" y1="10" x2="140" y2="130" className="topic-axis" />
@@ -610,13 +673,13 @@ function ConicDemo({ problemType, stepIndex, filmKey, answer }) {
             d="M 225 20 C 185 70, 185 70, 225 120"
             fill="none"
           />
-          {(phase === 'c' || phase === 'foci') && (
+          {(visPhase === 'c' || visPhase === 'foci') && (
             <>
               <circle cx="80" cy="70" r="5" className="topic-dot is-pop" />
               <circle cx="200" cy="70" r="5" className="topic-dot is-pop" />
             </>
           )}
-          {phase === 'foci' && (
+          {visPhase === 'foci' && (
             <>
               <text x="55" y="62" className="topic-svg-label">
                 F₁
@@ -628,63 +691,83 @@ function ConicDemo({ problemType, stepIndex, filmKey, answer }) {
           )}
         </svg>
         <div className="topic-abc-row">
-          <span className={phase !== 'type' ? 'is-on' : ''}>a²</span>
+          <span className={visPhase !== 'type' ? 'is-on' : ''}>a²</span>
           <span className="topic-abc-op">+</span>
-          <span className={phase === 'c' || phase === 'foci' ? 'is-on' : ''}>b²</span>
+          <span className={visPhase === 'c' || visPhase === 'foci' ? 'is-on' : ''}>b²</span>
           <span className="topic-abc-op">=</span>
-          <span className={phase === 'c' || phase === 'foci' ? 'is-on topic-abc-c' : ''}>c²</span>
+          <span className={visPhase === 'c' || visPhase === 'foci' ? 'is-on topic-abc-c' : ''}>c²</span>
         </div>
-        <p className="topic-demo-caption">
-          {phase === 'type' && '正项在 x → 焦点在 x 轴'}
-          {phase === 'ab' && '读出 a²、b²'}
-          {phase === 'c' && '双曲线：c² = a² + b²（加）'}
-          {phase === 'foci' && `焦点 ${answer}`}
-        </p>
-      </div>
+      </DemoStageShell>
     )
   }
 
   if (problemType === 'circle_r') {
-    const phase =
+    const visPhase =
       stepIndex <= 0 ? 'x' : stepIndex === 1 ? 'y' : stepIndex === 2 ? 'r2' : 'done'
+    const caption =
+      visPhase === 'x'
+        ? '先配方 x，得到圆心横坐标'
+        : visPhase === 'y'
+          ? '再配方 y，得到圆心纵坐标'
+          : visPhase === 'r2'
+            ? '右边凑出 r²'
+            : answer
     return (
-      <div key={filmKey} className="demo-stage topic-demo" data-phase={phase}>
-        <p className="demo-stage-title">演示：配方成圆</p>
+      <DemoStageShell
+        key={filmKey}
+        trackId="conic"
+        stepIndex={stepIndex}
+        totalSteps={totalSteps}
+        title="演示：配方成圆"
+        formula={formula || '(x−a)²+(y−b)²=r²'}
+        answer={answer}
+        why={why}
+        caption={caption}
+        className="topic-demo"
+      >
         <svg className="topic-svg" viewBox="0 0 280 140" aria-hidden="true">
           <line x1="20" y1="100" x2="260" y2="100" className="topic-axis" />
           <line x1="50" y1="20" x2="50" y2="120" className="topic-axis" />
           <circle
             cx="140"
             cy="70"
-            r={phase === 'x' ? 20 : phase === 'y' ? 35 : 48}
-            className={`topic-circle-ring${phase !== 'x' ? ' is-grow' : ''}`}
+            r={visPhase === 'x' ? 20 : visPhase === 'y' ? 35 : 48}
+            className={`topic-circle-ring${visPhase !== 'x' ? ' is-grow' : ''}`}
             fill="none"
           />
-          {(phase === 'r2' || phase === 'done') && (
+          {(visPhase === 'r2' || visPhase === 'done') && (
             <circle cx="140" cy="70" r="4" className="topic-dot is-pop" />
           )}
-          {phase === 'done' && (
+          {visPhase === 'done' && (
             <text x="148" y="66" className="topic-svg-label topic-svg-accent">
               C
             </text>
           )}
         </svg>
-        <p className="topic-demo-caption">
-          {phase === 'x' && '先配方 x，得到圆心横坐标'}
-          {phase === 'y' && '再配方 y，得到圆心纵坐标'}
-          {phase === 'r2' && '右边凑出 r²'}
-          {phase === 'done' && answer}
-        </p>
-      </div>
+      </DemoStageShell>
     )
   }
 
-  // ellipse_e 默认
-  const phase =
-    stepIndex <= 0 ? 'ab' : stepIndex === 1 ? 'c' : 'e'
+  const visPhase = stepIndex <= 0 ? 'ab' : stepIndex === 1 ? 'c' : 'e'
+  const caption =
+    visPhase === 'ab'
+      ? '较大分母是 a²，焦点在对应轴'
+      : visPhase === 'c'
+        ? '椭圆：c² = a² − b²（减）'
+        : '离心率 e = c/a，且 0＜e＜1'
   return (
-    <div key={filmKey} className="demo-stage topic-demo" data-phase={phase}>
-      <p className="demo-stage-title">演示：椭圆 a → c → e</p>
+    <DemoStageShell
+      key={filmKey}
+      trackId="conic"
+      stepIndex={stepIndex}
+      totalSteps={totalSteps}
+      title="演示：椭圆 a → c → e"
+      formula={formula || 'c² = a² − b²'}
+      answer={answer}
+      why={why}
+      caption={caption}
+      className="topic-demo"
+    >
       <svg className="topic-svg" viewBox="0 0 280 140" aria-hidden="true">
         <line x1="20" y1="70" x2="260" y2="70" className="topic-axis" />
         <line x1="140" y1="15" x2="140" y2="125" className="topic-axis" />
@@ -701,7 +784,7 @@ function ConicDemo({ problemType, stepIndex, filmKey, answer }) {
           y1="70"
           x2="230"
           y2="70"
-          className={`topic-seg${phase === 'ab' || phase === 'c' || phase === 'e' ? ' is-on' : ''}`}
+          className={`topic-seg${visPhase === 'ab' || visPhase === 'c' || visPhase === 'e' ? ' is-on' : ''}`}
         />
         <text x="178" y="64" className="topic-svg-label">
           a
@@ -711,12 +794,12 @@ function ConicDemo({ problemType, stepIndex, filmKey, answer }) {
           y1="70"
           x2="140"
           y2="125"
-          className={`topic-seg topic-seg-b${phase === 'ab' || phase === 'c' || phase === 'e' ? ' is-on' : ''}`}
+          className={`topic-seg topic-seg-b${visPhase === 'ab' || visPhase === 'c' || visPhase === 'e' ? ' is-on' : ''}`}
         />
         <text x="146" y="110" className="topic-svg-label">
           b
         </text>
-        {(phase === 'c' || phase === 'e') && (
+        {(visPhase === 'c' || visPhase === 'e') && (
           <>
             <circle cx="95" cy="70" r="4" className="topic-dot is-pop" />
             <circle cx="185" cy="70" r="4" className="topic-dot is-pop" />
@@ -727,19 +810,14 @@ function ConicDemo({ problemType, stepIndex, filmKey, answer }) {
         )}
       </svg>
       <div className="topic-abc-row">
-        <span className={phase === 'e' ? 'is-on topic-abc-c' : ''}>e</span>
+        <span className={visPhase === 'e' ? 'is-on topic-abc-c' : ''}>e</span>
         <span className="topic-abc-op">=</span>
-        <span className={phase === 'c' || phase === 'e' ? 'is-on' : ''}>c</span>
+        <span className={visPhase === 'c' || visPhase === 'e' ? 'is-on' : ''}>c</span>
         <span className="topic-abc-op">/</span>
         <span className="is-on">a</span>
-        {phase === 'e' && <span className="topic-abc-ans">= {answer}</span>}
+        {visPhase === 'e' && <span className="topic-abc-ans">= {answer}</span>}
       </div>
-      <p className="topic-demo-caption">
-        {phase === 'ab' && '较大分母是 a²，焦点在对应轴'}
-        {phase === 'c' && '椭圆：c² = a² − b²（减）'}
-        {phase === 'e' && '离心率 e = c/a，且 0＜e＜1'}
-      </p>
-    </div>
+    </DemoStageShell>
   )
 }
 
@@ -1052,11 +1130,18 @@ export default function TopicPanel({ topic, boot, onBackToHub }) {
         </section>
 
         <section className="logic-viz" aria-label="演示与思路树">
-          <h3 className="logic-section-title">具体演示（持续动画）</h3>
+          <h3 className="logic-section-title">具体演示（跟步骤变）</h3>
+          <LearningDemoRail
+            stepIndex={currentStep}
+            totalSteps={ir.steps.length}
+            trackId={resolveLearningTrack(topic)}
+          />
           <TopicDemoStage
             topic={topic}
             problemType={ir.problemType}
             stepIndex={currentStep}
+            totalSteps={ir.steps.length}
+            step={step}
             filmKey={filmKey}
             answer={ir.answer}
           />

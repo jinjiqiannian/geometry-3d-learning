@@ -5,6 +5,7 @@ import AnswerPanel from './AnswerPanel'
 import CoreIdeaCard from './explanation/CoreIdeaCard'
 import PlaybackControls from './PlaybackControls'
 import { mergeConsecutiveSteps, mapCurrentStepToMergedIndex } from './mergeConsecutiveSteps'
+import { LearningDemoRail } from './learning/LearningDemoParts.jsx'
 import './ExplanationPanel.css'
 
 const ExplanationPanel = memo(function ExplanationPanel({
@@ -50,6 +51,15 @@ const ExplanationPanel = memo(function ExplanationPanel({
           <div className="ep-problem-label">题目</div>
           <p className="ep-problem-text">{problemText}</p>
         </div>
+      )}
+
+      {steps.length > 0 && loadingStage === 'done' && !loading && (
+        <LearningDemoRail
+          stepIndex={mergedIndex}
+          totalSteps={mergedGroups.length}
+          trackId="geometry"
+          className="ld-rail--geometry"
+        />
       )}
 
       {steps.length > 0 && loadingStage === 'done' && !loading && (
