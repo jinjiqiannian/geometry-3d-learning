@@ -536,7 +536,97 @@ function solveDerivative(text) {
     if (/x\s*³|x\^3|x3/.test(text) && /−\s*3x|-3x/.test(text) && /x\s*=\s*1/.test(text)) {
       return structuredClone(EX_DERIV_TANGENT)
     }
-    // 通用：y=x^n 在 x=x0 — 太窄，走样例提示
+    // 高考基础：y=x^n 在 x=x0 处切线；或 y=ax^2+bx+c
+    const at = text.match(/x\s*=\s*(-?\d+)/)
+    const x0 = at ? Number(at[1]) : null
+    if (x0 != null) {
+      const pow = text.match(
+        /y\s*=\s*x\s*(?:\^(\d+)|([²³⁴]))|f\s*\(\s*x\s*\)\s*=\s*x\s*(?:\^(\d+)|([²³⁴]))/,
+      )
+      if (pow) {
+        const map = { '²': 2, '³': 3, '⁴': 4 }
+        const n = Number(pow[1] || pow[3] || map[pow[2] || pow[4]] || 0)
+        if (n >= 2) {
+          const k = n * x0 ** (n - 1)
+          const y0 = x0 ** n
+          const ans =
+            k === 0
+              ? `y=${y0}`
+              : `y=${k}(x${x0 >= 0 ? '−' : '+'}${Math.abs(x0)})+${y0}`
+          return {
+            version: 1,
+            problemType: 'deriv_tangent',
+            topic: 'derivative',
+            goal: text,
+            coreIdea: '切线：斜率 f′(x₀)，切点 (x₀,f(x₀))，点斜式。',
+            rootId: 'root',
+            nodes: [
+              {
+                id: 'root',
+                label: '切线三步',
+                kind: 'choice',
+                children: ['m', 'p', 'eq'],
+                why: '先导数再代入',
+              },
+              {
+                id: 'm',
+                label: `k=f′(${x0})=${k}`,
+                kind: 'outcome',
+                children: [],
+                why: `(x^${n})′=${n}x^${n - 1}`,
+              },
+              {
+                id: 'p',
+                label: `切点 (${x0},${y0})`,
+                kind: 'outcome',
+                children: [],
+                why: `f(${x0})=${y0}`,
+              },
+              {
+                id: 'eq',
+                label: ans,
+                kind: 'outcome',
+                children: [],
+                why: '点斜式',
+              },
+            ],
+            steps: [
+              {
+                index: 1,
+                title: '求导',
+                content: `f(x)=x^${n} → f′(x)=${n}x^${n - 1}`,
+                why: '幂法则',
+                highlightNodeIds: ['root'],
+              },
+              {
+                index: 2,
+                title: '斜率',
+                content: `k=f′(${x0})=${k}`,
+                why: '代入切点横坐标',
+                formula: String(k),
+                highlightNodeIds: ['m'],
+              },
+              {
+                index: 3,
+                title: '切点',
+                content: `(${x0},${y0})`,
+                why: '纵坐标用原函数',
+                highlightNodeIds: ['p'],
+              },
+              {
+                index: 4,
+                title: '方程',
+                content: ans,
+                why: '点斜式写完即可',
+                formula: ans,
+                highlightNodeIds: ['eq'],
+              },
+            ],
+            answer: ans,
+          }
+        }
+      }
+    }
   }
   if (/单调|增减/.test(text)) {
     if (/x\s*³|x\^3/.test(text) && /3x/.test(text)) {
@@ -815,6 +905,80 @@ function solveConic(text) {
           title: '焦点',
           content: ans,
           why: '写全两个焦点',
+          formula: ans,
+          highlightNodeIds: ['f'],
+        },
+      ],
+      answer: ans,
+    }
+  }
+
+  // 抛物线 y²=2px 或 x²=2py（高考基础：焦点/准线）
+  const paraY = text.match(/y\s*(?:\^2|²)\s*=\s*(\d+)\s*x/)
+  const paraX = text.match(/x\s*(?:\^2|²)\s*=\s*(\d+)\s*y/)
+  if (paraY || paraX) {
+    const openRight = Boolean(paraY)
+    const coeff = Number((paraY || paraX)[1])
+    const p = coeff / 2 // 标准 y²=2px → 焦点(p/2,0)；若写成 y²=4ax 则 4a=coeff
+    // 教材常用 y²=2px，焦点 (p/2, 0)；若 y²=4ax 则 a=coeff/4
+    const a = coeff / 4
+    const focus = openRight ? `(${a},0)` : `(0,${a})`
+    const directrix = openRight ? `x=${-a}` : `y=${-a}`
+    const wantFocus = /焦点|focus/i.test(text) || !/准线/.test(text)
+    const ans = wantFocus ? focus : directrix
+    return {
+      version: 1,
+      problemType: 'parabola_focus',
+      topic: 'conic',
+      goal: text,
+      coreIdea: openRight
+        ? 'y²=2px 型：先化成 y²=4ax，焦点 (a,0)，准线 x=−a。'
+        : 'x²=2py 型：化成 x²=4ay，焦点 (0,a)，准线 y=−a。',
+      rootId: 'root',
+      nodes: [
+        {
+          id: 'root',
+          label: openRight ? '开口向右' : '开口向上',
+          kind: 'choice',
+          children: ['a', 'f'],
+          why: '看平方项在哪一侧',
+        },
+        {
+          id: 'a',
+          label: `4a=${coeff} → a=${a}`,
+          kind: 'outcome',
+          children: [],
+          why: '标准式系数是 4a',
+        },
+        {
+          id: 'f',
+          label: wantFocus ? `焦点 ${focus}` : `准线 ${directrix}`,
+          kind: 'outcome',
+          children: [],
+          why: wantFocus ? '焦点在对称轴上' : '准线在开口反方向',
+        },
+      ],
+      steps: [
+        {
+          index: 1,
+          title: '认开口',
+          content: openRight ? 'y² 在左侧 → 开口向右' : 'x² 在左侧 → 开口向上/下',
+          why: '决定焦点落在哪条轴',
+          highlightNodeIds: ['root'],
+        },
+        {
+          index: 2,
+          title: '求 a',
+          content: `写成标准式，4a=${coeff}，a=${a}`,
+          why: '不要把 2p 直接当 a',
+          formula: `a=${a}`,
+          highlightNodeIds: ['a'],
+        },
+        {
+          index: 3,
+          title: wantFocus ? '焦点' : '准线',
+          content: ans,
+          why: wantFocus ? '焦点到顶点距离为 a' : '准线到顶点距离也为 a',
           formula: ans,
           highlightNodeIds: ['f'],
         },
