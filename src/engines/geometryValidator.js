@@ -452,77 +452,178 @@ function generateAnimationSteps(semantic) {
  }
  const steps = [];
  let currentStep = 0;
- steps.push({
- step: currentStep++,
- title: '画出几何体',
- description: `画出${getShapeName(semantic.shape)}`,
- addElements: {
- points: [...semantic.points],
- edges: semantic.edges.map(e => e.label),
- },
- });
- const derivedPoints = semantic.points.filter(p => isDerivedPoint(p, semantic));
- if (derivedPoints.length > 0) {
- derivedPoints.forEach(point => {
- steps.push({
- step: currentStep++,
- title: `添加点${point}`,
- description: `标记${point}点`,
- addElements: {
- points: [point],
- },
- });
- });
+ const basePoints = getBasePoints(semantic.shape);
+ const shapeName = getShapeName(semantic.shape);
+ const allEdgeLabels = (semantic.edges || []).map(e => (typeof e === 'string' ? e : e.label)).filter(Boolean);
+
+ // ① 先立顶点，再连棱 — 学生能看清「从点到体」
+ const visibleBase = (semantic.points || []).filter(p => basePoints.includes(p));
+ if (visibleBase.length > 0) {
+   steps.push({
+     step: currentStep++,
+     title: `标出${shapeName}顶点`,
+     description: `先标出${visibleBase.join('、')}，确定空间位置`,
+     addElements: { points: visibleBase },
+   });
  }
- const midpointEdges = semantic.relations.filter(r => r.includes('midpoint'));
- if (midpointEdges.length > 0) {
+
+ if (allEdgeLabels.length > 0) {
+   steps.push({
+     step: currentStep++,
+     title: `连出${shapeName}`,
+     description: `连接各棱，形成${shapeName}`,
+     addElements: {
+       points: [...(semantic.points || [])],
+       edges: allEdgeLabels,
+     },
+   });
+ } else {
+   steps.push({
+     step: currentStep++,
+     title: '画出几何体',
+     description: `画出${shapeName}`,
+     addElements: {
+       points: [...(semantic.points || [])],
+       edges: [],
+     },
+   });
+ }
+
+ const derivedPoints = (semantic.points || []).filter(p => isDerivedPoint(p, semantic));
+ const midpointEdges = (semantic.relations || []).filter(r => typeof r === 'string' && r.includes('midpoint'));
+ const handledDerived = new Set();
+
+ // ② 中点构造：先连线，再标中点（高考常考辅助点）
  midpointEdges.forEach(rel => {
- const match = rel.match(/^([A-Z]) midpoint ([A-Z])([A-Z])$/);
- if (match) {
- const [, mid, a, b] = match;
- steps.push({
- step: currentStep++,
- title: `连接${a}${b}并取中点`,
- description: `画出线段${a}${b}，找到中点${mid}`,
- addElements: {
- edges: [`${a}${b}`],
- highlightPoints: [mid],
- },
+   const match = String(rel).match(/^([A-Z][0-9]*)\s+midpoint\s+([A-Z][0-9]*)([A-Z][0-9]*)$/i);
+   if (!match) return;
+   const [, mid, a, b] = match;
+   const midU = mid.toUpperCase();
+   handledDerived.add(midU);
+   steps.push({
+     step: currentStep++,
+     title: `取${a}${b}中点${midU}`,
+     description: `连接${a}${b}，取中点${midU}（常用辅助点）`,
+     addElements: {
+       edges: [`${a}${b}`],
+       points: [midU],
+       highlightPoints: [midU],
+     },
+   });
  });
- }
+
+ // ③ 垂足 / 线面垂直 — 线面角、距离题的关键构造
+ const perpRels = (semantic.relations || []).filter(
+   r => typeof r === 'string' && /perpendicular/i.test(r)
+ );
+ perpRels.forEach(rel => {
+   const planeMatch = String(rel).match(
+     /^([A-Z][0-9]*'?)([A-Z][0-9]*'?)\s+perpendicular\s+plane\s+([A-Z0-9']+)$/i
+   );
+   if (planeMatch) {
+     const [, p0, p1, plane] = planeMatch;
+     steps.push({
+       step: currentStep++,
+       title: `作垂线${p0}${p1}⊥面${plane}`,
+       description: `过点作平面${plane}的垂线，得到垂足（求线面角/距离的关键）`,
+       addElements: {
+         edges: [`${p0}${p1}`],
+         highlightEdges: [`${p0}${p1}`],
+         planes: [plane],
+         highlightPoints: [p0, p1],
+       },
+     });
+     return;
+   }
+   const lineMatch = String(rel).match(
+     /^([A-Z][0-9]*'?)([A-Z][0-9]*'?)\s+perpendicular\s+([A-Z][0-9]*'?)([A-Z][0-9]*'?)$/i
+   );
+   if (lineMatch) {
+     const [, a, b, c, d] = lineMatch;
+     steps.push({
+       step: currentStep++,
+       title: `标出${a}${b}⊥${c}${d}`,
+       description: `高亮互相垂直的两线段，确认直角关系`,
+       addElements: {
+         highlightEdges: [`${a}${b}`, `${c}${d}`],
+       },
+     });
+   }
  });
- }
+
+ // ④ 平行关系 — 平移法 / 线面平行证明
+ const parallelRels = (semantic.relations || []).filter(
+   r => typeof r === 'string' && /\bparallel\b/i.test(r) && !/perpendicular/i.test(r)
+ );
+ parallelRels.forEach(rel => {
+   const match = String(rel).match(
+     /^([A-Z][0-9]*'?)([A-Z][0-9]*'?)\s+parallel\s+([A-Z][0-9]*'?)([A-Z][0-9]*'?)$/i
+   );
+   if (!match) return;
+   const [, a, b, c, d] = match;
+   steps.push({
+     step: currentStep++,
+     title: `观察${a}${b}∥${c}${d}`,
+     description: `高亮平行线段（平移法/线面平行常用）`,
+     addElements: {
+       highlightEdges: [`${a}${b}`, `${c}${d}`],
+     },
+   });
+ });
+
+ // ⑤ 其余派生点逐个出现
+ derivedPoints.forEach(point => {
+   if (handledDerived.has(point)) return;
+   steps.push({
+     step: currentStep++,
+     title: `添加点${point}`,
+     description: `在图上标出辅助点${point}`,
+     addElements: {
+       points: [point],
+       highlightPoints: [point],
+     },
+   });
+ });
+
  if (semantic.planes && semantic.planes.length > 0) {
- semantic.planes.forEach(plane => {
- steps.push({
- step: currentStep++,
- title: `生成平面${plane.label}`,
- description: `画出平面${plane.label}`,
- addElements: {
- planes: [plane.label],
- },
- });
- });
+   semantic.planes.forEach(plane => {
+     steps.push({
+       step: currentStep++,
+       title: `生成平面${plane.label}`,
+       description: `画出平面${plane.label}，看清截面/半平面`,
+       addElements: {
+         planes: [plane.label],
+       },
+     });
+   });
  }
+
+ // ⑥ 关键线段逐条高亮，避免一次闪太多
  if (semantic.importantLines && semantic.importantLines.length > 0) {
- steps.push({
- step: currentStep++,
- title: '高亮关键线段',
- description: `高亮${semantic.importantLines.join('、')}`,
- addElements: {
- highlightEdges: semantic.importantLines,
- },
- });
+   semantic.importantLines.forEach((edge, i) => {
+     steps.push({
+       step: currentStep++,
+       title: `关注线段${edge}`,
+       description:
+         i === 0
+           ? `高亮关键线段${edge}，跟解题步骤对齐`
+           : `继续高亮${edge}`,
+       addElements: {
+         highlightEdges: semantic.importantLines.slice(0, i + 1),
+       },
+     });
+   });
  }
+
  if (semantic.highlight && semantic.highlight.length > 0) {
- steps.push({
- step: currentStep++,
- title: '标记关系',
- description: `标记${semantic.highlight.join('、')}关系`,
- addElements: {
- highlight: semantic.highlight,
- },
- });
+   steps.push({
+     step: currentStep++,
+     title: '标记关系',
+     description: `标记${semantic.highlight.join('、')}关系`,
+     addElements: {
+       highlight: semantic.highlight,
+     },
+   });
  }
  semantic.animationSteps = steps;
 }
