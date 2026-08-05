@@ -107,8 +107,12 @@ function extractSize(parsedData, text) {
   return 1
 }
 
-/** 从题干抽线段：A₁B / AB / A1C 等 */
+/** 从题干抽线段：A₁B / AB / A1C / 直线A₁C 等 */
 function extractSegment(text) {
+  const m0 = String(text).match(
+    /直线\s*([A-Da-d][₁1'₂2']?)([A-Da-d][₁1'₂2']?)/,
+  )
+  if (m0) return [normalizeLabel(m0[1]), normalizeLabel(m0[2])]
   const m = String(text).match(
     /([A-Da-d][₁1'₂2']?)([A-Da-d][₁1'₂2']?)(?:与|和|到|所成|夹)/,
   )
@@ -117,6 +121,9 @@ function extractSegment(text) {
     /求\s*([A-Da-d][₁1']?)([A-Da-d][₁1']?)/,
   )
   if (m2) return [normalizeLabel(m2[1]), normalizeLabel(m2[2])]
+  // 体对角线 / 面对角线 常见默认
+  if (/体对角线|空间对角线/.test(text)) return ['A', 'C1']
+  if (/面对角线/.test(text)) return ['A', 'C']
   return null
 }
 

@@ -633,6 +633,75 @@ function solveDerivative(text) {
       return structuredClone(EX_DERIV_MONO)
     }
   }
+  if (/极值|极大|极小|最值/.test(text)) {
+    // 高考基础：f(x)=x³−3x 型，f'=3x²−3=0 → x=±1
+    if (/x\s*(?:\^3|³)/.test(text) && /3x/.test(text)) {
+      return {
+        version: 1,
+        problemType: 'deriv_mono',
+        topic: 'derivative',
+        goal: text,
+        coreIdea: '极值：先求 f′=0 的临界点，再比较左右或二阶导数。',
+        rootId: 'root',
+        nodes: [
+          {
+            id: 'root',
+            label: "f′=0",
+            kind: 'choice',
+            children: ['c', 'ext'],
+            why: '驻点可能是极值点',
+          },
+          {
+            id: 'c',
+            label: 'x=±1',
+            kind: 'outcome',
+            children: [],
+            why: '3(x²−1)=0',
+          },
+          {
+            id: 'ext',
+            label: '极大 2，极小 −2',
+            kind: 'outcome',
+            children: [],
+            why: 'f(1)=−2，f(−1)=2',
+          },
+        ],
+        steps: [
+          {
+            index: 1,
+            title: '求导',
+            content: "f(x)=x³−3x → f′(x)=3x²−3",
+            why: '极值先找导数为零处',
+            highlightNodeIds: ['root'],
+          },
+          {
+            index: 2,
+            title: '临界点',
+            content: "3x²−3=0 → x=±1",
+            why: '别漏负根',
+            formula: 'x=±1',
+            highlightNodeIds: ['c'],
+          },
+          {
+            index: 3,
+            title: '比较函数值',
+            content: 'f(−1)=2（极大），f(1)=−2（极小）',
+            why: '也可用二阶导数 f″=6x 判断',
+            highlightNodeIds: ['ext'],
+          },
+          {
+            index: 4,
+            title: '结论',
+            content: '极大值 2，极小值 −2',
+            why: '写清是函数值不是自变量',
+            formula: '极大2，极小−2',
+            highlightNodeIds: ['ext'],
+          },
+        ],
+        answer: '极大值2，极小值−2',
+      }
+    }
+  }
   if (/导|f\s*'|求导/.test(text)) {
     // f(x)=ax^3+bx^2+cx+d 简化：匹配 x³±px 或 x^3
     const cubic = text.match(
@@ -772,12 +841,23 @@ function solveConic(text) {
     } else {
       eStr = (c / a).toFixed(4).replace(/0+$/, '').replace(/\.$/, '')
     }
+    const wantFoci = /焦点/.test(text) && !/离心/.test(text)
+    const fociAns = focusOnX
+      ? cExact != null
+        ? `(±${cExact},0)`
+        : `(±√${a2 - b2},0)`
+      : cExact != null
+        ? `(0,±${cExact})`
+        : `(0,±√${a2 - b2})`
+    const ans = wantFoci ? fociAns : eStr
     return {
       version: 1,
       problemType: 'ellipse_e',
       topic: 'conic',
       goal: text,
-      coreIdea: '椭圆：c²=a²−b²，e=c/a（a 取较大半轴）。',
+      coreIdea: wantFoci
+        ? '椭圆：c²=a²−b²，焦点在长轴两端 (±c,0) 或 (0,±c)。'
+        : '椭圆：c²=a²−b²，e=c/a（a 取较大半轴）。',
       rootId: 'root',
       nodes: [
         {
@@ -803,10 +883,10 @@ function solveConic(text) {
         },
         {
           id: 'e',
-          label: `e=${eStr}`,
+          label: wantFoci ? `焦点 ${fociAns}` : `e=${eStr}`,
           kind: 'outcome',
           children: [],
-          why: 'e=c/a∈(0,1)',
+          why: wantFoci ? '焦点坐标' : 'e=c/a∈(0,1)',
         },
       ],
       steps: [
@@ -826,14 +906,14 @@ function solveConic(text) {
         },
         {
           index: 3,
-          title: '离心率',
-          content: `e=c/a=${eStr}`,
-          why: '检查是否 <1',
-          formula: eStr,
+          title: wantFoci ? '焦点' : '离心率',
+          content: wantFoci ? fociAns : `e=c/a=${eStr}`,
+          why: wantFoci ? '写在长轴上' : '检查是否 <1',
+          formula: ans,
           highlightNodeIds: ['e'],
         },
       ],
-      answer: eStr,
+      answer: ans,
     }
   }
 
