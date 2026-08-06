@@ -16,6 +16,19 @@ describe('subjectRouter', () => {
   it('detects physics topics', () => {
     expect(detectSubject('从静止加速求速度').subject).toBe('phys_motion')
     expect(detectSubject('欧姆定律 U=IR').subject).toBe('phys_circuit')
+    expect(
+      detectSubject(
+        '正方形abcd内存在匀强磁场，电子从ab中点射出',
+      ).subject,
+    ).toBe('phys_bfield')
+  })
+
+  it('HUB_SAMPLES includes square magnetic-field gaokao text sample', () => {
+    const hit = HUB_SAMPLES.find((s) => s.id === 'phys-bfield-square')
+    expect(hit).toBeTruthy()
+    expect(hit.sampleKey).toBeUndefined()
+    expect(hit.subject).toBe('phys_bfield')
+    expect(hit.text).toContain('正方形')
   })
 
   it('falls back to geometry with low confidence', () => {

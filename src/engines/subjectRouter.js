@@ -167,6 +167,15 @@ export const HUB_SAMPLES = Object.freeze([
     text: TOPIC_EXAMPLES.conic.ellipse_e.goal,
   },
   {
+    id: 'phys-bfield-square',
+    subject: 'phys_bfield',
+    tag: '物理·高考',
+    label: '正方形磁场出射',
+    hint: '2019全国Ⅱ · 轨迹定半径',
+    text:
+      '如图，边长为l的正方形abcd内存在匀强磁场，磁感应强度大小为B，方向垂直于纸面（abcd所在平面）向外。ab边中点有一电子发源O，可向磁场内沿垂直于ab边的方向发射电子。已知电子的比荷为k。则从a、d两点射出的电子的速度大小分别为',
+  },
+  {
     id: 'phys-motion',
     subject: 'phys_motion',
     tag: '物理',
