@@ -7,22 +7,25 @@
  *   VISION_API_KEY=...
  */
 
-const OCR_SYSTEM_PROMPT = `你是中学立体几何 OCR + 读图助手。用户上传题目照片/截图。
+const OCR_SYSTEM_PROMPT = `你是中学试题 OCR 助手。用户上传题目照片/截图，科目可能是数学、物理、化学等。
 
-输出严格 JSON（不要 markdown 代码块、不要解题）：
+只识别文字，禁止解题、改写、补全或套用任何例题模板。
+
+输出严格 JSON（不要 markdown 代码块）：
 {
-  "text": "完整题干纯文本（含(1)(2)小问），保留 P-ABCD、⊥、∥、√ 等符号",
+  "text": "完整题干纯文本（含选项与(1)(2)小问），保留 ⊥、∥、√、π、分数与物理量符号",
   "visionHints": {
-    "relations": ["E midpoint PD", "PA perpendicular plane ABCD"],
-    "points": ["P","A","B","C","D","E"],
-    "planes": ["ABCD","PAC","AEC"]
+    "relations": [],
+    "points": [],
+    "planes": []
   }
 }
 
 rules:
-1. text 必须完整、以卷面文字为准；图中关系写进 visionHints，不要编造文字没有的题干。
-2. relations 只用简短英文短语。
-3. 看不清的字段省略；visionHints 可为空对象。`
+1. text 必须以卷面可见文字为准；看不清就省略，禁止编造卷面没有的句子。
+2. 物理题照录 B、l、k、v、磁场、射出 等原文；不要改成立体几何题。
+3. 仅当图中有立体几何点线面关系时，才往 visionHints.relations 写英文短短语；否则 visionHints 用空对象。
+4. 禁止输出与输入图无关的「矩形/中点/求证平行」类模板题干。`
 
 const PRESETS = {
   zhipu: {
@@ -211,8 +214,8 @@ export default async function handler(req, res) {
             ],
           },
         ],
-        max_tokens: 1024,
-        temperature: 0.1,
+        max_tokens: 2048,
+        temperature: 0,
       }),
     })
 

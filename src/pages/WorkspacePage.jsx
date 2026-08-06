@@ -999,7 +999,7 @@ export default function WorkspacePage() {
         try {
           const res = await withTimeout(
             aiAPI.ocr(dataUrl),
-            20000,
+            45000,
             "云端识图超时"
           );
           if (res?.data?.visionHints) {
@@ -1165,11 +1165,9 @@ export default function WorkspacePage() {
         handleParseProblem(sample.text, { useLocalOnly: true });
         return;
       }
-      // sampleKey → 方法动画样例（免费）；仅有 text → 按真题开讲
       leaveHubWithBoot(sample.subject, {
-        type: sample.sampleKey ? "sample" : "text",
+        type: "sample",
         key: sample.sampleKey,
-        text: sample.text,
         nonce: Date.now(),
       });
     },

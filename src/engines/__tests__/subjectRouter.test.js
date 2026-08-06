@@ -23,14 +23,6 @@ describe('subjectRouter', () => {
     ).toBe('phys_bfield')
   })
 
-  it('HUB_SAMPLES includes square magnetic-field gaokao text sample', () => {
-    const hit = HUB_SAMPLES.find((s) => s.id === 'phys-bfield-square')
-    expect(hit).toBeTruthy()
-    expect(hit.sampleKey).toBeUndefined()
-    expect(hit.subject).toBe('phys_bfield')
-    expect(hit.text).toContain('正方形')
-  })
-
   it('falls back to geometry with low confidence', () => {
     const r = detectSubject('随便一句话')
     expect(r.subject).toBe('geometry')
