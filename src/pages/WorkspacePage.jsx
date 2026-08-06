@@ -999,7 +999,7 @@ export default function WorkspacePage() {
         try {
           const res = await withTimeout(
             aiAPI.ocr(dataUrl),
-            20000,
+            45000,
             "云端识图超时"
           );
           if (res?.data?.visionHints) {
@@ -1015,27 +1015,23 @@ export default function WorkspacePage() {
         }
 
         const cloudMsg = String(cloudErr?.message || "");
-        // 服务端明确报错（如未配置 Key）时直接提示，避免空等本地 OCR
-        if (
-          cloudMsg &&
-          /未配置|识图 Key|VISION_|视觉 OCR|识图失败|Daily limit/i.test(cloudMsg)
-        ) {
-          setOcrHint(`${cloudMsg}。也可手动输入题干后点「开始理解」`);
-          return;
-        }
-        if (
+        const cloudUnreachable =
           /Failed to fetch|NetworkError|Network request failed|云端识图超时|Load failed|ECONNREFUSED|fetch/i.test(
             cloudMsg
-          )
-        ) {
-          setOcrHint(
-            "云端识图连不上。也可手动输入题干后点「开始理解」"
           );
-          return;
-        }
+        const cloudMisconfigured =
+          /未配置|识图 Key|VISION_|视觉 OCR|识图失败|Daily limit/i.test(
+            cloudMsg
+          );
 
-        // 2) 浏览器本地 OCR 降级（无需配置视觉 Key）
-        setOcrHint("云端识图不可用，正在本地识别…");
+        // 2) 云端失败必须继续本地 OCR，禁止提前 return 把用户卡死在红字提示
+        setOcrHint(
+          cloudUnreachable
+            ? "云端识图连不上，正在本地识别…"
+            : cloudMisconfigured
+              ? `${cloudMsg}。正在本地识别…`
+              : "云端识图不可用，正在本地识别…"
+        );
         try {
           const localText = await runLocalImageOcr(dataUrl);
           if (
@@ -1046,12 +1042,17 @@ export default function WorkspacePage() {
           ) {
             return;
           }
-          setOcrHint("未识别出文字，请对照原图手动输入");
-        } catch (err) {
           setOcrHint(
-            err?.message
-              ? `${err.message}。请对照图片手动输入题干后点「开始理解」`
-              : "识别失败，请对照图片手动输入题干"
+            cloudUnreachable
+              ? "云端连不上且本地未识别出文字。请对照图片手动输入题干后点「开始理解」"
+              : "未识别出文字，请对照原图手动输入题干后点「开始理解」"
+          );
+        } catch (err) {
+          const localMsg = err?.message || "本地识别失败";
+          setOcrHint(
+            cloudUnreachable
+              ? `云端连不上；${localMsg}。请对照图片手动输入题干后点「开始理解」`
+              : `${localMsg}。请对照图片手动输入题干后点「开始理解」`
           );
         }
       } catch {

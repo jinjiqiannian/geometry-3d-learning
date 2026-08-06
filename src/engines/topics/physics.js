@@ -1333,17 +1333,124 @@ export function solvePhysics(text, sectionId) {
     }
   }
 
-  if (allow('phys_faraday') && /磁通量|感应电动势|法拉第/.test(raw)) {
-    return structuredClone(EX_PHYS_FARADAY)
+  // 2019全国Ⅱ：正方形有界磁场，ab 中点发射电子，求 a、d 射出速度
+  if (
+    allow('phys_lorentz') &&
+    /正方形/.test(raw) &&
+    /磁场/.test(raw) &&
+    /中点/.test(raw) &&
+    /(射出|飞出)/.test(raw) &&
+    /(比荷|电子)/.test(raw)
+  ) {
+    return {
+      version: V,
+      problemType: 'phys_lorentz',
+      topic: 'phys_bfield',
+      goal: raw,
+      coreIdea:
+        '有界正方形磁场中电子做匀速圆周；用弦长定半径，再由 r = v/(kB) 求速度。',
+      rootId: 'root',
+      nodes: [
+        {
+          id: 'root',
+          label: 'r = v/(kB)',
+          kind: 'choice',
+          children: ['track_a', 'track_d', 'va', 'vd'],
+          why: '比荷 k = e/m，故 r = mv/(eB) = v/(kB)',
+        },
+        {
+          id: 'track_a',
+          label: '从 a 出：Ra = l/4',
+          kind: 'outcome',
+          children: [],
+          why: 'O 为 ab 中点，弦 Oa = l/2 = 2Ra',
+        },
+        {
+          id: 'track_d',
+          label: '从 d 出：Rd = 5l/4',
+          kind: 'outcome',
+          children: [],
+          why: '几何：R² = (R − l/2)² + l² → R = 5l/4',
+        },
+        {
+          id: 'va',
+          label: 'va = kBl/4',
+          kind: 'outcome',
+          children: [],
+          why: 'va = kB · Ra',
+        },
+        {
+          id: 'vd',
+          label: 'vd = 5kBl/4',
+          kind: 'outcome',
+          children: [],
+          why: 'vd = kB · Rd',
+        },
+      ],
+      steps: [
+        {
+          index: 1,
+          title: '定模型',
+          content: '电子垂直 B 入射 → 洛伦兹力提供向心力 → 匀速圆周，r = v/(kB)。',
+          why: '电子带负电，左手定则四指反向',
+          highlightNodeIds: ['root'],
+        },
+        {
+          index: 2,
+          title: '从 a 射出',
+          content: 'O 为 ab 中点，垂直 ab 射入。从 a 射出时弦 Oa = l/2，故直径为 l/2，Ra = l/4。',
+          why: '圆心在过 O 且垂直初速度的直线上',
+          formula: 'Ra=l/4',
+          highlightNodeIds: ['track_a'],
+        },
+        {
+          index: 3,
+          title: '从 d 射出',
+          content: '从 d 射出：R² = (R − l/2)² + l²，解得 Rd = 5l/4。',
+          why: '轨迹圆心仍在 ab 延长相关几何上',
+          formula: 'Rd=5l/4',
+          highlightNodeIds: ['track_d'],
+        },
+        {
+          index: 4,
+          title: '求速度',
+          content: 'v = kBr → va = kBl/4，vd = 5kBl/4。',
+          why: '半径越大，射出所需速率越大',
+          formula: 'kBl/4，5kBl/4',
+          highlightNodeIds: ['va', 'vd'],
+        },
+      ],
+      answer: 'kBl/4，5kBl/4',
+    }
   }
-  if (allow('phys_ohm') && /欧姆|电阻|电压|电流/.test(raw) && /Ω|欧/.test(raw)) {
-    return structuredClone(EX_PHYS_OHM)
+
+  // 方法样例：只认样例题干，勿把高考真题整题替换成试样例
+  if (
+    allow('phys_faraday') &&
+    /0\.01\s*Wb/.test(raw) &&
+    /0\.05\s*Wb/.test(raw) &&
+    /0\.2\s*s/.test(raw)
+  ) {
+    return structuredClone({ ...EX_PHYS_FARADAY, goal: raw })
   }
-  if (allow('phys_efield_def') && /场强|试探电荷|电场力/.test(raw)) {
-    return structuredClone(EX_PHYS_EFIELD)
+  if (allow('phys_ohm') && /6\s*Ω/.test(raw) && /2\s*A/.test(raw)) {
+    return structuredClone({ ...EX_PHYS_OHM, goal: raw })
   }
-  if (allow('phys_lorentz') && /洛伦兹|磁场|圆周/.test(raw)) {
-    return structuredClone(EX_PHYS_LORENTZ)
+  if (
+    allow('phys_efield_def') &&
+    /2\s*[×xX\*]\s*10\s*[⁻\-]?\s*6|2×10⁻⁶/.test(raw) &&
+    /4\s*[×xX\*]\s*10/.test(raw)
+  ) {
+    return structuredClone({ ...EX_PHYS_EFIELD, goal: raw })
+  }
+  if (
+    allow('phys_lorentz') &&
+    /垂直进入/.test(raw) &&
+    /磁场/.test(raw) &&
+    /(说明|做什么运动|指出方法)/.test(raw) &&
+    !/正方形|边长|射出|比荷/.test(raw)
+  ) {
+    return structuredClone({ ...EX_PHYS_LORENTZ, goal: raw })
   }
   if (allow('phys_kinematic') && /初速为 0|初速为0/.test(raw) && /2/.test(raw) && /3/.test(raw) && !/位移|路程/.test(raw)) {
     return structuredClone(EX_PHYS_KINEMATIC)

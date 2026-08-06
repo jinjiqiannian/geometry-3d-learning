@@ -160,7 +160,7 @@ export const aiAPI = {
     })
   },
 
-  /** 拍照/截图 → 题干 + 构图 hint（图辅助，文字为准） */
+  /** 拍照/截图 → 题干 + 构图 hint（访客可用，不强制登录） */
   async ocr(imageBase64: string) {
     return request<ApiResponse<{
       text: string
@@ -172,6 +172,7 @@ export const aiAPI = {
     }>>('/api/ai/ocr', {
       method: 'POST',
       body: { imageBase64 },
+      auth: false,
     })
   },
 
