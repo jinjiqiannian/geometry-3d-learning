@@ -62,6 +62,25 @@ describe('physics focus: mechanics + electro', () => {
     ).toBe('匀速圆周，r=mv/(qB)')
   })
 
+  it('does not hijack gaokao magnetic-field problems into Lorentz sample', () => {
+    const gaokao =
+      '如图，边长为l的正方形abcd内存在匀强磁场，磁感应强度大小为B，方向垂直于纸面（abcd所在平面）向外。ab边中点有一电子发源O，可向磁场内沿垂直于ab边的方向发射电子。已知电子的比荷为k。则从a、d两点射出的电子的速度大小分别为'
+    const ir = solvePhysics(gaokao, 'phys_bfield')
+    expect(ir).toBeTruthy()
+    expect(ir.goal).toBe(gaokao)
+    expect(ir.answer).toBe('kBl/4，5kBl/4')
+    expect(ir.goal).not.toContain('说明它做什么运动')
+  })
+
+  it('returns null for unfamiliar magnetic-field text so AI can take over', () => {
+    expect(
+      solvePhysics(
+        '带电粒子以速度v斜射入匀强磁场B，求螺距与周期',
+        'phys_bfield',
+      ),
+    ).toBeNull()
+  })
+
   it('scopes sections and legacy map', () => {
     expect(
       solveTopicProblem(
