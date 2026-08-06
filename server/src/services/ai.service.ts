@@ -634,27 +634,25 @@ export interface OcrResult {
   visionHints?: VisionHints
 }
 
-const OCR_SYSTEM_PROMPT = `你是中学立体几何 OCR + 读图助手。用户上传题目照片/截图。
+const OCR_SYSTEM_PROMPT = `你是中学试题 OCR 助手。用户上传题目照片/截图，科目可能是数学、物理、化学等。
 
-输出严格 JSON（不要 markdown 代码块、不要解题）：
+只识别文字，禁止解题、改写、补全或套用任何例题模板。
+
+输出严格 JSON（不要 markdown 代码块）：
 {
-  "text": "完整题干纯文本（含(1)(2)小问），保留 P-ABCD、⊥、∥、√ 等符号",
+  "text": "完整题干纯文本（含选项与(1)(2)小问），保留 ⊥、∥、√、π、分数与物理量符号",
   "visionHints": {
-    "relations": ["E midpoint PD", "PA perpendicular plane ABCD"],
-    "points": ["P","A","B","C","D","E"],
-    "planes": ["ABCD","PAC","AEC"]
+    "relations": [],
+    "points": [],
+    "planes": []
   }
 }
 
 rules:
-1. text 必须完整、以卷面文字为准；图中关系写进 visionHints，不要编造文字没有的题干。
-2. relations 只用：
-   - "E midpoint AD"
-   - "F on PA"
-   - "AB parallel CD" / "PC parallel plane BEF"
-   - "AB perpendicular CD" / "PA perpendicular plane ABCD"
-   - "O intersection AC BD"
-3. 看不清的字段省略；visionHints 可为空对象。`
+1. text 必须以卷面可见文字为准；看不清就省略，禁止编造卷面没有的句子。
+2. 物理题照录 B、l、k、v、磁场、射出 等原文；不要改成立体几何题。
+3. 仅当图中有立体几何点线面关系时，才往 visionHints.relations 写英文短短语（如 "E midpoint PD"、"PA perpendicular plane ABCD"）；否则 visionHints 用空对象。
+4. 禁止输出与输入图无关的模板题干。`
 
 /** 规范化视觉 OCR 模型输出 → OcrResult（失败时绝不把整段 JSON 当题干） */
 function normalizeOcrPayload(raw: string): OcrResult {
@@ -880,6 +878,12 @@ async function extractWithOpenAICompatibleVision(
     )
   }
 
+  // 智谱 GLM-4V：image_url.url 要纯 base64，不要 data:image/...;base64, 前缀
+  let imageUrl = dataUrl
+  if (provider === 'zhipu' || /glm-4v/i.test(model)) {
+    imageUrl = dataUrl.replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, '')
+  }
+
   const response = await fetch(`${base}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -894,7 +898,7 @@ async function extractWithOpenAICompatibleVision(
           role: 'user',
           content: [
             { type: 'text', text: '请按 JSON 提取完整题干 text 与构图 visionHints：' },
-            { type: 'image_url', image_url: { url: dataUrl } },
+            { type: 'image_url', image_url: { url: imageUrl } },
           ],
         },
       ],

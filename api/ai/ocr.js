@@ -31,14 +31,21 @@ const PRESETS = {
   zhipu: {
     base: 'https://open.bigmodel.cn/api/paas/v4',
     model: 'glm-4v-flash',
+    // 智谱 GLM-4V：url 只要纯 base64，不要 data: 前缀
+    stripDataUrlPrefix: true,
+    maxTokens: 1024,
   },
   qwen: {
     base: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     model: 'qwen-vl-plus',
+    stripDataUrlPrefix: false,
+    maxTokens: 1200,
   },
   siliconflow: {
     base: 'https://api.siliconflow.cn/v1',
     model: 'Qwen/Qwen2.5-VL-32B-Instruct',
+    stripDataUrlPrefix: false,
+    maxTokens: 1200,
   },
 }
 
@@ -111,7 +118,7 @@ export const config = {
       sizeLimit: '4mb',
     },
   },
-  maxDuration: 30,
+  maxDuration: 60,
 }
 
 function readVisionKey() {
@@ -141,6 +148,80 @@ function visionEnvDiag() {
   }
 }
 
+/** 拆成纯 base64 + mime，供各家视觉 API 组装 */
+function splitImagePayload(imageBase64) {
+  const raw = String(imageBase64 || '').trim()
+  const m = raw.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/s)
+  if (m) {
+    return { mime: m[1], base64: m[2].replace(/\s/g, '') }
+  }
+  return {
+    mime: 'image/jpeg',
+    base64: raw.replace(/^data:[^;]+;base64,/i, '').replace(/\s/g, ''),
+  }
+}
+
+function buildImageUrl(providerCfg, mime, base64) {
+  if (providerCfg?.stripDataUrlPrefix) {
+    return base64
+  }
+  return `data:${mime};base64,${base64}`
+}
+
+export { splitImagePayload, buildImageUrl, normalizeOcrPayload }
+
+async function callVisionChat({
+  base,
+  model,
+  apiKey,
+  imageUrl,
+  maxTokens,
+}) {
+  const response = await fetch(`${base}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: OCR_SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: '请按 JSON 提取完整题干 text 与构图 visionHints：',
+            },
+            { type: 'image_url', image_url: { url: imageUrl } },
+          ],
+        },
+      ],
+      max_tokens: maxTokens,
+      temperature: 0.1,
+    }),
+  })
+
+  const errBody = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    const msg =
+      errBody?.error?.message ||
+      errBody?.msg ||
+      `视觉 OCR 失败 (${response.status})`
+    const err = new Error(msg)
+    err.status = response.status
+    err.body = errBody
+    throw err
+  }
+
+  const raw = (errBody?.choices?.[0]?.message?.content || '').trim()
+  if (!raw) {
+    throw new Error('未能识别出文字，请手动补全题干')
+  }
+  return raw
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
@@ -165,21 +246,18 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: '请上传有效图片' })
     }
 
-    const dataUrl = String(imageBase64).startsWith('data:')
-      ? String(imageBase64)
-      : `data:image/jpeg;base64,${imageBase64}`
-
     const apiKey = readVisionKey()
     if (!apiKey) {
       return res.status(500).json({
         success: false,
-        error: '未配置识图 Key：请在绑定 jiheweidu.cn 的 Vercel 项目设置 VISION_API_KEY 后重新部署',
+        error:
+          '未配置识图 Key：请在绑定 jiheweidu.cn 的 Vercel 项目设置 VISION_API_KEY 后重新部署',
         diag: visionEnvDiag(),
       })
     }
 
     const provider = String(process.env.VISION_PROVIDER || 'zhipu').toLowerCase()
-    const preset = PRESETS[provider]
+    const preset = PRESETS[provider] || PRESETS.zhipu
     const base = (
       process.env.VISION_API_BASE ||
       preset?.base ||
@@ -193,46 +271,72 @@ export default async function handler(req, res) {
       })
     }
 
-    const response = await fetch(`${base}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: OCR_SYSTEM_PROMPT },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: '请按 JSON 提取完整题干 text 与构图 visionHints：',
-              },
-              { type: 'image_url', image_url: { url: dataUrl } },
-            ],
-          },
-        ],
-        max_tokens: 2048,
-        temperature: 0,
-      }),
-    })
-
-    if (!response.ok) {
-      const errBody = await response.json().catch(() => ({}))
-      const msg =
-        errBody?.error?.message ||
-        `视觉 OCR 失败 (${response.status}, ${provider})`
-      return res.status(502).json({ success: false, error: msg })
+    const { mime, base64 } = splitImagePayload(imageBase64)
+    if (!base64 || base64.length < 32) {
+      return res.status(400).json({ success: false, error: '请上传有效图片' })
     }
 
-    const data = await response.json()
-    const raw = (data?.choices?.[0]?.message?.content || '').trim()
-    if (!raw) {
-      return res
-        .status(500)
-        .json({ success: false, error: '未能识别出文字，请手动补全题干' })
+    // 过大请求易拖垮函数；约 3MB base64 仍在 Vercel 4mb body 内
+    if (base64.length > 3_000_000) {
+      return res.status(413).json({
+        success: false,
+        error: '图片过大，请换更清晰的截图或压缩后再试',
+      })
+    }
+
+    const providerCfg = {
+      stripDataUrlPrefix: preset.stripDataUrlPrefix === true,
+      maxTokens: preset.maxTokens || 1024,
+    }
+    // 允许环境变量覆盖
+    if (process.env.VISION_STRIP_DATA_URL === '1') {
+      providerCfg.stripDataUrlPrefix = true
+    }
+    if (process.env.VISION_STRIP_DATA_URL === '0') {
+      providerCfg.stripDataUrlPrefix = false
+    }
+
+    const primaryUrl = buildImageUrl(providerCfg, mime, base64)
+    let raw
+    try {
+      raw = await callVisionChat({
+        base,
+        model,
+        apiKey,
+        imageUrl: primaryUrl,
+        maxTokens: providerCfg.maxTokens,
+      })
+    } catch (firstErr) {
+      const msg = String(firstErr?.message || '')
+      const formatFail =
+        /图片输入格式|解析错误|image|base64|format|1210|参数/i.test(msg)
+      // 智谱格式翻车时，自动换另一种 url 形态再试一次
+      if (formatFail) {
+        const altUrl = providerCfg.stripDataUrlPrefix
+          ? `data:${mime};base64,${base64}`
+          : base64
+        try {
+          raw = await callVisionChat({
+            base,
+            model,
+            apiKey,
+            imageUrl: altUrl,
+            maxTokens: providerCfg.maxTokens,
+          })
+        } catch (secondErr) {
+          return res.status(502).json({
+            success: false,
+            error: secondErr?.message || msg || `视觉 OCR 失败 (${provider})`,
+            provider,
+          })
+        }
+      } else {
+        return res.status(502).json({
+          success: false,
+          error: msg || `视觉 OCR 失败 (${provider})`,
+          provider,
+        })
+      }
     }
 
     const result = normalizeOcrPayload(raw)
