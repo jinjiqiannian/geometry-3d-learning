@@ -31,9 +31,16 @@
   gap: 2px;
   text-decoration: none;
   color: var(--text-muted);
-  transition: all var(--transition-fast);
+  transition: color 0.15s ease, opacity 0.1s ease, transform 0.12s cubic-bezier(0.22, 1, 0.36, 1);
   padding: 4px 0;
   position: relative;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mb-nav-item:active {
+  opacity: 0.75;
+  transform: scale(0.94);
 }
 
 .mb-nav-item.active {

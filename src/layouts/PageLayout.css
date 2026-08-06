@@ -30,12 +30,23 @@
   overflow: hidden;
 }
 
+/* 首页允许整页向下滚动浏览产品介绍 */
+.page-layout--facade {
+  height: auto;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
 .page-layout--facade .page-main {
-  overflow: hidden;
+  overflow: visible;
+  flex: 1 0 auto;
 }
 
 .page-layout--facade .page-transition {
   animation: none;
+  overflow: visible;
+  flex: 1 0 auto;
 }
 
 /* 移动端：放开整页滚动（桌面仍锁视口做左右分栏） */
@@ -78,14 +89,13 @@
   }
 }
 
-/* ── Page transition animation ───────────────────────── */
+/* ── Page transition — 短时、仅 opacity，点击后立刻有反馈 ── */
 .page-transition {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  animation: page-enter 0.3s ease-out;
-  will-change: transform, opacity;
+  animation: page-enter 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .page-layout:not(.page-layout--facade) .page-transition {
@@ -95,10 +105,16 @@
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition {
+    animation: none;
   }
 }

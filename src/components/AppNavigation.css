@@ -63,18 +63,24 @@
   font-weight: 450;
   color: var(--text-secondary);
   text-decoration: none;
-  transition: color var(--transition-fast);
+  transition: color 0.15s ease, opacity 0.12s ease, transform 0.12s ease;
   cursor: pointer;
   background: none;
   border: none;
   font-family: inherit;
   white-space: nowrap;
   position: relative;
+  touch-action: manipulation;
 }
 
 .app-nav-link:hover {
   color: var(--text-primary);
   background: transparent;
+}
+
+.app-nav-link:active {
+  opacity: 0.7;
+  transform: scale(0.98);
 }
 
 .app-nav-link.active {
