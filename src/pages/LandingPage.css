@@ -11,23 +11,26 @@
   color: #121212;
 }
 
-/* ── Hero ─────────────────────────────────────────── */
+/* ── Hero：全视口铺满，后续区块独立全宽 ───────────── */
 .landing-stage {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.95fr);
+  grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
+  width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
-  max-width: 1320px;
-  margin: 0 auto;
+  margin: 0;
 }
 
 .landing-copy {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: clamp(40px, 8vh, 80px) clamp(24px, 5vw, 64px);
+  justify-self: end;
+  width: 100%;
+  max-width: 640px;
+  padding: clamp(40px, 8vh, 80px) clamp(24px, 4vw, 56px);
   animation: landing-rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -196,7 +199,7 @@
   opacity: 0.7;
 }
 
-/* ── 右海报 ── */
+/* ── 右海报：贴齐视口右缘 ── */
 .landing-poster {
   position: relative;
   display: flex;
@@ -205,6 +208,7 @@
   overflow: hidden;
   background: #121212;
   min-height: 100%;
+  width: 100%;
 }
 
 .landing-poster-glow {
@@ -296,15 +300,20 @@
   color: rgba(255, 252, 247, 0.82);
 }
 
-/* ── 滚动区块通用 ─────────────────────────────────── */
+/* ── 滚动区块通用（全宽铺底，内容居中）─────────────── */
 .landing-section {
   position: relative;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
   padding: clamp(72px, 14vh, 128px) clamp(24px, 5vw, 64px);
+  clear: both;
 }
 
 .landing-section-inner {
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
+  width: 100%;
 }
 
 .landing-eyebrow {
@@ -616,6 +625,8 @@
   }
 
   .landing-copy {
+    justify-self: stretch;
+    max-width: none;
     padding: 28px 20px 64px;
   }
 
