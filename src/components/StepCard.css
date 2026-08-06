@@ -6,26 +6,39 @@
   padding: 14px 8px 14px 4px;
   border-radius: 0;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition:
+    background 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.22s ease,
+    opacity 0.22s ease,
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.22s ease;
   position: relative;
-  border: none;
-  border-bottom: 1px solid var(--border-subtle);
+  border: 1px solid transparent;
+  border-bottom-color: var(--border-subtle);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .step-card:last-child {
-  border-bottom: none;
+  border-bottom-color: transparent;
 }
 
 .step-card:hover {
   background: var(--accent-subtle);
 }
 
+.step-card:active:not(.pending):not(.locked) {
+  transform: scale(0.985);
+  transition-duration: 0.08s;
+}
+
 .step-card.current {
   background: #e6f2ef;
-  border: 1px solid #0f6b5c;
+  border-color: #0f6b5c;
   border-radius: 2px;
   padding: 12px 8px 12px 4px;
   margin: 2px 0;
+  box-shadow: 0 1px 0 rgba(15, 107, 92, 0.08);
 }
 
 .step-card.current .step-title {
@@ -71,6 +84,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition:
+    background 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.22s ease,
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .step-dot-num {
@@ -83,6 +100,7 @@
 .step-card.current .step-dot {
   border-color: #0f6b5c;
   background: #e6f2ef;
+  transform: scale(1.06);
 }
 
 .step-card.current .step-dot-num {
@@ -118,6 +136,7 @@
   line-height: 1.45;
   margin: 0 0 6px;
   letter-spacing: -0.01em;
+  transition: color 0.2s ease;
 }
 
 .step-formula {
@@ -151,4 +170,17 @@
   -webkit-line-clamp: unset;
   display: block;
   white-space: pre-wrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-card,
+  .step-dot,
+  .step-title {
+    transition: none;
+  }
+
+  .step-card:active:not(.pending):not(.locked),
+  .step-card.current .step-dot {
+    transform: none;
+  }
 }

@@ -150,17 +150,6 @@
   overflow: hidden;
 }
 
-/* 桌面：步进条叠在画布内，不挤出图下方 */
-.wp-canvas-col .step-controls {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 12;
-  max-width: calc(100% - 24px);
-  box-sizing: border-box;
-}
-
 /* 移动端折叠 3D — 用 CSS display 代替 unmount，保护 WebGL context */
 .wp-canvas--hidden {
   display: none;
@@ -194,10 +183,6 @@
 /* 手机：去掉画布手势文案（图下/图上浮字易显脏） */
 .wp-main--mobile .wp-canvas-col::after {
   content: none;
-  display: none;
-}
-
-.wp-main--mobile .wp-canvas-col .step-controls {
   display: none;
 }
 

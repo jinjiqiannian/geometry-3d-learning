@@ -272,10 +272,22 @@
   cursor: pointer;
   color: inherit;
   border-radius: 2px;
+  transition:
+    background 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.22s ease,
+    opacity 0.22s ease,
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .logic-step:hover {
   background: var(--lp-bg);
+}
+
+.logic-step:active:not(:disabled) {
+  transform: scale(0.985);
+  transition-duration: 0.08s;
 }
 
 .logic-step.is-current {
@@ -416,6 +428,16 @@
   color: var(--lp-accent);
   border: 1px solid var(--lp-accent);
   border-radius: 50%;
+  transition:
+    background 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.22s ease,
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.logic-step.is-current .logic-step-idx {
+  background: var(--lp-accent);
+  color: #fff;
+  transform: scale(1.06);
 }
 
 .logic-step-main {
@@ -469,11 +491,23 @@
   font-weight: 550;
   cursor: pointer;
   min-height: 36px;
+  transition:
+    background 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .logic-step-nav button:hover:not(:disabled) {
   background: #1a1a1a;
   color: #fffcf7;
+}
+
+.logic-step-nav button:active:not(:disabled) {
+  transform: scale(0.96);
+  transition-duration: 0.08s;
 }
 
 .logic-step-nav button:disabled {
