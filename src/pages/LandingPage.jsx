@@ -180,7 +180,22 @@ export default function LandingPage() {
   const slideRefs = useRef([]);
   const beatRefs = useRef([]);
   const stageRef = useRef(0);
-  const [isDesktop, setIsDesktop] = useState(true);
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(min-width: 901px)").matches
+      : true,
+  );
+
+  // 解锁文档滚动：避免 html/body height:100% + 祖先 overflow 把首页锁死在一屏
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add("is-landing");
+    document.body.classList.add("is-landing");
+    return () => {
+      root.classList.remove("is-landing");
+      document.body.classList.remove("is-landing");
+    };
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 901px)");
@@ -214,10 +229,7 @@ export default function LandingPage() {
         trackFillRef.current.style.transform = `scaleX(${progress})`;
       }
 
-      const stage = Math.min(
-        STORY.length - 1,
-        Math.floor(progress * STORY.length * 0.999),
-      );
+      const stage = Math.floor(storyExact(progress, STORY.length));
       if (labelRef.current && stageRef.current !== stage) {
         labelRef.current.textContent = STORY[stage].kicker;
       }

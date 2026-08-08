@@ -8,7 +8,10 @@ import './PageLayout.css'
 
 export default function PageLayout() {
   const location = useLocation()
-  const isFacade = location.pathname === '/'
+  const isFacade =
+    location.pathname === '/' ||
+    location.pathname === '' ||
+    location.pathname === '/index.html'
 
   return (
     <div className={`page-layout ${isFacade ? 'page-layout--facade' : ''}`}>

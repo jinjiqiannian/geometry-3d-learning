@@ -22,7 +22,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  overflow-x: clip;
   min-height: 0;
 }
 
@@ -30,7 +30,7 @@
   overflow: hidden;
 }
 
-/* 首页允许整页向下滚动；勿对祖先设 overflow 滚动包含，否则 sticky 失效 */
+/* 首页：整页可向下滚动浏览介绍，不锁视口 */
 .page-layout--facade {
   height: auto;
   min-height: 100dvh;
@@ -40,12 +40,15 @@
 .page-layout--facade .page-main {
   overflow: visible;
   flex: 1 0 auto;
+  min-height: auto;
 }
 
 .page-layout--facade .page-transition {
   animation: none;
   overflow: visible;
   flex: 1 0 auto;
+  min-height: auto;
+  height: auto;
 }
 
 /* 移动端：放开整页滚动（桌面仍锁视口做左右分栏） */
