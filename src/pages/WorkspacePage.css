@@ -11,6 +11,7 @@
   overflow: hidden;
   background: #f3f1ec;
   color: #121212;
+  position: relative;
 }
 
 /* ── Unified layout (CSS-driven responsive, single Canvas) ── */
@@ -1204,7 +1205,51 @@
   color: var(--text-primary);
 }
 
-/* ── 首次使用引导 ── */
+/* ── 首次使用轻提示（不挡交互） ── */
+
+.wp-guide-banner {
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: min(520px, calc(100% - 2rem));
+  padding: 0.55rem 0.75rem 0.55rem 1rem;
+  background: #fffcf7;
+  border: 1px solid #e4dfd5;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(18, 18, 18, 0.08);
+}
+
+.wp-guide-banner-text {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #5c574e;
+  line-height: 1.35;
+}
+
+.wp-guide-banner-btn {
+  appearance: none;
+  flex-shrink: 0;
+  border: none;
+  background: #0f6b5c;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.wp-guide-banner-btn:hover {
+  background: #0b5347;
+}
+
+/* 旧引导样式保留，避免残留引用报错 */
 
 .wp-guide-overlay {
   position: fixed;

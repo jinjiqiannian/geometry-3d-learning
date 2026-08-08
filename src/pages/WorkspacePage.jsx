@@ -1677,39 +1677,15 @@ export default function WorkspacePage() {
         </div>
       )}
 
-      {/* ── 首次使用引导 ── */}
-      {showGuide && (
-        <div className="wp-guide-overlay" onClick={dismissGuide}>
-          <div className="wp-guide-card" onClick={(e) => e.stopPropagation()}>
-            <h2 className="wp-guide-title">欢迎来到几何维度</h2>
-            <p className="wp-guide-subtitle">三步开始学习：</p>
-            <div className="wp-guide-steps">
-              <div className="wp-guide-step">
-                <span className="wp-guide-step-num">1</span>
-                <div>
-                  <strong>输入题目</strong>
-                  <p>粘贴任意题目或点热门样例，自动识别专题并开讲</p>
-                </div>
-              </div>
-              <div className="wp-guide-step">
-                <span className="wp-guide-step-num">2</span>
-                <div>
-                  <strong>查看步骤</strong>
-                  <p>AI 将分步讲解，每步都有公式和计算过程</p>
-                </div>
-              </div>
-              <div className="wp-guide-step">
-                <span className="wp-guide-step-num">3</span>
-                <div>
-                  <strong>探索 3D</strong>
-                  <p>右侧的 3D 模型可以旋转缩放，直观理解空间关系</p>
-                </div>
-              </div>
-            </div>
-            <button className="wp-guide-btn" onClick={dismissGuide}>
-              我知道了
-            </button>
-          </div>
+      {/* ── 首次使用轻提示（不挡样例点击） ── */}
+      {showGuide && hubActive && (
+        <div className="wp-guide-banner" role="status">
+          <p className="wp-guide-banner-text">
+            粘贴题目或点热门样例即可开讲，专题会自动识别。
+          </p>
+          <button type="button" className="wp-guide-banner-btn" onClick={dismissGuide}>
+            知道了
+          </button>
         </div>
       )}
     </div>
