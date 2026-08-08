@@ -1,4 +1,4 @@
-/* Landing — 大厂式 Sticky Canvas 滚动叙事 */
+/* Landing — Apple / Linear 式 scroll-progress 叙事 */
 
 .landing {
   --lp-ink: #121212;
@@ -8,7 +8,8 @@
   --lp-line: rgba(18, 18, 18, 0.08);
   --lp-accent: #c2410c;
   --lp-ember: #ff6a3d;
-  --lp-dark: #0c0c0c;
+  --lp-teal: #7dd3c0;
+  --lp-dark: #0a0a0a;
   --lp-cream: #fffcf7;
   --lp-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --lp-serif: "Songti SC", "STSong", "Noto Serif SC", Georgia, serif;
@@ -22,7 +23,7 @@
 }
 
 /* ═══════════════════════════════════════════════════
-   Hero — 第一视口：品牌 + 一句话 + CTA + 全幅视觉
+   Hero
    ═══════════════════════════════════════════════════ */
 .landing-hero {
   position: relative;
@@ -41,7 +42,7 @@
   width: 100%;
   max-width: 640px;
   padding: clamp(40px, 8vh, 80px) clamp(24px, 4vw, 56px);
-  animation: landing-rise 0.75s var(--lp-ease) both;
+  animation: landing-rise 0.8s var(--lp-ease) both;
 }
 
 .landing-brand-row {
@@ -189,7 +190,7 @@
   top: 22%;
   background: radial-gradient(
     ellipse at center,
-    rgba(194, 65, 12, 0.2) 0%,
+    rgba(194, 65, 12, 0.22) 0%,
     transparent 68%
   );
   pointer-events: none;
@@ -259,40 +260,40 @@
 }
 
 /* ═══════════════════════════════════════════════════
-   Manifesto — 一屏一句话
+   Manifesto
    ═══════════════════════════════════════════════════ */
 .landing-manifesto {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 88vh;
-  padding: clamp(64px, 12vh, 120px) clamp(24px, 6vw, 80px);
+  min-height: 92vh;
+  padding: clamp(72px, 14vh, 140px) clamp(24px, 6vw, 80px);
   background:
-    radial-gradient(ellipse 70% 50% at 50% 40%, rgba(194, 65, 12, 0.05), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 40%, rgba(194, 65, 12, 0.06), transparent 60%),
     var(--lp-paper);
   border-top: 1px solid var(--lp-line);
 }
 
 .landing-manifesto-inner {
-  max-width: 920px;
+  max-width: 960px;
   text-align: center;
 }
 
 .landing-manifesto-kicker {
-  margin: 0 0 20px;
+  margin: 0 0 24px;
   font-size: 0.78rem;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.32em;
   text-transform: uppercase;
   color: var(--lp-soft);
 }
 
 .landing-manifesto-title {
-  margin: 0 0 28px;
+  margin: 0 0 32px;
   font-family: var(--lp-serif);
-  font-size: clamp(2.4rem, 7vw, 5rem);
+  font-size: clamp(2.6rem, 8vw, 5.5rem);
   font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1.08;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
 }
 
 .landing-manifesto-title span {
@@ -301,127 +302,139 @@
 
 .landing-manifesto-lead {
   margin: 0 auto;
-  max-width: 32em;
-  font-size: clamp(1rem, 1.5vw, 1.15rem);
-  line-height: 1.8;
+  max-width: 30em;
+  font-size: clamp(1.02rem, 1.6vw, 1.2rem);
+  line-height: 1.85;
   color: var(--lp-muted);
 }
 
 /* ═══════════════════════════════════════════════════
-   Sticky Story — Apple / Linear 式钉住画面
+   Sticky Film — 整屏钉住，滚动 scrub 画面
    ═══════════════════════════════════════════════════ */
 .landing-story {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  position: relative;
   width: 100%;
   background: var(--lp-dark);
   color: var(--lp-cream);
 }
 
-.landing-story-sticky {
-  position: relative;
-}
-
-.landing-story-stage {
+.landing-story-pin {
   position: sticky;
   top: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  width: 100%;
   height: 100vh;
   height: 100dvh;
+  overflow: hidden;
+}
+
+.landing-story-visual {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 32px;
+  padding: 48px 32px 56px;
   background:
-    radial-gradient(ellipse 55% 40% at 50% 45%, rgba(255, 106, 61, 0.14), transparent 65%),
+    radial-gradient(ellipse 55% 42% at 48% 46%, rgba(255, 106, 61, 0.16), transparent 65%),
     var(--lp-dark);
 }
 
 .landing-story-stage-label {
-  margin: 0 0 24px;
+  margin: 0 0 20px;
   font-size: 0.72rem;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: rgba(255, 252, 247, 0.4);
-  transition: color 0.35s var(--lp-ease);
+  color: rgba(255, 252, 247, 0.42);
 }
 
-.landing-story-stage .landing-story-art {
-  width: min(72%, 440px);
-  transition: transform 0.55s var(--lp-ease), opacity 0.4s ease;
+.landing-story-visual .landing-story-art {
+  width: min(78%, 460px);
+  will-change: contents;
 }
 
-.landing-story-progress {
+.landing-story-track {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 72px;
+  height: 2px;
+  background: rgba(255, 252, 247, 0.1);
+  overflow: hidden;
+  border-radius: 1px;
+}
+
+.landing-story-track-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--lp-ember), #ff9a6b);
+  transform-origin: left center;
+  transform: scaleX(0);
+  will-change: transform;
+}
+
+.landing-story-beats {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 28px;
   display: flex;
-  gap: 10px;
-  margin-top: 36px;
+  justify-content: center;
+  gap: 28px;
 }
 
-.landing-story-progress-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: rgba(255, 252, 247, 0.2);
-  transition:
-    background 0.3s var(--lp-ease),
-    transform 0.3s var(--lp-ease),
-    box-shadow 0.3s ease;
+.landing-story-beat {
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  color: rgba(255, 252, 247, 0.22);
+  transition: color 0.35s var(--lp-ease), transform 0.35s var(--lp-ease);
 }
 
-.landing-story-progress-dot.is-done {
-  background: rgba(255, 106, 61, 0.55);
+.landing-story-beat.is-done {
+  color: rgba(255, 106, 61, 0.55);
 }
 
-.landing-story-progress-dot.is-active {
-  background: var(--lp-ember);
-  transform: scale(1.35);
-  box-shadow: 0 0 0 4px rgba(255, 106, 61, 0.2);
+.landing-story-beat.is-active {
+  color: var(--lp-ember);
+  transform: scale(1.12);
 }
 
-.landing-story-panels {
-  display: flex;
-  flex-direction: column;
+.landing-story-copy {
+  position: relative;
+  border-left: 1px solid rgba(255, 252, 247, 0.08);
+  background: #0e0e0e;
 }
 
-.landing-story-panel {
+.landing-story-slide {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 100vh;
-  min-height: 100dvh;
-  padding: clamp(48px, 10vh, 96px) clamp(28px, 5vw, 72px);
-  border-left: 1px solid rgba(255, 252, 247, 0.08);
-  opacity: 0.35;
-  transform: translateY(12px);
-  transition:
-    opacity 0.45s var(--lp-ease),
-    transform 0.45s var(--lp-ease);
+  padding: clamp(48px, 10vh, 96px) clamp(32px, 5vw, 72px);
+  transition: none;
 }
 
-.landing-story-panel.is-active {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.landing-story-panel-art {
+.landing-story-slide-art {
   display: none;
 }
 
-.landing-story-panel-title {
-  margin: 0 0 18px;
+.landing-story-slide-title {
+  margin: 0 0 20px;
   font-family: var(--lp-serif);
-  font-size: clamp(1.9rem, 3.8vw, 3rem);
+  font-size: clamp(2rem, 4vw, 3.2rem);
   font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
   color: var(--lp-cream);
 }
 
-.landing-story-panel-body {
+.landing-story-slide-body {
   margin: 0;
   max-width: 28em;
-  font-size: 1.05rem;
-  line-height: 1.8;
+  font-size: 1.08rem;
+  line-height: 1.85;
   color: rgba(255, 252, 247, 0.58);
 }
 
@@ -438,7 +451,7 @@
 }
 
 /* ═══════════════════════════════════════════════════
-   Story SVG 阶段切换
+   Story SVG
    ═══════════════════════════════════════════════════ */
 .landing-story-art {
   display: block;
@@ -452,168 +465,110 @@
 
 .lp-edge {
   fill: none;
-  stroke: rgba(255, 252, 247, 0.22);
-  stroke-width: 1.6;
-  transition: stroke 0.5s var(--lp-ease), opacity 0.5s ease;
-}
-
-.lp-edge--base,
-.lp-edge--top {
-  stroke: rgba(255, 252, 247, 0.35);
+  stroke: rgba(255, 252, 247, 0.85);
+  stroke-width: 1.7;
 }
 
 .lp-slash {
   fill: none;
   stroke: var(--lp-ember);
-  stroke-width: 3;
+  stroke-width: 3.2;
   stroke-linecap: round;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  opacity: 0;
-  transition:
-    stroke-dashoffset 0.7s var(--lp-ease),
-    opacity 0.4s ease;
+}
+
+.lp-slash--face {
+  stroke: var(--lp-teal);
+  stroke-width: 2.5;
 }
 
 .lp-node {
   fill: var(--lp-ember);
-  opacity: 0;
-  transition: opacity 0.4s ease, transform 0.4s var(--lp-ease);
+}
+
+.lp-node--mid {
+  fill: var(--lp-teal);
 }
 
 .lp-label {
-  fill: rgba(255, 252, 247, 0.55);
+  fill: rgba(255, 252, 247, 0.7);
   font-size: 14px;
   font-family: var(--lp-serif);
-  opacity: 0;
-  transition: opacity 0.4s ease;
 }
 
-/* Stage 0: 构图 — 立方体显现 */
-.landing-story-art--stage-0 .lp-edge {
-  stroke: rgba(255, 252, 247, 0.72);
-}
-
-.landing-story-art--stage-0 .lp-node-a,
-.landing-story-art--stage-0 .lp-node-g,
-.landing-story-art--stage-0 .lp-label-a,
-.landing-story-art--stage-0 .lp-label-g {
-  opacity: 1;
-}
-
-/* Stage 1: 推理 — 体对角线 */
-.landing-story-art--stage-1 .lp-edge {
-  stroke: rgba(255, 252, 247, 0.35);
-}
-
-.landing-story-art--stage-1 .lp-slash--diag {
-  opacity: 1;
-  stroke-dashoffset: 0;
-}
-
-.landing-story-art--stage-1 .lp-node-a,
-.landing-story-art--stage-1 .lp-node-g,
-.landing-story-art--stage-1 .lp-label-a,
-.landing-story-art--stage-1 .lp-label-g {
-  opacity: 1;
-}
-
-/* Stage 2: 讲解 — 面辅助 + 对角线 */
-.landing-story-art--stage-2 .lp-edge {
-  stroke: rgba(255, 252, 247, 0.28);
-}
-
-.landing-story-art--stage-2 .lp-slash--diag,
-.landing-story-art--stage-2 .lp-slash--face {
-  opacity: 1;
-  stroke-dashoffset: 0;
-}
-
-.landing-story-art--stage-2 .lp-slash--face {
-  stroke: #7dd3c0;
-  stroke-width: 2.4;
-}
-
-.landing-story-art--stage-2 .lp-node,
-.landing-story-art--stage-2 .lp-label {
-  opacity: 1;
-}
-
-/* Stage 3: 检验 — 全亮收束 */
-.landing-story-art--stage-3 .lp-edge {
-  stroke: rgba(255, 252, 247, 0.55);
-}
-
-.landing-story-art--stage-3 .lp-slash--diag {
-  opacity: 1;
-  stroke-dashoffset: 0;
-  stroke-width: 3.4;
-}
-
-.landing-story-art--stage-3 .lp-node-a,
-.landing-story-art--stage-3 .lp-node-g,
-.landing-story-art--stage-3 .lp-label-a,
-.landing-story-art--stage-3 .lp-label-g {
-  opacity: 1;
-}
-
-/* Hero 默认用 stage-1 样式 */
-.landing-hero-visual .landing-story-art--stage-1 .lp-edge {
-  stroke: rgba(255, 252, 247, 0.55);
-}
-
-.landing-hero-visual .landing-story-art--stage-1 .lp-slash--diag {
-  opacity: 1;
-  stroke-dashoffset: 0;
-  animation: lp-slash-pulse 5s ease-in-out 0.8s infinite;
-}
-
-.landing-hero-visual .landing-story-art--stage-1 .lp-node-a,
-.landing-hero-visual .landing-story-art--stage-1 .lp-node-g,
-.landing-hero-visual .landing-story-art--stage-1 .lp-label-a,
-.landing-hero-visual .landing-story-art--stage-1 .lp-label-g {
-  opacity: 1;
+.landing-story-art--hero .lp-slash--diag {
+  animation: lp-slash-pulse 5s ease-in-out 0.6s infinite;
 }
 
 /* ═══════════════════════════════════════════════════
-   Moment — 同屏对应产品瞬间
+   Moment — 产品帧
    ═══════════════════════════════════════════════════ */
 .landing-moment {
-  padding: clamp(72px, 14vh, 140px) clamp(24px, 5vw, 64px);
+  padding: clamp(80px, 14vh, 140px) clamp(24px, 5vw, 64px);
   background:
-    radial-gradient(ellipse 60% 45% at 70% 20%, rgba(255, 106, 61, 0.1), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 70% 15%, rgba(255, 106, 61, 0.12), transparent 55%),
     var(--lp-dark);
   color: var(--lp-cream);
 }
 
 .landing-moment-inner {
-  max-width: 1080px;
+  max-width: 1100px;
   margin: 0 auto;
 }
 
 .landing-moment-title {
   margin: 0 0 20px;
   font-family: var(--lp-serif);
-  font-size: clamp(2rem, 4.5vw, 3.4rem);
+  font-size: clamp(2.1rem, 4.8vw, 3.6rem);
   font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
 }
 
 .landing-moment-lead {
   margin: 0 0 48px;
   max-width: 34em;
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   line-height: 1.8;
   color: rgba(255, 252, 247, 0.58);
 }
 
 .landing-moment-frame {
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  min-height: 360px;
   border: 1px solid rgba(255, 252, 247, 0.12);
+  background: #111;
   overflow: hidden;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.35);
+}
+
+.landing-moment-chrome {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 16px;
+  background: #1a1a1a;
+  border-bottom: 1px solid rgba(255, 252, 247, 0.08);
+}
+
+.landing-moment-chrome span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 252, 247, 0.18);
+}
+
+.landing-moment-chrome em {
+  margin-left: 10px;
+  font-style: normal;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: rgba(255, 252, 247, 0.35);
+}
+
+.landing-moment-body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  min-height: 380px;
 }
 
 .landing-moment-pane {
@@ -622,21 +577,23 @@
 }
 
 .landing-moment-pane--steps {
-  background: #151515;
-  border-right: 1px solid rgba(255, 252, 247, 0.1);
+  background: #141414;
+  border-right: 1px solid rgba(255, 252, 247, 0.08);
 }
 
 .landing-moment-pane--viz {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255, 106, 61, 0.12), transparent 70%),
+    radial-gradient(ellipse 50% 50% at 50% 55%, rgba(255, 106, 61, 0.14), transparent 70%),
     #0a0a0a;
 }
 
 .landing-moment-pane--viz .landing-story-art {
-  width: min(85%, 340px);
+  width: min(88%, 360px);
+  margin-top: 8px;
 }
 
 .landing-moment-chip {
@@ -645,7 +602,8 @@
   font-size: 0.68rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(255, 252, 247, 0.4);
+  color: rgba(255, 252, 247, 0.38);
+  align-self: flex-start;
 }
 
 .landing-moment-pane--steps ol {
@@ -654,32 +612,61 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .landing-moment-pane--steps li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 14px 12px;
   font-size: 0.92rem;
   line-height: 1.45;
-  color: rgba(255, 252, 247, 0.4);
+  color: rgba(255, 252, 247, 0.35);
   border: 1px solid transparent;
+}
+
+.landing-moment-pane--steps li i {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-style: normal;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 252, 247, 0.2);
+  color: rgba(255, 252, 247, 0.4);
+  flex-shrink: 0;
 }
 
 .landing-moment-pane--steps li.is-done {
   color: rgba(255, 252, 247, 0.55);
 }
 
+.landing-moment-pane--steps li.is-done i {
+  background: rgba(255, 252, 247, 0.2);
+  border-color: transparent;
+  color: #fff;
+}
+
 .landing-moment-pane--steps li.is-current {
-  color: #7dd3c0;
-  background: rgba(15, 107, 92, 0.18);
+  color: var(--lp-teal);
+  background: rgba(15, 107, 92, 0.2);
   border-color: #0f6b5c;
+}
+
+.landing-moment-pane--steps li.is-current i {
+  background: #0f6b5c;
+  border-color: #0f6b5c;
+  color: #fff;
 }
 
 /* ═══════════════════════════════════════════════════
    Friction / End / Footer
    ═══════════════════════════════════════════════════ */
 .landing-friction {
-  padding: clamp(72px, 14vh, 128px) clamp(24px, 5vw, 64px);
+  padding: clamp(80px, 14vh, 140px) clamp(24px, 5vw, 64px);
   background:
     radial-gradient(ellipse 80% 50% at 50% 0%, rgba(194, 65, 12, 0.05), transparent 55%),
     var(--lp-paper);
@@ -694,16 +681,16 @@
 .landing-section-title {
   margin: 0 0 20px;
   font-family: var(--lp-serif);
-  font-size: clamp(1.85rem, 3.8vw, 2.8rem);
+  font-size: clamp(1.9rem, 4vw, 2.9rem);
   font-weight: 600;
   letter-spacing: -0.02em;
-  line-height: 1.2;
+  line-height: 1.18;
 }
 
 .landing-section-lead {
   margin: 0 0 40px;
   max-width: 32em;
-  font-size: 1.02rem;
+  font-size: 1.05rem;
   line-height: 1.8;
   color: var(--lp-muted);
 }
@@ -719,27 +706,27 @@
   display: grid;
   grid-template-columns: minmax(100px, 140px) 1fr;
   gap: 16px 28px;
-  padding: 22px 0;
+  padding: 24px 0;
   border-bottom: 1px solid var(--lp-line);
   align-items: baseline;
-  font-size: 0.95rem;
-  line-height: 1.65;
+  font-size: 0.98rem;
+  line-height: 1.7;
   color: var(--lp-muted);
 }
 
 .landing-friction-list strong {
   font-family: var(--lp-serif);
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--lp-ink);
 }
 
 .landing-end {
-  padding: clamp(88px, 18vh, 160px) clamp(24px, 5vw, 64px);
+  padding: clamp(96px, 20vh, 180px) clamp(24px, 5vw, 64px);
   text-align: center;
   background:
-    radial-gradient(ellipse 70% 60% at 50% 80%, rgba(194, 65, 12, 0.07), transparent 50%),
+    radial-gradient(ellipse 70% 55% at 50% 85%, rgba(194, 65, 12, 0.08), transparent 50%),
     var(--lp-paper);
 }
 
@@ -749,17 +736,17 @@
 }
 
 .landing-end-title {
-  margin: 0 0 16px;
+  margin: 0 0 18px;
   font-family: var(--lp-serif);
-  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-size: clamp(2.4rem, 5.5vw, 4rem);
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .landing-end-lead {
-  margin: 0 0 36px;
-  font-size: 1.05rem;
-  line-height: 1.75;
+  margin: 0 0 40px;
+  font-size: 1.08rem;
+  line-height: 1.8;
   color: var(--lp-muted);
 }
 
@@ -783,10 +770,10 @@
 /* ── Reveal ───────────────────────────────────────── */
 .lp-reveal {
   opacity: 0;
-  transform: translateY(32px);
+  transform: translateY(36px);
   transition:
-    opacity 0.8s var(--lp-ease),
-    transform 0.8s var(--lp-ease);
+    opacity 0.9s var(--lp-ease),
+    transform 0.9s var(--lp-ease);
 }
 
 .lp-reveal--in {
@@ -798,7 +785,7 @@
 @keyframes landing-rise {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(22px);
   }
   to {
     opacity: 1;
@@ -860,7 +847,7 @@
 }
 
 /* ═══════════════════════════════════════════════════
-   Responsive
+   Mobile — 竖排逐步展开，不做 sticky pin
    ═══════════════════════════════════════════════════ */
 @media (max-width: 900px) {
   .landing-hero {
@@ -892,25 +879,39 @@
     bottom: 16px;
   }
 
-  /* 移动端：取消 sticky，竖排「画面 + 文案」逐步展开 */
   .landing-story {
-    grid-template-columns: 1fr;
+    height: auto;
   }
 
-  .landing-story-sticky {
+  .landing-story-pin {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  .landing-story-visual {
     display: none;
   }
 
-  .landing-story-panel {
+  .landing-story-copy {
+    border-left: none;
+    background: transparent;
+  }
+
+  .landing-story-slide {
+    position: relative;
+    inset: auto;
     min-height: auto;
     padding: 48px 24px 56px;
-    border-left: none;
     border-top: 1px solid rgba(255, 252, 247, 0.08);
     opacity: 1;
     transform: none;
+    pointer-events: auto;
   }
 
-  .landing-story-panel-art {
+  .landing-story-slide-art {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -923,17 +924,17 @@
     border: 1px solid rgba(255, 252, 247, 0.08);
   }
 
-  .landing-story-panel-art .landing-story-art {
+  .landing-story-slide-art .landing-story-art {
     width: min(70%, 260px);
   }
 
-  .landing-moment-frame {
+  .landing-moment-body {
     grid-template-columns: 1fr;
   }
 
   .landing-moment-pane--steps {
     border-right: none;
-    border-bottom: 1px solid rgba(255, 252, 247, 0.1);
+    border-bottom: 1px solid rgba(255, 252, 247, 0.08);
   }
 
   .landing-friction-list li {
@@ -961,7 +962,7 @@
   .landing-hero-visual .landing-story-art,
   .landing-scroll-hint,
   .landing-scroll-hint__line,
-  .lp-slash {
+  .landing-story-art--hero .lp-slash--diag {
     animation: none;
   }
 
@@ -971,27 +972,13 @@
     transition: none;
   }
 
-  .landing-story-panel {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-
   .landing-submit,
   .landing-ghost,
-  .lp-edge,
-  .lp-slash,
-  .lp-node,
-  .lp-label {
+  .landing-story-beat {
     transition: none;
   }
 
-  .landing-hero-visual .landing-story-art--stage-1 .lp-slash--diag,
-  .landing-story-art--stage-1 .lp-slash--diag,
-  .landing-story-art--stage-2 .lp-slash--diag,
-  .landing-story-art--stage-2 .lp-slash--face,
-  .landing-story-art--stage-3 .lp-slash--diag {
-    stroke-dashoffset: 0;
-    opacity: 1;
+  .landing-story-track-fill {
+    transform: scaleX(1);
   }
 }

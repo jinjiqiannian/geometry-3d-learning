@@ -3,11 +3,45 @@ import { useNavigate } from "react-router-dom";
 import BrandLogo from "../components/BrandLogo";
 import "./LandingPage.css";
 
-/** 品牌几何：随滚动阶段切换高亮与辅助线 */
-function StoryArt({ stage = 0 }) {
+const STORY = [
+  {
+    key: "compose",
+    kicker: "01 · 构图",
+    title: "先把结构画出来",
+    body: "题目里的棱、面、点，落成可旋转的立体模型。不是示意图，是能转、能量的空间。",
+  },
+  {
+    key: "reason",
+    kicker: "02 · 推理",
+    title: "顺着关系往下推",
+    body: "垂直、平行、中点、对角线。关键线高亮，推理路径可回放——每一步都看得见。",
+  },
+  {
+    key: "explain",
+    kicker: "03 · 讲解",
+    title: "公式跟着画面走",
+    body: "左边推一步，右边亮一条线。像老师板书，而不是只丢一个答案。",
+  },
+  {
+    key: "check",
+    kicker: "04 · 检验",
+    title: "看懂了，才算过关",
+    body: "对照三维场景与结论，确认理解到位，再进入下一题。",
+  },
+];
+
+/** 品牌几何：progress 0→1 连续驱动描线，无时间轴跳动 */
+function StoryArt({ progress = 0, hero = false }) {
+  // 分段：0-0.28 构图 · 0.28-0.55 对角线 · 0.55-0.78 辅助线 · 0.78-1 收束
+  const edgeOp = hero ? 0.7 : Math.min(1, progress / 0.22) * 0.72;
+  const diagDraw = hero ? 1 : clamp01((progress - 0.28) / 0.22);
+  const faceDraw = hero ? 0 : clamp01((progress - 0.55) / 0.2);
+  const nodeOp = hero ? 1 : clamp01((progress - 0.2) / 0.15);
+  const settle = hero ? 0.55 : 0.28 + clamp01((progress - 0.78) / 0.22) * 0.35;
+
   return (
     <svg
-      className={`landing-story-art landing-story-art--stage-${stage}`}
+      className={`landing-story-art${hero ? " landing-story-art--hero" : ""}`}
       viewBox="0 0 480 520"
       aria-hidden="true"
     >
@@ -22,57 +56,116 @@ function StoryArt({ stage = 0 }) {
         })}
       </g>
 
-      {/* 立方体线框：构图阶段显现 */}
-      <g className="lp-cube">
-        <path className="lp-edge lp-edge--base" d="M140 320 L260 280 L380 320 L260 360 Z" />
-        <path className="lp-edge lp-edge--top" d="M140 200 L260 160 L380 200 L260 240 Z" />
-        <line className="lp-edge" x1="140" y1="200" x2="140" y2="320" />
-        <line className="lp-edge" x1="260" y1="160" x2="260" y2="280" />
-        <line className="lp-edge" x1="380" y1="200" x2="380" y2="320" />
-        <line className="lp-edge" x1="260" y1="240" x2="260" y2="360" />
+      <g className="lp-cube" style={{ opacity: Math.max(0.15, edgeOp) }}>
+        <path
+          className="lp-edge"
+          d="M140 320 L260 280 L380 320 L260 360 Z"
+          style={{ strokeOpacity: settle }}
+        />
+        <path
+          className="lp-edge"
+          d="M140 200 L260 160 L380 200 L260 240 Z"
+          style={{ strokeOpacity: settle }}
+        />
+        <line className="lp-edge" x1="140" y1="200" x2="140" y2="320" style={{ strokeOpacity: settle }} />
+        <line className="lp-edge" x1="260" y1="160" x2="260" y2="280" style={{ strokeOpacity: settle }} />
+        <line className="lp-edge" x1="380" y1="200" x2="380" y2="320" style={{ strokeOpacity: settle }} />
+        <line className="lp-edge" x1="260" y1="240" x2="260" y2="360" style={{ strokeOpacity: settle }} />
       </g>
 
-      {/* 推理：体对角线 */}
       <path
         className="lp-slash lp-slash--diag"
         d="M140 320 L380 200"
         pathLength="1"
+        style={{
+          strokeDashoffset: 1 - diagDraw,
+          opacity: diagDraw > 0.02 ? 0.3 + diagDraw * 0.7 : 0,
+        }}
       />
 
-      {/* 讲解：面辅助线 */}
       <path
         className="lp-slash lp-slash--face"
         d="M140 320 L260 280"
         pathLength="1"
+        style={{
+          strokeDashoffset: 1 - faceDraw,
+          opacity: faceDraw > 0.02 ? 0.3 + faceDraw * 0.7 : 0,
+        }}
       />
 
-      <circle className="lp-node lp-node-a" cx="140" cy="320" r="4" />
-      <circle className="lp-node lp-node-g" cx="380" cy="200" r="4" />
-      <circle className="lp-node lp-node-mid" cx="260" cy="280" r="3.2" />
+      <circle className="lp-node" cx="140" cy="320" r="4" style={{ opacity: nodeOp }} />
+      <circle className="lp-node" cx="380" cy="200" r="4" style={{ opacity: nodeOp * (0.4 + diagDraw * 0.6) }} />
+      <circle className="lp-node lp-node--mid" cx="260" cy="280" r="3.2" style={{ opacity: faceDraw }} />
 
-      <text className="lp-label lp-label-a" x="118" y="336">
+      <text className="lp-label" x="118" y="336" style={{ opacity: nodeOp * 0.85 }}>
         A
       </text>
-      <text className="lp-label lp-label-g" x="388" y="192">
+      <text className="lp-label" x="388" y="192" style={{ opacity: nodeOp * (0.3 + diagDraw * 0.7) }}>
         G
       </text>
     </svg>
   );
 }
 
-function useReveal(threshold = 0.2) {
+function clamp01(n) {
+  return Math.min(1, Math.max(0, n));
+}
+
+/** 整段 sticky 区：滚动进度 0→1，驱动画面与文案 */
+function useScrollProgress(ref, enabled = true) {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const el = ref.current;
+    if (!el) return undefined;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setProgress(1);
+      return undefined;
+    }
+
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const rect = el.getBoundingClientRect();
+      const total = el.offsetHeight - window.innerHeight;
+      if (total <= 0) {
+        setProgress(rect.top < 0 ? 1 : 0);
+        return;
+      }
+      const scrolled = clamp01(-rect.top / total);
+      setProgress(scrolled);
+    };
+
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [ref, enabled]);
+
+  return progress;
+}
+
+function useReveal(threshold = 0.18) {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return undefined;
-
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setVisible(true);
       return undefined;
     }
-
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -80,9 +173,8 @@ function useReveal(threshold = 0.2) {
           io.disconnect();
         }
       },
-      { threshold, rootMargin: "0px 0px -10% 0px" },
+      { threshold, rootMargin: "0px 0px -8% 0px" },
     );
-
     io.observe(el);
     return () => io.disconnect();
   }, [threshold]);
@@ -103,74 +195,34 @@ function Reveal({ as: Tag = "div", className = "", children, ...rest }) {
   );
 }
 
-/** Sticky 叙事：滚动面板驱动左侧画面阶段 */
-function useStoryStage(count) {
-  const rootRef = useRef(null);
-  const panelRefs = useRef([]);
-  const [stage, setStage] = useState(0);
-
-  useEffect(() => {
-    const panels = panelRefs.current.filter(Boolean);
-    if (panels.length === 0) return undefined;
-
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return undefined;
-    }
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible[0]) {
-          const idx = Number(visible[0].target.dataset.stage);
-          if (!Number.isNaN(idx)) setStage(idx);
-        }
-      },
-      { threshold: [0.35, 0.55, 0.7], rootMargin: "-20% 0px -35% 0px" },
-    );
-
-    panels.forEach((p) => io.observe(p));
-    return () => io.disconnect();
-  }, [count]);
-
-  const setPanelRef = (i) => (el) => {
-    panelRefs.current[i] = el;
-  };
-
-  return { rootRef, stage, setPanelRef };
+/** 阶段文案透明度：当前段亮，邻段淡出 */
+function stageOpacity(index, progress, count) {
+  const seg = 1 / count;
+  const center = index * seg + seg * 0.5;
+  const dist = Math.abs(progress - center);
+  return clamp01(1 - dist / (seg * 0.85));
 }
-
-const STORY = [
-  {
-    key: "compose",
-    kicker: "01 · 构图",
-    title: "先把结构画出来",
-    body: "题目里的棱、面、点落成可旋转的立体模型。不是示意图，是能转、能量的空间。",
-  },
-  {
-    key: "reason",
-    kicker: "02 · 推理",
-    title: "顺着关系往下推",
-    body: "垂直、平行、中点、对角线——关键线高亮，推理路径可回放，每一步都看得见。",
-  },
-  {
-    key: "explain",
-    kicker: "03 · 讲解",
-    title: "公式跟着画面走",
-    body: "左侧步骤、右侧几何同步推进。像老师板书，而不是只丢一个答案。",
-  },
-  {
-    key: "check",
-    kicker: "04 · 检验",
-    title: "看懂了，才算过关",
-    body: "对照三维场景与结论，确认理解到位，再进入下一题。",
-  },
-];
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { rootRef, stage, setPanelRef } = useStoryStage(STORY.length);
+  const storyRef = useRef(null);
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(min-width: 901px)").matches,
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 901px)");
+    const onChange = () => setIsDesktop(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  const progress = useScrollProgress(storyRef, isDesktop);
+  const stage = Math.min(
+    STORY.length - 1,
+    Math.floor(progress * STORY.length * 0.999),
+  );
 
   const go = (path) => {
     startTransition(() => {
@@ -187,7 +239,7 @@ export default function LandingPage() {
 
   return (
     <div className="landing">
-      {/* ── Hero：一屏品牌门面 ── */}
+      {/* ── Hero：品牌门面，一屏一事 ── */}
       <header className="landing-hero">
         <div className="landing-hero-copy">
           <div className="landing-brand-row">
@@ -228,7 +280,7 @@ export default function LandingPage() {
 
         <aside className="landing-hero-visual" aria-hidden="true">
           <div className="landing-hero-glow" />
-          <StoryArt stage={1} />
+          <StoryArt progress={0.5} hero />
           <div className="landing-hero-caption">
             <span>SEE</span>
             <span>看见结构</span>
@@ -246,7 +298,7 @@ export default function LandingPage() {
         </button>
       </header>
 
-      {/* ── 宣言：一屏一句话 ── */}
+      {/* ── 宣言：大字号一句话 ── */}
       <section className="landing-manifesto" id="overview" aria-label="产品理念">
         <Reveal className="landing-manifesto-inner">
           <p className="landing-manifesto-kicker">不是刷题工具</p>
@@ -262,54 +314,84 @@ export default function LandingPage() {
         </Reveal>
       </section>
 
-      {/* ── Sticky Canvas：大厂式滚动叙事 ── */}
+      {/* ── Sticky Film：整屏钉住，滚动驱动画面 ── */}
       <section
         id="story"
         className="landing-story"
-        ref={rootRef}
+        ref={storyRef}
+        style={
+          isDesktop
+            ? { height: `${STORY.length * 100}vh` }
+            : undefined
+        }
         aria-label="学习路径"
       >
-        <div className="landing-story-sticky" aria-hidden="true">
-          <div className="landing-story-stage">
+        <div className="landing-story-pin">
+          <div className="landing-story-visual" aria-hidden="true">
             <p className="landing-story-stage-label">
-              {STORY[stage]?.kicker ?? "01 · 构图"}
+              {STORY[stage]?.kicker}
             </p>
-            <StoryArt stage={stage} />
-            <div className="landing-story-progress" role="presentation">
+            <StoryArt progress={progress} />
+            <div className="landing-story-track" role="presentation">
+              <div
+                className="landing-story-track-fill"
+                style={{ transform: `scaleX(${progress})` }}
+              />
+            </div>
+            <div className="landing-story-beats">
               {STORY.map((item, i) => (
                 <span
                   key={item.key}
-                  className={`landing-story-progress-dot ${
+                  className={`landing-story-beat ${
                     i === stage ? "is-active" : i < stage ? "is-done" : ""
                   }`}
-                />
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
               ))}
             </div>
           </div>
-        </div>
 
-        <div className="landing-story-panels">
-          {STORY.map((item, i) => (
-            <article
-              key={item.key}
-              className={`landing-story-panel ${
-                i === stage ? "is-active" : ""
-              }`}
-              data-stage={i}
-              ref={setPanelRef(i)}
-            >
-              <div className="landing-story-panel-art" aria-hidden="true">
-                <StoryArt stage={i} />
-              </div>
-              <p className="landing-eyebrow">{item.kicker}</p>
-              <h3 className="landing-story-panel-title">{item.title}</h3>
-              <p className="landing-story-panel-body">{item.body}</p>
-            </article>
-          ))}
+          <div className="landing-story-copy">
+            {STORY.map((item, i) => {
+              const op = isDesktop
+                ? stageOpacity(i, progress, STORY.length)
+                : 1;
+              return (
+                <article
+                  key={item.key}
+                  className={`landing-story-slide ${
+                    i === stage ? "is-active" : ""
+                  }`}
+                  style={
+                    isDesktop
+                      ? {
+                          opacity: op,
+                          transform: `translateY(${(1 - op) * 18}px)`,
+                          pointerEvents: i === stage ? "auto" : "none",
+                        }
+                      : undefined
+                  }
+                  aria-hidden={isDesktop && i !== stage ? true : undefined}
+                >
+                  <div className="landing-story-slide-art" aria-hidden="true">
+                    <StoryArt
+                      progress={(i + 0.65) / STORY.length}
+                    />
+                  </div>
+                  <p className="landing-eyebrow landing-eyebrow--light">
+                    {item.kicker}
+                  </p>
+                  <h3 className="landing-story-slide-title">{item.title}</h3>
+                  <p className="landing-story-slide-body">{item.body}</p>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </section>
 
-      {/* ── 产品瞬间：同屏对应 ── */}
+      {/* ── 产品瞬间：工作台同屏 ── */}
       <section className="landing-moment" aria-labelledby="moment-title">
         <Reveal className="landing-moment-inner">
           <p className="landing-eyebrow landing-eyebrow--light">工作台</p>
@@ -323,17 +405,34 @@ export default function LandingPage() {
           </p>
 
           <div className="landing-moment-frame" aria-hidden="true">
-            <div className="landing-moment-pane landing-moment-pane--steps">
-              <span className="landing-moment-chip">步骤</span>
-              <ol>
-                <li className="is-done">画出底面与侧棱</li>
-                <li className="is-current">用勾股定理求 AG</li>
-                <li>写出体对角线结论</li>
-              </ol>
+            <div className="landing-moment-chrome">
+              <span />
+              <span />
+              <span />
+              <em>理解引擎 · 工作台</em>
             </div>
-            <div className="landing-moment-pane landing-moment-pane--viz">
-              <span className="landing-moment-chip">三维</span>
-              <StoryArt stage={2} />
+            <div className="landing-moment-body">
+              <div className="landing-moment-pane landing-moment-pane--steps">
+                <span className="landing-moment-chip">步骤</span>
+                <ol>
+                  <li className="is-done">
+                    <i>✓</i>
+                    画出底面与侧棱
+                  </li>
+                  <li className="is-current">
+                    <i>2</i>
+                    用勾股定理求 AG
+                  </li>
+                  <li>
+                    <i>3</i>
+                    写出体对角线结论
+                  </li>
+                </ol>
+              </div>
+              <div className="landing-moment-pane landing-moment-pane--viz">
+                <span className="landing-moment-chip">三维</span>
+                <StoryArt progress={0.72} />
+              </div>
             </div>
           </div>
         </Reveal>
@@ -366,7 +465,7 @@ export default function LandingPage() {
         </Reveal>
       </section>
 
-      {/* ── 收尾 CTA ── */}
+      {/* ── 收尾 ── */}
       <section className="landing-end">
         <Reveal className="landing-end-inner">
           <h2 className="landing-end-title">从一道题开始</h2>
