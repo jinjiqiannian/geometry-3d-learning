@@ -1,29 +1,39 @@
-/* Landing — 网站门面：全屏英雄 + 向下滚动叙事 */
+/* Landing — 大厂式 Sticky Canvas 滚动叙事 */
 
 .landing {
+  --lp-ink: #121212;
+  --lp-paper: #f3f1ec;
+  --lp-muted: #5c574f;
+  --lp-soft: #8a847a;
+  --lp-line: rgba(18, 18, 18, 0.08);
+  --lp-accent: #c2410c;
+  --lp-ember: #ff6a3d;
+  --lp-dark: #0c0c0c;
+  --lp-cream: #fffcf7;
+  --lp-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --lp-serif: "Songti SC", "STSong", "Noto Serif SC", Georgia, serif;
+
   position: relative;
   width: 100%;
-  min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
-  overflow-y: visible;
-  background: #f3f1ec;
-  color: #121212;
+  background: var(--lp-paper);
+  color: var(--lp-ink);
 }
 
-/* ── Hero：全视口铺满，后续区块独立全宽 ───────────── */
-.landing-stage {
+/* ═══════════════════════════════════════════════════
+   Hero — 第一视口：品牌 + 一句话 + CTA + 全幅视觉
+   ═══════════════════════════════════════════════════ */
+.landing-hero {
   position: relative;
-  z-index: 1;
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
   width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
-  margin: 0;
 }
 
-.landing-copy {
+.landing-hero-copy {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -31,7 +41,7 @@
   width: 100%;
   max-width: 640px;
   padding: clamp(40px, 8vh, 80px) clamp(24px, 4vw, 56px);
-  animation: landing-rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: landing-rise 0.75s var(--lp-ease) both;
 }
 
 .landing-brand-row {
@@ -42,7 +52,7 @@
 }
 
 .landing-logo-svg {
-  color: #121212;
+  color: var(--lp-ink);
   flex-shrink: 0;
 }
 
@@ -54,12 +64,11 @@
 
 .landing-brand {
   margin: 0;
-  font-family: "Songti SC", "STSong", "Noto Serif SC", Georgia, serif;
+  font-family: var(--lp-serif);
   font-size: clamp(1.7rem, 3vw, 2.2rem);
   font-weight: 650;
   letter-spacing: 0.06em;
   line-height: 1.1;
-  color: #121212;
 }
 
 .landing-brand-en {
@@ -67,30 +76,29 @@
   font-size: 0.68rem;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: #8a847a;
+  color: var(--lp-soft);
 }
 
 .landing-headline {
   margin: 0 0 18px;
-  font-family: "Songti SC", "STSong", "Noto Serif SC", Georgia, serif;
-  font-size: clamp(2.1rem, 4.6vw, 3.35rem);
+  font-family: var(--lp-serif);
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
   font-weight: 600;
   letter-spacing: -0.02em;
-  line-height: 1.16;
-  color: #121212;
+  line-height: 1.12;
 }
 
 .landing-headline em {
   font-style: normal;
-  color: #c2410c;
+  color: var(--lp-accent);
 }
 
 .landing-support {
   margin: 0 0 36px;
   max-width: 30em;
-  font-size: 0.98rem;
+  font-size: 1rem;
   line-height: 1.75;
-  color: #5c574f;
+  color: var(--lp-muted);
 }
 
 .landing-cta-row {
@@ -100,23 +108,30 @@
   gap: 12px;
 }
 
+.landing-cta-row--center {
+  justify-content: center;
+}
+
 .landing-submit {
   padding: 13px 28px;
   border: none;
   border-radius: 2px;
-  background: #121212;
-  color: #fffcf7;
+  background: var(--lp-ink);
+  color: var(--lp-cream);
   font-size: 0.92rem;
   font-weight: 550;
   font-family: inherit;
   letter-spacing: 0.04em;
   cursor: pointer;
   transition:
-    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
-    background 0.18s ease,
-    opacity 0.18s ease;
-  will-change: transform;
+    transform 0.18s var(--lp-ease),
+    background 0.18s ease;
   touch-action: manipulation;
+}
+
+.landing-submit--lg {
+  padding: 16px 36px;
+  font-size: 1rem;
 }
 
 .landing-submit:hover {
@@ -126,7 +141,6 @@
 
 .landing-submit:active {
   transform: translateY(0) scale(0.98);
-  background: #000;
   transition-duration: 0.08s;
 }
 
@@ -142,23 +156,74 @@
   transition:
     border-color 0.18s ease,
     color 0.18s ease,
-    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.18s var(--lp-ease),
     background 0.18s ease;
   touch-action: manipulation;
 }
 
 .landing-ghost:hover {
-  border-color: #121212;
-  color: #121212;
+  border-color: var(--lp-ink);
+  color: var(--lp-ink);
 }
 
 .landing-ghost:active {
   transform: scale(0.98);
-  background: rgba(18, 18, 18, 0.04);
   transition-duration: 0.08s;
 }
 
-/* 滚动提示 */
+.landing-hero-visual {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--lp-dark);
+  min-height: 100%;
+}
+
+.landing-hero-glow {
+  position: absolute;
+  width: 70%;
+  height: 50%;
+  left: 18%;
+  top: 22%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(194, 65, 12, 0.2) 0%,
+    transparent 68%
+  );
+  pointer-events: none;
+  animation: lp-glow 8s ease-in-out infinite;
+}
+
+.landing-hero-visual .landing-story-art {
+  width: min(78%, 420px);
+  animation: lp-float 10s ease-in-out infinite;
+}
+
+.landing-hero-caption {
+  position: absolute;
+  left: 28px;
+  bottom: 32px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.landing-hero-caption span:first-child {
+  font-size: 0.68rem;
+  letter-spacing: 0.32em;
+  color: rgba(255, 252, 247, 0.38);
+}
+
+.landing-hero-caption span:last-child {
+  font-size: 0.92rem;
+  letter-spacing: 0.2em;
+  color: rgba(255, 252, 247, 0.82);
+}
+
 .landing-scroll-hint {
   position: absolute;
   left: 50%;
@@ -172,148 +237,192 @@
   padding: 8px 12px;
   background: transparent;
   border: none;
-  color: #8a847a;
+  color: var(--lp-soft);
   cursor: pointer;
   touch-action: manipulation;
-  animation: lp-hint-fade 1.2s ease 1.1s both;
+  animation: lp-hint-fade 1.2s ease 1s both;
 }
 
 .landing-scroll-hint__line {
   display: block;
   width: 1px;
-  height: 28px;
+  height: 32px;
   background: linear-gradient(180deg, #c4bdb0, transparent);
   animation: lp-hint-pulse 2.2s ease-in-out infinite;
+  transform-origin: top center;
 }
 
 .landing-scroll-hint__label {
-  font-size: 0.68rem;
-  letter-spacing: 0.22em;
+  font-size: 0.65rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
 }
 
-.landing-scroll-hint:hover {
-  color: #3a3630;
-}
-
-.landing-scroll-hint:active {
-  opacity: 0.7;
-}
-
-/* ── 右海报：贴齐视口右缘 ── */
-.landing-poster {
-  position: relative;
+/* ═══════════════════════════════════════════════════
+   Manifesto — 一屏一句话
+   ═══════════════════════════════════════════════════ */
+.landing-manifesto {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  background: #121212;
-  min-height: 100%;
+  min-height: 88vh;
+  padding: clamp(64px, 12vh, 120px) clamp(24px, 6vw, 80px);
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 40%, rgba(194, 65, 12, 0.05), transparent 60%),
+    var(--lp-paper);
+  border-top: 1px solid var(--lp-line);
+}
+
+.landing-manifesto-inner {
+  max-width: 920px;
+  text-align: center;
+}
+
+.landing-manifesto-kicker {
+  margin: 0 0 20px;
+  font-size: 0.78rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--lp-soft);
+}
+
+.landing-manifesto-title {
+  margin: 0 0 28px;
+  font-family: var(--lp-serif);
+  font-size: clamp(2.4rem, 7vw, 5rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+}
+
+.landing-manifesto-title span {
+  color: var(--lp-accent);
+}
+
+.landing-manifesto-lead {
+  margin: 0 auto;
+  max-width: 32em;
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  line-height: 1.8;
+  color: var(--lp-muted);
+}
+
+/* ═══════════════════════════════════════════════════
+   Sticky Story — Apple / Linear 式钉住画面
+   ═══════════════════════════════════════════════════ */
+.landing-story {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   width: 100%;
+  background: var(--lp-dark);
+  color: var(--lp-cream);
 }
 
-.landing-poster-glow {
-  position: absolute;
-  width: 70%;
-  height: 50%;
-  left: 18%;
-  top: 22%;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(194, 65, 12, 0.18) 0%,
-    transparent 68%
-  );
-  pointer-events: none;
-  animation: lp-glow 8s ease-in-out infinite;
-}
-
-.landing-poster-art {
+.landing-story-sticky {
   position: relative;
-  z-index: 1;
-  width: min(78%, 420px);
-  height: auto;
-  animation: lp-float 10s ease-in-out infinite;
 }
 
-.lp-grid line {
-  stroke: rgba(255, 252, 247, 0.045);
-  stroke-width: 1;
-}
-
-.lp-plane {
-  fill: none;
-  stroke: rgba(255, 252, 247, 0.72);
-  stroke-width: 1.8;
-}
-
-.lp-plane-back .lp-plane {
-  stroke: rgba(255, 252, 247, 0.28);
-}
-
-.lp-plane-back {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: lp-plane-back 9s ease-in-out infinite;
-}
-
-.lp-plane-front {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: lp-plane-front 9s ease-in-out infinite;
-}
-
-.lp-slash {
-  fill: none;
-  stroke: #ff6a3d;
-  stroke-width: 3.2;
-  stroke-linecap: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: lp-draw 2.4s ease forwards 0.35s, lp-slash-pulse 5s ease-in-out 2.8s infinite;
-}
-
-.lp-node {
-  fill: #ff6a3d;
-  opacity: 0;
-  animation: lp-node-in 0.5s ease forwards 2.2s;
-}
-
-.landing-poster-caption {
-  position: absolute;
-  left: 28px;
-  bottom: 32px;
-  z-index: 2;
+.landing-story-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  pointer-events: none;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  background:
+    radial-gradient(ellipse 55% 40% at 50% 45%, rgba(255, 106, 61, 0.14), transparent 65%),
+    var(--lp-dark);
 }
 
-.landing-poster-caption span:first-child {
-  font-size: 0.68rem;
-  letter-spacing: 0.32em;
-  color: rgba(255, 252, 247, 0.38);
+.landing-story-stage-label {
+  margin: 0 0 24px;
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 252, 247, 0.4);
+  transition: color 0.35s var(--lp-ease);
 }
 
-.landing-poster-caption span:last-child {
-  font-size: 0.92rem;
-  letter-spacing: 0.2em;
-  color: rgba(255, 252, 247, 0.82);
+.landing-story-stage .landing-story-art {
+  width: min(72%, 440px);
+  transition: transform 0.55s var(--lp-ease), opacity 0.4s ease;
 }
 
-/* ── 滚动区块通用（全宽铺底，内容居中）─────────────── */
-.landing-section {
-  position: relative;
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  padding: clamp(72px, 14vh, 128px) clamp(24px, 5vw, 64px);
-  clear: both;
+.landing-story-progress {
+  display: flex;
+  gap: 10px;
+  margin-top: 36px;
 }
 
-.landing-section-inner {
-  max-width: 760px;
-  margin: 0 auto;
-  width: 100%;
+.landing-story-progress-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 252, 247, 0.2);
+  transition:
+    background 0.3s var(--lp-ease),
+    transform 0.3s var(--lp-ease),
+    box-shadow 0.3s ease;
+}
+
+.landing-story-progress-dot.is-done {
+  background: rgba(255, 106, 61, 0.55);
+}
+
+.landing-story-progress-dot.is-active {
+  background: var(--lp-ember);
+  transform: scale(1.35);
+  box-shadow: 0 0 0 4px rgba(255, 106, 61, 0.2);
+}
+
+.landing-story-panels {
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-story-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: clamp(48px, 10vh, 96px) clamp(28px, 5vw, 72px);
+  border-left: 1px solid rgba(255, 252, 247, 0.08);
+  opacity: 0.35;
+  transform: translateY(12px);
+  transition:
+    opacity 0.45s var(--lp-ease),
+    transform 0.45s var(--lp-ease);
+}
+
+.landing-story-panel.is-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.landing-story-panel-art {
+  display: none;
+}
+
+.landing-story-panel-title {
+  margin: 0 0 18px;
+  font-family: var(--lp-serif);
+  font-size: clamp(1.9rem, 3.8vw, 3rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--lp-cream);
+}
+
+.landing-story-panel-body {
+  margin: 0;
+  max-width: 28em;
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: rgba(255, 252, 247, 0.58);
 }
 
 .landing-eyebrow {
@@ -321,157 +430,337 @@
   font-size: 0.72rem;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: #8a847a;
+  color: var(--lp-soft);
 }
 
 .landing-eyebrow--light {
   color: rgba(255, 252, 247, 0.42);
 }
 
-.landing-section-title {
-  margin: 0 0 20px;
-  font-family: "Songti SC", "STSong", "Noto Serif SC", Georgia, serif;
-  font-size: clamp(1.75rem, 3.6vw, 2.6rem);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.22;
-  color: #121212;
+/* ═══════════════════════════════════════════════════
+   Story SVG 阶段切换
+   ═══════════════════════════════════════════════════ */
+.landing-story-art {
+  display: block;
+  height: auto;
 }
 
-.landing-section-title--light {
-  color: #fffcf7;
+.lp-grid line {
+  stroke: rgba(255, 252, 247, 0.045);
+  stroke-width: 1;
+}
+
+.lp-edge {
+  fill: none;
+  stroke: rgba(255, 252, 247, 0.22);
+  stroke-width: 1.6;
+  transition: stroke 0.5s var(--lp-ease), opacity 0.5s ease;
+}
+
+.lp-edge--base,
+.lp-edge--top {
+  stroke: rgba(255, 252, 247, 0.35);
+}
+
+.lp-slash {
+  fill: none;
+  stroke: var(--lp-ember);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  transition:
+    stroke-dashoffset 0.7s var(--lp-ease),
+    opacity 0.4s ease;
+}
+
+.lp-node {
+  fill: var(--lp-ember);
+  opacity: 0;
+  transition: opacity 0.4s ease, transform 0.4s var(--lp-ease);
+}
+
+.lp-label {
+  fill: rgba(255, 252, 247, 0.55);
+  font-size: 14px;
+  font-family: var(--lp-serif);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+/* Stage 0: 构图 — 立方体显现 */
+.landing-story-art--stage-0 .lp-edge {
+  stroke: rgba(255, 252, 247, 0.72);
+}
+
+.landing-story-art--stage-0 .lp-node-a,
+.landing-story-art--stage-0 .lp-node-g,
+.landing-story-art--stage-0 .lp-label-a,
+.landing-story-art--stage-0 .lp-label-g {
+  opacity: 1;
+}
+
+/* Stage 1: 推理 — 体对角线 */
+.landing-story-art--stage-1 .lp-edge {
+  stroke: rgba(255, 252, 247, 0.35);
+}
+
+.landing-story-art--stage-1 .lp-slash--diag {
+  opacity: 1;
+  stroke-dashoffset: 0;
+}
+
+.landing-story-art--stage-1 .lp-node-a,
+.landing-story-art--stage-1 .lp-node-g,
+.landing-story-art--stage-1 .lp-label-a,
+.landing-story-art--stage-1 .lp-label-g {
+  opacity: 1;
+}
+
+/* Stage 2: 讲解 — 面辅助 + 对角线 */
+.landing-story-art--stage-2 .lp-edge {
+  stroke: rgba(255, 252, 247, 0.28);
+}
+
+.landing-story-art--stage-2 .lp-slash--diag,
+.landing-story-art--stage-2 .lp-slash--face {
+  opacity: 1;
+  stroke-dashoffset: 0;
+}
+
+.landing-story-art--stage-2 .lp-slash--face {
+  stroke: #7dd3c0;
+  stroke-width: 2.4;
+}
+
+.landing-story-art--stage-2 .lp-node,
+.landing-story-art--stage-2 .lp-label {
+  opacity: 1;
+}
+
+/* Stage 3: 检验 — 全亮收束 */
+.landing-story-art--stage-3 .lp-edge {
+  stroke: rgba(255, 252, 247, 0.55);
+}
+
+.landing-story-art--stage-3 .lp-slash--diag {
+  opacity: 1;
+  stroke-dashoffset: 0;
+  stroke-width: 3.4;
+}
+
+.landing-story-art--stage-3 .lp-node-a,
+.landing-story-art--stage-3 .lp-node-g,
+.landing-story-art--stage-3 .lp-label-a,
+.landing-story-art--stage-3 .lp-label-g {
+  opacity: 1;
+}
+
+/* Hero 默认用 stage-1 样式 */
+.landing-hero-visual .landing-story-art--stage-1 .lp-edge {
+  stroke: rgba(255, 252, 247, 0.55);
+}
+
+.landing-hero-visual .landing-story-art--stage-1 .lp-slash--diag {
+  opacity: 1;
+  stroke-dashoffset: 0;
+  animation: lp-slash-pulse 5s ease-in-out 0.8s infinite;
+}
+
+.landing-hero-visual .landing-story-art--stage-1 .lp-node-a,
+.landing-hero-visual .landing-story-art--stage-1 .lp-node-g,
+.landing-hero-visual .landing-story-art--stage-1 .lp-label-a,
+.landing-hero-visual .landing-story-art--stage-1 .lp-label-g {
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════
+   Moment — 同屏对应产品瞬间
+   ═══════════════════════════════════════════════════ */
+.landing-moment {
+  padding: clamp(72px, 14vh, 140px) clamp(24px, 5vw, 64px);
+  background:
+    radial-gradient(ellipse 60% 45% at 70% 20%, rgba(255, 106, 61, 0.1), transparent 55%),
+    var(--lp-dark);
+  color: var(--lp-cream);
+}
+
+.landing-moment-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.landing-moment-title {
+  margin: 0 0 20px;
+  font-family: var(--lp-serif);
+  font-size: clamp(2rem, 4.5vw, 3.4rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.landing-moment-lead {
+  margin: 0 0 48px;
+  max-width: 34em;
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: rgba(255, 252, 247, 0.58);
+}
+
+.landing-moment-frame {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  min-height: 360px;
+  border: 1px solid rgba(255, 252, 247, 0.12);
+  overflow: hidden;
+}
+
+.landing-moment-pane {
+  position: relative;
+  padding: 28px 24px;
+}
+
+.landing-moment-pane--steps {
+  background: #151515;
+  border-right: 1px solid rgba(255, 252, 247, 0.1);
+}
+
+.landing-moment-pane--viz {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255, 106, 61, 0.12), transparent 70%),
+    #0a0a0a;
+}
+
+.landing-moment-pane--viz .landing-story-art {
+  width: min(85%, 340px);
+}
+
+.landing-moment-chip {
+  display: inline-block;
+  margin-bottom: 20px;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 252, 247, 0.4);
+}
+
+.landing-moment-pane--steps ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.landing-moment-pane--steps li {
+  padding: 14px 12px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: rgba(255, 252, 247, 0.4);
+  border: 1px solid transparent;
+}
+
+.landing-moment-pane--steps li.is-done {
+  color: rgba(255, 252, 247, 0.55);
+}
+
+.landing-moment-pane--steps li.is-current {
+  color: #7dd3c0;
+  background: rgba(15, 107, 92, 0.18);
+  border-color: #0f6b5c;
+}
+
+/* ═══════════════════════════════════════════════════
+   Friction / End / Footer
+   ═══════════════════════════════════════════════════ */
+.landing-friction {
+  padding: clamp(72px, 14vh, 128px) clamp(24px, 5vw, 64px);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(194, 65, 12, 0.05), transparent 55%),
+    var(--lp-paper);
+  border-top: 1px solid var(--lp-line);
+}
+
+.landing-friction-inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.landing-section-title {
+  margin: 0 0 20px;
+  font-family: var(--lp-serif);
+  font-size: clamp(1.85rem, 3.8vw, 2.8rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .landing-section-lead {
-  margin: 0;
-  max-width: 34em;
+  margin: 0 0 40px;
+  max-width: 32em;
   font-size: 1.02rem;
   line-height: 1.8;
-  color: #5c574f;
+  color: var(--lp-muted);
 }
 
-.landing-section-lead--light {
-  color: rgba(255, 252, 247, 0.62);
-}
-
-/* 概述区：浅色底 + 细纹理感（径向光晕，非纯平） */
-.landing-overview {
-  background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(194, 65, 12, 0.06), transparent 55%),
-    #f3f1ec;
-  border-top: 1px solid rgba(18, 18, 18, 0.06);
-}
-
-/* 能力区：全宽暗色叙事 */
-.landing-capability {
-  background:
-    radial-gradient(ellipse 60% 40% at 70% 30%, rgba(255, 106, 61, 0.12), transparent 55%),
-    #121212;
-  color: #fffcf7;
-}
-
-.landing-capability-inner {
-  max-width: 800px;
-}
-
-.landing-cap-list {
+.landing-friction-list {
   list-style: none;
-  margin: 48px 0 0;
+  margin: 0;
   padding: 0;
-  display: grid;
-  gap: 0;
-  border-top: 1px solid rgba(255, 252, 247, 0.1);
+  border-top: 1px solid var(--lp-line);
 }
 
-.landing-cap-list li {
+.landing-friction-list li {
   display: grid;
   grid-template-columns: minmax(100px, 140px) 1fr;
   gap: 16px 28px;
   padding: 22px 0;
-  border-bottom: 1px solid rgba(255, 252, 247, 0.1);
+  border-bottom: 1px solid var(--lp-line);
   align-items: baseline;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--lp-muted);
 }
 
-.landing-cap-list strong {
-  font-family: "Songti SC", "STSong", "Noto Serif SC", Georgia, serif;
+.landing-friction-list strong {
+  font-family: var(--lp-serif);
   font-size: 1.05rem;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: #fffcf7;
+  color: var(--lp-ink);
 }
 
-.landing-cap-list span {
-  font-size: 0.95rem;
-  line-height: 1.65;
-  color: rgba(255, 252, 247, 0.55);
-}
-
-/* 学习流 */
-.landing-flow {
-  background: #ebe7df;
-}
-
-.landing-flow-list {
-  list-style: none;
-  margin: 48px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.landing-flow-item {
-  display: grid;
-  grid-template-columns: 64px 1fr;
-  gap: 20px;
-  padding: 28px 0;
-  border-top: 1px solid rgba(18, 18, 18, 0.08);
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.landing-flow-item:last-child {
-  border-bottom: 1px solid rgba(18, 18, 18, 0.08);
-}
-
-.lp-reveal--in .landing-flow-item {
-  animation: landing-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-delay: calc(var(--i, 0) * 0.08s);
-}
-
-.landing-flow-index {
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
-  color: #c2410c;
-  font-variant-numeric: tabular-nums;
-  padding-top: 4px;
-}
-
-.landing-flow-copy h3 {
-  margin: 0 0 8px;
-  font-family: "Songti SC", "STSong", "Noto Serif SC", Georgia, serif;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #121212;
-}
-
-.landing-flow-copy p {
-  margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.7;
-  color: #5c574f;
-  max-width: 36em;
-}
-
-/* 收尾 CTA */
 .landing-end {
+  padding: clamp(88px, 18vh, 160px) clamp(24px, 5vw, 64px);
+  text-align: center;
   background:
-    radial-gradient(ellipse 70% 60% at 50% 100%, rgba(194, 65, 12, 0.07), transparent 50%),
-    #f3f1ec;
-  text-align: left;
+    radial-gradient(ellipse 70% 60% at 50% 80%, rgba(194, 65, 12, 0.07), transparent 50%),
+    var(--lp-paper);
 }
 
-.landing-end-inner .landing-cta-row {
-  margin-top: 32px;
+.landing-end-inner {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.landing-end-title {
+  margin: 0 0 16px;
+  font-family: var(--lp-serif);
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.landing-end-lead {
+  margin: 0 0 36px;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: var(--lp-muted);
 }
 
 .landing-footer {
@@ -483,21 +772,21 @@
   padding: 28px 24px 40px;
   font-size: 0.72rem;
   letter-spacing: 0.18em;
-  color: #8a847a;
-  border-top: 1px solid rgba(18, 18, 18, 0.06);
+  color: var(--lp-soft);
+  border-top: 1px solid var(--lp-line);
 }
 
 .landing-footer-dot {
   opacity: 0.45;
 }
 
-/* ── 滚动显现 ─────────────────────────────────────── */
+/* ── Reveal ───────────────────────────────────────── */
 .lp-reveal {
   opacity: 0;
-  transform: translateY(28px);
+  transform: translateY(32px);
   transition:
-    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 0.8s var(--lp-ease),
+    transform 0.8s var(--lp-ease);
 }
 
 .lp-reveal--in {
@@ -506,6 +795,17 @@
 }
 
 /* ── Keyframes ────────────────────────────────────── */
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes lp-float {
   0%,
   100% {
@@ -513,48 +813,6 @@
   }
   50% {
     transform: translateY(-10px);
-  }
-}
-
-@keyframes lp-plane-back {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  50% {
-    transform: translate(-4px, 5px);
-  }
-}
-
-@keyframes lp-plane-front {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  50% {
-    transform: translate(5px, -4px);
-  }
-}
-
-@keyframes lp-draw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes lp-slash-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.55;
-  }
-}
-
-@keyframes lp-node-in {
-  to {
-    opacity: 1;
   }
 }
 
@@ -570,14 +828,13 @@
   }
 }
 
-@keyframes landing-rise {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  to {
+@keyframes lp-slash-pulse {
+  0%,
+  100% {
     opacity: 1;
-    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.55;
   }
 }
 
@@ -597,75 +854,114 @@
     opacity: 0.55;
   }
   50% {
-    transform: scaleY(1.15);
+    transform: scaleY(1.2);
     opacity: 1;
   }
 }
 
-/* ── Responsive ───────────────────────────────────── */
+/* ═══════════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════════ */
 @media (max-width: 900px) {
-  .landing-stage {
+  .landing-hero {
     grid-template-columns: 1fr;
   }
 
-  .landing-poster {
+  .landing-hero-visual {
     order: -1;
     min-height: 42vh;
     max-height: 48vh;
   }
 
-  .landing-poster-art {
+  .landing-hero-visual .landing-story-art {
     width: min(62%, 280px);
     animation: none;
   }
 
-  .lp-plane-back,
-  .lp-plane-front {
-    animation: none;
-  }
-
-  .landing-copy {
+  .landing-hero-copy {
     justify-self: stretch;
     max-width: none;
     padding: 28px 20px 64px;
   }
 
   .landing-headline {
-    font-size: 1.9rem;
+    font-size: 1.95rem;
   }
 
   .landing-scroll-hint {
     bottom: 16px;
   }
 
-  .landing-cap-list li {
+  /* 移动端：取消 sticky，竖排「画面 + 文案」逐步展开 */
+  .landing-story {
     grid-template-columns: 1fr;
-    gap: 6px;
   }
 
-  .landing-flow-item {
-    grid-template-columns: 48px 1fr;
-    gap: 12px;
+  .landing-story-sticky {
+    display: none;
+  }
+
+  .landing-story-panel {
+    min-height: auto;
+    padding: 48px 24px 56px;
+    border-left: none;
+    border-top: 1px solid rgba(255, 252, 247, 0.08);
+    opacity: 1;
+    transform: none;
+  }
+
+  .landing-story-panel-art {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 220px;
+    margin-bottom: 28px;
+    background:
+      radial-gradient(ellipse 60% 60% at 50% 50%, rgba(255, 106, 61, 0.15), transparent 70%),
+      #0a0a0a;
+    border: 1px solid rgba(255, 252, 247, 0.08);
+  }
+
+  .landing-story-panel-art .landing-story-art {
+    width: min(70%, 260px);
+  }
+
+  .landing-moment-frame {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-moment-pane--steps {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 252, 247, 0.1);
+  }
+
+  .landing-friction-list li {
+    grid-template-columns: 1fr;
+    gap: 6px;
   }
 }
 
 @media (max-width: 480px) {
-  .landing-section {
+  .landing-manifesto {
+    min-height: 70vh;
+    padding: 56px 20px;
+  }
+
+  .landing-moment,
+  .landing-friction,
+  .landing-end {
     padding: 56px 20px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-copy,
-  .landing-poster-art,
-  .landing-poster-glow,
-  .lp-plane-back,
-  .lp-plane-front,
-  .lp-slash,
-  .lp-node,
+  .landing-hero-copy,
+  .landing-hero-glow,
+  .landing-hero-visual .landing-story-art,
   .landing-scroll-hint,
   .landing-scroll-hint__line,
-  .lp-reveal--in .landing-flow-item {
+  .lp-slash {
     animation: none;
   }
 
@@ -675,16 +971,27 @@
     transition: none;
   }
 
-  .landing-submit,
-  .landing-ghost {
+  .landing-story-panel {
+    opacity: 1;
+    transform: none;
     transition: none;
   }
 
-  .lp-slash {
-    stroke-dashoffset: 0;
+  .landing-submit,
+  .landing-ghost,
+  .lp-edge,
+  .lp-slash,
+  .lp-node,
+  .lp-label {
+    transition: none;
   }
 
-  .lp-node {
+  .landing-hero-visual .landing-story-art--stage-1 .lp-slash--diag,
+  .landing-story-art--stage-1 .lp-slash--diag,
+  .landing-story-art--stage-2 .lp-slash--diag,
+  .landing-story-art--stage-2 .lp-slash--face,
+  .landing-story-art--stage-3 .lp-slash--diag {
+    stroke-dashoffset: 0;
     opacity: 1;
   }
 }
