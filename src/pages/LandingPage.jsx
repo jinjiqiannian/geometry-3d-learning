@@ -118,12 +118,16 @@ function StoryArt({ className = "", hero = false }) {
   );
 }
 
+function storyExact(progress, count) {
+  return Math.min(count - 0.001, progress * count);
+}
+
 function stageOpacity(index, progress, count) {
-  const exact = progress * count;
-  const current = Math.min(count - 1, Math.floor(exact));
+  const exact = storyExact(progress, count);
+  const current = Math.floor(exact);
   const local = exact - current;
-  if (index === current) return 1 - local * 0.25;
-  if (index === current + 1 && current < count - 1) return local * 0.9;
+  if (index === current) return 1 - local * 0.2;
+  if (index === current + 1 && current < count - 1) return local * 0.85;
   return 0;
 }
 
