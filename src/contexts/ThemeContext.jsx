@@ -1,6 +1,5 @@
 // ═══════════════════════════════════════════════════════
-//  ThemeContext — MVP 教材风格：固定浅色
-//  （深色模式入口已从产品导航移除）
+//  ThemeContext — 浅色默认，支持深色切换
 // ═══════════════════════════════════════════════════════
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 
@@ -18,30 +17,35 @@ function applyTheme(theme) {
   }
 }
 
+function readStoredTheme() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored === 'dark' || stored === 'light') return stored
+  } catch { /* */ }
+  return 'light'
+}
+
 export function ThemeProvider({ children }) {
-  // MVP：教材风固定浅色；清理历史 dark 偏好，避免黑底看不清
-  const [theme, setThemeState] = useState('light')
+  const [theme, setThemeState] = useState(() => readStoredTheme())
 
   useEffect(() => {
-    applyTheme('light')
+    applyTheme(theme)
     try {
-      localStorage.setItem(STORAGE_KEY, 'light')
+      localStorage.setItem(STORAGE_KEY, theme)
     } catch { /* */ }
-  }, [])
+  }, [theme])
 
   const setTheme = useCallback((t) => {
-    // 产品暂不开放深色；保留 API 以免其它调用报错
-    if (t === 'dark') return
-    setThemeState('light')
-    applyTheme('light')
+    if (t !== 'dark' && t !== 'light') return
+    setThemeState(t)
   }, [])
 
   const toggleTheme = useCallback(() => {
-    // no-op：深色已下线
+    setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'))
   }, [])
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme, isDark: false }}>
+    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme, isDark: theme === 'dark' }}>
       {children}
     </ThemeContext.Provider>
   )

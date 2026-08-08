@@ -1,8 +1,8 @@
 /**
- * BrandLogo — 理解引擎
+ * BrandLogo — 几何维度
  * 抽象「层叠视窗」：两片错位平面 + 一条洞察斜线，不直写汉字、不绑科目。
  */
-export default function BrandLogo({ size = 22, className = '', title = '理解引擎' }) {
+export default function BrandLogo({ size = 22, className = '', title = '几何维度' }) {
   return (
     <svg
       className={className}

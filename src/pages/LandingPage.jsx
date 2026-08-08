@@ -55,8 +55,8 @@ export default function LandingPage() {
           <div className="landing-brand-row">
             <BrandLogo className="landing-logo-svg" size={42} />
             <div className="landing-brand-text">
-              <p className="landing-brand">理解引擎</p>
-              <p className="landing-brand-en">Understanding Engine</p>
+              <p className="landing-brand">几何维度</p>
+              <p className="landing-brand-en">MathViz · 理解引擎</p>
             </div>
           </div>
 

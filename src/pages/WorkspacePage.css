@@ -21,7 +21,51 @@
   min-height: 0;
 }
 
-/* 一级：数学 | 物理 */
+/* 解题态：专题标签（非入口） */
+.wp-topic-chip-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  padding: 0.55rem 1rem;
+  border-bottom: 1px solid #e4dfd5;
+  background: #fffcf7;
+}
+
+.wp-topic-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #0f6b5c;
+  background: rgba(15, 107, 92, 0.08);
+  border: 1px solid rgba(15, 107, 92, 0.18);
+  border-radius: 999px;
+  padding: 0.28rem 0.75rem;
+}
+
+.wp-topic-chip-back {
+  appearance: none;
+  border: 1px solid #e4dfd5;
+  background: #fffcf7;
+  color: #5c574e;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.35rem 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.wp-topic-chip-back:hover {
+  color: #121212;
+  border-color: #cfc8bc;
+  background: #fff;
+}
+
+/* 一级：数学 | 物理（保留样式供旧布局，当前默认不渲染） */
 .wp-domain-bar {
   display: flex;
   gap: 0;

@@ -98,7 +98,31 @@
 .app-nav-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+}
+
+.app-nav-link--quiet {
+  color: var(--text-muted);
+}
+
+.app-nav-theme-btn {
+  appearance: none;
+  border: 1px solid var(--border-subtle, #e6e1d8);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 550;
+  font-family: inherit;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.app-nav-theme-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .app-nav-plan-badge {
@@ -355,6 +379,15 @@
 
   .app-nav-links {
     display: none;
+  }
+
+  .app-nav-right .app-nav-link--quiet:first-of-type {
+    display: none;
+  }
+
+  .app-nav-theme-btn {
+    padding: 3px 8px;
+    font-size: 10px;
   }
 
   .app-nav-left {

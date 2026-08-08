@@ -3,6 +3,7 @@ import {
   detectSubject,
   resolveSubjectNav,
   HUB_SAMPLES,
+  getSubjectLabel,
 } from '../subjectRouter.js'
 
 describe('subjectRouter', () => {
@@ -40,5 +41,11 @@ describe('subjectRouter', () => {
     const subjects = new Set(HUB_SAMPLES.map((s) => s.subject))
     expect(subjects.has('geometry')).toBe(true)
     expect(subjects.has('combo')).toBe(true)
+  })
+
+  it('getSubjectLabel returns display names', () => {
+    expect(getSubjectLabel('geometry')).toBe('立体几何')
+    expect(getSubjectLabel('combo')).toBe('排列组合 / 概率')
+    expect(getSubjectLabel('phys_motion')).toBe('物理')
   })
 })

@@ -42,7 +42,7 @@ export default function PricingPage() {
       <div className="app-container">
       {/* Hero */}
       <section className="pp-hero">
-        <Link to="/math" className="pp-back-link">← 返回</Link>
+        <Link to="/workspace" className="pp-back-link">← 返回工作台</Link>
         <div className="pp-hero-badge">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -51,8 +51,8 @@ export default function PricingPage() {
         </div>
         <h1 className="pp-hero-title">免费学习 · 支持开发者</h1>
         <p className="pp-hero-subtitle">
-          理解引擎帮助学生真正理解抽象知识。<br />
-          当前开放立体几何；后续将扩展更多科目。
+          几何维度帮助学生真正理解抽象知识。<br />
+          已开放立体几何、排列组合/概率、导数、圆锥曲线与部分物理；后续继续接入更多科目。
           核心功能<strong>永久免费</strong>，Pro会员是对产品持续开发的支持。
         </p>
 

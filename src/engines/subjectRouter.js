@@ -197,3 +197,16 @@ export const HUB_SAMPLES = Object.freeze([
 export function isPhysicsSubject(subject) {
   return typeof subject === 'string' && subject.startsWith('phys_')
 }
+
+/** 专题展示名（结果标签，不当作入口） */
+export const SUBJECT_LABELS = Object.freeze({
+  geometry: '立体几何',
+  combo: '排列组合 / 概率',
+  derivative: '导数',
+  conic: '圆锥曲线',
+})
+
+export function getSubjectLabel(subject) {
+  if (isPhysicsSubject(subject)) return '物理'
+  return SUBJECT_LABELS[subject] || '专题'
+}
