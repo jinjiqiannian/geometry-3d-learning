@@ -513,6 +513,97 @@
   color: var(--lp-accent);
 }
 
+.logic-more-menu {
+  position: relative;
+}
+
+.logic-more-menu > summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #5c574e;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid #e4dfd5;
+  border-radius: 8px;
+  background: #fffcf7;
+  user-select: none;
+}
+
+.logic-more-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.logic-more-menu[open] > summary {
+  color: #121212;
+  border-color: #cfc8bc;
+}
+
+.logic-more-panel {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  min-width: 160px;
+  padding: 0.35rem;
+  background: #fffcf7;
+  border: 1px solid #e4dfd5;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(18, 18, 18, 0.08);
+  z-index: 5;
+}
+
+.logic-more-action {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #121212;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.logic-more-action:hover:not(:disabled) {
+  background: rgba(15, 107, 92, 0.08);
+  color: #0f6b5c;
+}
+
+.logic-more-action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.logic-tree-details {
+  margin-top: 1rem;
+  border-top: 1px solid #ebe6dc;
+  padding-top: 0.75rem;
+}
+
+.logic-tree-summary {
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.logic-tree-summary::-webkit-details-marker {
+  display: none;
+}
+
+.logic-tree-summary::after {
+  content: '展开';
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #8a847a;
+}
+
+.logic-tree-details[open] .logic-tree-summary::after {
+  content: '收起';
+}
+
 .logic-solving-bar {
   display: none;
 }

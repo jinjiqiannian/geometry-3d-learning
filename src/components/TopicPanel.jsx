@@ -991,15 +991,20 @@ export default function TopicPanel({ topic, boot, onBackToHub }) {
             >
               下一步
             </button>
-            <button
-              type="button"
-              className="logic-play-btn"
-              onClick={handleExportPPT}
-              disabled={pptLoading}
-            >
-              {pptLoading ? '导出中…' : isPro ? '导出 PPT' : '导出 PPT · Pro'}
-            </button>
             <span className="logic-answer">答案 {ir.answer}</span>
+            <details className="logic-more-menu">
+              <summary>更多</summary>
+              <div className="logic-more-panel">
+                <button
+                  type="button"
+                  className="logic-more-action"
+                  onClick={handleExportPPT}
+                  disabled={pptLoading}
+                >
+                  {pptLoading ? '导出中…' : isPro ? '导出 PPT' : '导出 PPT（Pro）'}
+                </button>
+              </div>
+            </details>
           </div>
         </section>
 
@@ -1023,16 +1028,18 @@ export default function TopicPanel({ topic, boot, onBackToHub }) {
             )}
           </div>
 
-          <h3 className="logic-section-title">思路树</h3>
-          <ul className="logic-tree-root">
-            <TreeNode
-              node={root}
-              byId={byId}
-              highlighted={highlighted}
-              revealed={revealed}
-              depth={0}
-            />
-          </ul>
+          <details className="logic-tree-details">
+            <summary className="logic-section-title logic-tree-summary">思路树</summary>
+            <ul className="logic-tree-root">
+              <TreeNode
+                node={root}
+                byId={byId}
+                highlighted={highlighted}
+                revealed={revealed}
+                depth={0}
+              />
+            </ul>
+          </details>
         </section>
       </div>
         </>

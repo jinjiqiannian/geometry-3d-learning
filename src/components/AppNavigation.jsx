@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import BrandLogo from './BrandLogo'
+import { useTheme } from '../contexts/ThemeContext'
 import './AppNavigation.css'
 
 const NAV_ITEMS = [
@@ -9,6 +10,7 @@ const NAV_ITEMS = [
 
 export default function AppNavigation() {
   const location = useLocation()
+  const { theme, toggleTheme, isDark } = useTheme()
 
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/'
@@ -20,7 +22,7 @@ export default function AppNavigation() {
       <div className="app-nav-left">
         <Link to="/" className="app-nav-logo">
           <BrandLogo className="app-nav-logo-icon" size={22} />
-          <span className="app-nav-brand">理解引擎</span>
+          <span className="app-nav-brand">几何维度</span>
         </Link>
 
         <div className="app-nav-links">
@@ -38,6 +40,30 @@ export default function AppNavigation() {
             )
           })}
         </div>
+      </div>
+
+      <div className="app-nav-right">
+        <Link
+          to="/pricing"
+          className={`app-nav-link app-nav-link--quiet${isActive('/pricing') ? ' active' : ''}`}
+        >
+          定价
+        </Link>
+        <Link
+          to="/settings"
+          className={`app-nav-link app-nav-link--quiet${isActive('/settings') ? ' active' : ''}`}
+        >
+          设置
+        </Link>
+        <button
+          type="button"
+          className="app-nav-theme-btn"
+          onClick={toggleTheme}
+          aria-label={isDark ? '切换到浅色模式' : '切换到深色模式'}
+          title={isDark ? '浅色' : '深色'}
+        >
+          {theme === 'dark' ? '浅色' : '深色'}
+        </button>
       </div>
     </nav>
   )

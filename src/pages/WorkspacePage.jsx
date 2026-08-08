@@ -11,10 +11,6 @@ import ExplanationPanel from "../components/ExplanationPanel";
 import LogicPanel from "../components/LogicPanel";
 import TopicPanel from "../components/TopicPanel";
 import TeacherModePanel from "../components/TeacherModePanel";
-import {
-  PHYSICS_GROUPS,
-  PHYSICS_SECTIONS,
-} from "../engines/topics/physics.js";
 import { getLineDefinitions } from "../engines/lineDefinitions";
 import { isPolyhedral } from "../engines/geometryEngine";
 import { applyConstraints } from "../engines/geometryValidator";
@@ -52,6 +48,7 @@ import {
   detectSubject,
   resolveSubjectNav,
   HUB_SAMPLES,
+  getSubjectLabel,
 } from "../engines/subjectRouter.js";
 import "./WorkspacePage.css";
 import "../components/LogicPanel.css";
@@ -885,7 +882,8 @@ export default function WorkspacePage() {
       applySubjectNav(subjectId);
       setPanelBoot(boot);
       setHubActive(false);
-      setShowTopicNav(true);
+      // 专题只作结果标签，不展开多级入口条
+      setShowTopicNav(false);
     },
     [applySubjectNav],
   );
@@ -898,9 +896,11 @@ export default function WorkspacePage() {
       detected.confidence === "low" ? detected.hint || "" : "",
     );
     if (detected.subject === "geometry") {
+      // 先写入题目，避免 isComposeIdle 把几何态弹回 Hub
+      setProblemText(trimmed);
       applySubjectNav("geometry");
       setHubActive(false);
-      setShowTopicNav(true);
+      setShowTopicNav(false);
       setPanelBoot(null);
       handleParseProblem(trimmed, { useLocalOnly: false });
       return;
@@ -1158,9 +1158,12 @@ export default function WorkspacePage() {
     (sample) => {
       setRouteHint("");
       if (sample.subject === "geometry") {
+        // 先落题再离 Hub，防止空题竞态弹回统一入口
+        setProblemText(sample.text);
+        setSearchInput(sample.text);
         applySubjectNav("geometry");
         setHubActive(false);
-        setShowTopicNav(true);
+        setShowTopicNav(false);
         setPanelBoot(null);
         handleParseProblem(sample.text, { useLocalOnly: true });
         return;
@@ -1172,26 +1175,6 @@ export default function WorkspacePage() {
       });
     },
     [applySubjectNav, leaveHubWithBoot, handleParseProblem],
-  );
-
-  const handleTopicTabClick = useCallback(
-    (nextSubject) => {
-      applySubjectNav(nextSubject);
-      setPanelBoot(null);
-      if (hubActive) {
-        if (nextSubject === "geometry") {
-          setShowTopicNav(false);
-          return;
-        }
-        setHubActive(false);
-        setShowTopicNav(true);
-        return;
-      }
-      if (nextSubject === "geometry") {
-        handleBackToCompose();
-      }
-    },
-    [applySubjectNav, hubActive, handleBackToCompose],
   );
 
   // ── 自动回放：按合并后步骤组推进（一步一组，避免同卡步数空转） ──
@@ -1272,14 +1255,14 @@ export default function WorkspacePage() {
         backgroundColor: isDark ? "#161616" : "#f8f9fb",
       });
       const link = document.createElement("a");
-      link.download = `理解引擎-${new Date().toISOString().slice(0, 10)}.png`;
+      link.download = `几何维度-${new Date().toISOString().slice(0, 10)}.png`;
       link.href = dataUrl;
       link.click();
     } catch {
       const canvas = canvasRef.current?.querySelector("canvas");
       if (canvas) {
         const link = document.createElement("a");
-        link.download = `理解引擎-${new Date().toISOString().slice(0, 10)}.png`;
+        link.download = `几何维度-${new Date().toISOString().slice(0, 10)}.png`;
         link.href = canvas.toDataURL("image/png");
         link.click();
       }
@@ -1307,9 +1290,10 @@ export default function WorkspacePage() {
   }, [problemText, geometry, steps, parsedData]);
 
   const isComposeIdle = !problemText && !loading;
-  const showNavBars = !hubActive || showTopicNav;
+  // 解题中只显示专题标签，不展示多级入口条
+  const showTopicChip = !hubActive;
 
-  // 几何无题时回到 Hub，避免空画布
+  // 几何无题时回到 Hub，避免空画布（loading/有题时不弹回）
   useEffect(() => {
     if (!hubActive && subject === "geometry" && isComposeIdle) {
       setHubActive(true);
@@ -1322,137 +1306,17 @@ export default function WorkspacePage() {
     <div
       className={`workspace-page${hubActive ? " workspace-page--hub" : ""}${!hubActive && subject === "geometry" ? " workspace-page--geometry" : ""}${!hubActive && subject === "geometry" && !isComposeIdle ? " workspace-page--solving" : ""}`}
     >
-      {showNavBars && (
-        <>
-          <div className="wp-domain-bar" role="tablist" aria-label="学科">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={domain === "math"}
-              className={`wp-domain-tab${domain === "math" ? " is-active" : ""}`}
-              onClick={() => {
-                setDomain("math");
-                setPanelBoot(null);
-                if (hubActive && mathTopic !== "geometry") {
-                  setHubActive(false);
-                  setShowTopicNav(true);
-                }
-              }}
-            >
-              数学
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={domain === "physics"}
-              className={`wp-domain-tab${domain === "physics" ? " is-active" : ""}`}
-              onClick={() => {
-                setDomain("physics");
-                setPanelBoot(null);
-                if (hubActive) {
-                  setHubActive(false);
-                  setShowTopicNav(true);
-                }
-              }}
-            >
-              物理
-            </button>
-          </div>
-
-          {domain === "math" && (
-            <div className="wp-subject-bar" role="tablist" aria-label="数学专题">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={mathTopic === "combo"}
-                className={`wp-subject-tab${mathTopic === "combo" ? " is-active" : ""}`}
-                onClick={() => handleTopicTabClick("combo")}
-              >
-                排列组合 / 概率
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={mathTopic === "geometry"}
-                className={`wp-subject-tab${mathTopic === "geometry" ? " is-active" : ""}`}
-                onClick={() => handleTopicTabClick("geometry")}
-              >
-                立体几何
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={mathTopic === "derivative"}
-                className={`wp-subject-tab${mathTopic === "derivative" ? " is-active" : ""}`}
-                onClick={() => handleTopicTabClick("derivative")}
-              >
-                导数
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={mathTopic === "conic"}
-                className={`wp-subject-tab${mathTopic === "conic" ? " is-active" : ""}`}
-                onClick={() => handleTopicTabClick("conic")}
-              >
-                圆锥曲线
-              </button>
-            </div>
-          )}
-          {domain === "physics" && (
-            <>
-              <div className="wp-subject-bar" role="tablist" aria-label="物理大组">
-                {PHYSICS_GROUPS.map((g) => (
-                  <button
-                    key={g.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={physicsGroup === g.id}
-                    className={`wp-subject-tab${physicsGroup === g.id ? " is-active" : ""}`}
-                    onClick={() => {
-                      setPhysicsGroup(g.id);
-                      setPhysicsTopic(g.topics[0]);
-                      setPanelBoot(null);
-                      if (hubActive) {
-                        setHubActive(false);
-                        setShowTopicNav(true);
-                      }
-                    }}
-                  >
-                    {g.label}
-                  </button>
-                ))}
-              </div>
-              <div
-                className="wp-subject-bar wp-subject-bar--sub"
-                role="tablist"
-                aria-label="物理专题"
-              >
-                {(
-                  PHYSICS_GROUPS.find((g) => g.id === physicsGroup)?.topics || []
-                ).map((tid) => (
-                  <button
-                    key={tid}
-                    type="button"
-                    role="tab"
-                    aria-selected={physicsTopic === tid}
-                    className={`wp-subject-tab${physicsTopic === tid ? " is-active" : ""}`}
-                    onClick={() => {
-                      setPhysicsTopic(tid);
-                      setPanelBoot(null);
-                      if (hubActive) {
-                        setHubActive(false);
-                        setShowTopicNav(true);
-                      }
-                    }}
-                  >
-                    {PHYSICS_SECTIONS[tid]?.navLabel || tid}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </>
+      {showTopicChip && (
+        <div className="wp-topic-chip-bar" aria-label="当前专题">
+          <span className="wp-topic-chip">{getSubjectLabel(subject)}</span>
+          <button
+            type="button"
+            className="wp-topic-chip-back"
+            onClick={handleBackToCompose}
+          >
+            换题
+          </button>
+        </div>
       )}
 
       {hubActive ? (
@@ -1746,11 +1610,10 @@ export default function WorkspacePage() {
               />
             </Canvas>
           ) : (
-            <div className="wp-webgl-fallback">
-              <span className="wp-webgl-fallback-icon">⚠️</span>
-              <p>您的浏览器不支持 WebGL，无法显示 3D 场景</p>
+            <div className="wp-webgl-fallback" role="status">
+              <p>当前浏览器无法显示 3D 场景</p>
               <p className="wp-webgl-fallback-hint">
-                请使用最新版 Chrome、Edge 或 Firefox
+                立体几何需要 WebGL。请改用最新版 Chrome、Edge 或 Firefox；步骤讲解仍可正常阅读。
               </p>
             </div>
           )}
@@ -1814,39 +1677,15 @@ export default function WorkspacePage() {
         </div>
       )}
 
-      {/* ── 首次使用引导 ── */}
-      {showGuide && (
-        <div className="wp-guide-overlay" onClick={dismissGuide}>
-          <div className="wp-guide-card" onClick={(e) => e.stopPropagation()}>
-            <h2 className="wp-guide-title">欢迎来到理解引擎</h2>
-            <p className="wp-guide-subtitle">三步开始学习：</p>
-            <div className="wp-guide-steps">
-              <div className="wp-guide-step">
-                <span className="wp-guide-step-num">1</span>
-                <div>
-                  <strong>输入题目</strong>
-                  <p>粘贴任意题目或点热门样例，自动识别专题并开讲</p>
-                </div>
-              </div>
-              <div className="wp-guide-step">
-                <span className="wp-guide-step-num">2</span>
-                <div>
-                  <strong>查看步骤</strong>
-                  <p>AI 将分步讲解，每步都有公式和计算过程</p>
-                </div>
-              </div>
-              <div className="wp-guide-step">
-                <span className="wp-guide-step-num">3</span>
-                <div>
-                  <strong>探索 3D</strong>
-                  <p>右侧的 3D 模型可以旋转缩放，直观理解空间关系</p>
-                </div>
-              </div>
-            </div>
-            <button className="wp-guide-btn" onClick={dismissGuide}>
-              我知道了
-            </button>
-          </div>
+      {/* ── 首次使用轻提示（不挡样例点击） ── */}
+      {showGuide && hubActive && (
+        <div className="wp-guide-banner" role="status">
+          <p className="wp-guide-banner-text">
+            粘贴题目或点热门样例即可开讲，专题会自动识别。
+          </p>
+          <button type="button" className="wp-guide-banner-btn" onClick={dismissGuide}>
+            知道了
+          </button>
         </div>
       )}
     </div>

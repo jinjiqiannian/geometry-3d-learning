@@ -57,7 +57,7 @@ export async function generatePPT(workspace, canvasElement) {
     x: 1.2, y: 3.0, w: '80%', h: 1.5,
     fontSize: 20, color: PPT_THEME.secondary, fontFace: 'Microsoft YaHei',
   })
-  slide1.addText('由 理解引擎 AI 生成', {
+  slide1.addText('由 几何维度 AI 生成', {
     x: 0.8, y: 6.0, w: '40%', h: 0.5,
     fontSize: 11, color: PPT_THEME.accent, fontFace: 'Microsoft YaHei',
   })
@@ -147,14 +147,14 @@ export async function generatePPT(workspace, canvasElement) {
     })
   }
 
-  slide5.addText('由 理解引擎 AI 生成 · jihewedu.cn', {
+  slide5.addText('由 几何维度 AI 生成 · jihewedu.cn', {
     x: 0, y: 6.5, w: '100%', h: 0.5,
     fontSize: 10, color: PPT_THEME.accent, fontFace: 'Microsoft YaHei',
     align: 'center',
   })
 
   // ── 下载 ────────────────────────────────────────
-  const fileName = `理解引擎-${(problemText || '讲解').slice(0, 30)}.pptx`
+  const fileName = `几何维度-${(problemText || '讲解').slice(0, 30)}.pptx`
   await pptx.writeFile({ fileName })
 }
 
@@ -201,7 +201,7 @@ export async function generateExplainPPT(payload = {}) {
       fontSize: 16, color: theme.secondary, fontFace: 'Microsoft YaHei',
     })
   }
-  cover.addText('MathViz · 理解引擎', {
+  cover.addText('几何维度 · MathViz', {
     x: 0.8, y: 6.5, w: 11.5, h: 0.4,
     fontSize: 12, color: theme.muted, fontFace: 'Microsoft YaHei',
   })

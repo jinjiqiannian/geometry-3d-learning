@@ -26,7 +26,7 @@ export default function SettingsPage() {
       <div className="app-container">
       {/* ── Header ── */}
       <div className="settings-header">
-        <Link to="/math" className="settings-back">← 返回</Link>
+        <Link to="/workspace" className="settings-back">← 返回工作台</Link>
         <h1 className="settings-title">设置</h1>
       </div>
 
