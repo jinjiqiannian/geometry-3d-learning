@@ -30,20 +30,48 @@ const STORY = [
   },
 ];
 
-/** 品牌几何：progress 0→1 连续驱动描线，无时间轴跳动 */
-function StoryArt({ progress = 0, hero = false }) {
-  // 分段：0-0.28 构图 · 0.28-0.55 对角线 · 0.55-0.78 辅助线 · 0.78-1 收束
-  const edgeOp = hero ? 0.7 : Math.min(1, progress / 0.22) * 0.72;
-  const diagDraw = hero ? 1 : clamp01((progress - 0.28) / 0.22);
-  const faceDraw = hero ? 0 : clamp01((progress - 0.55) / 0.2);
-  const nodeOp = hero ? 1 : clamp01((progress - 0.2) / 0.15);
-  const settle = hero ? 0.55 : 0.28 + clamp01((progress - 0.78) / 0.22) * 0.35;
+function clamp01(n) {
+  return Math.min(1, Math.max(0, n));
+}
 
+/** 根据 progress 写入 SVG 描线（直接操作 DOM，避免每帧 React 重绘） */
+function paintStoryArt(svg, progress, hero = false) {
+  if (!svg) return;
+  const edgeOp = hero ? 0.72 : 0.28 + Math.min(1, progress / 0.2) * 0.5;
+  const diagDraw = hero ? 1 : clamp01((progress - 0.22) / 0.24);
+  const faceDraw = hero ? 0 : clamp01((progress - 0.5) / 0.22);
+  const nodeOp = hero ? 1 : 0.35 + clamp01((progress - 0.08) / 0.2) * 0.65;
+
+  svg.querySelectorAll(".lp-edge").forEach((el) => {
+    el.style.strokeOpacity = String(edgeOp);
+  });
+  const diag = svg.querySelector(".lp-slash--diag");
+  if (diag) {
+    diag.style.strokeDashoffset = String(1 - diagDraw);
+    diag.style.opacity = String(diagDraw > 0.01 ? 0.35 + diagDraw * 0.65 : 0);
+  }
+  const face = svg.querySelector(".lp-slash--face");
+  if (face) {
+    face.style.strokeDashoffset = String(1 - faceDraw);
+    face.style.opacity = String(faceDraw > 0.01 ? 0.35 + faceDraw * 0.65 : 0);
+  }
+  svg.querySelectorAll(".lp-node-a, .lp-label-a").forEach((el) => {
+    el.style.opacity = String(nodeOp);
+  });
+  svg.querySelectorAll(".lp-node-g, .lp-label-g").forEach((el) => {
+    el.style.opacity = String(nodeOp * (0.35 + diagDraw * 0.65));
+  });
+  const mid = svg.querySelector(".lp-node-mid");
+  if (mid) mid.style.opacity = String(faceDraw);
+}
+
+function StoryArt({ className = "", hero = false }) {
   return (
     <svg
-      className={`landing-story-art${hero ? " landing-story-art--hero" : ""}`}
+      className={`landing-story-art${hero ? " landing-story-art--hero" : ""} ${className}`.trim()}
       viewBox="0 0 480 520"
       aria-hidden="true"
+      data-hero={hero ? "1" : undefined}
     >
       <g className="lp-grid">
         {Array.from({ length: 9 }, (_, i) => {
@@ -56,103 +84,47 @@ function StoryArt({ progress = 0, hero = false }) {
         })}
       </g>
 
-      <g className="lp-cube" style={{ opacity: Math.max(0.15, edgeOp) }}>
-        <path
-          className="lp-edge"
-          d="M140 320 L260 280 L380 320 L260 360 Z"
-          style={{ strokeOpacity: settle }}
-        />
-        <path
-          className="lp-edge"
-          d="M140 200 L260 160 L380 200 L260 240 Z"
-          style={{ strokeOpacity: settle }}
-        />
-        <line className="lp-edge" x1="140" y1="200" x2="140" y2="320" style={{ strokeOpacity: settle }} />
-        <line className="lp-edge" x1="260" y1="160" x2="260" y2="280" style={{ strokeOpacity: settle }} />
-        <line className="lp-edge" x1="380" y1="200" x2="380" y2="320" style={{ strokeOpacity: settle }} />
-        <line className="lp-edge" x1="260" y1="240" x2="260" y2="360" style={{ strokeOpacity: settle }} />
+      <g className="lp-cube">
+        <path className="lp-edge" d="M140 320 L260 280 L380 320 L260 360 Z" />
+        <path className="lp-edge" d="M140 200 L260 160 L380 200 L260 240 Z" />
+        <line className="lp-edge" x1="140" y1="200" x2="140" y2="320" />
+        <line className="lp-edge" x1="260" y1="160" x2="260" y2="280" />
+        <line className="lp-edge" x1="380" y1="200" x2="380" y2="320" />
+        <line className="lp-edge" x1="260" y1="240" x2="260" y2="360" />
       </g>
 
       <path
         className="lp-slash lp-slash--diag"
         d="M140 320 L380 200"
         pathLength="1"
-        style={{
-          strokeDashoffset: 1 - diagDraw,
-          opacity: diagDraw > 0.02 ? 0.3 + diagDraw * 0.7 : 0,
-        }}
       />
-
       <path
         className="lp-slash lp-slash--face"
         d="M140 320 L260 280"
         pathLength="1"
-        style={{
-          strokeDashoffset: 1 - faceDraw,
-          opacity: faceDraw > 0.02 ? 0.3 + faceDraw * 0.7 : 0,
-        }}
       />
 
-      <circle className="lp-node" cx="140" cy="320" r="4" style={{ opacity: nodeOp }} />
-      <circle className="lp-node" cx="380" cy="200" r="4" style={{ opacity: nodeOp * (0.4 + diagDraw * 0.6) }} />
-      <circle className="lp-node lp-node--mid" cx="260" cy="280" r="3.2" style={{ opacity: faceDraw }} />
+      <circle className="lp-node lp-node-a" cx="140" cy="320" r="4" />
+      <circle className="lp-node lp-node-g" cx="380" cy="200" r="4" />
+      <circle className="lp-node lp-node-mid" cx="260" cy="280" r="3.2" />
 
-      <text className="lp-label" x="118" y="336" style={{ opacity: nodeOp * 0.85 }}>
+      <text className="lp-label lp-label-a" x="118" y="336">
         A
       </text>
-      <text className="lp-label" x="388" y="192" style={{ opacity: nodeOp * (0.3 + diagDraw * 0.7) }}>
+      <text className="lp-label lp-label-g" x="388" y="192">
         G
       </text>
     </svg>
   );
 }
 
-function clamp01(n) {
-  return Math.min(1, Math.max(0, n));
-}
-
-/** 整段 sticky 区：滚动进度 0→1，驱动画面与文案 */
-function useScrollProgress(ref, enabled = true) {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    if (!enabled) return undefined;
-    const el = ref.current;
-    if (!el) return undefined;
-
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setProgress(1);
-      return undefined;
-    }
-
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const rect = el.getBoundingClientRect();
-      const total = el.offsetHeight - window.innerHeight;
-      if (total <= 0) {
-        setProgress(rect.top < 0 ? 1 : 0);
-        return;
-      }
-      const scrolled = clamp01(-rect.top / total);
-      setProgress(scrolled);
-    };
-
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(update);
-    };
-
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, [ref, enabled]);
-
-  return progress;
+function stageOpacity(index, progress, count) {
+  const exact = progress * count;
+  const current = Math.min(count - 1, Math.floor(exact));
+  const local = exact - current;
+  if (index === current) return 1 - local * 0.25;
+  if (index === current + 1 && current < count - 1) return local * 0.9;
+  return 0;
 }
 
 function useReveal(threshold = 0.18) {
@@ -195,20 +167,16 @@ function Reveal({ as: Tag = "div", className = "", children, ...rest }) {
   );
 }
 
-/** 阶段文案透明度：当前段亮，邻段淡出 */
-function stageOpacity(index, progress, count) {
-  const seg = 1 / count;
-  const center = index * seg + seg * 0.5;
-  const dist = Math.abs(progress - center);
-  return clamp01(1 - dist / (seg * 0.85));
-}
-
 export default function LandingPage() {
   const navigate = useNavigate();
   const storyRef = useRef(null);
-  const [isDesktop, setIsDesktop] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(min-width: 901px)").matches,
-  );
+  const pinArtRef = useRef(null);
+  const trackFillRef = useRef(null);
+  const labelRef = useRef(null);
+  const slideRefs = useRef([]);
+  const beatRefs = useRef([]);
+  const stageRef = useRef(0);
+  const [isDesktop, setIsDesktop] = useState(true);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 901px)");
@@ -218,11 +186,87 @@ export default function LandingPage() {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  const progress = useScrollProgress(storyRef, isDesktop);
-  const stage = Math.min(
-    STORY.length - 1,
-    Math.floor(progress * STORY.length * 0.999),
-  );
+  // Hero art 初始态
+  useEffect(() => {
+    document.querySelectorAll(".landing-story-art--hero").forEach((svg) => {
+      paintStoryArt(svg, 0.5, true);
+    });
+  }, []);
+
+  // Sticky film：rAF + DOM 直写，滚动不掉帧、不发黑
+  useEffect(() => {
+    const el = storyRef.current;
+    if (!el || !isDesktop) return undefined;
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let raf = 0;
+
+    const apply = (progress) => {
+      const svg =
+        pinArtRef.current?.querySelector?.("svg") || pinArtRef.current;
+      paintStoryArt(svg, reduced ? 1 : progress, false);
+
+      if (trackFillRef.current) {
+        trackFillRef.current.style.transform = `scaleX(${progress})`;
+      }
+
+      const stage = Math.min(
+        STORY.length - 1,
+        Math.floor(progress * STORY.length * 0.999),
+      );
+      if (labelRef.current && stageRef.current !== stage) {
+        labelRef.current.textContent = STORY[stage].kicker;
+      }
+      stageRef.current = stage;
+
+      STORY.forEach((_, i) => {
+        const slide = slideRefs.current[i];
+        if (!slide) return;
+        const op = reduced ? (i === stage ? 1 : 0) : stageOpacity(i, progress, STORY.length);
+        slide.style.opacity = String(op);
+        slide.style.transform = `translateY(${(1 - op) * 16}px)`;
+        slide.style.pointerEvents = i === stage ? "auto" : "none";
+        slide.setAttribute("aria-hidden", i === stage ? "false" : "true");
+
+        const beat = beatRefs.current[i];
+        if (beat) {
+          beat.classList.toggle("is-active", i === stage);
+          beat.classList.toggle("is-done", i < stage);
+        }
+      });
+    };
+
+    const update = () => {
+      raf = 0;
+      const rect = el.getBoundingClientRect();
+      const total = el.offsetHeight - window.innerHeight;
+      const progress =
+        total <= 0 ? (rect.top < 0 ? 1 : 0) : clamp01(-rect.top / total);
+      apply(progress);
+    };
+
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+
+    apply(0);
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [isDesktop]);
+
+  // 移动端：每张 slide 自带静态画面
+  useEffect(() => {
+    if (isDesktop) return;
+    document.querySelectorAll(".landing-story-slide-art .landing-story-art").forEach((svg, i) => {
+      paintStoryArt(svg, (i + 0.7) / STORY.length, false);
+    });
+  }, [isDesktop]);
 
   const go = (path) => {
     startTransition(() => {
@@ -239,7 +283,6 @@ export default function LandingPage() {
 
   return (
     <div className="landing">
-      {/* ── Hero：品牌门面，一屏一事 ── */}
       <header className="landing-hero">
         <div className="landing-hero-copy">
           <div className="landing-brand-row">
@@ -280,7 +323,7 @@ export default function LandingPage() {
 
         <aside className="landing-hero-visual" aria-hidden="true">
           <div className="landing-hero-glow" />
-          <StoryArt progress={0.5} hero />
+          <StoryArt hero />
           <div className="landing-hero-caption">
             <span>SEE</span>
             <span>看见结构</span>
@@ -298,7 +341,6 @@ export default function LandingPage() {
         </button>
       </header>
 
-      {/* ── 宣言：大字号一句话 ── */}
       <section className="landing-manifesto" id="overview" aria-label="产品理念">
         <Reveal className="landing-manifesto-inner">
           <p className="landing-manifesto-kicker">不是刷题工具</p>
@@ -314,37 +356,32 @@ export default function LandingPage() {
         </Reveal>
       </section>
 
-      {/* ── Sticky Film：整屏钉住，滚动驱动画面 ── */}
       <section
         id="story"
         className="landing-story"
         ref={storyRef}
-        style={
-          isDesktop
-            ? { height: `${STORY.length * 100}vh` }
-            : undefined
-        }
+        style={isDesktop ? { height: `${STORY.length * 100}vh` } : undefined}
         aria-label="学习路径"
       >
         <div className="landing-story-pin">
           <div className="landing-story-visual" aria-hidden="true">
-            <p className="landing-story-stage-label">
-              {STORY[stage]?.kicker}
+            <p className="landing-story-stage-label" ref={labelRef}>
+              {STORY[0].kicker}
             </p>
-            <StoryArt progress={progress} />
+            <div ref={pinArtRef}>
+              <StoryArt />
+            </div>
             <div className="landing-story-track" role="presentation">
-              <div
-                className="landing-story-track-fill"
-                style={{ transform: `scaleX(${progress})` }}
-              />
+              <div className="landing-story-track-fill" ref={trackFillRef} />
             </div>
             <div className="landing-story-beats">
               {STORY.map((item, i) => (
                 <span
                   key={item.key}
-                  className={`landing-story-beat ${
-                    i === stage ? "is-active" : i < stage ? "is-done" : ""
-                  }`}
+                  ref={(el) => {
+                    beatRefs.current[i] = el;
+                  }}
+                  className={`landing-story-beat ${i === 0 ? "is-active" : ""}`}
                 >
                   {String(i + 1).padStart(2, "0")}
                 </span>
@@ -353,45 +390,36 @@ export default function LandingPage() {
           </div>
 
           <div className="landing-story-copy">
-            {STORY.map((item, i) => {
-              const op = isDesktop
-                ? stageOpacity(i, progress, STORY.length)
-                : 1;
-              return (
-                <article
-                  key={item.key}
-                  className={`landing-story-slide ${
-                    i === stage ? "is-active" : ""
-                  }`}
-                  style={
-                    isDesktop
-                      ? {
-                          opacity: op,
-                          transform: `translateY(${(1 - op) * 18}px)`,
-                          pointerEvents: i === stage ? "auto" : "none",
-                        }
-                      : undefined
-                  }
-                  aria-hidden={isDesktop && i !== stage ? true : undefined}
-                >
-                  <div className="landing-story-slide-art" aria-hidden="true">
-                    <StoryArt
-                      progress={(i + 0.65) / STORY.length}
-                    />
-                  </div>
-                  <p className="landing-eyebrow landing-eyebrow--light">
-                    {item.kicker}
-                  </p>
-                  <h3 className="landing-story-slide-title">{item.title}</h3>
-                  <p className="landing-story-slide-body">{item.body}</p>
-                </article>
-              );
-            })}
+            {STORY.map((item, i) => (
+              <article
+                key={item.key}
+                className="landing-story-slide"
+                ref={(el) => {
+                  slideRefs.current[i] = el;
+                }}
+                style={
+                  isDesktop
+                    ? {
+                        opacity: i === 0 ? 1 : 0,
+                        transform: "translateY(0)",
+                      }
+                    : undefined
+                }
+              >
+                <div className="landing-story-slide-art" aria-hidden="true">
+                  <StoryArt />
+                </div>
+                <p className="landing-eyebrow landing-eyebrow--light">
+                  {item.kicker}
+                </p>
+                <h3 className="landing-story-slide-title">{item.title}</h3>
+                <p className="landing-story-slide-body">{item.body}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── 产品瞬间：工作台同屏 ── */}
       <section className="landing-moment" aria-labelledby="moment-title">
         <Reveal className="landing-moment-inner">
           <p className="landing-eyebrow landing-eyebrow--light">工作台</p>
@@ -431,14 +459,13 @@ export default function LandingPage() {
               </div>
               <div className="landing-moment-pane landing-moment-pane--viz">
                 <span className="landing-moment-chip">三维</span>
-                <StoryArt progress={0.72} />
+                <MomentArt />
               </div>
             </div>
           </div>
         </Reveal>
       </section>
 
-      {/* ── 零摩擦 ── */}
       <section className="landing-friction" aria-labelledby="friction-title">
         <Reveal className="landing-friction-inner">
           <p className="landing-eyebrow">上手</p>
@@ -465,7 +492,6 @@ export default function LandingPage() {
         </Reveal>
       </section>
 
-      {/* ── 收尾 ── */}
       <section className="landing-end">
         <Reveal className="landing-end-inner">
           <h2 className="landing-end-title">从一道题开始</h2>
@@ -491,6 +517,19 @@ export default function LandingPage() {
         </span>
         <span>Understanding Engine</span>
       </footer>
+    </div>
+  );
+}
+
+function MomentArt() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const svg = ref.current?.querySelector("svg");
+    paintStoryArt(svg, 0.72, false);
+  }, []);
+  return (
+    <div ref={ref}>
+      <StoryArt />
     </div>
   );
 }
