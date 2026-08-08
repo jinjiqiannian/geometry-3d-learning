@@ -318,6 +318,14 @@
   color: var(--lp-cream);
 }
 
+/* 桌面：为 sticky film 预留足够滚程（约每幕 1.2 屏） */
+@media (min-width: 901px) {
+  .landing-story {
+    height: 480vh;
+    min-height: 480vh;
+  }
+}
+
 .landing-story-pin {
   position: sticky;
   top: 0;
@@ -327,6 +335,7 @@
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
+  background: var(--lp-dark);
 }
 
 .landing-story-visual {
@@ -413,6 +422,7 @@
   flex-direction: column;
   justify-content: center;
   padding: clamp(48px, 10vh, 96px) clamp(32px, 5vw, 72px);
+  background: #0e0e0e;
   transition: none;
 }
 
@@ -886,6 +896,7 @@
 
   .landing-story {
     height: auto;
+    min-height: 0;
   }
 
   .landing-story-pin {

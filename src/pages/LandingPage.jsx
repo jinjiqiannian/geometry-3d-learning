@@ -360,7 +360,7 @@ export default function LandingPage() {
         id="story"
         className="landing-story"
         ref={storyRef}
-        style={isDesktop ? { height: `${STORY.length * 100}vh` } : undefined}
+        style={isDesktop ? { height: `${STORY.length * 120}vh` } : undefined}
         aria-label="学习路径"
       >
         <div className="landing-story-pin">
