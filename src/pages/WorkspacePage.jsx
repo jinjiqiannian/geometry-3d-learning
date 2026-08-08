@@ -3,7 +3,6 @@ import { useSearchParams } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
 import Canvas3D from "../features/solid-geometry/Canvas3D";
 import GeometryMiniControls from "../components/GeometryMiniControls";
-import StepControls from "../components/StepControls";
 import { MEASURE_MODES } from "../features/solid-geometry/MeasureTool";
 import { ANNOTATION_MODES } from "../features/solid-geometry/AnnotationTool";
 import { VIEW_PRESETS } from "../features/solid-geometry/ViewControl";
@@ -1622,22 +1621,6 @@ export default function WorkspacePage() {
             onToggleFaces={() => setShowFaces((prev) => !prev)}
             onResetCamera={handleResetCamera}
           />
-          {/* 手机端用 ExplanationPanel 的 PlaybackControls，避免图下再叠一层步进条 */}
-          {!isMobile && steps.length > 1 && (
-            <StepControls
-              currentStep={mergedStepIndex}
-              totalSteps={mergedGroups.length}
-              stepTitles={mergedGroups.map((g) => g.step.title)}
-              onNext={handleNextStep}
-              onPrevious={handlePrevStep}
-              onPlay={handleTogglePlay}
-              onPause={handleTogglePlay}
-              onSeek={(i) =>
-                handleStepClick(mergedGroups[i]?.originalIndices?.[0] ?? i)
-              }
-              isPlaying={isPlaying}
-            />
-          )}
         </div>
       </div>
 
