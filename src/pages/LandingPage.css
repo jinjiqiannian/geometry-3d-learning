@@ -17,7 +17,7 @@
   position: relative;
   width: 100%;
   min-height: 100dvh;
-  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--lp-paper);
   color: var(--lp-ink);
 }

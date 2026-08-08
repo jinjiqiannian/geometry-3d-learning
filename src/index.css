@@ -246,7 +246,7 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 #root {
@@ -254,7 +254,8 @@ body {
   min-height: 100%;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
+  /* clip 不建立滚动包含块，避免打断首页 sticky film */
+  overflow-x: clip;
 }
 
 body {

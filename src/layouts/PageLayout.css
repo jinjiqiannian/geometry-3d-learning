@@ -30,12 +30,11 @@
   overflow: hidden;
 }
 
-/* 首页允许整页向下滚动浏览产品介绍 */
+/* 首页允许整页向下滚动；勿对祖先设 overflow 滚动包含，否则 sticky 失效 */
 .page-layout--facade {
   height: auto;
   min-height: 100dvh;
-  overflow-x: hidden;
-  overflow-y: visible;
+  overflow: visible;
 }
 
 .page-layout--facade .page-main {
