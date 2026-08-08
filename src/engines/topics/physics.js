@@ -865,6 +865,69 @@ export function resolvePhysicsSectionId(sectionId) {
   return PHYSICS_LEGACY_TOPIC_MAP[sectionId] || sectionId
 }
 
+/** Unicode 上标 → ASCII；解析 2×10⁻⁶ / 4e-3 / 0.2 */
+function parsePhysNumber(token) {
+  if (token == null || token === '') return NaN
+  const SUP = {
+    '⁰': '0',
+    '¹': '1',
+    '²': '2',
+    '³': '3',
+    '⁴': '4',
+    '⁵': '5',
+    '⁶': '6',
+    '⁷': '7',
+    '⁸': '8',
+    '⁹': '9',
+    '⁺': '+',
+    '⁻': '-',
+  }
+  let s = String(token)
+    .trim()
+    .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]/g, (c) => SUP[c] || c)
+    .replace(/[×·∗]/g, 'x')
+    .replace(/\s+/g, '')
+  const sci = s.match(/^([+-]?\d+(?:\.\d+)?)(?:x10\^?|e)([+-]?\d+)$/i)
+  if (sci) return Number(sci[1]) * 10 ** Number(sci[2])
+  const n = Number(s)
+  return Number.isFinite(n) ? n : NaN
+}
+
+const PHYS_NUM =
+  '([+-]?\\d+(?:\\.\\d+)?(?:\\s*[×x·∗]\\s*10\\s*[\\^+\\-⁻]?\\s*[⁰¹²³⁴⁵⁶⁷⁸⁹\\d+-]+|\\s*[eE]\\s*[+-]?\\d+)?)'
+
+function matchPhysNum(raw, re) {
+  const m = raw.match(re)
+  if (!m) return NaN
+  for (let i = 1; i < m.length; i++) {
+    if (m[i] == null || m[i] === '') continue
+    const n = parsePhysNumber(m[i])
+    if (Number.isFinite(n)) return n
+  }
+  return NaN
+}
+
+function fmtSci(n) {
+  if (!Number.isFinite(n)) return String(n)
+  const abs = Math.abs(n)
+  // 中等大小：普通小数，避免把 2000 的尾零裁成 2
+  if (abs === 0) return '0'
+  if (abs >= 0.01 && abs < 1e4) {
+    if (Number.isInteger(n)) return String(n)
+    return String(Number(n.toFixed(6))).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '')
+  }
+  const exp = Math.floor(Math.log10(abs))
+  const mant = n / 10 ** exp
+  const mStr = String(Number(mant.toFixed(4)))
+    .replace(/(\.\d*?)0+$/, '$1')
+    .replace(/\.$/, '')
+  const expAbs = String(Math.abs(exp))
+    .split('')
+    .map((d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(d)])
+    .join('')
+  return `${mStr}×10${exp < 0 ? '⁻' : ''}${expAbs}`
+}
+
 /**
  * @param {string} text
  * @param {string} [sectionId]
@@ -900,8 +963,13 @@ export function solvePhysics(text, sectionId) {
     return false
   }
 
-  const fmt = (n) =>
-    Number.isInteger(n) ? String(n) : String(Number(n.toFixed(4))).replace(/\.?0+$/, '')
+  const fmt = (n) => {
+    if (!Number.isFinite(n)) return String(n)
+    if (Number.isInteger(n)) return String(n)
+    const rounded = Number(n.toFixed(6))
+    if (Number.isInteger(rounded)) return String(rounded)
+    return String(rounded).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '')
+  }
 
   if (allow('phys_newton')) {
     const newton = raw.match(
@@ -1424,31 +1492,416 @@ export function solvePhysics(text, sectionId) {
     }
   }
 
-  // 方法样例：只认样例题干，勿把高考真题整题替换成试样例
-  if (
-    allow('phys_faraday') &&
-    /0\.01\s*Wb/.test(raw) &&
-    /0\.05\s*Wb/.test(raw) &&
-    /0\.2\s*s/.test(raw)
-  ) {
-    return structuredClone({ ...EX_PHYS_FARADAY, goal: raw })
+  // ── 电磁：按数字算，不再只抄样例 ──
+  if (allow('phys_ohm') && /欧姆|电阻|电压|电流|Ω|欧/.test(raw)) {
+    const R = matchPhysNum(
+      raw,
+      new RegExp(`(?:电阻|R)\\s*[为=:]?\\s*${PHYS_NUM}\\s*(?:Ω|欧)`, 'i'),
+    )
+    const I = matchPhysNum(
+      raw,
+      new RegExp(`(?:电流|I)\\s*[为=:]?\\s*${PHYS_NUM}\\s*A`, 'i'),
+    )
+    const U = matchPhysNum(
+      raw,
+      new RegExp(`(?:电压|U|电势差)\\s*[为=:]?\\s*${PHYS_NUM}\\s*V`, 'i'),
+    )
+    const askU =
+      /求\s*(?:两端)?(?:电压|U)/.test(raw) ||
+      (/电压/.test(raw) &&
+        !/求\s*电流|求\s*电阻/.test(raw) &&
+        Number.isFinite(I) &&
+        Number.isFinite(R))
+    const askI = /求\s*(?:通过的)?(?:电流|I)/.test(raw)
+    const askR = /求\s*(?:电阻|R)/.test(raw)
+
+    if (
+      askU ||
+      (!askI && !askR && Number.isFinite(I) && Number.isFinite(R) && I > 0 && R > 0)
+    ) {
+      if (I > 0 && R > 0) {
+        const u = I * R
+        return {
+          version: V,
+          problemType: 'phys_ohm',
+          topic: 'phys_circuit',
+          goal: raw,
+          coreIdea: '先认欧姆定律 U = IR，再代入。',
+          rootId: 'root',
+          nodes: [
+            {
+              id: 'root',
+              label: 'U = IR',
+              kind: 'choice',
+              children: ['I', 'R', 'U'],
+              why: '一段电阻的电压、电流、电阻关系',
+            },
+            { id: 'I', label: `I = ${fmt(I)} A`, kind: 'outcome', children: [], why: '电流' },
+            { id: 'R', label: `R = ${fmt(R)} Ω`, kind: 'outcome', children: [], why: '电阻' },
+            { id: 'U', label: `U = ${fmt(u)} V`, kind: 'outcome', children: [], why: '电压' },
+          ],
+          steps: [
+            {
+              index: 1,
+              title: '选题型',
+              content: '已知 I、R 求 U → 欧姆定律。',
+              why: '不要先背串并联公式',
+              highlightNodeIds: ['root'],
+            },
+            {
+              index: 2,
+              title: '列式',
+              content: 'U = IR',
+              why: '电压 = 电流 × 电阻',
+              formula: 'U=IR',
+              highlightNodeIds: ['I', 'R'],
+            },
+            {
+              index: 3,
+              title: '代入',
+              content: `U = ${fmt(I)} × ${fmt(R)} = ${fmt(u)}`,
+              why: '单位：A·Ω = V',
+              formula: `${fmt(I)}×${fmt(R)}=${fmt(u)}`,
+              highlightNodeIds: ['U'],
+            },
+            {
+              index: 4,
+              title: '结论',
+              content: `两端电压为 ${fmt(u)} V`,
+              why: '方向：电流从高电势流向低电势',
+              formula: `${fmt(u)} V`,
+              highlightNodeIds: ['U'],
+            },
+          ],
+          answer: `${fmt(u)} V`,
+        }
+      }
+    }
+    if (askI && Number.isFinite(U) && Number.isFinite(R) && R > 0) {
+      const i = U / R
+      return {
+        version: V,
+        problemType: 'phys_ohm',
+        topic: 'phys_circuit',
+        goal: raw,
+        coreIdea: 'I = U / R',
+        rootId: 'root',
+        nodes: [
+          {
+            id: 'root',
+            label: 'I = U/R',
+            kind: 'choice',
+            children: ['U', 'R', 'I'],
+            why: '欧姆定律变形',
+          },
+          { id: 'U', label: `U = ${fmt(U)} V`, kind: 'outcome', children: [], why: '电压' },
+          { id: 'R', label: `R = ${fmt(R)} Ω`, kind: 'outcome', children: [], why: '电阻' },
+          { id: 'I', label: `I = ${fmt(i)} A`, kind: 'outcome', children: [], why: '电流' },
+        ],
+        steps: [
+          {
+            index: 1,
+            title: '公式',
+            content: 'I = U / R',
+            why: '已知电压、电阻求电流',
+            formula: 'I=U/R',
+            highlightNodeIds: ['root'],
+          },
+          {
+            index: 2,
+            title: '代入',
+            content: `I = ${fmt(U)} / ${fmt(R)} = ${fmt(i)} A`,
+            why: 'V/Ω = A',
+            formula: `${fmt(i)} A`,
+            highlightNodeIds: ['U', 'R', 'I'],
+          },
+        ],
+        answer: `${fmt(i)} A`,
+      }
+    }
+    if (askR && Number.isFinite(U) && Number.isFinite(I) && I > 0) {
+      const r = U / I
+      return {
+        version: V,
+        problemType: 'phys_ohm',
+        topic: 'phys_circuit',
+        goal: raw,
+        coreIdea: 'R = U / I',
+        rootId: 'root',
+        nodes: [
+          {
+            id: 'root',
+            label: 'R = U/I',
+            kind: 'choice',
+            children: ['U', 'I', 'R'],
+            why: '欧姆定律变形',
+          },
+          { id: 'U', label: `U = ${fmt(U)} V`, kind: 'outcome', children: [], why: '电压' },
+          { id: 'I', label: `I = ${fmt(I)} A`, kind: 'outcome', children: [], why: '电流' },
+          { id: 'R', label: `R = ${fmt(r)} Ω`, kind: 'outcome', children: [], why: '电阻' },
+        ],
+        steps: [
+          {
+            index: 1,
+            title: '公式',
+            content: 'R = U / I',
+            why: '已知电压、电流求电阻',
+            formula: 'R=U/I',
+            highlightNodeIds: ['root'],
+          },
+          {
+            index: 2,
+            title: '代入',
+            content: `R = ${fmt(U)} / ${fmt(I)} = ${fmt(r)} Ω`,
+            why: 'V/A = Ω',
+            formula: `${fmt(r)} Ω`,
+            highlightNodeIds: ['U', 'I', 'R'],
+          },
+        ],
+        answer: `${fmt(r)} Ω`,
+      }
+    }
   }
-  if (allow('phys_ohm') && /6\s*Ω/.test(raw) && /2\s*A/.test(raw)) {
-    return structuredClone({ ...EX_PHYS_OHM, goal: raw })
+
+  if (allow('phys_efield_def') && /场强|试探电荷|电场力|E\s*=\s*F/.test(raw)) {
+    const F = matchPhysNum(
+      raw,
+      new RegExp(`(?:受力|电场力|力|F)\\s*[为=:]?\\s*${PHYS_NUM}\\s*N`, 'i'),
+    )
+    const q = matchPhysNum(
+      raw,
+      new RegExp(`(?:电荷量|电荷|q)\\s*[为=:]?\\s*${PHYS_NUM}\\s*C`, 'i'),
+    )
+    const Egiven = matchPhysNum(
+      raw,
+      new RegExp(`(?:场强|E)\\s*[为=:]?\\s*${PHYS_NUM}\\s*(?:N\\/C|V\\/m)`, 'i'),
+    )
+    if (
+      Number.isFinite(F) &&
+      Number.isFinite(q) &&
+      q !== 0 &&
+      (/场强|求\s*E/.test(raw) || !Number.isFinite(Egiven))
+    ) {
+      const E = Math.abs(F / q)
+      const eStr = fmtSci(E)
+      return {
+        version: V,
+        problemType: 'phys_efield_def',
+        topic: 'phys_efield',
+        goal: raw,
+        coreIdea: '场强定义：E = F / q（与试探电荷无关）。',
+        rootId: 'root',
+        nodes: [
+          {
+            id: 'root',
+            label: 'E = F / q',
+            kind: 'choice',
+            children: ['F', 'q', 'E'],
+            why: '用试探电荷测出场，再除掉电荷量',
+          },
+          { id: 'F', label: `F = ${fmtSci(F)} N`, kind: 'outcome', children: [], why: '电场力' },
+          { id: 'q', label: `q = ${fmtSci(q)} C`, kind: 'outcome', children: [], why: '试探电荷' },
+          { id: 'E', label: `E = ${eStr} N/C`, kind: 'outcome', children: [], why: '场强' },
+        ],
+        steps: [
+          {
+            index: 1,
+            title: '认定义',
+            content: '求场强且给了 F、q → E = F/q。',
+            why: 'E 描述场本身，不是力',
+            highlightNodeIds: ['root'],
+          },
+          {
+            index: 2,
+            title: '代入',
+            content: `E = ${fmtSci(F)} / ${fmtSci(q)} = ${eStr}`,
+            why: '注意数量级',
+            formula: 'E=F/q',
+            highlightNodeIds: ['F', 'q'],
+          },
+          {
+            index: 3,
+            title: '结论',
+            content: `该点场强为 ${eStr} N/C，方向与正电荷受力同向`,
+            why: '正试探电荷受力方向 = 场强方向',
+            formula: `${eStr} N/C`,
+            highlightNodeIds: ['E'],
+          },
+        ],
+        answer: `${eStr} N/C`,
+      }
+    }
   }
-  if (
-    allow('phys_efield_def') &&
-    /2\s*[×xX\*]\s*10\s*[⁻\-]?\s*6|2×10⁻⁶/.test(raw) &&
-    /4\s*[×xX\*]\s*10/.test(raw)
-  ) {
-    return structuredClone({ ...EX_PHYS_EFIELD, goal: raw })
+
+  if (allow('phys_faraday') && /磁通量|感应电动势|法拉第|ΔΦ|磁通/.test(raw)) {
+    const fromTo = raw.match(
+      new RegExp(
+        `从\\s*${PHYS_NUM}\\s*Wb\\s*(?:变为|到|变到)\\s*${PHYS_NUM}\\s*Wb`,
+        'i',
+      ),
+    )
+    let dPhi = NaN
+    if (fromTo) {
+      dPhi = Math.abs(parsePhysNumber(fromTo[2]) - parsePhysNumber(fromTo[1]))
+    } else {
+      dPhi = matchPhysNum(
+        raw,
+        new RegExp(`(?:ΔΦ|磁通量变化|变化量)\\s*[为=:]?\\s*${PHYS_NUM}\\s*Wb`, 'i'),
+      )
+    }
+    const dt = matchPhysNum(
+      raw,
+      new RegExp(
+        `(?:Δt|时间|内)\\s*[为=:]?\\s*${PHYS_NUM}\\s*s|(?:在\\s*)?${PHYS_NUM}\\s*s\\s*内`,
+        'i',
+      ),
+    )
+    const nTurns = matchPhysNum(raw, /(?:匝数|共)\s*[为=:]?\s*(\d+(?:\.\d+)?)/i)
+    const nTurns2 = matchPhysNum(raw, /(\d+(?:\.\d+)?)\s*匝/)
+    const N = Number.isFinite(nTurns) ? nTurns : Number.isFinite(nTurns2) ? nTurns2 : 1
+    if (Number.isFinite(dPhi) && Number.isFinite(dt) && dt > 0) {
+      const eps = (N * dPhi) / dt
+      const nNote = N !== 1 ? `（N=${fmt(N)}）` : '（单匝）'
+      return {
+        version: V,
+        problemType: 'phys_faraday',
+        topic: 'phys_induction',
+        goal: raw,
+        coreIdea: `法拉第电磁感应：ε = N|ΔΦ/Δt|${nNote}。`,
+        rootId: 'root',
+        nodes: [
+          {
+            id: 'root',
+            label: N === 1 ? 'ε = |ΔΦ/Δt|' : 'ε = N|ΔΦ/Δt|',
+            kind: 'choice',
+            children: ['dPhi', 'dt', 'eps'],
+            why: '磁通量变化率决定电动势',
+          },
+          { id: 'dPhi', label: `ΔΦ = ${fmt(dPhi)} Wb`, kind: 'outcome', children: [], why: '磁通量变化量' },
+          { id: 'dt', label: `Δt = ${fmt(dt)} s`, kind: 'outcome', children: [], why: '时间' },
+          { id: 'eps', label: `ε = ${fmt(eps)} V`, kind: 'outcome', children: [], why: '电动势' },
+        ],
+        steps: [
+          {
+            index: 1,
+            title: '认公式',
+            content:
+              N === 1
+                ? '求感应电动势 → ε = |ΔΦ/Δt|。'
+                : `求感应电动势 → ε = N|ΔΦ/Δt|，N=${fmt(N)}。`,
+            why: '多匝再乘 N',
+            highlightNodeIds: ['root'],
+          },
+          {
+            index: 2,
+            title: '算变化',
+            content: `ΔΦ = ${fmt(dPhi)} Wb`,
+            why: '只看变化量的绝对值',
+            formula: `ΔΦ=${fmt(dPhi)}`,
+            highlightNodeIds: ['dPhi'],
+          },
+          {
+            index: 3,
+            title: '代入',
+            content:
+              N === 1
+                ? `ε = ${fmt(dPhi)} / ${fmt(dt)} = ${fmt(eps)} V`
+                : `ε = ${fmt(N)} × ${fmt(dPhi)} / ${fmt(dt)} = ${fmt(eps)} V`,
+            why: 'Wb/s = V',
+            formula: `${fmt(eps)} V`,
+            highlightNodeIds: ['dt', 'eps'],
+          },
+          {
+            index: 4,
+            title: '结论',
+            content: `感应电动势大小为 ${fmt(eps)} V（方向用楞次定律另判）`,
+            why: '大小与方向分开想',
+            formula: `${fmt(eps)} V`,
+            highlightNodeIds: ['eps'],
+          },
+        ],
+        answer: `${fmt(eps)} V`,
+      }
+    }
   }
+
+  if (allow('phys_lorentz') && /洛伦兹|磁场|圆周|回旋/.test(raw)) {
+    const m = matchPhysNum(
+      raw,
+      new RegExp(`(?:质量|m)\\s*[为=:]?\\s*${PHYS_NUM}\\s*kg`, 'i'),
+    )
+    const v = matchPhysNum(
+      raw,
+      new RegExp(`(?:速度|速率|v)\\s*[为=:]?\\s*${PHYS_NUM}\\s*(?:m\\/s)`, 'i'),
+    )
+    const q = matchPhysNum(
+      raw,
+      new RegExp(`(?:电荷量|电荷|q)\\s*[为=:]?\\s*${PHYS_NUM}\\s*C`, 'i'),
+    )
+    const B = matchPhysNum(
+      raw,
+      new RegExp(`(?:磁感应强度|磁场|B)\\s*[为=:]?\\s*${PHYS_NUM}\\s*T`, 'i'),
+    )
+    if (
+      Number.isFinite(m) &&
+      Number.isFinite(v) &&
+      Number.isFinite(q) &&
+      Number.isFinite(B) &&
+      q !== 0 &&
+      B !== 0 &&
+      /半径|r\s*=/.test(raw)
+    ) {
+      const r = (m * v) / (Math.abs(q) * B)
+      return {
+        version: V,
+        problemType: 'phys_lorentz',
+        topic: 'phys_bfield',
+        goal: raw,
+        coreIdea: 'v⊥B 时洛伦兹力提供向心力 → r = mv/(qB)。',
+        rootId: 'root',
+        nodes: [
+          {
+            id: 'root',
+            label: 'r = mv/(qB)',
+            kind: 'choice',
+            children: ['m', 'v', 'q', 'B'],
+            why: 'qvB = mv²/r',
+          },
+          { id: 'm', label: `m = ${fmtSci(m)} kg`, kind: 'outcome', children: [], why: '质量' },
+          { id: 'v', label: `v = ${fmtSci(v)} m/s`, kind: 'outcome', children: [], why: '速率' },
+          { id: 'q', label: `q = ${fmtSci(q)} C`, kind: 'outcome', children: [], why: '电荷量' },
+          { id: 'B', label: `B = ${fmt(B)} T`, kind: 'outcome', children: [], why: '磁感应强度' },
+        ],
+        steps: [
+          {
+            index: 1,
+            title: '公式',
+            content: 'r = mv / (qB)',
+            why: '洛伦兹力 = 向心力',
+            formula: 'r=mv/(qB)',
+            highlightNodeIds: ['root'],
+          },
+          {
+            index: 2,
+            title: '代入',
+            content: `r = ${fmtSci(m)}×${fmtSci(v)} / (|${fmtSci(q)}|×${fmt(B)}) = ${fmtSci(r)} m`,
+            why: '取电荷量绝对值',
+            formula: `${fmtSci(r)} m`,
+            highlightNodeIds: ['m', 'v', 'q', 'B'],
+          },
+        ],
+        answer: `${fmtSci(r)} m`,
+      }
+    }
+  }
+
+  // 方法样例：收紧匹配，勿把高考真题整题替换成试样例
   if (
     allow('phys_lorentz') &&
     /垂直进入/.test(raw) &&
     /磁场/.test(raw) &&
     /(说明|做什么运动|指出方法)/.test(raw) &&
-    !/正方形|边长|射出|比荷/.test(raw)
+    !/正方形|边长|射出|比荷|半径/.test(raw)
   ) {
     return structuredClone({ ...EX_PHYS_LORENTZ, goal: raw })
   }

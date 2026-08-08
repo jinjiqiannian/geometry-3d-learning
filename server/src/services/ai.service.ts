@@ -1590,7 +1590,7 @@ const EXPLAIN_TOPIC_HINT: Record<string, string> = {
   conic:
     '圆锥曲线。重点认 a,b,c 与公式（椭圆减、双曲线加）。problemType 用 ellipse_e | hyper_focus | circle_r 或自拟短名。',
   physics:
-    '高中物理力学。重点拆清公式选用与代入（匀变速、F=ma、功）。problemType 用 phys_kinematic | phys_newton | phys_work 或自拟短名。',
+    '高中物理（力学+电磁）。重点拆清公式选用与代入（匀变速、F=ma、U=IR、E=F/q、ε=ΔΦ/Δt）。problemType 用 phys_kinematic | phys_ohm | phys_efield_def | phys_faraday 或自拟短名。',
 }
 
 /**

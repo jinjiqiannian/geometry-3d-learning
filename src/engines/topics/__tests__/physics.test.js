@@ -81,6 +81,34 @@ describe('physics focus: mechanics + electro', () => {
     ).toBeNull()
   })
 
+  it('solves electro from custom numbers (not sample clone)', () => {
+    expect(
+      solvePhysics('电阻 10 Ω 的导体两端电压为 20 V，求通过的电流', 'phys_circuit')
+        ?.answer,
+    ).toBe('2 A')
+    expect(
+      solvePhysics('电阻 4 Ω，电流 3 A，求两端电压', 'phys_circuit')?.answer,
+    ).toBe('12 V')
+    expect(
+      solvePhysics(
+        '电荷量 1×10⁻⁶ C 的试探电荷在电场中受力 2×10⁻³ N，求该点场强',
+        'phys_efield',
+      )?.answer,
+    ).toBe('2000 N/C')
+    expect(
+      solvePhysics(
+        '穿过线圈的磁通量在 0.5 s 内从 0.02 Wb 变为 0.12 Wb，求感应电动势',
+        'phys_induction',
+      )?.answer,
+    ).toBe('0.2 V')
+    expect(
+      solvePhysics(
+        '100 匝线圈，磁通量在 0.1 s 内从 0.01 Wb 变为 0.03 Wb，求感应电动势',
+        'phys_induction',
+      )?.answer,
+    ).toBe('20 V')
+  })
+
   it('scopes sections and legacy map', () => {
     expect(
       solveTopicProblem(
