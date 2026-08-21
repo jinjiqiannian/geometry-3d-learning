@@ -811,6 +811,20 @@
   justify-content: center;
 }
 
+/* 默认静止；代入/结论步才开运动 */
+.phys-live:not(.is-playing) .phys-accel-box,
+.phys-live:not(.is-playing) .phys-work-slider,
+.phys-live:not(.is-playing) .phys-motion-car,
+.phys-live:not(.is-playing) .phys-motion-needle,
+.phys-live:not(.is-playing) .phys-ke-ball,
+.phys-live:not(.is-playing) .phys-pe-lift,
+.phys-live:not(.is-playing) .phys-efield-charge,
+.phys-live:not(.is-playing) .phys-lorentz-orbit,
+.phys-live:not(.is-playing) .phys-faraday-wave {
+  animation-play-state: paused;
+  animation: none;
+}
+
 .phys-live.is-playing .phys-accel-box,
 .phys-live.is-playing .phys-work-slider,
 .phys-live.is-playing .phys-motion-car,
@@ -821,6 +835,66 @@
 .phys-live.is-playing .phys-lorentz-orbit,
 .phys-live.is-playing .phys-faraday-wave {
   animation-duration: 2.4s;
+}
+
+.phys-formula-chip {
+  margin: 0.35rem auto 0.15rem;
+  width: fit-content;
+  padding: 0.28rem 0.75rem;
+  border: 1px solid #0f6b5c;
+  background: #e6f2ef;
+  color: #0f6b5c;
+  font-family: "Source Han Serif SC", "Noto Serif SC", "Songti SC", Georgia, serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.phys-formula-chip.is-pop,
+.phys-step-answer.is-pop {
+  animation: logic-factor-pop 0.4s ease both;
+}
+
+.phys-step-answer {
+  margin: 0.25rem 0 0;
+  text-align: center;
+  font-family: "Source Han Serif SC", "Noto Serif SC", "Songti SC", Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #0f6b5c;
+}
+
+.phys-accel-force,
+.phys-accel-a,
+.phys-work-f,
+.phys-work-s,
+.phys-work-w,
+.phys-weight-g,
+.phys-pe-h,
+.phys-ohm-eq,
+.phys-motion-meter {
+  opacity: 0.28;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.phys-accel-force.is-on,
+.phys-accel-a.is-on,
+.phys-work-f.is-on,
+.phys-work-s.is-on,
+.phys-work-w.is-on,
+.phys-weight-g.is-on,
+.phys-pe-h.is-on,
+.phys-ohm-eq.is-on,
+.phys-motion-meter.is-on {
+  opacity: 1;
+}
+
+.phys-live.is-phase-setup .phys-accel-box {
+  left: 8%;
+}
+
+.phys-live.is-phase-formula .phys-accel-box {
+  left: 8%;
 }
 
 /* 牛顿：单向加速 → 停顿 → 淡出复位（不折返） */

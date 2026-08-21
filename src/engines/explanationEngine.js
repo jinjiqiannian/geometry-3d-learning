@@ -5,6 +5,7 @@
 // ═══════════════════════════════════════════════════════
 
 import { solveGeometry } from "./calculationEngine.js";
+import { solveExamGeometry } from "./examGeometrySolver.js";
 import { reason as proofEngineReason } from "./proofEngine/index.js";
 
 // ── 可计算题型列表 ──
@@ -17,6 +18,9 @@ const COMPUTABLE_TYPES = [
   "side_edge",
   "section",
   "generatrix",
+  "line_plane_angle",
+  "dihedral_angle",
+  "point_plane_distance",
 ];
 
 // ── 几何体类型 → 题型模板映射 ──────────────────────
@@ -1316,7 +1320,13 @@ function detectProblemType(type, text) {
 
   if (type === "cube") {
     if (/二面角|dihedral/.test(t)) return "dihedral_angle";
-    if (/线面角|直线.*平面.*角/.test(t)) return "line_plane_angle";
+    // 所成角优先于「对角线」关键字（高考基础：对角线与底面所成角）
+    if (
+      /线面角|直线.*(?:平面|底面).*角|(?:与|和)(?:平面|底面).*(?:所成|夹)角/.test(
+        t
+      )
+    )
+      return "line_plane_angle";
     if (/点.*到.*(平面|面).*距离|等体积法/.test(t))
       return "point_plane_distance";
     if (/内接|内切/.test(t)) return "inscribed";
@@ -1402,6 +1412,37 @@ export function generateLocalSteps(problemText, parsedData) {
     parsedData?.questionType || detectProblemType(type, problemText);
 
   // ── Phase 1: 动态计算（可计算题型 → 真实数值）──
+  // 高考常考：线面角 / 二面角 / 点面距离 — 优先坐标法实算
+  if (
+    ["line_plane_angle", "dihedral_angle", "point_plane_distance"].includes(
+      problemType
+    )
+  ) {
+    const examSolved = solveExamGeometry(problemText, {
+      ...parsedData,
+      questionType: problemType,
+    });
+    if (examSolved?.steps?.length) {
+      return examSolved.steps.map((step, index) => {
+        const result = {
+          ...step,
+          step: index + 1,
+          title: makeTeacherTitle(
+            { ...step, step: index + 1, problemText },
+            {
+              type,
+              typeName: examSolved.typeName || GEOMETRY_NAMES[type] || type,
+            }
+          ),
+        };
+        if (index === 0 && step.type === "observation") {
+          result.intuition = step.content.split(/[。！？\n]/)[0];
+        }
+        return result;
+      });
+    }
+  }
+
   if (COMPUTABLE_TYPES.includes(problemType)) {
     const solved = solveGeometry({ ...parsedData, questionType: problemType });
     if (solved && solved.steps && solved.steps.length > 0) {

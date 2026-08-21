@@ -10,6 +10,8 @@ const ANIMATION_CONFIG = {
   fadeInDuration: 400,
   fadeOutDuration: 300,
   pulseDuration: 1500,
+  /** 辅助线/高亮线「画出」时长 — 比淡入更长，方便学生跟上构造 */
+  drawDuration: 700,
 };
 
 function easeOutCubic(t) {
@@ -66,9 +68,9 @@ export class HighlightEngine {
       this.highlightedLines.add(id);
       if (!options.noAnimation) {
         this.lineAnimations.set(id, {
-          type: 'fadeIn',
+          type: 'draw',
           startTime: performance.now(),
-          duration: ANIMATION_CONFIG.fadeInDuration,
+          duration: options.drawDuration ?? ANIMATION_CONFIG.drawDuration,
         });
       }
     });
@@ -257,22 +259,25 @@ export class HighlightEngine {
           color: this.currentColor,
           opacity: 0.55 + 0.45 * wave,
           pulse: true,
+          drawProgress: 1,
         };
       }
-      return { highlighted: false, color: null, opacity: null, pulse: false };
+      return { highlighted: false, color: null, opacity: null, pulse: false, drawProgress: 1 };
     }
     
     const now = performance.now();
     const elapsed = now - anim.startTime;
     const t = Math.min(1, elapsed / anim.duration);
     
-    if (anim.type === 'fadeIn') {
+    if (anim.type === 'draw' || anim.type === 'fadeIn') {
       const eased = easeOutCubic(t);
       return {
         highlighted: true,
         color: this.currentColor,
-        opacity: 0.3 + 0.7 * eased,
+        opacity: 0.35 + 0.65 * eased,
         pulse: false,
+        /** 0→1：线段从起点逐渐「画」到终点 */
+        drawProgress: eased,
       };
     } else if (anim.type === 'fadeOut') {
       const eased = easeInCubic(t);
@@ -281,6 +286,7 @@ export class HighlightEngine {
         color: null,
         opacity: 1.0 - 0.7 * eased,
         pulse: false,
+        drawProgress: 1,
       };
       if (t >= 1) {
         this.lineAnimations.delete(lineId);
@@ -288,7 +294,7 @@ export class HighlightEngine {
       return result;
     }
     
-    return { highlighted: isHighlighted, color: null, opacity: null, pulse: false };
+    return { highlighted: isHighlighted, color: null, opacity: null, pulse: false, drawProgress: 1 };
   }
   
   getPlaneState(planeId) {

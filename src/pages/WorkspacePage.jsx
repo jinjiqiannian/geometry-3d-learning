@@ -459,6 +459,7 @@ export default function WorkspacePage() {
           const parsedData = {
             type: semantic.shape,
             size: semantic.size,
+            params: semantic.params || { size: semantic.size },
             labels: semantic.points,
             vertices: semantic.points,
             relations: semantic.relations || [],
@@ -513,17 +514,20 @@ export default function WorkspacePage() {
           onParsed: (parsed) => {
             const shape = localSemantic?.shape || parsed.type || "cube";
             const size = localSemantic?.size || parsed.size || 2;
+            const params =
+              localSemantic?.params || parsed.params || { size };
             setParsedData({
               ...parsed,
               type: shape,
               size,
+              params,
               labels: localSemantic?.points || parsed.labels,
               relations: localSemantic?.relations || parsed.relations,
               semantic: localSemantic || undefined,
             });
             setGeometry({
               type: shape,
-              params: { size },
+              params: { size, ...params },
               ...defaultConstraintParams(shape),
             });
           },
@@ -537,11 +541,14 @@ export default function WorkspacePage() {
             if (parsed) {
               const shape = localSemantic?.shape || parsed.type || "cube";
               const size = localSemantic?.size || parsed.size || 2;
+              const params =
+                localSemantic?.params || parsed.params || { size };
               // 保存推理过程到 parsedData；构图以本地 semantic 为准
               const parsedWithReasoning = {
                 ...parsed,
                 type: shape,
                 size,
+                params,
                 labels: localSemantic?.points || parsed.labels,
                 vertices: localSemantic?.points || parsed.vertices,
                 relations: localSemantic?.relations || parsed.relations,
@@ -552,7 +559,7 @@ export default function WorkspacePage() {
               setParsedData(parsedWithReasoning);
               setGeometry({
                 type: shape,
-                params: { size },
+                params: { size, ...params },
                 ...defaultConstraintParams(shape),
               });
               setSteps(resultSteps);
@@ -613,6 +620,7 @@ export default function WorkspacePage() {
             const fallbackParsed = {
               type: semantic.shape,
               size: semantic.size,
+              params: semantic.params || { size: semantic.size },
               labels: semantic.points,
               vertices: semantic.points,
               relations: semantic.relations || [],
@@ -650,6 +658,7 @@ export default function WorkspacePage() {
         const fallbackParsed = {
           type: semantic.shape,
           size: semantic.size,
+          params: semantic.params || { size: semantic.size },
           labels: semantic.points,
           vertices: semantic.points,
           relations: semantic.relations || [],

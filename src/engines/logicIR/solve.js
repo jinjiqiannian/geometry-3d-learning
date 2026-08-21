@@ -59,7 +59,16 @@ export function solveLogicProblem(text) {
   if (raw.includes('代表') && /5\s*人/.test(raw) && /2\s*人/.test(raw)) {
     return structuredClone(EXAMPLE_PERM_COMB)
   }
-  if (raw.includes('红') && raw.includes('白') && raw.includes('不放回')) {
+  // 先走通用古典概率（至少一红 / 先红后白 / 放回…），再回落样例
+  const classical = tryClassicalProb(raw)
+  if (classical) return classical
+
+  if (
+    raw.includes('红') &&
+    raw.includes('白') &&
+    raw.includes('不放回') &&
+    /都是红|全红|两.*红|红红|两次都红/.test(raw)
+  ) {
     const m = raw.match(/(\d+)\s*红.*?(\d+)\s*白/)
     if (m && m[1] === '3' && m[2] === '2') {
       return structuredClone(EXAMPLE_CLASSICAL_PROB)
@@ -67,56 +76,172 @@ export function solveLogicProblem(text) {
   }
 
   return (
-    tryClassicalProb(raw) ||
     tryOrderedOfficers(raw) ||
     tryCombination(raw) ||
     tryMultiplyClothes(raw) ||
     tryPermutation(raw) ||
+    tryClassifyAdd(raw) ||
     null
   )
 }
 
-/** 袋中 a 红 b 白，不放回连抽 2 次，都是红 */
+/**
+ * 袋中 a 红 b 白，连抽 2 次 — 覆盖高考基础：
+ * 不放回都红 / 先红后白 / 放回都红 / 至少一红
+ */
 function tryClassicalProb(text) {
-  if (!/概率|几率/.test(text) && !/红/.test(text)) return null
+  if (!/概率|几率|抽/.test(text) && !/红/.test(text)) return null
   const balls = text.match(/(\d+)\s*红.*?(\d+)\s*白/)
   if (!balls) return null
   const red = Number(balls[1])
   const white = Number(balls[2])
   const total = red + white
-  if (total < 2 || red < 2) return null
-  if (!/不放回|依次|连抽|连续/.test(text) && !/两次|2\s*次/.test(text)) {
-    // 仍允许「抽两球都是红」类
-    if (!/都是红|全红|两.*红|红.*红/.test(text)) return null
+  if (total < 2) return null
+
+  const withReplace = /放回/.test(text) && !/不放回/.test(text)
+  const wantRW =
+    /先红后白|第一次.*红.*第二次.*白|红后白/.test(text)
+  const wantAtLeastOneRed = /至少.*(?:一)?红|不全白/.test(text)
+  const wantBothRed =
+    /都是红|全红|两.*红|红红|两次都红/.test(text) ||
+    (!wantRW && !wantAtLeastOneRed)
+
+  if (wantAtLeastOneRed && !withReplace) {
+    if (white < 2) return null
+    // P(至少一红)=1-P(白白)
+    const ww = simplifyFrac(white * (white - 1), total * (total - 1))
+    const atLeast = simplifyFrac(ww.den - ww.num, ww.den)
+    return buildTwoDrawProbIR(text, {
+      red,
+      white,
+      total,
+      withReplace: false,
+      pathLabel: '至少一红 = 1 − 白白',
+      p1n: white,
+      p1d: total,
+      p2n: white - 1,
+      p2d: total - 1,
+      answerNum: atLeast.num,
+      answerDen: atLeast.den,
+      formulaNote: `1−(${ww.num}/${ww.den})=${atLeast.num}/${atLeast.den}`,
+      isComplement: true,
+    })
   }
 
-  const p1n = red
-  const p1d = total
-  const p2n = red - 1
-  const p2d = total - 1
-  const { num, den } = simplifyFrac(p1n * p2n, p1d * p2d)
+  if (wantRW) {
+    if (red < 1 || white < 1) return null
+    if (withReplace) {
+      const { num, den } = simplifyFrac(red * white, total * total)
+      return buildTwoDrawProbIR(text, {
+        red,
+        white,
+        total,
+        withReplace: true,
+        pathLabel: '红→白',
+        p1n: red,
+        p1d: total,
+        p2n: white,
+        p2d: total,
+        answerNum: num,
+        answerDen: den,
+      })
+    }
+    const { num, den } = simplifyFrac(red * white, total * (total - 1))
+    return buildTwoDrawProbIR(text, {
+      red,
+      white,
+      total,
+      withReplace: false,
+      pathLabel: '红→白',
+      p1n: red,
+      p1d: total,
+      p2n: white,
+      p2d: total - 1,
+      answerNum: num,
+      answerDen: den,
+    })
+  }
+
+  // 默认：都是红
+  if (wantBothRed) {
+    if (red < 2 && !withReplace) return null
+    if (withReplace) {
+      const { num, den } = simplifyFrac(red * red, total * total)
+      return buildTwoDrawProbIR(text, {
+        red,
+        white,
+        total,
+        withReplace: true,
+        pathLabel: '红→红',
+        p1n: red,
+        p1d: total,
+        p2n: red,
+        p2d: total,
+        answerNum: num,
+        answerDen: den,
+      })
+    }
+    const { num, den } = simplifyFrac(red * (red - 1), total * (total - 1))
+    return buildTwoDrawProbIR(text, {
+      red,
+      white,
+      total,
+      withReplace: false,
+      pathLabel: '红→红',
+      p1n: red,
+      p1d: total,
+      p2n: red - 1,
+      p2d: total - 1,
+      answerNum: num,
+      answerDen: den,
+    })
+  }
+
+  return null
+}
+
+function buildTwoDrawProbIR(text, opts) {
+  const {
+    red,
+    white,
+    total,
+    withReplace,
+    pathLabel,
+    p1n,
+    p1d,
+    p2n,
+    p2d,
+    answerNum,
+    answerDen,
+    formulaNote,
+    isComplement,
+  } = opts
+  const mode = withReplace ? '放回' : '不放回'
+  const mul = formulaNote || `(${p1n}/${p1d})×(${p2n}/${p2d})=${answerNum}/${answerDen}`
 
   return {
     version: LOGIC_IR_VERSION,
     problemType: 'classical_prob',
     goal: text,
-    coreIdea: '用树形图看清每一步样本变化，再沿目标路径相乘。',
+    coreIdea: isComplement
+      ? '至少一红用对立事件：1−全白。'
+      : `用树形图看清${mode}下每一步样本，再沿目标路径相乘。`,
     rootId: 'root',
     nodes: [
       {
         id: 'root',
-        label: '第一次抽',
+        label: `第一次抽（${mode}）`,
         kind: 'choice',
         children: ['r1', 'w1'],
-        why: `一共 ${total} 球`,
+        why: `一共 ${total} 球（红${red} 白${white}）`,
       },
       {
         id: 'r1',
-        label: `红 (${p1n}/${p1d})`,
+        label: `红 (${red}/${total})`,
         count: red,
         kind: 'case',
-        children: ['r1r2'],
-        why: `抽到红后剩 ${total - 1} 球、${red - 1} 红`,
+        children: ['leaf'],
+        why: withReplace ? '放回后总数不变' : `抽后剩 ${total - 1} 球`,
       },
       {
         id: 'w1',
@@ -124,22 +249,21 @@ function tryClassicalProb(text) {
         count: white,
         kind: 'case',
         children: [],
-        why: '本问只要「都红」，白分支可淡化',
+        why: '对照分支',
       },
       {
-        id: 'r1r2',
-        label: `再红 (${p2n}/${p2d})`,
-        count: red - 1,
+        id: 'leaf',
+        label: pathLabel,
         kind: 'outcome',
         children: [],
-        why: '路径：红→红',
+        why: `目标路径：${pathLabel}`,
       },
     ],
     steps: [
       {
         index: 1,
-        title: '画树：第一次',
-        content: `${total} 球中 ${red} 红 → P(红₁)=${p1n}/${p1d}。`,
+        title: `第一次（${mode}）`,
+        content: `P₁ 相关分数 ${p1n}/${p1d}。`,
         why: '古典概型：有利 / 全体',
         op: 'divide',
         formula: `${p1n}/${p1d}`,
@@ -147,33 +271,113 @@ function tryClassicalProb(text) {
       },
       {
         index: 2,
-        title: '第二次（已抽红）',
-        content: `不放回：剩 ${total - 1} 球、${red - 1} 红 → P(红₂|红₁)=${p2n}/${p2d}。`,
-        why: '条件变了，分母分子都要更新',
+        title: '第二次',
+        content: withReplace
+          ? `放回：分母仍是 ${total} → ${p2n}/${p2d}。`
+          : `不放回：分母变为 ${total - 1} → ${p2n}/${p2d}。`,
+        why: withReplace ? '放回则独立' : '条件变了，分母分子都要更新',
         op: 'divide',
         formula: `${p2n}/${p2d}`,
-        highlightNodeIds: ['r1', 'r1r2'],
+        highlightNodeIds: ['r1', 'leaf'],
       },
       {
         index: 3,
-        title: '沿路径相乘',
-        content: `P(红红)=(${p1n}/${p1d})×(${p2n}/${p2d})=${num}/${den}。`,
-        why: '同一路径上的连续事件用乘法',
+        title: isComplement ? '对立事件' : '沿路径相乘',
+        content: mul,
+        why: isComplement ? '正面难算时用对立' : '同一路径连续事件用乘法',
         op: 'conclude',
-        formula: `(${p1n}/${p1d})×(${p2n}/${p2d})=${num}/${den}`,
-        highlightNodeIds: ['r1', 'r1r2'],
+        formula: `${answerNum}/${answerDen}`,
+        highlightNodeIds: ['r1', 'leaf'],
       },
     ],
-    answer: `${num}/${den}`,
-    answerLatex: `\\dfrac{${num}}{${den}}`,
+    answer: `${answerNum}/${answerDen}`,
+    answerLatex: `\\dfrac{${answerNum}}{${answerDen}}`,
   }
+}
+
+/** 分类加法：或走 A 或走 B（高考基础乘法原理 / 加法原理） */
+function tryClassifyAdd(text) {
+  if (!/分类|或者|两类|两种方法|从.*或.*中/.test(text) && !/加原/.test(text)) {
+    // 「甲乙两班…各选」类
+    if (!/甲.*乙|两个班|两班/.test(text)) return null
+  }
+  const nums = [...text.matchAll(/(\d+)\s*(?:人|种|个|名)/g)].map((m) => Number(m[1]))
+  if (nums.length < 2) return null
+  // 两班各选 1 人：n1+n2；或「有 a 种方法或 b 种方法」
+  if (/各选\s*1|选\s*1\s*(?:人|名)|一名代表|选1名代表/.test(text) || /或者|分类/.test(text)) {
+    const a = nums[0]
+    const b = nums[1]
+    const ans = a + b
+    return {
+      version: LOGIC_IR_VERSION,
+      problemType: 'multiply_add',
+      goal: text,
+      coreIdea: '完成这件事只需走一类办法 → 分类相加。',
+      rootId: 'root',
+      nodes: [
+        {
+          id: 'root',
+          label: '分类',
+          kind: 'add',
+          children: ['c1', 'c2'],
+          why: '两类办法互斥，用加法',
+        },
+        {
+          id: 'c1',
+          label: `第一类 ${a}`,
+          count: a,
+          kind: 'case',
+          children: [],
+          why: `${a} 种`,
+        },
+        {
+          id: 'c2',
+          label: `第二类 ${b}`,
+          count: b,
+          kind: 'case',
+          children: [],
+          why: `${b} 种`,
+        },
+      ],
+      steps: [
+        {
+          index: 1,
+          title: '识别：分类',
+          content: '只需完成其中一类即可 → 加法原理。',
+          why: '分类用加，分步才用乘',
+          highlightNodeIds: ['root'],
+        },
+        {
+          index: 2,
+          title: '两类选法',
+          content: `第一类 ${a} 种，第二类 ${b} 种。`,
+          why: '两类互斥、不重不漏',
+          formula: `${a}+${b}`,
+          highlightNodeIds: ['c1', 'c2'],
+        },
+        {
+          index: 3,
+          title: '合并',
+          content: `${a}+${b}=${ans}。`,
+          why: '分类相加',
+          op: 'conclude',
+          formula: String(ans),
+          highlightNodeIds: ['root', 'c1', 'c2'],
+        },
+      ],
+      answer: String(ans),
+      answerLatex: String(ans),
+    }
+  }
+  return null
 }
 
 /** 从 n 人选正副 / 班长与委员等有序职务 */
 function tryOrderedOfficers(text) {
   const hasOrder =
     /(正|副).*(正|副)/.test(text) ||
-    /班长.*副|正副|主席.*书记|有序|排列|名次|冠军.*亚军/.test(text)
+    /班长.*副|正副|主席.*书记|有序|排列|名次|冠军.*亚军/.test(text) ||
+    /班长.*委员|委员.*委员|各\s*[1一]\s*人/.test(text)
   if (!hasOrder) return null
 
   const nMatch =
@@ -184,10 +388,19 @@ function tryOrderedOfficers(text) {
   const n = Number(nMatch[1])
   if (n < 2 || n > 30) return null
 
-  // 默认两职：正副；若写「选 k 人且有序」用 k
+  // 默认两职：正副；若写「选 k 人且有序」用 k；若「班长、…、…各1人」数职务
   let k = 2
-  const kMatch = text.match(/选\s*(\d+)\s*人/)
-  if (kMatch && !/(正|副)/.test(text)) k = Number(kMatch[1])
+  const roleList = text.match(/选([^，。？?\n]{2,48}?)各\s*[1一]\s*人/)
+  if (roleList) {
+    const parts = roleList[1]
+      .split(/[、,，]/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+    if (parts.length >= 2) k = parts.length
+  } else {
+    const kMatch = text.match(/选\s*(\d+)\s*人/)
+    if (kMatch && !/(正|副)/.test(text)) k = Number(kMatch[1])
+  }
   if (k < 2 || k > n) k = 2
 
   const counts = []
@@ -262,14 +475,19 @@ function tryCombination(text) {
   if (orderedHint) return null
 
   const nMatch =
-    text.match(/从\s*(\d+)\s*人/) ||
-    text.match(/(\d+)\s*名?(?:同学|学生|人)中/)
+    text.match(/从\s*(\d+)\s*(?:人|名|个|位)/) ||
+    text.match(/(\d+)\s*名?(?:同学|学生|人)中/) ||
+    text.match(/(\d+)\s*个(?:不同)?(?:元素|球|物品|数)/)
   const kMatch =
-    text.match(/选\s*(\d+)\s*人/) ||
-    text.match(/取\s*(\d+)\s*人/) ||
-    text.match(/抽\s*(\d+)\s*人/)
+    text.match(/选\s*(\d+)\s*(?:人|名|个|位)/) ||
+    text.match(/取\s*(\d+)\s*(?:人|名|个)/) ||
+    text.match(/抽\s*(\d+)\s*(?:人|名|个)/) ||
+    text.match(/取出\s*(\d+)/)
   if (!nMatch || !kMatch) return null
-  if (!/代表|委员|小组|无.*(职务|职位|差别)|组合|多少种/.test(text) && !/选/.test(text)) {
+  if (
+    !/代表|委员|小组|无.*(职务|职位|差别)|组合|多少种|选法/.test(text) &&
+    !/选/.test(text)
+  ) {
     return null
   }
 

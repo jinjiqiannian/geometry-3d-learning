@@ -10,6 +10,21 @@ import { HighlightEngine, HIGHLIGHT_COLORS_CONST } from '../../engines/highlight
 import AnnotationRenderer from '../../renderers/AnnotationRenderer';
 const easeInOutCubic = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 const ANIMATION_DURATION = 600;
+
+/** 按 drawProgress(0→1) 截取线段，呈现「画出」过程 */
+function geometryWithDrawProgress(from, to, progress, fallbackGeo) {
+  if (!from || !to || progress == null || progress >= 0.999) return fallbackGeo;
+  const p = Math.max(0.001, Math.min(1, progress));
+  const end = [
+    from[0] + (to[0] - from[0]) * p,
+    from[1] + (to[1] - from[1]) * p,
+    from[2] + (to[2] - from[2]) * p,
+  ];
+  return new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(from[0], from[1], from[2]),
+    new THREE.Vector3(end[0], end[1], end[2]),
+  ]);
+}
 function ring(radius, plane, seg = 64) {
  const pts = [];
  for (let i = 0; i <= seg; i++) {
@@ -490,8 +505,9 @@ const sceneIRAnim = useRef({ camera: null });
  opacity *= effectiveNonHighlightOpacity;
  }
  const isEdge = ['棱', '底面边', '顶面边', '侧棱'].includes(l.category) || l.custom;
+ const drawGeo = geometryWithDrawProgress(l.from, l.to, lineState.drawProgress, l._geo);
  return (<group key={key}>
- <line geometry={l._geo} visible={opacity > 0} raycast={() => { }}>
+ <line geometry={drawGeo} visible={opacity > 0} raycast={() => { }}>
  <lineBasicMaterial color={color} transparent opacity={opacity} dashed={style.dash || l.dashed}/>
  </line>
  {isEdge && (<EdgeHitbox from={l.from} to={l.to} lineData={l} lineKey={key} visible={visible} selected={selected} hovered={hovered} onPointerOver={handlePointerOver} onPointerOut={handlePointerOut} onSelect={handleSelect}/>)}
@@ -602,7 +618,8 @@ const sceneIRAnim = useRef({ camera: null });
  }
  if (l.visible === false)
  opacity = 0;
- return (<line key={`ir-line-${l.id}`} geometry={l._geo} visible={opacity > 0.001} renderOrder={3}>
+ const drawGeo = geometryWithDrawProgress(l.from, l.to, lineState.drawProgress, l._geo);
+ return (<line key={`ir-line-${l.id}`} geometry={drawGeo} visible={opacity > 0.001} renderOrder={3}>
  <lineBasicMaterial color={color} transparent opacity={opacity} dashed={dashed}/>
  </line>);
  })}

@@ -388,10 +388,14 @@ function extractSimpleEdgePairs(text) {
  */
 function detectSubType(text, type) {
   if (/二面角|dihedral/.test(text)) return "dihedral_angle";
-  if (/线面角|直线.*(?:与|和).*(?:平面|面).*(?:所成|的)角/.test(text))
+  if (
+    /线面角|直线.*(?:与|和).*(?:平面|底面|面).*(?:所成|的)角|(?:与|和)(?:平面|底面).*(?:所成|夹)角/.test(
+      text
+    )
+  )
     return "line_plane_angle";
-  if (/异面|skew|异面直线|所成角|夹角/.test(text) && type === "cube") return "skew_lines";
-  if (/余弦|正弦|正切|cos|sin|tan/.test(text) && type === "cube") return "skew_lines";
+  if (/异面|skew|异面直线/.test(text) && type === "cube") return "skew_lines";
+  // 勿用单独「所成角/正弦」误判为异面角（会抢走线面角基础题）
   if (/点.*到.*(?:平面|面).*距离|等体积法/.test(text))
     return "point_plane_distance";
   if (/内接|内切|inscribed/.test(text)) return "inscribed";
@@ -881,8 +885,13 @@ export function quickMatch(text) {
   // 长方体
   const cuboidMatch = t.match(/长方体|cuboid/);
   if (cuboidMatch) {
-    const sizeMatch = t.match(/(?:棱长[为是]?|长[为是]?)\s*(\d+(?:\.\d+)?)/);
-    const size = sizeMatch ? parseFloat(sizeMatch[1]) : 2;
+    const lengthMatch = t.match(/长[为是]?\s*(\d+(?:\.\d+)?)/);
+    const widthMatch = t.match(/宽[为是]?\s*(\d+(?:\.\d+)?)/);
+    const heightMatch = t.match(/高[为是]?\s*(\d+(?:\.\d+)?)/);
+    const a = lengthMatch ? parseFloat(lengthMatch[1]) : 2;
+    const b = widthMatch ? parseFloat(widthMatch[1]) : a;
+    const c = heightMatch ? parseFloat(heightMatch[1]) : a;
+    const size = a;
 
     const extractedLabels = extractVerticesFromText(text);
     const labels = extractedLabels || ["A", "B", "C", "D", "E", "F", "G", "H"];
@@ -895,12 +904,13 @@ export function quickMatch(text) {
       labels,
       vertices: labels,
       highlightLines,
-      params: { size },
+      params: { size, a, b, c, length: a, width: b, height: c },
       annotations: [],
-      explanation: sizeMatch
-        ? `长方体，棱长 ${size}`
-        : "长方体（参数来自快速匹配）",
-      confidence: 0.85,
+      explanation:
+        lengthMatch || widthMatch || heightMatch
+          ? `长方体，长${a} 宽${b} 高${c}`
+          : "长方体（参数来自快速匹配）",
+      confidence: 0.9,
     };
   }
 
@@ -1095,16 +1105,24 @@ function generateFallbackResult(text) {
   if (/长方体|cuboid/.test(t)) {
     const extractedLabels = extractVerticesFromText(text);
     const labels = extractedLabels || ["A", "B", "C", "D", "E", "F", "G", "H"];
+    const dims = t.match(
+      /长[为是]?\s*(\d+(?:\.\d+)?)[、,，\s]*宽[为是]?\s*(\d+(?:\.\d+)?)[、,，\s]*高[为是]?\s*(\d+(?:\.\d+)?)/,
+    );
+    const a = dims ? parseFloat(dims[1]) : size;
+    const b = dims ? parseFloat(dims[2]) : size;
+    const c = dims ? parseFloat(dims[3]) : size;
     return {
       type: "cuboid",
-      size,
+      size: a,
       subType: detectSubType(text, "cuboid"),
       labels,
       vertices: labels,
       highlightLines: extractEdgeRefs(text),
-      params: { size },
+      params: { size: a, a, b, c, length: a, width: b, height: c },
       annotations: [],
-      explanation: `长方体，棱长 ${size}（本地解析）`,
+      explanation: dims
+        ? `长方体，长${a} 宽${b} 高${c}（本地解析）`
+        : `长方体，棱长 ${size}（本地解析）`,
       confidence: 0.85,
     };
   }

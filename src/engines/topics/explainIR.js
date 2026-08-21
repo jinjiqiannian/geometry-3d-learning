@@ -536,11 +536,172 @@ function solveDerivative(text) {
     if (/x\s*³|x\^3|x3/.test(text) && /−\s*3x|-3x/.test(text) && /x\s*=\s*1/.test(text)) {
       return structuredClone(EX_DERIV_TANGENT)
     }
-    // 通用：y=x^n 在 x=x0 — 太窄，走样例提示
+    // 高考基础 / 作业：y=x^n 在 x=x0 或点(x0,y0) 处切线
+    const at =
+      text.match(/x\s*=\s*(-?\d+)/) ||
+      text.match(/点\s*\(\s*(-?\d+)\s*[,，]\s*-?\d+\s*\)/)
+    const x0 = at ? Number(at[1]) : null
+    if (x0 != null) {
+      const pow = text.match(
+        /y\s*=\s*x\s*(?:\^(\d+)|([²³⁴]))|f\s*\(\s*x\s*\)\s*=\s*x\s*(?:\^(\d+)|([²³⁴]))/,
+      )
+      if (pow) {
+        const map = { '²': 2, '³': 3, '⁴': 4 }
+        const n = Number(pow[1] || pow[3] || map[pow[2] || pow[4]] || 0)
+        if (n >= 2) {
+          const k = n * x0 ** (n - 1)
+          const y0 = x0 ** n
+          const ans =
+            k === 0
+              ? `y=${y0}`
+              : `y=${k}(x${x0 >= 0 ? '−' : '+'}${Math.abs(x0)})+${y0}`
+          return {
+            version: 1,
+            problemType: 'deriv_tangent',
+            topic: 'derivative',
+            goal: text,
+            coreIdea: '切线：斜率 f′(x₀)，切点 (x₀,f(x₀))，点斜式。',
+            rootId: 'root',
+            nodes: [
+              {
+                id: 'root',
+                label: '切线三步',
+                kind: 'choice',
+                children: ['m', 'p', 'eq'],
+                why: '先导数再代入',
+              },
+              {
+                id: 'm',
+                label: `k=f′(${x0})=${k}`,
+                kind: 'outcome',
+                children: [],
+                why: `(x^${n})′=${n}x^${n - 1}`,
+              },
+              {
+                id: 'p',
+                label: `切点 (${x0},${y0})`,
+                kind: 'outcome',
+                children: [],
+                why: `f(${x0})=${y0}`,
+              },
+              {
+                id: 'eq',
+                label: ans,
+                kind: 'outcome',
+                children: [],
+                why: '点斜式',
+              },
+            ],
+            steps: [
+              {
+                index: 1,
+                title: '求导',
+                content: `f(x)=x^${n} → f′(x)=${n}x^${n - 1}`,
+                why: '幂法则',
+                highlightNodeIds: ['root'],
+              },
+              {
+                index: 2,
+                title: '斜率',
+                content: `k=f′(${x0})=${k}`,
+                why: '代入切点横坐标',
+                formula: String(k),
+                highlightNodeIds: ['m'],
+              },
+              {
+                index: 3,
+                title: '切点',
+                content: `(${x0},${y0})`,
+                why: '纵坐标用原函数',
+                highlightNodeIds: ['p'],
+              },
+              {
+                index: 4,
+                title: '方程',
+                content: ans,
+                why: '点斜式写完即可',
+                formula: ans,
+                highlightNodeIds: ['eq'],
+              },
+            ],
+            answer: ans,
+          }
+        }
+      }
+    }
   }
   if (/单调|增减/.test(text)) {
     if (/x\s*³|x\^3/.test(text) && /3x/.test(text)) {
       return structuredClone(EX_DERIV_MONO)
+    }
+  }
+  if (/极值|极大|极小|最值/.test(text)) {
+    // 高考基础：f(x)=x³−3x 型，f'=3x²−3=0 → x=±1
+    if (/x\s*(?:\^3|³)/.test(text) && /3x/.test(text)) {
+      return {
+        version: 1,
+        problemType: 'deriv_mono',
+        topic: 'derivative',
+        goal: text,
+        coreIdea: '极值：先求 f′=0 的临界点，再比较左右或二阶导数。',
+        rootId: 'root',
+        nodes: [
+          {
+            id: 'root',
+            label: "f′=0",
+            kind: 'choice',
+            children: ['c', 'ext'],
+            why: '驻点可能是极值点',
+          },
+          {
+            id: 'c',
+            label: 'x=±1',
+            kind: 'outcome',
+            children: [],
+            why: '3(x²−1)=0',
+          },
+          {
+            id: 'ext',
+            label: '极大 2，极小 −2',
+            kind: 'outcome',
+            children: [],
+            why: 'f(1)=−2，f(−1)=2',
+          },
+        ],
+        steps: [
+          {
+            index: 1,
+            title: '求导',
+            content: "f(x)=x³−3x → f′(x)=3x²−3",
+            why: '极值先找导数为零处',
+            highlightNodeIds: ['root'],
+          },
+          {
+            index: 2,
+            title: '临界点',
+            content: "3x²−3=0 → x=±1",
+            why: '别漏负根',
+            formula: 'x=±1',
+            highlightNodeIds: ['c'],
+          },
+          {
+            index: 3,
+            title: '比较函数值',
+            content: 'f(−1)=2（极大），f(1)=−2（极小）',
+            why: '也可用二阶导数 f″=6x 判断',
+            highlightNodeIds: ['ext'],
+          },
+          {
+            index: 4,
+            title: '结论',
+            content: '极大值 2，极小值 −2',
+            why: '写清是函数值不是自变量',
+            formula: '极大2，极小−2',
+            highlightNodeIds: ['ext'],
+          },
+        ],
+        answer: '极大值2，极小值−2',
+      }
     }
   }
   if (/导|f\s*'|求导/.test(text)) {
@@ -561,7 +722,7 @@ function solveDerivative(text) {
         answer: ans,
       }
     }
-    // ax^2+bx+c
+    // ax^2+bx+c（含首项系数）
     const quad = text.match(
       /f\s*\(\s*x\s*\)\s*=\s*(\d*)\s*x\s*(?:\^2|²)\s*([+-])\s*(\d*)\s*x\s*([+-])\s*(\d+)/i,
     )
@@ -647,6 +808,15 @@ function solveDerivative(text) {
         answer: ans,
       }
     }
+    // 作业常见：f(x)=ax²+bx+c 用中文减号
+    const quad2 = text.match(
+      /f\s*\(\s*x\s*\)\s*=\s*(\d+)x\s*(?:\^2|²)\s*([+\-−])\s*(\d+)x\s*([+\-−])\s*(\d+)/i,
+    )
+    if (quad2) {
+      return solveDerivative(
+        text.replace(/−/g, '-').replace(/f\s*\(\s*x\s*\)\s*=/, 'f(x)='),
+      )
+    }
   }
   // 贴进样例题干
   if (text.includes('x³−3x') || text.includes('x^3-3x')) {
@@ -679,15 +849,29 @@ function solveConic(text) {
     if (cExact != null && aExact != null) {
       const fr = simplify(cExact, aExact)
       eStr = fr.d === 1 ? String(fr.n) : `${fr.n}/${fr.d}`
+    } else if (aExact != null) {
+      // 作业/高考基础常见：e=√(a²−b²)/a，如 √7/4
+      eStr = `√${a2 - b2}/${aExact}`
     } else {
       eStr = (c / a).toFixed(4).replace(/0+$/, '').replace(/\.$/, '')
     }
+    const wantFoci = /焦点/.test(text) && !/离心/.test(text)
+    const fociAns = focusOnX
+      ? cExact != null
+        ? `(±${cExact},0)`
+        : `(±√${a2 - b2},0)`
+      : cExact != null
+        ? `(0,±${cExact})`
+        : `(0,±√${a2 - b2})`
+    const ans = wantFoci ? fociAns : eStr
     return {
       version: 1,
       problemType: 'ellipse_e',
       topic: 'conic',
       goal: text,
-      coreIdea: '椭圆：c²=a²−b²，e=c/a（a 取较大半轴）。',
+      coreIdea: wantFoci
+        ? '椭圆：c²=a²−b²，焦点在长轴两端 (±c,0) 或 (0,±c)。'
+        : '椭圆：c²=a²−b²，e=c/a（a 取较大半轴）。',
       rootId: 'root',
       nodes: [
         {
@@ -713,10 +897,10 @@ function solveConic(text) {
         },
         {
           id: 'e',
-          label: `e=${eStr}`,
+          label: wantFoci ? `焦点 ${fociAns}` : `e=${eStr}`,
           kind: 'outcome',
           children: [],
-          why: 'e=c/a∈(0,1)',
+          why: wantFoci ? '焦点坐标' : 'e=c/a∈(0,1)',
         },
       ],
       steps: [
@@ -736,14 +920,14 @@ function solveConic(text) {
         },
         {
           index: 3,
-          title: '离心率',
-          content: `e=c/a=${eStr}`,
-          why: '检查是否 <1',
-          formula: eStr,
+          title: wantFoci ? '焦点' : '离心率',
+          content: wantFoci ? fociAns : `e=c/a=${eStr}`,
+          why: wantFoci ? '写在长轴上' : '检查是否 <1',
+          formula: ans,
           highlightNodeIds: ['e'],
         },
       ],
-      answer: eStr,
+      answer: ans,
     }
   }
 
@@ -815,6 +999,79 @@ function solveConic(text) {
           title: '焦点',
           content: ans,
           why: '写全两个焦点',
+          formula: ans,
+          highlightNodeIds: ['f'],
+        },
+      ],
+      answer: ans,
+    }
+  }
+
+  // 抛物线 y²=2px 或 x²=2py（高考基础：焦点/准线）
+  const paraY = text.match(/y\s*(?:\^2|²)\s*=\s*(\d+)\s*x/)
+  const paraX = text.match(/x\s*(?:\^2|²)\s*=\s*(\d+)\s*y/)
+  if (paraY || paraX) {
+    const openRight = Boolean(paraY)
+    const coeff = Number((paraY || paraX)[1])
+    // 教材常用 y²=2px；写成 y²=4ax 则 a=coeff/4
+    const a = coeff / 4
+    const focus = openRight ? `(${a},0)` : `(0,${a})`
+    const directrix = openRight ? `x=${-a}` : `y=${-a}`
+    const wantFocus = /焦点|focus/i.test(text) || !/准线/.test(text)
+    const ans = wantFocus ? focus : directrix
+    return {
+      version: 1,
+      problemType: 'parabola_focus',
+      topic: 'conic',
+      goal: text,
+      coreIdea: openRight
+        ? 'y²=2px 型：先化成 y²=4ax，焦点 (a,0)，准线 x=−a。'
+        : 'x²=2py 型：化成 x²=4ay，焦点 (0,a)，准线 y=−a。',
+      rootId: 'root',
+      nodes: [
+        {
+          id: 'root',
+          label: openRight ? '开口向右' : '开口向上',
+          kind: 'choice',
+          children: ['a', 'f'],
+          why: '看平方项在哪一侧',
+        },
+        {
+          id: 'a',
+          label: `4a=${coeff} → a=${a}`,
+          kind: 'outcome',
+          children: [],
+          why: '标准式系数是 4a',
+        },
+        {
+          id: 'f',
+          label: wantFocus ? `焦点 ${focus}` : `准线 ${directrix}`,
+          kind: 'outcome',
+          children: [],
+          why: wantFocus ? '焦点在对称轴上' : '准线在开口反方向',
+        },
+      ],
+      steps: [
+        {
+          index: 1,
+          title: '认开口',
+          content: openRight ? 'y² 在左侧 → 开口向右' : 'x² 在左侧 → 开口向上/下',
+          why: '决定焦点落在哪条轴',
+          highlightNodeIds: ['root'],
+        },
+        {
+          index: 2,
+          title: '求 a',
+          content: `写成标准式，4a=${coeff}，a=${a}`,
+          why: '不要把 2p 直接当 a',
+          formula: `a=${a}`,
+          highlightNodeIds: ['a'],
+        },
+        {
+          index: 3,
+          title: wantFocus ? '焦点' : '准线',
+          content: ans,
+          why: wantFocus ? '焦点到顶点距离为 a' : '准线到顶点距离也为 a',
           formula: ans,
           highlightNodeIds: ['f'],
         },

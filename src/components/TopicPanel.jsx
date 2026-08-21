@@ -211,21 +211,42 @@ function physCaption(problemType, stepIndex, answer) {
   return lines[Math.min(n, lines.length - 1)]
 }
 
+/** 解题步骤 → 演示分阶：认场景 → 出公式 → 代入 → 结论运动 */
+function physPhase(stepIndex) {
+  const n = stepIndex ?? 0
+  if (n <= 0) return 'setup'
+  if (n === 1) return 'formula'
+  if (n === 2) return 'plug'
+  return 'done'
+}
+
+function PhysFormulaChip({ text, show }) {
+  if (!show) return null
+  return <div className="phys-formula-chip is-pop">{text}</div>
+}
+
 function PhysicsDemo({ problemType, stepIndex, answer }) {
-  const live = 'phys-live is-playing'
+  const phase = physPhase(stepIndex)
+  const playing = phase === 'plug' || phase === 'done'
+  const live = `phys-live${playing ? ' is-playing' : ''} is-phase-${phase}`
   const caption = physCaption(problemType, stepIndex, answer)
+  const showFormula = phase !== 'setup'
+  const showAnswer = phase === 'done'
 
   if (problemType === 'phys_newton' || problemType === 'phys_find_F') {
+    const formula = problemType === 'phys_find_F' ? 'F = ma' : 'a = F / m'
     return (
-      <div className={`demo-stage topic-demo ${live}`} data-kind="newton">
+      <div className={`demo-stage topic-demo ${live}`} data-kind="newton" data-phase={phase}>
         <p className="demo-stage-title">方法：F=ma — 看物体被加速推走</p>
         <div className="phys-stage">
           <div className="phys-accel-track">
-            <div className="phys-accel-force">→ F</div>
+            <div className={`phys-accel-force${showFormula ? ' is-on' : ''}`}>→ F</div>
             <div className="phys-accel-box">m</div>
-            <div className="phys-accel-a">a</div>
+            <div className={`phys-accel-a${showFormula ? ' is-on' : ''}`}>a</div>
           </div>
         </div>
+        <PhysFormulaChip text={formula} show={showFormula} />
+        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -233,18 +254,20 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
 
   if (problemType === 'phys_work') {
     return (
-      <div className={`demo-stage topic-demo ${live}`} data-kind="work">
+      <div className={`demo-stage topic-demo ${live}`} data-kind="work" data-phase={phase}>
         <p className="demo-stage-title">方法：同向推动 — 看位移累积成功</p>
         <div className="phys-stage">
           <div className="phys-work-live">
-            <span className="phys-work-f">→ F</span>
+            <span className={`phys-work-f${showFormula ? ' is-on' : ''}`}>→ F</span>
             <div className="phys-work-rail">
               <div className="phys-work-slider">■</div>
             </div>
-            <span className="phys-work-s">s</span>
-            <span className="phys-work-w">W=Fs</span>
+            <span className={`phys-work-s${showFormula ? ' is-on' : ''}`}>s</span>
+            <span className={`phys-work-w${showFormula ? ' is-on' : ''}`}>W=Fs</span>
           </div>
         </div>
+        <PhysFormulaChip text="W = F · s" show={showFormula} />
+        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -261,20 +284,28 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
         : problemType === 'phys_v2as'
           ? '方法：速度随位移涨 — 看加速冲刺'
           : '方法：匀加速 — 看速度条持续上涨'
+    const formula =
+      problemType === 'phys_displacement'
+        ? 's = v₀t + ½at²'
+        : problemType === 'phys_v2as'
+          ? 'v² = v₀² + 2as'
+          : 'v = v₀ + at'
     return (
-      <div className={`demo-stage topic-demo ${live}`} data-kind="motion">
+      <div className={`demo-stage topic-demo ${live}`} data-kind="motion" data-phase={phase}>
         <p className="demo-stage-title">{title}</p>
         <div className="phys-stage">
           <div className="phys-motion-live">
             <div className="phys-motion-rail">
               <div className="phys-motion-car">▮</div>
             </div>
-            <div className="phys-motion-meter">
+            <div className={`phys-motion-meter${showFormula ? ' is-on' : ''}`}>
               <div className="phys-motion-needle" />
               <span>v</span>
             </div>
           </div>
         </div>
+        <PhysFormulaChip text={formula} show={showFormula} />
+        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -282,15 +313,17 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
 
   if (problemType === 'phys_weight') {
     return (
-      <div className={`demo-stage topic-demo ${live}`} data-kind="weight">
+      <div className={`demo-stage topic-demo ${live}`} data-kind="weight" data-phase={phase}>
         <p className="demo-stage-title">方法：重力 G=mg — 方向竖直向下</p>
         <div className="phys-stage">
           <div className="phys-weight-live">
             <div className="phys-weight-hook" />
             <div className="phys-weight-mass">m</div>
-            <div className="phys-weight-g">↓ G</div>
+            <div className={`phys-weight-g${showFormula ? ' is-on' : ''}`}>↓ G</div>
           </div>
         </div>
+        <PhysFormulaChip text="G = mg" show={showFormula} />
+        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -302,6 +335,7 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
       <div
         className={`demo-stage topic-demo ${live}`}
         data-kind={isKe ? 'ke' : 'pe'}
+        data-phase={phase}
       >
         <p className="demo-stage-title">
           {isKe ? '方法：动能 — 看物体在跑道上冲刺' : '方法：势能 — 看物体在升高/下降'}
@@ -314,10 +348,12 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
           ) : (
             <div className="phys-pe-live">
               <div className="phys-pe-lift">m</div>
-              <span className="phys-pe-h">h</span>
+              <span className={`phys-pe-h${showFormula ? ' is-on' : ''}`}>h</span>
             </div>
           )}
         </div>
+        <PhysFormulaChip text={isKe ? 'Ek = ½mv²' : 'Ep = mgh'} show={showFormula} />
+        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -325,42 +361,48 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
 
   if (problemType === 'phys_ohm') {
     return (
-      <div className={`demo-stage topic-demo ${live}`} data-kind="ohm">
+      <div className={`demo-stage topic-demo ${live}`} data-kind="ohm" data-phase={phase}>
         <p className="demo-stage-title">方法：欧姆定律 — 看电荷在回路里跑</p>
         <div className="phys-stage">
           <div className="phys-ohm-live">
             <svg viewBox="0 0 240 100" className="phys-ohm-svg" aria-hidden="true">
               <rect x="20" y="20" width="200" height="60" rx="8" className="phys-ohm-loop" />
-              <circle r="5" className="phys-ohm-dot">
-                <animateMotion
-                  dur="2.4s"
-                  repeatCount="indefinite"
-                  path="M28,28 H212 V72 H28 Z"
-                />
-              </circle>
-              <circle r="5" className="phys-ohm-dot">
-                <animateMotion
-                  dur="2.4s"
-                  begin="-0.8s"
-                  repeatCount="indefinite"
-                  path="M28,28 H212 V72 H28 Z"
-                />
-              </circle>
-              <circle r="5" className="phys-ohm-dot">
-                <animateMotion
-                  dur="2.4s"
-                  begin="-1.6s"
-                  repeatCount="indefinite"
-                  path="M28,28 H212 V72 H28 Z"
-                />
-              </circle>
+              {playing && (
+                <>
+                  <circle r="5" className="phys-ohm-dot">
+                    <animateMotion
+                      dur="2.4s"
+                      repeatCount="indefinite"
+                      path="M28,28 H212 V72 H28 Z"
+                    />
+                  </circle>
+                  <circle r="5" className="phys-ohm-dot">
+                    <animateMotion
+                      dur="2.4s"
+                      begin="-0.8s"
+                      repeatCount="indefinite"
+                      path="M28,28 H212 V72 H28 Z"
+                    />
+                  </circle>
+                  <circle r="5" className="phys-ohm-dot">
+                    <animateMotion
+                      dur="2.4s"
+                      begin="-1.6s"
+                      repeatCount="indefinite"
+                      path="M28,28 H212 V72 H28 Z"
+                    />
+                  </circle>
+                </>
+              )}
               <text x="100" y="55" className="phys-ohm-label">
                 R
               </text>
             </svg>
-            <div className="phys-ohm-eq">U = IR</div>
+            <div className={`phys-ohm-eq${showFormula ? ' is-on' : ''}`}>U = IR</div>
           </div>
         </div>
+        <PhysFormulaChip text="U = IR" show={showFormula} />
+        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -368,7 +410,7 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
 
   if (problemType === 'phys_efield_def') {
     return (
-      <div className={`demo-stage topic-demo ${live}`} data-kind="efield">
+      <div className={`demo-stage topic-demo ${live}`} data-kind="efield" data-phase={phase}>
         <p className="demo-stage-title">方法：场强 — 看试探电荷被场推着走</p>
         <div className="phys-stage">
           <div className="phys-efield-live">
@@ -378,6 +420,8 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
             <div className="phys-efield-charge">+q</div>
           </div>
         </div>
+        <PhysFormulaChip text="E = F / q" show={showFormula} />
+        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -385,7 +429,7 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
 
   if (problemType === 'phys_lorentz') {
     return (
-      <div className={`demo-stage topic-demo ${live}`} data-kind="lorentz">
+      <div className={`demo-stage topic-demo ${live}`} data-kind="lorentz" data-phase={phase}>
         <p className="demo-stage-title">方法：洛伦兹力 — 看粒子在磁场里绕圈</p>
         <div className="phys-stage">
           <div className="phys-lorentz-live">
@@ -395,6 +439,8 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
             </div>
           </div>
         </div>
+        <PhysFormulaChip text="F = qvB" show={showFormula} />
+        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
@@ -402,7 +448,7 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
 
   if (problemType === 'phys_faraday') {
     return (
-      <div className={`demo-stage topic-demo ${live}`} data-kind="faraday">
+      <div className={`demo-stage topic-demo ${live}`} data-kind="faraday" data-phase={phase}>
         <p className="demo-stage-title">方法：感应电动势 — 看磁通量起伏变化</p>
         <div className="phys-stage">
           <div className="phys-faraday-live">
@@ -410,13 +456,15 @@ function PhysicsDemo({ problemType, stepIndex, answer }) {
             <div className="phys-faraday-wave" />
           </div>
         </div>
+        <PhysFormulaChip text="ε = |ΔΦ / Δt|" show={showFormula} />
+        {showAnswer && <p className="phys-step-answer is-pop">{answer}</p>}
         <p className="topic-demo-caption">{caption}</p>
       </div>
     )
   }
 
   return (
-    <div className={`demo-stage topic-demo ${live}`}>
+    <div className={`demo-stage topic-demo ${live}`} data-phase={phase}>
       <p className="demo-stage-title">方法演示</p>
       <p className="topic-demo-caption">{caption}</p>
     </div>
