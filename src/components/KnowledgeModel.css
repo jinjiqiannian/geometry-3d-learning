@@ -1,0 +1,96 @@
+.km-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.km-bg {
+  fill: transparent;
+}
+
+.km-axis {
+  stroke: rgba(28, 25, 21, 0.28);
+  stroke-width: 1.5;
+}
+
+.km-stroke,
+.km-stroke-thick,
+.km-soft-stroke {
+  fill: none;
+  stroke: #1c1915;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.km-stroke {
+  stroke-width: 2.2;
+}
+
+.km-stroke-thick {
+  stroke-width: 2.6;
+}
+
+.km-soft-stroke {
+  stroke-width: 1.6;
+  stroke-opacity: 0.35;
+}
+
+.km-fill-a {
+  fill: rgba(232, 106, 58, 0.38);
+  stroke: none;
+}
+
+.km-fill-b {
+  fill: rgba(61, 143, 130, 0.32);
+  stroke: none;
+}
+
+.km-curve {
+  fill: none;
+  stroke: #1c1915;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+}
+
+.km-accent {
+  stroke: #c2410c;
+}
+
+.km-teal {
+  stroke: #3d8f82;
+}
+
+.km-accent-line,
+.km-teal-line {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.km-accent-line {
+  stroke: #c2410c;
+}
+
+.km-teal-line {
+  stroke: #3d8f82;
+}
+
+.km-arc {
+  fill: none;
+  stroke: #3d8f82;
+  stroke-width: 2.4;
+}
+
+.km-dot {
+  fill: #c2410c;
+  stroke: #fffcf7;
+  stroke-width: 2;
+}
+
+.km-dot-teal {
+  fill: #3d8f82;
+}
+
+.km-shadow {
+  fill: rgba(40, 28, 16, 0.18);
+}

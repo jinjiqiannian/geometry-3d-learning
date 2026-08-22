@@ -7,6 +7,7 @@ import {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import BrandLogo from "../components/BrandLogo";
+import { CURRICULUM, curriculumStats } from "../data/curriculum";
 import "./LandingPage.css";
 
 const STORY = [
@@ -487,6 +488,7 @@ export default function LandingPage() {
       ? window.matchMedia("(min-width: 901px)").matches
       : true,
   );
+  const stats = curriculumStats();
 
   useLayoutEffect(() => {
     const root = document.documentElement;
@@ -800,8 +802,51 @@ export default function LandingPage() {
             <span>看明白</span>
           </h2>
           <p className="landing-manifesto-lead">
-            输入一道立体几何题，立刻得到可交互三维场景与逐步讲解。
+            数学、物理按册覆盖高中重要知识点。每个点先看见模型，再开讲或搜题。
           </p>
+        </Reveal>
+      </section>
+
+      <section className="landing-coverage" aria-label="知识点覆盖">
+        <Reveal className="landing-coverage-inner">
+          <p className="landing-eyebrow">覆盖</p>
+          <h2 className="landing-coverage-title">
+            {stats.points} 个重要知识点 · {stats.models} 种模型
+          </h2>
+          <p className="landing-coverage-lead">
+            数学必修与选择性必修，物理必修与选择性必修。其中 {stats.playable}{" "}
+            个可直接开讲例题。
+          </p>
+          <div className="landing-coverage-grid">
+            {CURRICULUM.map((subj) => (
+              <div key={subj.id} className="landing-coverage-col">
+                <h3>{subj.label}</h3>
+                <ul>
+                  {subj.books.map((book) => {
+                    const n = (book.children || []).reduce(
+                      (acc, ch) => acc + (ch.leaves?.length || 0),
+                      0,
+                    );
+                    return (
+                      <li key={book.id}>
+                        <span>{book.label}</span>
+                        <em>{n} 点</em>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className="landing-cta-row">
+            <button
+              type="button"
+              className="landing-submit"
+              onClick={() => go("/teach")}
+            >
+              打开教学目录
+            </button>
+          </div>
         </Reveal>
       </section>
 

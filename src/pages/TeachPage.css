@@ -167,6 +167,11 @@
   flex-direction: column;
 }
 
+.teach-main .teach-lesson {
+  flex: 1;
+  min-height: 0;
+}
+
 .teach-main .workspace-page {
   flex: 1;
   min-height: 0;

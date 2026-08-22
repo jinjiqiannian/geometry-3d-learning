@@ -1,18 +1,20 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { CURRICULUM } from "../data/curriculum";
+import TeachLesson from "../components/TeachLesson";
 import WorkspacePage from "./WorkspacePage";
 import "./TeachPage.css";
 
 const DEFAULT_SUBJECT = "math";
-const DEFAULT_BOOK = "math-req-3";
-const DEFAULT_CHAPTER = "math-req-3-solid";
+const DEFAULT_BOOK = "math-req-2";
+const DEFAULT_CHAPTER = "m2-solid";
 
 export default function TeachPage() {
   const [subjectId, setSubjectId] = useState(DEFAULT_SUBJECT);
   const [openBookId, setOpenBookId] = useState(DEFAULT_BOOK);
   const [openChapterId, setOpenChapterId] = useState(DEFAULT_CHAPTER);
   const [activeLeafId, setActiveLeafId] = useState(null);
+  const [playing, setPlaying] = useState(false);
   const [bootNonce, setBootNonce] = useState(0);
   const [navOpen, setNavOpen] = useState(true);
 
@@ -34,8 +36,15 @@ export default function TeachPage() {
 
   const selectLeaf = (leaf) => {
     setActiveLeafId(leaf.id);
+    setPlaying(false);
     setBootNonce((n) => n + 1);
     setNavOpen(false);
+  };
+
+  const clearLesson = () => {
+    setActiveLeafId(null);
+    setPlaying(false);
+    setNavOpen(true);
   };
 
   return (
@@ -64,8 +73,7 @@ export default function TeachPage() {
                 const firstBook = s.books?.[0];
                 setOpenBookId(firstBook?.id ?? null);
                 setOpenChapterId(firstBook?.children?.[0]?.id ?? null);
-                setActiveLeafId(null);
-                setNavOpen(true);
+                clearLesson();
               }}
             >
               {s.label}
@@ -153,22 +161,25 @@ export default function TeachPage() {
             {navOpen ? "收起目录" : "课程目录"}
           </button>
         )}
-        {activeLeaf ? (
+        {activeLeaf && playing && activeLeaf.subject && activeLeaf.text ? (
           <WorkspacePage
             key={`${activeLeaf.id}-${bootNonce}`}
             variant="teach"
             teachPoint={activeLeaf}
-            onRequestExit={() => {
-              setActiveLeafId(null);
-              setNavOpen(true);
-            }}
+            onRequestExit={() => setPlaying(false)}
+          />
+        ) : activeLeaf ? (
+          <TeachLesson
+            leaf={activeLeaf}
+            onPlay={() => setPlaying(true)}
+            onBack={clearLesson}
           />
         ) : (
           <div className="teach-empty">
             <p className="teach-empty-kicker">开始学习</p>
             <h2 className="teach-empty-title">从左侧选择一个知识点</h2>
             <p className="teach-empty-lead">
-              默认已打开必修第三册 · 立体几何。点开后进入与搜题相同的讲解界面。
+              默认已打开必修第二册 · 立体几何。每个点都有模型，能开讲的会进入同一套讲解界面。
             </p>
           </div>
         )}
