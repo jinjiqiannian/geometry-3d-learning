@@ -10,13 +10,20 @@ function HomeIcon({ active }) {
   )
 }
 
-function WorkspaceIcon({ active }) {
+function TeachIcon({ active }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--accent)' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 2L2 7v10l10 5 10-5V7l-10-5z" />
-      <path d="M2 7l10 5 10-5" />
-      <path d="M12 22V12" />
-      <path d="M7 9.5l5 2.5 5-2.5" />
+      <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+    </svg>
+  )
+}
+
+function SearchIcon({ active }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--accent)' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
   )
 }
@@ -32,7 +39,8 @@ function HistoryIcon({ active }) {
 
 const NAV_ITEMS = [
   { path: '/', label: '首页', icon: HomeIcon },
-  { path: '/workspace', label: '工作台', icon: WorkspaceIcon },
+  { path: '/teach', label: '教学', icon: TeachIcon },
+  { path: '/search', label: '搜题', icon: SearchIcon },
   { path: '/history', label: '历史', icon: HistoryIcon },
 ]
 
