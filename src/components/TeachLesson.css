@@ -1,0 +1,115 @@
+.teach-lesson {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: #f4f0e8;
+}
+
+.teach-lesson-bar {
+  padding: 10px 16px 0;
+}
+
+.teach-lesson-back {
+  border: none;
+  background: transparent;
+  color: #6b645c;
+  font-size: 0.88rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.teach-lesson-stage {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  min-height: 0;
+  gap: 0;
+}
+
+.teach-lesson-poster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(ellipse 55% 45% at 50% 40%, rgba(232, 106, 58, 0.16), transparent 62%),
+    linear-gradient(165deg, #e8dfd0, #d8cbb6);
+}
+
+.teach-lesson-poster .km-svg {
+  width: min(100%, 520px);
+}
+
+.teach-lesson-copy {
+  padding: 36px 32px;
+  overflow-y: auto;
+}
+
+.teach-lesson-kicker {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #9a9288;
+}
+
+.teach-lesson-title {
+  margin: 0 0 12px;
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  letter-spacing: -0.02em;
+}
+
+.teach-lesson-idea {
+  margin: 0 0 20px;
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: #6b645c;
+}
+
+.teach-lesson-formulas {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+}
+
+.teach-lesson-formulas li {
+  padding: 10px 0;
+  border-top: 1px solid rgba(28, 25, 21, 0.08);
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+
+.teach-lesson-steps {
+  margin: 0 0 24px;
+  padding-left: 1.2em;
+  color: #6b645c;
+  line-height: 1.7;
+}
+
+.teach-lesson-play {
+  padding: 12px 22px;
+  border: none;
+  border-radius: 999px;
+  background: #1c1915;
+  color: #fffcf7;
+  font-size: 0.94rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.teach-lesson-note {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b645c;
+}
+
+@media (max-width: 900px) {
+  .teach-lesson-stage {
+    grid-template-columns: 1fr;
+  }
+
+  .teach-lesson-poster {
+    min-height: 240px;
+  }
+}

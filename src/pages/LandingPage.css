@@ -845,6 +845,69 @@
 /* ═══════════════════════════════════════════════════
    Gallery — Instagram grid, distinct shapes
    ═══════════════════════════════════════════════════ */
+.landing-coverage {
+  padding: clamp(48px, 8vh, 88px) clamp(20px, 4vw, 48px);
+  border-top: 1px solid var(--lp-line);
+  background: var(--lp-paper);
+}
+
+.landing-coverage-inner {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.landing-coverage-title {
+  margin: 0 0 12px;
+  font-family: var(--lp-serif);
+  font-size: clamp(1.7rem, 3.6vw, 2.6rem);
+  letter-spacing: -0.02em;
+}
+
+.landing-coverage-lead {
+  margin: 0 0 28px;
+  max-width: 36em;
+  color: var(--lp-muted);
+  line-height: 1.7;
+}
+
+.landing-coverage-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px 48px;
+  margin-bottom: 28px;
+}
+
+.landing-coverage-col h3 {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
+
+.landing-coverage-col ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.landing-coverage-col li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--lp-line);
+  font-size: 0.94rem;
+}
+
+.landing-coverage-col em {
+  font-style: normal;
+  color: var(--lp-accent);
+}
+
+@media (max-width: 700px) {
+  .landing-coverage-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .landing-gallery {
   padding: clamp(48px, 7vh, 72px) clamp(20px, 4vw, 48px);
   background: var(--lp-paper);
