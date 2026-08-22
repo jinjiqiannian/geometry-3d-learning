@@ -4,7 +4,8 @@ import { useTheme } from '../contexts/ThemeContext'
 import './AppNavigation.css'
 
 const NAV_ITEMS = [
-  { path: '/workspace', label: '工作台' },
+  { path: '/teach', label: '教学' },
+  { path: '/search', label: '搜题' },
   { path: '/history', label: '历史' },
 ]
 

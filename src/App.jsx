@@ -7,7 +7,6 @@ import { TeacherProvider } from './contexts/TeacherContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import PageLayout from './layouts/PageLayout';
 import LandingPage from './pages/LandingPage';
-import WorkspacePage from './pages/WorkspacePage';
 import ErrorBoundary from './components/ErrorBoundary';
 import ChunkErrorBoundary from './components/ChunkErrorBoundary';
 
@@ -23,6 +22,8 @@ const ExamReportPage = lazy(() => import('./pages/ExamReportPage'));
 const LearningPlanPage = lazy(() => import('./pages/LearningPlanPage'));
 const EduMindProfile = lazy(() => import('./pages/edumind/ProfilePage'));
 const FeedbackAdminPage = lazy(() => import('./pages/FeedbackAdminPage'));
+const TeachPage = lazy(() => import('./pages/TeachPage'));
+const SearchPage = lazy(() => import('./pages/SearchPage'));
 
 // ── Suspense fallback ──
 function PageLoader() {
@@ -76,9 +77,21 @@ const router = createHashRouter([
       },
       {
         path: 'workspace',
+        element: <Navigate to="/search" replace />,
+      },
+      {
+        path: 'teach',
         element: (
           <WrappedRoute>
-            <WorkspacePage />
+            <TeachPage />
+          </WrappedRoute>
+        ),
+      },
+      {
+        path: 'search',
+        element: (
+          <WrappedRoute>
+            <SearchPage />
           </WrappedRoute>
         ),
       },

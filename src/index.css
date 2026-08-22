@@ -273,7 +273,7 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* 首页：文档自然增高，整页可下滑看介绍 */
+/* 首页：文档自然增高，整页可下滑看介绍；锁定纸色底，避免深色主题闪黑 */
 html.is-landing,
 html.is-landing body {
   height: auto;
@@ -281,12 +281,15 @@ html.is-landing body {
   overflow-x: clip;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  background: #f3f1ec;
+  color: #121212;
 }
 
 html.is-landing #root {
   height: auto;
   min-height: 100%;
   overflow: visible;
+  background: #f3f1ec;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -384,15 +387,10 @@ textarea {
 }
 
 /* ── Dark mode: Landing page ─────────────────────── */
+/* 首页保留自有纸色/叙事色板，不套用全局深色底（否则深字+深底≈全黑页） */
 [data-theme="dark"] .landing {
-  background: linear-gradient(180deg, var(--bg-base) 0%, var(--bg-deep) 40%);
-}
-
-[data-theme="dark"] .landing-title {
-  background: linear-gradient(135deg, #f0f0f5 0%, #818cf8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  background: var(--lp-paper, #f3f1ec);
+  color: var(--lp-ink, #121212);
 }
 
 /* ── Dark mode: Legacy feature components ────────── */

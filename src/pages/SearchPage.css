@@ -1,0 +1,121 @@
+.search-page {
+  --search-ink: #1c1915;
+  --search-muted: #6b645c;
+  --search-paper: #f4f0e8;
+  --search-cream: #fffcf7;
+  --search-accent: #c2410c;
+
+  min-height: calc(100dvh - var(--app-nav-height, 56px) - var(--mobile-nav-height, 0px));
+  background:
+    radial-gradient(ellipse 55% 40% at 50% 20%, rgba(194, 65, 12, 0.07), transparent 60%),
+    var(--search-paper);
+  color: var(--search-ink);
+}
+
+.search-page--active {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--app-nav-height, 56px) - var(--mobile-nav-height, 0px));
+  min-height: 480px;
+  background: var(--search-paper);
+}
+
+.search-page--active .workspace-page {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+.search-shell {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: clamp(48px, 10vh, 96px) 24px 64px;
+}
+
+.search-kicker {
+  margin: 0 0 10px;
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--search-muted);
+}
+
+.search-title {
+  margin: 0 0 12px;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 650;
+  letter-spacing: -0.03em;
+}
+
+.search-lead {
+  margin: 0 0 28px;
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: var(--search-muted);
+}
+
+.search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 18px 18px;
+  border: 1px solid rgba(28, 25, 21, 0.12);
+  border-radius: 12px;
+  background: var(--search-cream);
+  color: var(--search-ink);
+  font-size: 1.02rem;
+  line-height: 1.65;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 140px;
+  box-shadow: 0 16px 40px rgba(40, 28, 16, 0.06);
+}
+
+.search-input:focus {
+  outline: 2px solid rgba(194, 65, 12, 0.35);
+  outline-offset: 2px;
+}
+
+.search-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.search-submit {
+  padding: 12px 28px;
+  border: none;
+  border-radius: 999px;
+  background: var(--search-ink);
+  color: var(--search-cream);
+  font-size: 0.95rem;
+  font-family: inherit;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.search-submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.search-submit:not(:disabled):hover {
+  background: #2c2822;
+}
+
+.search-link {
+  font-size: 0.9rem;
+  color: var(--search-accent);
+  text-decoration: none;
+}
+
+.search-link:hover {
+  text-decoration: underline;
+}
+
+.search-hint {
+  margin: 14px 0 0;
+  font-size: 0.78rem;
+  color: var(--search-muted);
+}

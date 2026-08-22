@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
 import Canvas3D from "../features/solid-geometry/Canvas3D";
@@ -187,7 +187,13 @@ function convertSceneStateToOps(sceneState) {
   return ops;
 }
 
-export default function WorkspacePage() {
+export default function WorkspacePage({
+  variant = "default",
+  teachPoint = null,
+  initialQuery = null,
+  onRequestExit = null,
+}) {
+  const isEmbed = variant === "teach" || variant === "search";
   const { isGuest } = useSupabase();
   const { checkCanGenerate, recordUsage, remaining, isPro, triggerPaywall, checkCanExportPpt } =
     useSubscription();
@@ -228,7 +234,7 @@ export default function WorkspacePage() {
   const subject = domain === "physics" ? physicsTopic : mathTopic;
 
   /** 统一入口：首屏 Hub；解题后才强调专题 Tab */
-  const [hubActive, setHubActive] = useState(true);
+  const [hubActive, setHubActive] = useState(() => !isEmbed);
   const [showTopicNav, setShowTopicNav] = useState(false);
   const [panelBoot, setPanelBoot] = useState(null);
   const [routeHint, setRouteHint] = useState("");
@@ -1110,7 +1116,7 @@ export default function WorkspacePage() {
     setCameraResetKey((k) => k + 1);
   }, []);
 
-  // ── 解题页返回统一 Hub ──
+  // ── 解题页返回：默认回 Hub；嵌入模式交给父页 ──
   const handleBackToCompose = useCallback(() => {
     try {
       abortStreamRef.current?.();
@@ -1147,11 +1153,16 @@ export default function WorkspacePage() {
       params: { size: 2 },
       ...defaultConstraintParams("cube"),
     });
-    setHubActive(true);
     setShowTopicNav(false);
     setPanelBoot(null);
     setRouteHint("");
-  }, []);
+    if (isEmbed && typeof onRequestExit === "function") {
+      setHubActive(false);
+      onRequestExit();
+      return;
+    }
+    setHubActive(true);
+  }, [isEmbed, onRequestExit]);
 
   const handleHubSample = useCallback(
     (sample) => {
@@ -1175,6 +1186,42 @@ export default function WorkspacePage() {
     },
     [applySubjectNav, leaveHubWithBoot, handleParseProblem],
   );
+
+  // 教学模式 / 搜题模式：挂载时直接开讲（跳过 Hub）
+  useLayoutEffect(() => {
+    if (!isEmbed) return undefined;
+    if (teachPoint) {
+      handleHubSample({
+        subject: teachPoint.subject,
+        text: teachPoint.text,
+        sampleKey: teachPoint.sampleKey,
+      });
+      return undefined;
+    }
+    if (initialQuery) {
+      const trimmed = String(initialQuery).trim();
+      if (trimmed.length < 3) return undefined;
+      setSearchInput(trimmed);
+      const detected = detectSubject(trimmed);
+      if (detected.subject === "geometry") {
+        setProblemText(trimmed);
+        applySubjectNav("geometry");
+        setHubActive(false);
+        setShowTopicNav(false);
+        setPanelBoot(null);
+        handleParseProblem(trimmed, { useLocalOnly: false });
+      } else {
+        leaveHubWithBoot(detected.subject, {
+          type: "text",
+          text: trimmed,
+          nonce: Date.now(),
+        });
+      }
+    }
+    return undefined;
+    // 仅在挂载 / key 变化时启动一次
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── 自动回放：按合并后步骤组推进（一步一组，避免同卡步数空转） ──
   const handleTogglePlay = useCallback(() => {
@@ -1290,20 +1337,21 @@ export default function WorkspacePage() {
 
   const isComposeIdle = !problemText && !loading;
   // 解题中只显示专题标签，不展示多级入口条
-  const showTopicChip = !hubActive;
+  const showTopicChip = !hubActive && subject !== "geometry";
 
-  // 几何无题时回到 Hub，避免空画布（loading/有题时不弹回）
+  // 几何无题时回到 Hub，避免空画布（loading/有题时不弹回；嵌入模式由父页接管）
   useEffect(() => {
+    if (isEmbed) return;
     if (!hubActive && subject === "geometry" && isComposeIdle) {
       setHubActive(true);
       setShowTopicNav(false);
       setPanelBoot(null);
     }
-  }, [hubActive, subject, isComposeIdle]);
+  }, [hubActive, subject, isComposeIdle, isEmbed]);
 
   return (
     <div
-      className={`workspace-page${hubActive ? " workspace-page--hub" : ""}${!hubActive && subject === "geometry" ? " workspace-page--geometry" : ""}${!hubActive && subject === "geometry" && !isComposeIdle ? " workspace-page--solving" : ""}`}
+      className={`workspace-page${isEmbed ? " workspace-page--embed" : ""}${hubActive ? " workspace-page--hub" : ""}${!hubActive && subject === "geometry" ? " workspace-page--geometry" : ""}${!hubActive && subject === "geometry" && !isComposeIdle ? " workspace-page--solving" : ""}`}
     >
       {showTopicChip && (
         <div className="wp-topic-chip-bar" aria-label="当前专题">
@@ -1313,12 +1361,12 @@ export default function WorkspacePage() {
             className="wp-topic-chip-back"
             onClick={handleBackToCompose}
           >
-            换题
+            {variant === "teach" ? "← 换知识点" : variant === "search" ? "← 换一道" : "换题"}
           </button>
         </div>
       )}
 
-      {hubActive ? (
+      {hubActive && !isEmbed ? (
         <div className="wp-combo-shell">
           <div className="logic-panel wp-hub-panel">
             <header className="logic-panel-head">
@@ -1453,7 +1501,7 @@ export default function WorkspacePage() {
             className="wp-solve-back"
             onClick={handleBackToCompose}
           >
-            ← 换一道
+            {variant === "teach" ? "← 换知识点" : "← 换一道"}
           </button>
           {composeImage && (
             <button

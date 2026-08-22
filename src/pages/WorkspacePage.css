@@ -14,6 +14,11 @@
   position: relative;
 }
 
+.workspace-page--embed {
+  min-height: 0;
+  height: 100%;
+}
+
 /* ── Unified layout (CSS-driven responsive, single Canvas) ── */
 .wp-main {
   flex: 1;
