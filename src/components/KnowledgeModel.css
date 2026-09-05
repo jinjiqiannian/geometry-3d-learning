@@ -9,7 +9,7 @@
 }
 
 .km-axis {
-  stroke: rgba(28, 25, 21, 0.28);
+  stroke: rgba(0, 0, 0, 0.20);
   stroke-width: 1.5;
 }
 
@@ -17,7 +17,7 @@
 .km-stroke-thick,
 .km-soft-stroke {
   fill: none;
-  stroke: #1c1915;
+  stroke: #1d1d1f;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
@@ -36,28 +36,199 @@
 }
 
 .km-fill-a {
-  fill: rgba(232, 106, 58, 0.38);
+  fill: rgba(0, 113, 227, 0.12);
   stroke: none;
 }
 
 .km-fill-b {
-  fill: rgba(61, 143, 130, 0.32);
+  fill: rgba(0, 0, 0, 0.05);
   stroke: none;
+}
+
+.km-fill-c {
+  fill: rgba(0, 113, 227, 0.18);
+  stroke: none;
+}
+
+.km-hidden {
+  fill: none;
+  stroke: #1d1d1f;
+  stroke-width: 1.7;
+  stroke-dasharray: 6 5;
+  stroke-opacity: 0.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.km-vtx {
+  font-size: 13px;
+  font-family: -apple-system, "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif;
+  fill: #1d1d1f;
+  pointer-events: none;
+}
+
+.km-formula {
+  font-size: 13px;
+  font-family: -apple-system, "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif;
+  fill: #0071e3;
+  pointer-events: none;
+}
+
+/* ── 图示动画 ─────────────────────────────────────────
+ * 入场（一次性）：描边生长 0.7–0.9s、面/文字淡入 0.5s
+ * 循环（轻柔）：方向箭头流光 1.3s、辅助高光线流动 1.4s
+ * 配合 Frame 注入的 pathLength="1" 实现任意长度线条统一生长
+ */
+:root {
+  --km-ease: cubic-bezier(0.33, 0, 0.2, 1);
+}
+
+/* 主线条：描边生长入场 */
+.km-axis,
+.km-stroke,
+.km-stroke-thick,
+.km-soft-stroke,
+.km-curve,
+.km-arc,
+.km-accent-line:not(.km-flow):not(.km-diag),
+.km-teal-line:not(.km-flow) {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: km-draw 0.9s var(--km-ease) 0.08s forwards;
+}
+
+.km-soft-stroke,
+.km-axis {
+  animation-duration: 0.7s;
+}
+
+/* 面填充与底部阴影：淡入 */
+.km-fill-a,
+.km-fill-b,
+.km-fill-c,
+.km-arrow-fill,
+.km-arrow-fill-teal,
+.km-arrow-fill-ink {
+  animation: km-fade 0.55s ease 0.2s both;
+}
+
+.km-shadow {
+  animation: km-fade 0.7s ease 0.05s both;
+}
+
+/* 关键点：弹入 */
+.km-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: km-pop 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) 0.4s both;
+}
+
+/* 文字标注：淡入上移 */
+.km-vtx,
+.km-formula {
+  animation: km-text-in 0.5s ease 0.42s both;
+}
+
+/* 方向箭头（力 / 速度 / 场 / 向量）：虚线流光循环 */
+.km-flow {
+  stroke-dasharray: 7 6;
+  animation: km-flow 1.3s linear infinite;
+}
+
+/* 辅助高光线（体对角线 / 高）：轻柔流动，引导视线 */
+.km-diag {
+  stroke-dasharray: 9 7;
+  animation: km-dash 1.4s linear infinite;
+}
+
+@keyframes km-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes km-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes km-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes km-text-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes km-flow {
+  to {
+    stroke-dashoffset: -26;
+  }
+}
+
+@keyframes km-dash {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .km-axis,
+  .km-stroke,
+  .km-stroke-thick,
+  .km-soft-stroke,
+  .km-curve,
+  .km-arc,
+  .km-accent-line,
+  .km-teal-line,
+  .km-fill-a,
+  .km-fill-b,
+  .km-fill-c,
+  .km-arrow-fill,
+  .km-arrow-fill-teal,
+  .km-arrow-fill-ink,
+  .km-shadow,
+  .km-dot,
+  .km-vtx,
+  .km-formula,
+  .km-flow,
+  .km-diag {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
 }
 
 .km-curve {
   fill: none;
-  stroke: #1c1915;
+  stroke: #1d1d1f;
   stroke-width: 2.8;
   stroke-linecap: round;
 }
 
 .km-accent {
-  stroke: #c2410c;
+  stroke: #0071e3;
 }
 
 .km-teal {
-  stroke: #3d8f82;
+  stroke: #86868b;
 }
 
 .km-accent-line,
@@ -68,29 +239,44 @@
 }
 
 .km-accent-line {
-  stroke: #c2410c;
+  stroke: #0071e3;
 }
 
 .km-teal-line {
-  stroke: #3d8f82;
+  stroke: #86868b;
 }
 
 .km-arc {
   fill: none;
-  stroke: #3d8f82;
+  stroke: #86868b;
   stroke-width: 2.4;
 }
 
 .km-dot {
-  fill: #c2410c;
-  stroke: #fffcf7;
+  fill: #0071e3;
+  stroke: #ffffff;
   stroke-width: 2;
 }
 
 .km-dot-teal {
-  fill: #3d8f82;
+  fill: #86868b;
+}
+
+.km-arrow-fill {
+  fill: #0071e3;
+  stroke: none;
+}
+
+.km-arrow-fill-teal {
+  fill: #86868b;
+  stroke: none;
+}
+
+.km-arrow-fill-ink {
+  fill: #1d1d1f;
+  stroke: none;
 }
 
 .km-shadow {
-  fill: rgba(40, 28, 16, 0.18);
+  fill: rgba(0, 0, 0, 0.10);
 }

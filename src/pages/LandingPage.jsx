@@ -186,20 +186,26 @@ function ArtCompose({ className = "", hero = false }) {
       />
       <IsoGrid ox={240} oy={372} s={108} />
       <g className="lp-solid">
+        {/* 等轴测：视线沿 (1,1,1)，可见三面在近角 G 交汇 */}
         <path className="lp-face lp-face--top" d={polyPath([V.E, V.F, V.G, V.H])} />
         <path className="lp-face lp-face--side" d={polyPath([V.B, V.C, V.G, V.F])} />
-        <path className="lp-face lp-face--front" d={polyPath([V.A, V.B, V.F, V.E])} />
-        <path className="lp-edge" d={linePath(V.A, V.B)} />
-        <path className="lp-edge" d={linePath(V.B, V.C)} />
-        <path className="lp-edge" d={linePath(V.A, V.E)} />
-        <path className="lp-edge" d={linePath(V.B, V.F)} />
-        <path className="lp-edge" d={linePath(V.C, V.G)} />
+        <path className="lp-face lp-face--front" d={polyPath([V.D, V.C, V.G, V.H])} />
+        {/* 可见棱：六边形外轮廓 + 近角 G 的三条内棱 */}
         <path className="lp-edge" d={linePath(V.E, V.F)} />
-        <path className="lp-edge" d={linePath(V.F, V.G)} />
-        <path className="lp-edge" d={linePath(V.G, V.H)} />
+        <path className="lp-edge" d={linePath(V.F, V.B)} />
+        <path className="lp-edge" d={linePath(V.B, V.C)} />
+        <path className="lp-edge" d={linePath(V.C, V.D)} />
+        <path className="lp-edge" d={linePath(V.D, V.H)} />
         <path className="lp-edge" d={linePath(V.H, V.E)} />
+        <path className="lp-edge" d={linePath(V.F, V.G)} />
+        <path className="lp-edge" d={linePath(V.C, V.G)} />
+        <path className="lp-edge" d={linePath(V.H, V.G)} />
+        {/* 不可见棱：远角 A 出发，虚线 */}
+        <path className="lp-edge lp-edge--ghost" d={linePath(V.A, V.B)} />
+        <path className="lp-edge lp-edge--ghost" d={linePath(V.A, V.E)} />
+        <path className="lp-edge lp-edge--ghost" d={linePath(V.A, V.D)} />
       </g>
-      {/* 体对角线 AG · 面对角线 AF */}
+      {/* 体对角线 AG（立方体正投影缩为一点）· 面对角线与可见棱 GF 重合 */}
       <path className="lp-slash lp-slash--diag" d={linePath(V.A, V.G)} pathLength="1" />
       <path className="lp-slash lp-slash--face" d={linePath(V.A, V.F)} pathLength="1" />
       <circle className="lp-node" cx={V.A[0]} cy={V.A[1]} r="6" />
@@ -209,17 +215,18 @@ function ArtCompose({ className = "", hero = false }) {
 }
 
 function ArtReason({ className = "" }) {
-  // 长方体 1 × 1.55 × 1：平行棱 AE∥BF，底面 ∠DAB = 90°
+  // 长方体 1 × 1.55 × 1：平行棱 BF ∥ DH（两条可见竖棱），底面近角 ∠BCD = 90°
   const ox = 236;
   const oy = 378;
   const s = 92;
   const V = boxVerts(1, 1.55, 1, ox, oy, s);
-  const M1 = mid(V.A, V.E);
+  const M1 = mid(V.D, V.H);
   const M2 = mid(V.B, V.F);
   const u = 0.14;
-  const tickX = iso(u, 0, 0, ox, oy, s);
-  const tickZ = iso(0, 0, u, ox, oy, s);
-  const tickC = iso(u, 0, u, ox, oy, s);
+  // 直角记号标在底面近角 C（CB 与 CD 均为可见棱）
+  const tickB = iso(1, 0, 1 - u, ox, oy, s);
+  const tickD = iso(1 - u, 0, 1, ox, oy, s);
+  const tickM = iso(1 - u, 0, 1 - u, ox, oy, s);
   return (
     <svg
       className={`landing-story-art landing-story-art--reason ${className}`.trim()}
@@ -231,27 +238,29 @@ function ArtReason({ className = "" }) {
       <g className="lp-solid">
         <path className="lp-face lp-face--top" d={polyPath([V.E, V.F, V.G, V.H])} />
         <path className="lp-face lp-face--side" d={polyPath([V.B, V.C, V.G, V.F])} />
-        <path className="lp-face lp-face--front" d={polyPath([V.A, V.B, V.F, V.E])} />
-        <path className="lp-edge" d={linePath(V.A, V.B)} />
-        <path className="lp-edge" d={linePath(V.B, V.C)} />
-        <path className="lp-edge" d={linePath(V.A, V.E)} />
-        <path className="lp-edge" d={linePath(V.B, V.F)} />
-        <path className="lp-edge" d={linePath(V.C, V.G)} />
+        <path className="lp-face lp-face--front" d={polyPath([V.D, V.C, V.G, V.H])} />
+        {/* 可见棱：外轮廓 + 近角 G 内棱 */}
         <path className="lp-edge" d={linePath(V.E, V.F)} />
-        <path className="lp-edge" d={linePath(V.F, V.G)} />
-        <path className="lp-edge" d={linePath(V.G, V.H)} />
+        <path className="lp-edge" d={linePath(V.F, V.B)} />
+        <path className="lp-edge" d={linePath(V.B, V.C)} />
+        <path className="lp-edge" d={linePath(V.C, V.D)} />
+        <path className="lp-edge" d={linePath(V.D, V.H)} />
         <path className="lp-edge" d={linePath(V.H, V.E)} />
+        <path className="lp-edge" d={linePath(V.F, V.G)} />
+        <path className="lp-edge" d={linePath(V.C, V.G)} />
+        <path className="lp-edge" d={linePath(V.H, V.G)} />
+        {/* 不可见棱：远角 A 出发，虚线 */}
+        <path className="lp-edge lp-edge--ghost" d={linePath(V.A, V.B)} />
+        <path className="lp-edge lp-edge--ghost" d={linePath(V.A, V.E)} />
         <path className="lp-edge lp-edge--ghost" d={linePath(V.A, V.D)} />
-        <path className="lp-edge lp-edge--ghost" d={linePath(V.D, V.C)} />
-        <path className="lp-edge lp-edge--ghost" d={linePath(V.D, V.H)} />
       </g>
-      {/* AE ∥ BF */}
-      <path className="lp-slash lp-slash--parallel" d={linePath(V.A, V.E)} pathLength="1" />
+      {/* DH ∥ BF：两条可见的竖直轮廓棱 */}
+      <path className="lp-slash lp-slash--parallel" d={linePath(V.D, V.H)} pathLength="1" />
       <path className="lp-slash lp-slash--parallel lp-slash--parallel-b" d={linePath(V.B, V.F)} pathLength="1" />
-      {/* 底面 AB 上的直角记号 */}
+      {/* 底面近角 C 处的直角记号 */}
       <path
         className="lp-arc"
-        d={`${linePath(tickX, tickC)} ${linePath(tickC, tickZ)}`}
+        d={`${linePath(tickB, tickM)} ${linePath(tickM, tickD)}`}
         pathLength="1"
       />
       <circle className="lp-node" cx={M1[0]} cy={M1[1]} r="5" />
@@ -280,20 +289,24 @@ function ArtExplain({ className = "" }) {
       <g className="lp-solid">
         <path className="lp-face lp-face--top" d={polyPath([V.E, V.F, V.G, V.H])} />
         <path className="lp-face lp-face--side" d={polyPath([V.B, V.C, V.G, V.F])} />
-        <path className="lp-face lp-face--front lp-face--lit" d={polyPath([V.A, V.B, V.F, V.E])} />
-        <path className="lp-edge" d={linePath(V.A, V.B)} />
-        <path className="lp-edge" d={linePath(V.B, V.C)} />
-        <path className="lp-edge" d={linePath(V.A, V.E)} />
-        <path className="lp-edge" d={linePath(V.B, V.F)} />
-        <path className="lp-edge" d={linePath(V.C, V.G)} />
+        <path className="lp-face lp-face--front lp-face--lit" d={polyPath([V.D, V.C, V.G, V.H])} />
         <path className="lp-edge" d={linePath(V.E, V.F)} />
-        <path className="lp-edge" d={linePath(V.F, V.G)} />
-        <path className="lp-edge" d={linePath(V.G, V.H)} />
+        <path className="lp-edge" d={linePath(V.F, V.B)} />
+        <path className="lp-edge" d={linePath(V.B, V.C)} />
+        <path className="lp-edge" d={linePath(V.C, V.D)} />
+        <path className="lp-edge" d={linePath(V.D, V.H)} />
         <path className="lp-edge" d={linePath(V.H, V.E)} />
+        <path className="lp-edge" d={linePath(V.F, V.G)} />
+        <path className="lp-edge" d={linePath(V.C, V.G)} />
+        <path className="lp-edge" d={linePath(V.H, V.G)} />
+        <path className="lp-edge lp-edge--ghost" d={linePath(V.A, V.B)} />
+        <path className="lp-edge lp-edge--ghost" d={linePath(V.A, V.E)} />
+        <path className="lp-edge lp-edge--ghost" d={linePath(V.A, V.D)} />
       </g>
-      <path className="lp-slash lp-slash--step" d={linePath(V.A, V.G)} pathLength="1" />
-      <circle className="lp-node" cx={V.A[0]} cy={V.A[1]} r="6" />
-      <circle className="lp-node" cx={V.G[0]} cy={V.G[1]} r="6" />
+      {/* “步”路径：穿过近角、两端落在可见顶点上 */}
+      <path className="lp-slash lp-slash--step" d={linePath(V.F, V.D)} pathLength="1" />
+      <circle className="lp-node" cx={V.F[0]} cy={V.F[1]} r="6" />
+      <circle className="lp-node" cx={V.D[0]} cy={V.D[1]} r="6" />
     </svg>
   );
 }
@@ -313,16 +326,19 @@ function ArtCheck({ className = "" }) {
       <g className="lp-solid">
         <path className="lp-face lp-face--top" d={polyPath([V.E, V.F, V.G, V.H])} />
         <path className="lp-face lp-face--side" d={polyPath([V.B, V.C, V.G, V.F])} />
-        <path className="lp-face lp-face--front" d={polyPath([V.A, V.B, V.F, V.E])} />
-        <path className="lp-edge" d={linePath(V.A, V.B)} />
-        <path className="lp-edge" d={linePath(V.B, V.C)} />
-        <path className="lp-edge" d={linePath(V.A, V.E)} />
-        <path className="lp-edge" d={linePath(V.B, V.F)} />
-        <path className="lp-edge" d={linePath(V.C, V.G)} />
+        <path className="lp-face lp-face--front" d={polyPath([V.D, V.C, V.G, V.H])} />
         <path className="lp-edge" d={linePath(V.E, V.F)} />
-        <path className="lp-edge" d={linePath(V.F, V.G)} />
-        <path className="lp-edge" d={linePath(V.G, V.H)} />
+        <path className="lp-edge" d={linePath(V.F, V.B)} />
+        <path className="lp-edge" d={linePath(V.B, V.C)} />
+        <path className="lp-edge" d={linePath(V.C, V.D)} />
+        <path className="lp-edge" d={linePath(V.D, V.H)} />
         <path className="lp-edge" d={linePath(V.H, V.E)} />
+        <path className="lp-edge" d={linePath(V.F, V.G)} />
+        <path className="lp-edge" d={linePath(V.C, V.G)} />
+        <path className="lp-edge" d={linePath(V.H, V.G)} />
+        <path className="lp-edge lp-edge--ghost" d={linePath(V.A, V.B)} />
+        <path className="lp-edge lp-edge--ghost" d={linePath(V.A, V.E)} />
+        <path className="lp-edge lp-edge--ghost" d={linePath(V.A, V.D)} />
       </g>
       <path
         className="lp-confirm"
@@ -352,17 +368,18 @@ function ArtMoment({ className = "" }) {
     >
       <ellipse className="lp-shadow" cx={O[0]} cy={+(+O[1] + 12).toFixed(2)} rx="120" ry="16" />
       <g className="lp-solid">
-        <path className="lp-face lp-face--top" d={polyPath([A, B, C, D])} />
+        {/* 可见侧面在近底角 C 两侧：右前 SBC、左前 SDC；底面朝下不可见，不填色 */}
         <path className="lp-face lp-face--side" d={polyPath([S, B, C])} />
-        <path className="lp-face lp-face--front lp-face--lit" d={polyPath([S, A, B])} />
-        <path className="lp-edge" d={linePath(A, B)} />
-        <path className="lp-edge" d={linePath(B, C)} />
-        <path className="lp-edge lp-edge--ghost" d={linePath(C, D)} />
-        <path className="lp-edge lp-edge--ghost" d={linePath(D, A)} />
-        <path className="lp-edge" d={linePath(S, A)} />
+        <path className="lp-face lp-face--lit" d={polyPath([S, D, C])} />
+        {/* 可见棱：侧面轮廓 S-B-C-D-S + 近折棱 S-C */}
         <path className="lp-edge" d={linePath(S, B)} />
+        <path className="lp-edge" d={linePath(B, C)} />
+        <path className="lp-edge" d={linePath(C, D)} />
+        <path className="lp-edge" d={linePath(D, S)} />
         <path className="lp-edge" d={linePath(S, C)} />
-        <path className="lp-edge lp-edge--ghost" d={linePath(S, D)} />
+        {/* 底面远边 A-B、A-D 被侧面遮挡，虚线；S-A 与可见棱 S-C 投影重合，省略 */}
+        <path className="lp-edge lp-edge--ghost" d={linePath(A, B)} />
+        <path className="lp-edge lp-edge--ghost" d={linePath(A, D)} />
       </g>
       {/* 高 SO：顶点到底心 */}
       <path className="lp-slash lp-slash--diag" d={linePath(S, O)} pathLength="1" />
@@ -402,11 +419,25 @@ function ArtCylinder({ className = "" }) {
     >
       <ellipse className="lp-shadow" cx="240" cy="448" rx="120" ry="16" />
       <g className="lp-solid">
+        {/* 侧壁 + 顶面（底面朝下不可见，不填色） */}
         <path className="lp-face lp-face--side" d={polyPath(sideFill)} />
-        <path className="lp-face lp-face--front" d={polyPath(bot)} />
         <path className="lp-face lp-face--top" d={polyPath(top)} />
         <path className="lp-edge" d={polyPath(top).replace(" Z", "")} />
-        <path className="lp-edge" d={polyPath(bot).replace(" Z", "")} />
+        {/* 底圆：后半弧被侧壁遮挡为虚线，前半弧为可见轮廓 */}
+        <path
+          className="lp-edge lp-edge--ghost"
+          d={bot
+            .slice(n / 2)
+            .map((p, i) => `${i ? "L" : "M"}${p[0]} ${p[1]}`)
+            .join(" ")}
+        />
+        <path
+          className="lp-edge"
+          d={bot
+            .slice(0, n / 2 + 1)
+            .map((p, i) => `${i ? "L" : "M"}${p[0]} ${p[1]}`)
+            .join(" ")}
+        />
         <path className="lp-edge" d={linePath(leftT, leftB)} />
         <path className="lp-edge" d={linePath(rightT, rightB)} />
       </g>
