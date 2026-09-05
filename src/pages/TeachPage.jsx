@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { CURRICULUM } from "../data/curriculum";
 import TeachLesson from "../components/TeachLesson";
-import WorkspacePage from "./WorkspacePage";
 import "./TeachPage.css";
 
 const DEFAULT_SUBJECT = "math";
@@ -14,8 +13,6 @@ export default function TeachPage() {
   const [openBookId, setOpenBookId] = useState(DEFAULT_BOOK);
   const [openChapterId, setOpenChapterId] = useState(DEFAULT_CHAPTER);
   const [activeLeafId, setActiveLeafId] = useState(null);
-  const [playing, setPlaying] = useState(false);
-  const [bootNonce, setBootNonce] = useState(0);
   const [navOpen, setNavOpen] = useState(true);
 
   const subject = useMemo(
@@ -36,14 +33,11 @@ export default function TeachPage() {
 
   const selectLeaf = (leaf) => {
     setActiveLeafId(leaf.id);
-    setPlaying(false);
-    setBootNonce((n) => n + 1);
     setNavOpen(false);
   };
 
   const clearLesson = () => {
     setActiveLeafId(null);
-    setPlaying(false);
     setNavOpen(true);
   };
 
@@ -82,10 +76,13 @@ export default function TeachPage() {
         </div>
 
         <nav className="teach-tree">
-          {(subject?.books || []).map((book) => {
+          {(subject?.books || []).map((book, bookIndex) => {
             const bookOpen = openBookId === book.id;
             return (
-              <div key={book.id} className="teach-book">
+              <div
+                key={book.id}
+                className={`teach-book${bookOpen ? " is-open" : ""}`}
+              >
                 <button
                   type="button"
                   className={`teach-book-toggle${bookOpen ? " is-open" : ""}`}
@@ -96,10 +93,10 @@ export default function TeachPage() {
                     }
                   }}
                 >
-                  <span>{book.label}</span>
-                  <span className="teach-chevron" aria-hidden="true">
-                    {bookOpen ? "−" : "+"}
+                  <span className="teach-book-index">
+                    {String(bookIndex + 1).padStart(2, "0")}
                   </span>
+                  <span className="teach-book-name">{book.label}</span>
                 </button>
                 {bookOpen && (
                   <div className="teach-chapters">
@@ -116,7 +113,7 @@ export default function TeachPage() {
                               )
                             }
                           >
-                            {ch.label}
+                            <span className="teach-chapter-name">{ch.label}</span>
                           </button>
                           {chOpen && (
                             <ul className="teach-leaves">
@@ -130,11 +127,6 @@ export default function TeachPage() {
                                     <span className="teach-leaf-label">
                                       {leaf.label}
                                     </span>
-                                    {leaf.hint && (
-                                      <span className="teach-leaf-hint">
-                                        {leaf.hint}
-                                      </span>
-                                    )}
                                   </button>
                                 </li>
                               ))}
@@ -161,25 +153,14 @@ export default function TeachPage() {
             {navOpen ? "收起目录" : "课程目录"}
           </button>
         )}
-        {activeLeaf && playing && activeLeaf.subject && activeLeaf.text ? (
-          <WorkspacePage
-            key={`${activeLeaf.id}-${bootNonce}`}
-            variant="teach"
-            teachPoint={activeLeaf}
-            onRequestExit={() => setPlaying(false)}
-          />
-        ) : activeLeaf ? (
-          <TeachLesson
-            leaf={activeLeaf}
-            onPlay={() => setPlaying(true)}
-            onBack={clearLesson}
-          />
+        {activeLeaf ? (
+          <TeachLesson leaf={activeLeaf} onBack={clearLesson} />
         ) : (
           <div className="teach-empty">
             <p className="teach-empty-kicker">开始学习</p>
             <h2 className="teach-empty-title">从左侧选择一个知识点</h2>
             <p className="teach-empty-lead">
-              默认已打开必修第二册 · 立体几何。每个点都有模型，能开讲的会进入同一套讲解界面。
+              默认已打开必修第二册 · 立体几何。开讲后动画和解析留在右侧，不再跳到旧画面。
             </p>
           </div>
         )}

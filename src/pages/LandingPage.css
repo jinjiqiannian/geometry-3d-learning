@@ -1,17 +1,17 @@
 /* Landing — Instagram editorial geometry posters */
 
 .landing {
-  --lp-ink: #1c1915;
-  --lp-paper: #f4f0e8;
-  --lp-muted: #6b645c;
-  --lp-soft: #9a9288;
-  --lp-line: rgba(28, 25, 21, 0.08);
-  --lp-accent: #c2410c;
-  --lp-ember: #e86a3a;
-  --lp-teal: #3d8f82;
-  --lp-cream: #fffcf7;
+  --lp-ink: #1d1d1f;
+  --lp-paper: #f5f5f7;
+  --lp-muted: #6e6e73;
+  --lp-soft: #86868b;
+  --lp-line: rgba(0, 0, 0, 0.08);
+  --lp-accent: #0071e3;
+  --lp-ember: #2997ff;
+  --lp-teal: #86868b;
+  --lp-cream: #ffffff;
   --lp-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --lp-serif: "Songti SC", "STSong", "Noto Serif SC", "Source Han Serif SC", Georgia, serif;
+  --lp-serif: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
 
   position: relative;
   display: block;
@@ -115,7 +115,7 @@
   align-items: flex-start;
   gap: 6px;
   padding: 16px 16px 18px;
-  border: 1px solid rgba(28, 25, 21, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 12px;
   background: var(--lp-ink);
   color: var(--lp-cream);
@@ -132,7 +132,7 @@
 
 .landing-mode-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 32px rgba(40, 28, 16, 0.12);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.12);
 }
 
 .landing-mode-card-kicker {
@@ -199,7 +199,7 @@
 .landing-submit:hover {
   background: #2c2822;
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(28, 25, 21, 0.18);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
 }
 
 .landing-submit:active {
@@ -208,7 +208,7 @@
 
 .landing-ghost {
   padding: 13px 22px;
-  border: 1.5px solid rgba(28, 25, 21, 0.18);
+  border: 1.5px solid rgba(0, 0, 0, 0.18);
   border-radius: 999px;
   background: transparent;
   color: #3a3630;
@@ -242,8 +242,8 @@
   overflow: hidden;
   padding: clamp(40px, 8vh, 72px) clamp(28px, 5vw, 56px);
   background:
-    radial-gradient(ellipse 70% 55% at 55% 38%, rgba(232, 106, 58, 0.28), transparent 58%),
-    radial-gradient(ellipse 45% 40% at 20% 75%, rgba(61, 143, 130, 0.16), transparent 50%),
+    radial-gradient(ellipse 70% 55% at 55% 38%, rgba(0, 113, 227, 0.10), transparent 58%),
+    radial-gradient(ellipse 45% 40% at 20% 75%, rgba(0, 0, 0, 0.16), transparent 50%),
     linear-gradient(152deg, #ebe3d6 0%, #ddd2c0 42%, #cfc2ad 100%);
   min-height: 100%;
   border-left: 1px solid var(--lp-line);
@@ -257,7 +257,7 @@
   top: 15%;
   background: radial-gradient(
     ellipse at center,
-    rgba(232, 106, 58, 0.35) 0%,
+    rgba(0, 113, 227, 0.10) 0%,
     transparent 68%
   );
   pointer-events: none;
@@ -283,10 +283,10 @@
   justify-content: center;
   padding: 8% 6%;
   background: var(--lp-cream);
-  border: 1px solid rgba(28, 25, 21, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow:
-    0 4px 8px rgba(40, 28, 16, 0.04),
-    0 28px 64px rgba(40, 28, 16, 0.14);
+    0 4px 8px rgba(0, 0, 0, 0.04),
+    0 28px 64px rgba(0, 0, 0, 0.14);
 }
 
 .landing-hero-art-wrap {
@@ -445,15 +445,15 @@
   height: min(88vh, 720px);
   padding: 20px 20px 18px;
   background: var(--lp-cream);
-  border: 1px solid rgba(28, 25, 21, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow:
-    0 4px 12px rgba(40, 28, 16, 0.05),
-    0 36px 80px rgba(40, 28, 16, 0.16);
+    0 4px 12px rgba(0, 0, 0, 0.05),
+    0 36px 80px rgba(0, 0, 0, 0.16);
   transition: background 0.5s ease;
 }
 
 .landing-story-plate[data-stage="compose"] {
-  background: linear-gradient(180deg, #fffcf7 0%, #f3e9db 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #f3e9db 100%);
 }
 
 .landing-story-plate[data-stage="reason"] {
@@ -519,7 +519,7 @@
   position: relative;
   margin: 14px 0 0;
   height: 2px;
-  background: rgba(28, 25, 21, 0.08);
+  background: rgba(0, 0, 0, 0.08);
   overflow: hidden;
   border-radius: 2px;
 }
@@ -543,7 +543,7 @@
 .landing-story-beat {
   font-size: 0.68rem;
   letter-spacing: 0.18em;
-  color: rgba(28, 25, 21, 0.22);
+  color: rgba(0, 0, 0, 0.22);
   transition: color 0.35s var(--lp-ease), transform 0.35s var(--lp-ease);
 }
 
@@ -622,7 +622,7 @@
 }
 
 .lp-shadow {
-  fill: rgba(40, 28, 16, 0.22);
+  fill: rgba(0, 0, 0, 0.22);
   opacity: 0.7;
 }
 
@@ -635,7 +635,7 @@
 .lp-grid line,
 .lp-grid-line {
   fill: none;
-  stroke: rgba(28, 25, 21, 0.12);
+  stroke: rgba(0, 0, 0, 0.12);
   stroke-width: 1.2;
 }
 
@@ -650,24 +650,24 @@
 }
 
 .lp-face--top {
-  fill: rgba(232, 106, 58, 0.42);
+  fill: rgba(0, 113, 227, 0.10);
 }
 
 .lp-face--side {
-  fill: rgba(61, 143, 130, 0.38);
+  fill: rgba(0, 0, 0, 0.04);
 }
 
 .lp-face--front {
-  fill: rgba(255, 252, 247, 0.92);
+  fill: rgba(255, 255, 255, 0.92);
 }
 
 .lp-face--lit {
-  fill: rgba(232, 106, 58, 0.55);
+  fill: rgba(0, 113, 227, 0.18);
 }
 
 .lp-edge {
   fill: none;
-  stroke: #1c1915;
+  stroke: #1d1d1f;
   stroke-width: 2.6;
   stroke-linejoin: round;
   stroke-linecap: round;
@@ -730,14 +730,14 @@
 }
 
 .lp-board-plate {
-  fill: rgba(255, 252, 247, 0.92);
-  stroke: rgba(28, 25, 21, 0.1);
+  fill: rgba(255, 255, 255, 0.92);
+  stroke: rgba(0, 0, 0, 0.1);
   stroke-width: 1.5;
-  filter: drop-shadow(0 8px 18px rgba(40, 28, 16, 0.08));
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.08));
 }
 
 .lp-board-line {
-  stroke: rgba(28, 25, 21, 0.35);
+  stroke: rgba(0, 0, 0, 0.35);
   stroke-width: 2.8;
   stroke-linecap: round;
   stroke-dasharray: 1;
@@ -753,7 +753,7 @@
 
 .lp-ring {
   fill: none;
-  stroke: rgba(194, 65, 12, 0.35);
+  stroke: rgba(0, 113, 227, 0.35);
   stroke-width: 2;
   stroke-dasharray: 1;
   stroke-dashoffset: 0;
@@ -772,7 +772,7 @@
 
 .lp-node {
   fill: var(--lp-accent);
-  stroke: #fffcf7;
+  stroke: #ffffff;
   stroke-width: 2;
   opacity: 1;
   transform-box: fill-box;
@@ -791,55 +791,55 @@
 }
 
 .landing-story-art--reason .lp-face--top {
-  fill: rgba(61, 143, 130, 0.4);
+  fill: rgba(0, 0, 0, 0.04);
 }
 
 .landing-story-art--reason .lp-face--side {
-  fill: rgba(232, 106, 58, 0.28);
+  fill: rgba(0, 113, 227, 0.10);
 }
 
 .landing-story-art--reason .lp-face--front {
-  fill: rgba(255, 252, 247, 0.95);
+  fill: rgba(255, 255, 255, 0.95);
 }
 
 .landing-story-art--explain .lp-face--lit {
-  fill: rgba(232, 106, 58, 0.58);
+  fill: rgba(0, 113, 227, 0.22);
 }
 
 .landing-story-art--check .lp-face--top {
-  fill: rgba(232, 106, 58, 0.48);
+  fill: rgba(0, 113, 227, 0.12);
 }
 
 .landing-story-art--check .lp-face--side {
-  fill: rgba(61, 143, 130, 0.42);
+  fill: rgba(0, 0, 0, 0.06);
 }
 
 .landing-story-art--check .lp-face--front {
-  fill: rgba(255, 252, 247, 0.95);
+  fill: rgba(255, 255, 255, 0.95);
 }
 
 .landing-story-art--moment .lp-face--lit {
-  fill: rgba(232, 106, 58, 0.5);
+  fill: rgba(0, 113, 227, 0.18);
 }
 
 .landing-story-art--moment .lp-face--side {
-  fill: rgba(61, 143, 130, 0.32);
+  fill: rgba(0, 0, 0, 0.05);
 }
 
 .landing-story-art--moment .lp-face--top {
-  fill: rgba(28, 25, 21, 0.12);
+  fill: rgba(0, 0, 0, 0.08);
 }
 
 .landing-story-art--cylinder .lp-face--top {
-  fill: rgba(61, 143, 130, 0.45);
+  fill: rgba(0, 113, 227, 0.85);
 }
 
 .landing-story-art--cylinder .lp-face--side {
-  fill: rgba(232, 106, 58, 0.28);
+  fill: rgba(0, 0, 0, 0.06);
 }
 
 .landing-story-art--cylinder .lp-face--front {
-  fill: rgba(255, 252, 247, 0.55);
+  fill: rgba(255, 255, 255, 0.96);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -942,7 +942,7 @@
   justify-content: center;
   padding: 12%;
   overflow: hidden;
-  box-shadow: 0 16px 40px rgba(40, 28, 16, 0.08);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
 }
 
 .landing-gallery-card .landing-story-art {
@@ -951,7 +951,7 @@
 }
 
 .landing-gallery-card--cube {
-  background: linear-gradient(160deg, #f0e6d8, #e2d4c0);
+  background: linear-gradient(160deg, #e8e8ed, #e2d4c0);
 }
 
 .landing-gallery-card--prism {
@@ -1008,10 +1008,10 @@
   display: grid;
   grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
   min-height: 380px;
-  border: 1px solid rgba(28, 25, 21, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   background: var(--lp-cream);
   overflow: hidden;
-  box-shadow: 0 28px 64px rgba(40, 28, 16, 0.08);
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.08);
 }
 
 .landing-moment-pane {
@@ -1073,7 +1073,7 @@
   font-style: normal;
   font-size: 0.7rem;
   font-weight: 600;
-  border: 1px solid rgba(28, 25, 21, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.12);
   color: var(--lp-soft);
   flex-shrink: 0;
 }
@@ -1083,15 +1083,15 @@
 }
 
 .landing-moment-pane--steps li.is-done i {
-  background: rgba(28, 25, 21, 0.08);
+  background: rgba(0, 0, 0, 0.08);
   border-color: transparent;
   color: var(--lp-ink);
 }
 
 .landing-moment-pane--steps li.is-current {
   color: var(--lp-teal);
-  background: rgba(61, 143, 130, 0.12);
-  border-color: rgba(61, 143, 130, 0.4);
+  background: rgba(0, 0, 0, 0.12);
+  border-color: rgba(0, 0, 0, 0.4);
 }
 
 .landing-moment-pane--steps li.is-current i {
@@ -1107,7 +1107,7 @@
   padding: clamp(56px, 8vh, 88px) clamp(24px, 5vw, 64px);
   text-align: center;
   background:
-    radial-gradient(ellipse 65% 50% at 50% 90%, rgba(194, 65, 12, 0.08), transparent 52%),
+    radial-gradient(ellipse 65% 50% at 50% 90%, rgba(0, 113, 227, 0.06), transparent 52%),
     var(--lp-paper);
   border-top: 1px solid var(--lp-line);
 }
@@ -1343,7 +1343,7 @@
     margin: 0 0 28px;
     padding: 10%;
     background: var(--lp-cream);
-    box-shadow: 0 20px 48px rgba(40, 28, 16, 0.1);
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.1);
   }
 
   .landing-story-slide-art .landing-story-art {
@@ -1351,7 +1351,7 @@
   }
 
   .landing-story-slide:nth-child(1) .landing-story-slide-art {
-    background: linear-gradient(180deg, #fffcf7, #f0e6d8);
+    background: linear-gradient(180deg, #ffffff, #e8e8ed);
   }
 
   .landing-story-slide:nth-child(2) .landing-story-slide-art {

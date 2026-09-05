@@ -42,8 +42,98 @@
 }
 
 .teach-lesson-copy {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   padding: 36px 32px;
   overflow-y: auto;
+}
+
+.teach-lesson.is-playing .teach-lesson-copy {
+  padding: 16px 18px 0;
+  overflow: hidden;
+}
+
+.teach-explain-head {
+  flex-shrink: 0;
+  padding-bottom: 8px;
+}
+
+.teach-explain-head .teach-lesson-title {
+  margin: 6px 0 0;
+  font-size: 1.25rem;
+}
+
+.teach-explain {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.teach-explain--geo .explanation-panel {
+  background: transparent;
+}
+
+.teach-explain--topic {
+  overflow-y: auto;
+}
+
+.teach-explain--topic .logic-panel {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  padding: 0.5rem 0.75rem 1rem;
+  background: transparent;
+}
+
+.teach-explain--topic .logic-compose,
+.teach-explain--topic .logic-examples-wrap,
+.teach-explain--topic .logic-empty-hint,
+.teach-explain--topic .logic-solving-bar {
+  display: none;
+}
+
+.teach-explain--topic .logic-panel-head {
+  padding-bottom: 0;
+}
+
+.teach-explain--topic .logic-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.teach-explain--topic .logic-viz {
+  order: -1;
+}
+
+/* 窄栏聚焦：镜像移动端一屏聚焦（LogicPanel.css 移动端规则按视口宽度判断，
+   教学右栏在桌面视口下仅 ~260px，规则不触发会导致 280px 定高卡片内容溢出叠压） */
+.teach-explain--topic .logic-viz,
+.teach-explain--topic .logic-steps {
+  min-height: 0;
+  overflow: visible;
+  padding: 0.75rem;
+}
+
+.teach-explain--topic .logic-viz > .logic-section-title,
+.teach-explain--topic .logic-steps > .logic-section-title,
+.teach-explain--topic .logic-film-caption,
+.teach-explain--topic .logic-tree-details {
+  display: none;
+}
+
+.teach-explain--topic .demo-stage {
+  margin-bottom: 0;
+}
+
+.teach-explain--topic .logic-step-list > li:not(:has(.logic-step.is-current)) {
+  display: none;
 }
 
 .teach-lesson-kicker {
@@ -101,7 +191,23 @@
 .teach-lesson-note {
   margin: 0;
   font-size: 0.9rem;
-  color: #6b645c;
+  color: #6e6e73;
+}
+
+.teach-lesson-explain {
+  margin: 24px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.teach-lesson-explain-p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #6e6e73;
 }
 
 @media (max-width: 900px) {
