@@ -1,30 +1,77 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useSubscription } from '../contexts/SubscriptionContext'
-import { EXAMPLES, GEOMETRY_NAMES } from '../constants'
-import { recommendProblems } from '../engines/difficultyEngine'
-import CameraCapture from '../features/solid-geometry/CameraCapture'
-import './LandingPage.css'
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSubscription } from "../contexts/SubscriptionContext";
+import { EXAMPLES, GEOMETRY_NAMES } from "../constants";
+import { recommendProblems } from "../engines/difficultyEngine";
+import CameraCapture from "../features/solid-geometry/CameraCapture";
+import "./LandingPage.css";
 
 // ── Logo SVG ──────────────────────────────────────
+//  实心六棱柱（柱体）—— 顶面 + 侧面渐变填充，不再空心
 function GeometryLogo({ size = 32 }) {
+  const uid = useMemo(() => "gd-" + Math.random().toString(36).slice(2, 8), []);
+  const bodyId = `${uid}-body`;
+  const topId = `${uid}-top`;
   return (
-    <svg className="landing-logo-svg" viewBox="0 0 32 32" fill="none"
-      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-      style={{ width: size, height: size }}>
-      <path d="M16 2L3 9v14l13 7 13-7V9L16 2z" />
-      <path d="M3 9l13 7 13-7" />
-      <path d="M16 23V9" />
-      <path d="M8 13.5l8 4 8-4" />
-      <path d="M8 18.5l8 4 8-4" />
+    <svg
+      className="landing-logo-svg"
+      viewBox="0 0 32 32"
+      style={{ width: size, height: size }}
+    >
+      <defs>
+        <linearGradient id={bodyId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#0A84FF" />
+          <stop offset="1" stopColor="#0040DD" />
+        </linearGradient>
+        <linearGradient id={topId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#6CC2FF" />
+          <stop offset="1" stopColor="#0A84FF" />
+        </linearGradient>
+      </defs>
+      {/* 柱体整体（侧面） */}
+      <path d="M16 2L3 9v14l13 7 13-7V9L16 2z" fill={`url(#${bodyId})`} />
+      {/* 顶面（菱形）—— 更亮，制造立体感 */}
+      <path d="M16 2L3 9l13 7 13-7z" fill={`url(#${topId})`} />
+      {/* 侧面横向分割线 */}
+      <path
+        d="M8 13.5l8 4 8-4"
+        stroke="rgba(255,255,255,0.45)"
+        strokeWidth="1"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 18.5l8 4 8-4"
+        stroke="rgba(255,255,255,0.45)"
+        strokeWidth="1"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* 后侧棱（淡淡的中轴） */}
+      <path
+        d="M16 16v14"
+        stroke="rgba(0,0,0,0.18)"
+        strokeWidth="1"
+        fill="none"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 // ── Feature icon SVGs ─────────────────────────────
 const FEATURE_ICONS = {
   ai: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M12 2a4 4 0 0 1 4 4c0 2.21-1.79 4-4 4" />
       <path d="M8 10a4 4 0 0 0-4 4c0 2.21 1.79 4 4 4h.5" />
       <path d="M16 14h.5a4 4 0 0 1 4 4c0 2.21-1.79 4-4 4" />
@@ -33,14 +80,28 @@ const FEATURE_ICONS = {
     </svg>
   ),
   threeD: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" />
       <path d="M3 7l9 5 9-5" />
       <path d="M12 12v10" />
     </svg>
   ),
   teacher: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <rect x="2" y="3" width="20" height="14" rx="2" />
       <path d="M8 21h8" />
       <path d="M12 17v4" />
@@ -48,200 +109,244 @@ const FEATURE_ICONS = {
     </svg>
   ),
   notebook: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
       <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
       <path d="M9 7h6M9 11h5" />
     </svg>
   ),
   report: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M18 20V10" />
       <path d="M12 20V4" />
       <path d="M6 20v-6" />
     </svg>
   ),
   ppt: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
       <polyline points="14 2 14 8 20 8" />
       <path d="M8 13h3M8 17h6" />
     </svg>
   ),
-}
+};
 
 const FEATURES = [
   {
-    id: 'ai',
-    title: 'AI 解析',
-    desc: '智能识别几何题目，自动生成完整解题步骤与答案',
+    id: "ai",
+    title: "AI 解析",
+    desc: "智能识别几何题目，自动生成完整解题步骤与答案",
     icon: FEATURE_ICONS.ai,
-    gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
   },
   {
-    id: '3d',
-    title: '3D 动态讲解',
-    desc: '交互式三维模型，自由旋转缩放，直观理解空间关系',
+    id: "3d",
+    title: "3D 动态讲解",
+    desc: "交互式三维模型，自由旋转缩放，直观理解空间关系",
     icon: FEATURE_ICONS.threeD,
-    gradient: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
   },
   {
-    id: 'teacher',
-    title: '教师模式',
-    desc: '详细的板书式分步讲解，适合课堂教学与备课',
+    id: "teacher",
+    title: "教师模式",
+    desc: "详细的板书式分步讲解，适合课堂教学与备课",
     icon: FEATURE_ICONS.teacher,
-    gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
   },
   {
-    id: 'notebook',
-    title: '错题本',
-    desc: '自动记录错题，分类整理，针对性巩固薄弱知识点',
+    id: "notebook",
+    title: "错题本",
+    desc: "自动记录错题，分类整理，针对性巩固薄弱知识点",
     icon: FEATURE_ICONS.notebook,
-    gradient: 'linear-gradient(135deg, #ef4444, #f97316)',
   },
   {
-    id: 'report',
-    title: '学习报告',
-    desc: '追踪学习进度，分析知识点掌握情况，可视化成长曲线',
+    id: "report",
+    title: "学习报告",
+    desc: "追踪学习进度，分析知识点掌握情况，可视化成长曲线",
     icon: FEATURE_ICONS.report,
-    gradient: 'linear-gradient(135deg, #22c55e, #10b981)',
   },
   {
-    id: 'ppt',
-    title: 'PPT 导出',
-    desc: '一键导出解题过程与3D视图为课件，方便分享教学',
+    id: "ppt",
+    title: "PPT 导出",
+    desc: "一键导出解题过程与3D视图为课件，方便分享教学",
     icon: FEATURE_ICONS.ppt,
-    gradient: 'linear-gradient(135deg, #ec4899, #f43f5e)',
   },
-]
+];
 
 // ── 热门题目标签（Hero 内快速填充）──────────────
 const HOT_TAGS = [
-  { label: '正方体', text: '正方体ABCD-A₁B₁C₁D₁棱长为2，求异面直线A₁B与B₁C所成角余弦值' },
-  { label: '三棱锥', text: '正三棱锥S-ABC底面边长为4，高为3，求侧棱与底面所成角' },
-  { label: '球体', text: '球O半径为5，求球面上A、B两点间的最短距离' },
-  { label: '二面角', text: '长方体ABCD-A₁B₁C₁D₁中AB=3, AD=4, AA₁=2，求二面角A₁-BD-C₁' },
-  { label: '异面直线', text: '正方体棱长为1，求异面直线AC与BD₁的距离' },
-]
+  {
+    label: "正方体",
+    text: "正方体ABCD-A₁B₁C₁D₁棱长为2，求异面直线A₁B与B₁C所成角余弦值",
+  },
+  {
+    label: "三棱锥",
+    text: "正三棱锥S-ABC底面边长为4，高为3，求侧棱与底面所成角",
+  },
+  { label: "球体", text: "球O半径为5，求球面上A、B两点间的最短距离" },
+  {
+    label: "二面角",
+    text: "长方体ABCD-A₁B₁C₁D₁中AB=3, AD=4, AA₁=2，求二面角A₁-BD-C₁",
+  },
+  { label: "异面直线", text: "正方体棱长为1，求异面直线AC与BD₁的距离" },
+];
 
 // ── 分类 & 几何体类型 ──
-const ALL_CATEGORIES = ['全部', ...new Set(EXAMPLES.map(e => e.category))]
-const ALL_GEOMETRY_TYPES = [...new Set(EXAMPLES.map(e => e.geometryType))]
+const ALL_CATEGORIES = ["全部", ...new Set(EXAMPLES.map((e) => e.category))];
+const ALL_GEOMETRY_TYPES = [...new Set(EXAMPLES.map((e) => e.geometryType))];
 
 export default function LandingPage() {
-  const navigate = useNavigate()
-  const { isPro } = useSubscription()
+  const navigate = useNavigate();
+  const { isPro } = useSubscription();
 
   // Input
-  const [input, setInput] = useState('')
-  const [focused, setFocused] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [showCamera, setShowCamera] = useState(false)
-  const cameraApiKey = useRef('')
+  const [input, setInput] = useState("");
+  const [focused, setFocused] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const cameraApiKey = useRef("");
   useEffect(() => {
-    try { cameraApiKey.current = localStorage.getItem('mathviz_deepseek_key') || localStorage.getItem('mathviz_openai_key') || '' }
-    catch { /* */ }
-  }, [])
+    try {
+      cameraApiKey.current =
+        localStorage.getItem("mathviz_deepseek_key") ||
+        localStorage.getItem("mathviz_openai_key") ||
+        "";
+    } catch {
+      /* */
+    }
+  }, []);
 
   // Filter
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeCategory, setActiveCategory] = useState('全部')
-  const [activeGeoType, setActiveGeoType] = useState(null)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("全部");
+  const [activeGeoType, setActiveGeoType] = useState(null);
 
   // History & recommendations
-  const [history, setHistory] = useState([])
-  const [recommended, setRecommended] = useState(null)
+  const [history, setHistory] = useState([]);
+  const [recommended, setRecommended] = useState(null);
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('mathviz_history') || '[]')
-      setHistory(saved.slice(0, 5))
+      const saved = JSON.parse(localStorage.getItem("mathviz_history") || "[]");
+      setHistory(saved.slice(0, 5));
       if (saved.length > 0) {
-        const recs = recommendProblems(saved)
-        setRecommended(recs)
+        const recs = recommendProblems(saved);
+        setRecommended(recs);
       }
-    } catch { /* */ }
-  }, [])
+    } catch {
+      /* */
+    }
+  }, []);
 
   // ── Filtered examples ──
   const filteredExamples = useMemo(() => {
-    let results = EXAMPLES
-    if (activeCategory !== '全部') {
-      results = results.filter(e => e.category === activeCategory)
+    let results = EXAMPLES;
+    if (activeCategory !== "全部") {
+      results = results.filter((e) => e.category === activeCategory);
     }
     if (activeGeoType) {
-      results = results.filter(e => e.geometryType === activeGeoType)
+      results = results.filter((e) => e.geometryType === activeGeoType);
     }
     if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase()
-      results = results.filter(e =>
-        e.title.toLowerCase().includes(q) ||
-        e.text.toLowerCase().includes(q) ||
-        e.category.toLowerCase().includes(q) ||
-        (GEOMETRY_NAMES[e.geometryType] || '').includes(q)
-      )
+      const q = searchQuery.trim().toLowerCase();
+      results = results.filter(
+        (e) =>
+          e.title.toLowerCase().includes(q) ||
+          e.text.toLowerCase().includes(q) ||
+          e.category.toLowerCase().includes(q) ||
+          (GEOMETRY_NAMES[e.geometryType] || "").includes(q)
+      );
     }
-    return results
-  }, [searchQuery, activeCategory, activeGeoType])
+    return results;
+  }, [searchQuery, activeCategory, activeGeoType]);
 
   // ── Navigate ──
-  const handleGenerate = useCallback(async (text) => {
-    const trimmed = text.trim()
-    if (trimmed.length < 3) return
-    setLoading(true)
-    setError(null)
-    navigate(`/workspace?q=${encodeURIComponent(trimmed)}`)
-  }, [navigate])
+  const handleGenerate = useCallback(
+    async (text) => {
+      const trimmed = text.trim();
+      if (trimmed.length < 3) return;
+      setLoading(true);
+      setError(null);
+      navigate(`/workspace?q=${encodeURIComponent(trimmed)}`);
+    },
+    [navigate]
+  );
 
-  const handleSubmit = () => handleGenerate(input)
+  const handleSubmit = () => handleGenerate(input);
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSubmit()
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
     }
-  }
+  };
 
   const handleExample = (text) => {
-    setInput(text)
-    handleGenerate(text)
-  }
+    setInput(text);
+    handleGenerate(text);
+  };
 
   // Hot tag click: fill input (don't submit immediately)
   const handleHotTag = (text) => {
-    setInput(text)
-  }
+    setInput(text);
+  };
 
   // Continue history
   const handleContinue = (item) => {
     if (item.steps && item.steps.length > 0) {
       try {
-        sessionStorage.setItem('mathviz_replay_steps', JSON.stringify(item.steps))
-        sessionStorage.setItem('mathviz_replay_parsed', JSON.stringify(item.parsedData || null))
-      } catch { /* */ }
-      navigate(`/workspace?q=${encodeURIComponent(item.text)}&replay=1`)
+        sessionStorage.setItem(
+          "mathviz_replay_steps",
+          JSON.stringify(item.steps)
+        );
+        sessionStorage.setItem(
+          "mathviz_replay_parsed",
+          JSON.stringify(item.parsedData || null)
+        );
+      } catch {
+        /* */
+      }
+      navigate(`/workspace?q=${encodeURIComponent(item.text)}&replay=1`);
     } else {
-      navigate(`/workspace?q=${encodeURIComponent(item.text)}`)
+      navigate(`/workspace?q=${encodeURIComponent(item.text)}`);
     }
-  }
+  };
 
   // Camera
   const handleGeometryRecognized = useCallback((result) => {
-    const desc = result?.explanation || result?.text || ''
-    if (desc) setInput(prev => prev ? `${prev}\n${desc}` : desc)
-    setShowCamera(false)
-  }, [])
+    const desc = result?.explanation || result?.text || "";
+    if (desc) setInput((prev) => (prev ? `${prev}\n${desc}` : desc));
+    setShowCamera(false);
+  }, []);
 
   const formatDate = (dateStr) => {
-    const d = new Date(dateStr)
-    const now = new Date()
-    const diff = now - d
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-    if (days === 0) return '今天'
-    if (days === 1) return '昨天'
-    if (days < 7) return `${days}天前`
-    return `${d.getMonth() + 1}月${d.getDate()}日`
-  }
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diff = now - d;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (days === 0) return "今天";
+    if (days === 1) return "昨天";
+    if (days < 7) return `${days}天前`;
+    return `${d.getMonth() + 1}月${d.getDate()}日`;
+  };
 
   return (
     <div className="landing">
@@ -257,15 +362,15 @@ export default function LandingPage() {
           </div>
 
           {/* Title */}
-          <h1 className="landing-hero-title">
-            AI 立体几何学习助手
-          </h1>
+          <h1 className="landing-hero-title">AI 立体几何学习助手</h1>
           <p className="landing-hero-subtitle">
             输入一道几何题，自动生成三维动态讲解
           </p>
 
           {/* Input */}
-          <div className={`landing-hero-input-wrap ${focused ? 'focused' : ''}`}>
+          <div
+            className={`landing-hero-input-wrap ${focused ? "focused" : ""}`}
+          >
             <textarea
               className="landing-hero-input"
               value={input}
@@ -279,16 +384,25 @@ export default function LandingPage() {
             />
             <div className="landing-hero-input-footer">
               <span className="landing-hero-input-hint">
-                {loading ? '解析中…' : '按 Enter 开始解析'}
+                {loading ? "解析中…" : "按 Enter 开始解析"}
               </span>
               <div className="landing-hero-input-actions">
                 {/* Camera toggle */}
                 <button
                   className="landing-hero-camera-btn"
-                  onClick={() => setShowCamera(v => !v)}
+                  onClick={() => setShowCamera((v) => !v)}
                   title="拍照识别"
                 >
-                  <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="16"
+                    height="16"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M15 13V5a1 1 0 0 0-1-1h-2.17a1 1 0 0 1-.83-.44L10.17 2.5a1 1 0 0 0-.83-.44H6.66a1 1 0 0 0-.83.44L5 3.56a1 1 0 0 1-.83.44H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1z" />
                     <circle cx="8" cy="8.75" r="2.5" />
                   </svg>
@@ -298,7 +412,7 @@ export default function LandingPage() {
                   onClick={handleSubmit}
                   disabled={input.trim().length < 3 || loading}
                 >
-                  {loading ? '解析中…' : '开始解析'}
+                  {loading ? "解析中…" : "开始解析"}
                   <span className="landing-hero-submit-shortcut">↵</span>
                 </button>
               </div>
@@ -319,7 +433,7 @@ export default function LandingPage() {
 
           {/* Hot tags */}
           <div className="landing-hero-tags">
-            {HOT_TAGS.map(tag => (
+            {HOT_TAGS.map((tag) => (
               <button
                 key={tag.label}
                 className="landing-hero-tag"
@@ -345,7 +459,13 @@ export default function LandingPage() {
           {/* Search + filter */}
           <div className="landing-filter-bar">
             <div className="landing-search-wrap">
-              <svg className="landing-search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <svg
+                className="landing-search-icon"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
                 <circle cx="7" cy="7" r="5.5" />
                 <line x1="11" y1="11" x2="14" y2="14" />
               </svg>
@@ -358,17 +478,22 @@ export default function LandingPage() {
                 spellCheck={false}
               />
               {searchQuery && (
-                <button className="landing-search-clear" onClick={() => setSearchQuery('')}>×</button>
+                <button
+                  className="landing-search-clear"
+                  onClick={() => setSearchQuery("")}
+                >
+                  ×
+                </button>
               )}
             </div>
 
             <div className="landing-filter-row">
               {/* Category tabs */}
               <div className="landing-filter-tabs">
-                {ALL_CATEGORIES.map(cat => (
+                {ALL_CATEGORIES.map((cat) => (
                   <button
                     key={cat}
-                    className={`landing-filter-tab ${activeCategory === cat ? 'active' : ''}`}
+                    className={`landing-filter-tab ${activeCategory === cat ? "active" : ""}`}
                     onClick={() => setActiveCategory(cat)}
                   >
                     {cat}
@@ -379,16 +504,18 @@ export default function LandingPage() {
               {/* Geometry type tags */}
               <div className="landing-filter-tags">
                 <button
-                  className={`landing-filter-tag ${!activeGeoType ? 'active' : ''}`}
+                  className={`landing-filter-tag ${!activeGeoType ? "active" : ""}`}
                   onClick={() => setActiveGeoType(null)}
                 >
                   全部类型
                 </button>
-                {ALL_GEOMETRY_TYPES.map(gt => (
+                {ALL_GEOMETRY_TYPES.map((gt) => (
                   <button
                     key={gt}
-                    className={`landing-filter-tag ${activeGeoType === gt ? 'active' : ''}`}
-                    onClick={() => setActiveGeoType(activeGeoType === gt ? null : gt)}
+                    className={`landing-filter-tag ${activeGeoType === gt ? "active" : ""}`}
+                    onClick={() =>
+                      setActiveGeoType(activeGeoType === gt ? null : gt)
+                    }
                   >
                     {GEOMETRY_NAMES[gt] || gt}
                   </button>
@@ -406,12 +533,17 @@ export default function LandingPage() {
                   className="landing-example-card"
                   onClick={() => handleExample(ex.text)}
                 >
-                  <span className="landing-example-category">{ex.category}</span>
+                  <span className="landing-example-category">
+                    {ex.category}
+                  </span>
                   <span className="landing-example-title">
-                    {searchQuery ? highlightMatch(ex.title, searchQuery) : ex.title}
+                    {searchQuery
+                      ? highlightMatch(ex.title, searchQuery)
+                      : ex.title}
                   </span>
                   <span className="landing-example-desc">
-                    {ex.text.slice(0, 50)}{ex.text.length > 50 ? '…' : ''}
+                    {ex.text.slice(0, 50)}
+                    {ex.text.length > 50 ? "…" : ""}
                   </span>
                 </button>
               ))}
@@ -419,7 +551,14 @@ export default function LandingPage() {
           ) : (
             <div className="landing-no-results">
               <p>没有匹配的例题</p>
-              <button className="landing-reset-filter" onClick={() => { setSearchQuery(''); setActiveCategory('全部'); setActiveGeoType(null); }}>
+              <button
+                className="landing-reset-filter"
+                onClick={() => {
+                  setSearchQuery("");
+                  setActiveCategory("全部");
+                  setActiveGeoType(null);
+                }}
+              >
                 清除筛选
               </button>
             </div>
@@ -430,7 +569,9 @@ export default function LandingPage() {
             <div className="landing-subsection">
               <div className="landing-subsection-header">
                 <h3 className="landing-subsection-title">为你推荐</h3>
-                <span className="landing-subsection-hint">{recommended.reason}</span>
+                <span className="landing-subsection-hint">
+                  {recommended.reason}
+                </span>
               </div>
               <div className="landing-examples-grid">
                 {recommended.recommendations.map((rec, i) => (
@@ -440,10 +581,16 @@ export default function LandingPage() {
                     onClick={() => handleExample(rec.text)}
                   >
                     <span className="landing-example-category">
-                      {rec.difficulty === 'easy' ? '入门' : rec.difficulty === 'medium' ? '进阶' : '挑战'}
+                      {rec.difficulty === "easy"
+                        ? "入门"
+                        : rec.difficulty === "medium"
+                          ? "进阶"
+                          : "挑战"}
                     </span>
                     <span className="landing-example-title">{rec.title}</span>
-                    <span className="landing-example-desc">{rec.text.slice(0, 40)}…</span>
+                    <span className="landing-example-desc">
+                      {rec.text.slice(0, 40)}…
+                    </span>
                   </button>
                 ))}
               </div>
@@ -463,8 +610,13 @@ export default function LandingPage() {
                     className="landing-history-item"
                     onClick={() => handleContinue(item)}
                   >
-                    <span className="landing-history-date">{formatDate(item.date)}</span>
-                    <span className="landing-history-text">{item.text.slice(0, 60)}{item.text.length > 60 ? '…' : ''}</span>
+                    <span className="landing-history-date">
+                      {formatDate(item.date)}
+                    </span>
+                    <span className="landing-history-text">
+                      {item.text.slice(0, 60)}
+                      {item.text.length > 60 ? "…" : ""}
+                    </span>
                     <span className="landing-history-arrow">→</span>
                   </button>
                 ))}
@@ -481,18 +633,15 @@ export default function LandingPage() {
         <div className="landing-section-inner">
           <div className="landing-section-heading">
             <h2 className="landing-section-title">核心功能</h2>
-            <p className="landing-section-subtitle">六大模块，覆盖立体几何学习全流程</p>
+            <p className="landing-section-subtitle">
+              六大模块，覆盖立体几何学习全流程
+            </p>
           </div>
 
           <div className="landing-features-grid">
-            {FEATURES.map(feature => (
+            {FEATURES.map((feature) => (
               <div key={feature.id} className="landing-feature-card">
-                <div
-                  className="landing-feature-icon"
-                  style={{ background: feature.gradient }}
-                >
-                  {feature.icon}
-                </div>
+                <div className="landing-feature-icon">{feature.icon}</div>
                 <h3 className="landing-feature-title">{feature.title}</h3>
                 <p className="landing-feature-desc">{feature.desc}</p>
               </div>
@@ -536,7 +685,9 @@ export default function LandingPage() {
             </div>
 
             {/* Pro */}
-            <div className={`landing-plan-card ${isPro ? 'landing-plan-card--current' : ''}`}>
+            <div
+              className={`landing-plan-card ${isPro ? "landing-plan-card--current" : ""}`}
+            >
               {isPro && <span className="landing-plan-badge">当前方案</span>}
               <div className="landing-plan-header">
                 <h3 className="landing-plan-name">Pro</h3>
@@ -557,12 +708,14 @@ export default function LandingPage() {
                 className="landing-plan-btn landing-plan-btn--primary"
                 onClick={() => {
                   if (!isPro) {
-                    document.dispatchEvent(new CustomEvent('mathviz:show-paywall'))
+                    document.dispatchEvent(
+                      new CustomEvent("mathviz:show-paywall")
+                    );
                   }
                 }}
                 disabled={isPro}
               >
-                {isPro ? '已是 Pro' : '升级 Pro'}
+                {isPro ? "已是 Pro" : "升级 Pro"}
               </button>
             </div>
           </div>
@@ -582,17 +735,21 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
 
 // ── 搜索关键词高亮 ──
 function highlightMatch(text, query) {
-  if (!query.trim()) return text
-  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const parts = text.split(new RegExp(`(${escaped})`, 'gi'))
+  if (!query.trim()) return text;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const parts = text.split(new RegExp(`(${escaped})`, "gi"));
   return parts.map((part, i) =>
-    part.toLowerCase() === query.toLowerCase()
-      ? <mark key={i} className="landing-highlight">{part}</mark>
-      : part
-  )
+    part.toLowerCase() === query.toLowerCase() ? (
+      <mark key={i} className="landing-highlight">
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  );
 }

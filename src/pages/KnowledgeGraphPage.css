@@ -1,152 +1,361 @@
 /* ═══════════════════════════════════════════════════════
-   KnowledgeGraphPage — 知识图谱样式
+   KnowledgeGraphPage — 知识图谱（教材模式）
+   Apple 风格：白底大留白 + 单一蓝高亮 + 精致卡片
+   复用 LandingPage.css 中全局定义的 --apple-* 变量
    ═══════════════════════════════════════════════════════ */
 
 .kg-page {
-  max-width: 960px;
+  max-width: 1080px;
   margin: 0 auto;
-  padding: var(--space-lg);
+  padding: 56px 22px 96px;
+  color: var(--apple-ink, #1d1d1f);
 }
 
+/* ── Header ─────────────────────────────────────── */
 .kg-header {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: var(--space-xl);
+  gap: 16px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
 }
 
 .kg-header h1 {
-  font-size: var(--text-2xl);
+  font-size: clamp(30px, 4vw, 44px);
   font-weight: 600;
-  color: var(--text-primary);
+  letter-spacing: -0.022em;
+  color: var(--apple-ink, #1d1d1f);
+  line-height: 1.1;
+}
+
+.kg-header-sub {
+  margin-top: 8px;
+  font-size: 16px;
+  color: var(--apple-ink-soft, #6e6e73);
+  font-weight: 400;
 }
 
 .kg-controls select {
-  padding: 8px 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  color: var(--text-primary);
-  font-size: var(--text-sm);
+  padding: 9px 16px;
+  border: 1px solid var(--apple-line-soft, #e8e8ed);
+  border-radius: 9999px;
+  background: #ffffff;
+  color: var(--apple-ink, #1d1d1f);
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-.kg-loading,
-.kg-error {
-  text-align: center;
-  padding: var(--space-xl);
-  color: var(--text-muted);
+[data-theme="dark"] .kg-controls select {
+  background: #161617;
+  border-color: var(--apple-line-soft, #1d1d1f);
 }
 
-.kg-error {
-  color: var(--color-danger);
-}
-
-/* ── 树形结构 ─────────────────────────────── */
-
+/* ── 知识树 ─────────────────────────────────────── */
 .kg-tree {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: 14px;
+  margin-bottom: 40px;
+}
+
+.kg-loading {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--apple-ink-mute, #86868b);
+  font-size: 15px;
 }
 
 .kg-level {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-  padding: var(--space-sm);
-  background: var(--bg-subtle);
-  border-radius: var(--radius-lg);
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--apple-bg-alt, #f5f5f7);
+  border-radius: 18px;
 }
 
-.kg-level::before {
-  content: attr(data-level);
-  font-size: var(--text-xs);
-  color: var(--text-muted);
-  width: 100%;
+.kg-level-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--apple-ink-mute, #86868b);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.kg-level-nodes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .kg-node {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: var(--space-sm) var(--space-md);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
+  padding: 10px 16px;
+  border: 1px solid var(--apple-line-soft, #e8e8ed);
+  border-radius: 12px;
+  background: #ffffff;
   cursor: pointer;
-  transition: all 0.2s;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
   text-align: left;
   font-family: inherit;
-  opacity: calc(0.5 + var(--importance, 3) * 0.1);
 }
 
 .kg-node:hover {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px var(--color-accent-alpha);
+  border-color: var(--apple-blue, #0071e3);
+  color: var(--apple-blue, #0071e3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
 }
 
 .kg-node.active {
-  border-color: var(--color-accent);
-  background: var(--color-accent-alpha);
+  background: var(--apple-blue, #0071e3);
+  border-color: var(--apple-blue, #0071e3);
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(0, 113, 227, 0.28);
 }
 
 .kg-node-name {
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .kg-node-sub {
-  font-size: var(--text-xs);
-  color: var(--text-muted);
+  font-size: 11px;
+  color: var(--apple-ink-mute, #86868b);
+  font-weight: 400;
 }
 
-/* ── 详情面板 ─────────────────────────────── */
+.kg-node.active .kg-node-sub {
+  color: rgba(255, 255, 255, 0.75);
+}
 
+[data-theme="dark"] .kg-node {
+  background: #161617;
+  border-color: var(--apple-line-soft, #1d1d1f);
+}
+
+/* ── 详情卡片 ───────────────────────────────────── */
 .kg-detail {
-  margin-top: var(--space-xl);
-  padding: var(--space-lg);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  padding: 32px;
+  background: #ffffff;
+  border: 1px solid var(--apple-line-soft, #e8e8ed);
+  border-radius: 24px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 16px 40px rgba(0, 0, 0, 0.06);
 }
 
-.kg-detail h2 {
-  font-size: var(--text-xl);
+[data-theme="dark"] .kg-detail {
+  background: #161617;
+  border-color: var(--apple-line-soft, #1d1d1f);
+}
+
+.kg-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.kg-detail-head h2 {
+  font-size: 28px;
   font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: var(--space-sm);
+  letter-spacing: -0.022em;
+  color: var(--apple-ink, #1d1d1f);
 }
 
-.kg-detail-desc {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  line-height: 1.6;
-  margin-bottom: var(--space-lg);
+.kg-detail-tag {
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: var(--apple-blue-soft, rgba(0, 113, 227, 0.08));
+  color: var(--apple-blue, #0071e3);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.kg-detail-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .kg-detail-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── 专属示意图 ─────────────────────────────────── */
+.kg-diagram-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kg-diagram-frame {
+  width: 100%;
+  aspect-ratio: 320 / 200;
+  background: var(--apple-bg-alt, #f5f5f7);
+  border: 1px solid var(--apple-line-soft, #e8e8ed);
+  border-radius: 18px;
+  padding: 18px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme="dark"] .kg-diagram-frame {
+  background: #0d0d0f;
+  border-color: var(--apple-line-soft, #1d1d1f);
+}
+
+.kg-diagram-caption {
+  font-size: 12px;
+  color: var(--apple-ink-mute, #86868b);
+  text-align: center;
+}
+
+/* ── 文字讲解 ───────────────────────────────────── */
+.kg-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.kg-text-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kg-block-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--apple-ink-mute, #86868b);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.kg-summary {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--apple-ink, #1d1d1f);
+  letter-spacing: -0.005em;
+}
+
+.kg-keypoints {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kg-keypoints li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--apple-ink-soft, #6e6e73);
+}
+
+.kg-keypoints li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--apple-blue, #0071e3);
+}
+
+/* ── 关系区 ─────────────────────────────────────── */
+.kg-rel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--apple-line-soft, #e8e8ed);
+}
+
+@media (max-width: 600px) {
+  .kg-rel-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .kg-rel-section {
-  margin-bottom: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.kg-rel-section h3 {
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--text-muted);
-  margin-bottom: var(--space-xs);
+.kg-rel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--apple-ink-mute, #86868b);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .kg-rel-list {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-xs);
+  gap: 8px;
 }
 
 .kg-rel-tag {
-  padding: 4px 12px;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
+  padding: 6px 14px;
+  background: var(--apple-blue-soft, rgba(0, 113, 227, 0.08));
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--apple-blue, #0071e3);
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.kg-rel-tag:hover {
+  background: rgba(0, 113, 227, 0.16);
+  transform: translateY(-1px);
+}
+
+/* ── Mobile ─────────────────────────────────────── */
+@media (max-width: 767px) {
+  .kg-page {
+    padding: 32px 16px 64px;
+  }
+
+  .kg-detail {
+    padding: 22px 18px;
+  }
+
+  .kg-detail-head h2 {
+    font-size: 23px;
+  }
+
+  .kg-summary {
+    font-size: 15px;
+  }
 }

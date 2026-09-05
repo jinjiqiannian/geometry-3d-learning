@@ -1,58 +1,74 @@
 /* ═══════════════════════════════════════════════════════
-   LandingPage — 四段式首页
+   LandingPage — Apple 风格首页
    Hero → 热门例题 → 核心功能 → 会员计划
-   风格：Notion / Figma / ChatGPT 式居中布局
+   大留白 · 大标题 · 克制配色（白 + 近黑 + 单一蓝）
    ═══════════════════════════════════════════════════════ */
+
+:root {
+  --apple-bg: #fbfbfd;
+  --apple-bg-alt: #f5f5f7;
+  --apple-ink: #1d1d1f;
+  --apple-ink-soft: #6e6e73;
+  --apple-ink-mute: #86868b;
+  --apple-line: #d2d2d7;
+  --apple-line-soft: #e8e8ed;
+  --apple-blue: #0071e3;
+  --apple-blue-hover: #0077ed;
+  --apple-blue-soft: rgba(0, 113, 227, 0.08);
+}
 
 .landing {
   width: 100%;
   min-height: 100vh;
-  background: linear-gradient(180deg, #f8f9ff 0%, #ffffff 20%, #ffffff 100%);
+  background: var(--apple-bg);
+  color: var(--apple-ink);
 }
 
 /* ── Section inner wrapper (shared) ──────────────── */
 .landing-section-inner {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 22px;
   box-sizing: border-box;
 }
 
 .landing-section-heading {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 56px;
 }
 
 .landing-section-title {
-  font-size: var(--text-2xl);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--text-primary);
-  margin-bottom: 8px;
+  font-size: clamp(32px, 4.4vw, 48px);
+  font-weight: 600;
+  letter-spacing: -0.022em;
+  color: var(--apple-ink);
+  margin-bottom: 12px;
+  line-height: 1.08;
 }
 
 .landing-section-subtitle {
-  font-size: var(--text-base);
-  color: var(--text-muted);
+  font-size: 19px;
+  color: var(--apple-ink-soft);
   font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 /* ═══════════════════════════════════════════════════
-   Section 1 — Hero (65vh, 垂直居中)
+   Section 1 — Hero
    ═══════════════════════════════════════════════════ */
 .landing-hero {
-  min-height: 65vh;
+  min-height: 78vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px 24px 40px;
+  padding: 80px 22px 64px;
   box-sizing: border-box;
 }
 
 .landing-hero-inner {
   width: 100%;
-  max-width: 640px;
+  max-width: 820px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -64,74 +80,81 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 40px;
 }
 
 .landing-logo-svg {
-  color: #6366f1;
+  filter: drop-shadow(0 6px 16px rgba(10, 132, 255, 0.28));
 }
 
 .landing-hero-brand {
-  font-size: 22px;
-  font-weight: 650;
-  letter-spacing: -0.03em;
-  color: var(--text-primary);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--apple-ink);
 }
 
-/* Title */
+/* Title — Apple 式实心大标题，不用渐变 */
 .landing-hero-title {
-  font-size: 40px;
-  font-weight: 750;
-  letter-spacing: -0.04em;
-  line-height: 1.15;
-  color: var(--text-primary);
-  margin-bottom: 10px;
-  background: linear-gradient(135deg, #1d1d1f 0%, #6366f1 55%, #8b5cf6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: clamp(40px, 7vw, 80px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  color: var(--apple-ink);
+  margin-bottom: 18px;
+  background: none;
+  -webkit-text-fill-color: currentColor;
 }
 
 .landing-hero-subtitle {
-  font-size: var(--text-lg);
-  color: var(--text-muted);
-  margin-bottom: 28px;
-  line-height: 1.5;
+  font-size: clamp(19px, 2.2vw, 24px);
+  color: var(--apple-ink-soft);
+  margin-bottom: 40px;
+  line-height: 1.45;
+  font-weight: 400;
+  letter-spacing: -0.012em;
+  max-width: 620px;
 }
 
 /* ── Input ──────────────────────────────────────── */
 .landing-hero-input-wrap {
   width: 100%;
-  max-width: 580px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-xl);
-  padding: 16px 18px 10px;
-  transition: all 0.2s ease;
-  box-shadow: var(--shadow-sm);
+  max-width: 620px;
+  background: #ffffff;
+  border: 1px solid var(--apple-line-soft);
+  border-radius: 22px;
+  padding: 18px 20px 12px;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.04);
 }
 
 .landing-hero-input-wrap.focused {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1), var(--shadow-sm);
+  border-color: var(--apple-blue);
+  box-shadow:
+    0 0 0 4px rgba(0, 113, 227, 0.16),
+    0 8px 28px rgba(0, 0, 0, 0.06);
 }
 
 .landing-hero-input {
   width: 100%;
   border: none;
   resize: none;
-  font-size: var(--text-base);
+  font-size: 17px;
   font-family: var(--font-sans);
-  color: var(--text-primary);
+  color: var(--apple-ink);
   background: transparent;
-  line-height: 1.65;
+  line-height: 1.6;
   outline: none;
-  min-height: 60px;
+  min-height: 64px;
 }
 
 .landing-hero-input::placeholder {
-  color: var(--text-muted);
-  font-size: var(--text-sm);
+  color: var(--apple-ink-mute);
+  font-size: 15px;
 }
 
 .landing-hero-input-footer {
@@ -140,12 +163,12 @@
   justify-content: space-between;
   margin-top: 8px;
   padding-top: 10px;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--apple-line-soft);
 }
 
 .landing-hero-input-hint {
-  font-size: var(--text-xs);
-  color: var(--text-muted);
+  font-size: 13px;
+  color: var(--apple-ink-mute);
 }
 
 .landing-hero-input-actions {
@@ -159,34 +182,34 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--apple-line-soft);
   background: transparent;
-  color: var(--text-muted);
+  color: var(--apple-ink-soft);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .landing-hero-camera-btn:hover {
-  border-color: var(--border-default);
-  color: var(--text-primary);
-  background: var(--accent-subtle);
+  border-color: var(--apple-line);
+  color: var(--apple-ink);
+  background: var(--apple-bg-alt);
 }
 
-/* Submit button */
+/* Submit button — Apple 蓝胶囊 */
 .landing-hero-submit {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 20px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  padding: 9px 22px;
+  background: var(--apple-blue);
   color: white;
   border: none;
   border-radius: var(--radius-full);
-  font-size: var(--text-sm);
-  font-weight: 550;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
   font-family: inherit;
@@ -194,12 +217,12 @@
 }
 
 .landing-hero-submit:hover:not(:disabled) {
+  background: var(--apple-blue-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
 }
 
 .landing-hero-submit:disabled {
-  opacity: 0.35;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -209,34 +232,34 @@
   justify-content: center;
   width: 20px;
   height: 20px;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.22);
   font-size: 11px;
   font-weight: 500;
 }
 
 /* Error */
 .landing-hero-error {
-  margin-top: 12px;
-  padding: 8px 16px;
-  background: rgba(248, 81, 73, 0.08);
-  border: 1px solid rgba(248, 81, 73, 0.15);
-  border-radius: var(--radius-md);
-  color: var(--color-error);
-  font-size: var(--text-xs);
+  margin-top: 14px;
+  padding: 10px 18px;
+  background: rgba(255, 59, 48, 0.08);
+  border: 1px solid rgba(255, 59, 48, 0.18);
+  border-radius: 14px;
+  color: #ff3b30;
+  font-size: 13px;
   width: 100%;
-  max-width: 580px;
+  max-width: 620px;
 }
 
 /* Camera panel */
 .landing-hero-camera {
   width: 100%;
-  max-width: 580px;
-  margin-top: 12px;
-  padding: 12px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  max-width: 620px;
+  margin-top: 14px;
+  padding: 14px;
+  background: #ffffff;
+  border: 1px solid var(--apple-line-soft);
+  border-radius: 18px;
 }
 
 /* Hot tags */
@@ -245,16 +268,16 @@
   gap: 8px;
   flex-wrap: wrap;
   justify-content: center;
-  margin-top: 24px;
+  margin-top: 32px;
 }
 
 .landing-hero-tag {
-  padding: 6px 14px;
+  padding: 7px 16px;
   border-radius: var(--radius-full);
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-surface);
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
+  border: 1px solid var(--apple-line-soft);
+  background: #ffffff;
+  color: var(--apple-ink-soft);
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
@@ -262,9 +285,9 @@
 }
 
 .landing-hero-tag:hover {
-  border-color: rgba(99, 102, 241, 0.3);
-  color: #6366f1;
-  background: rgba(99, 102, 241, 0.04);
+  border-color: var(--apple-blue);
+  color: var(--apple-blue);
+  background: var(--apple-blue-soft);
   transform: translateY(-1px);
 }
 
@@ -272,7 +295,8 @@
    Section 2 — 热门例题
    ═══════════════════════════════════════════════════ */
 .landing-examples {
-  padding: 64px 0;
+  padding: 96px 0;
+  background: var(--apple-bg-alt);
 }
 
 /* Filter bar */
@@ -280,8 +304,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 28px;
+  gap: 14px;
+  margin-bottom: 36px;
 }
 
 .landing-search-wrap {
@@ -290,23 +314,25 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  transition: border-color 0.15s ease;
+  padding: 10px 16px;
+  background: #ffffff;
+  border: 1px solid var(--apple-line-soft);
+  border-radius: 14px;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
   box-sizing: border-box;
 }
 
 .landing-search-wrap:focus-within {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
+  border-color: var(--apple-blue);
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.14);
 }
 
 .landing-search-icon {
   flex-shrink: 0;
-  color: var(--text-muted);
-  opacity: 0.5;
+  color: var(--apple-ink-mute);
+  opacity: 0.6;
   width: 14px;
   height: 14px;
 }
@@ -315,15 +341,15 @@
   flex: 1;
   border: none;
   outline: none;
-  font-size: var(--text-sm);
+  font-size: 15px;
   font-family: inherit;
-  color: var(--text-primary);
+  color: var(--apple-ink);
   background: transparent;
   min-width: 0;
 }
 
 .landing-search-input::placeholder {
-  color: var(--text-muted);
+  color: var(--apple-ink-mute);
 }
 
 .landing-search-clear {
@@ -334,8 +360,8 @@
   height: 20px;
   border-radius: 50%;
   border: none;
-  background: var(--border-subtle);
-  color: var(--text-muted);
+  background: var(--apple-line-soft);
+  color: var(--apple-ink-soft);
   cursor: pointer;
   font-size: 12px;
   line-height: 1;
@@ -344,8 +370,8 @@
 }
 
 .landing-search-clear:hover {
-  background: var(--border-default);
-  color: var(--text-primary);
+  background: var(--apple-line);
+  color: var(--apple-ink);
 }
 
 .landing-filter-row {
@@ -364,12 +390,12 @@
 }
 
 .landing-filter-tab {
-  padding: 5px 14px;
+  padding: 6px 15px;
   border-radius: var(--radius-full);
-  border: 1px solid var(--border-subtle);
-  background: transparent;
-  color: var(--text-muted);
-  font-size: var(--text-xs);
+  border: 1px solid var(--apple-line-soft);
+  background: #ffffff;
+  color: var(--apple-ink-soft);
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
@@ -377,12 +403,12 @@
 }
 
 .landing-filter-tab:hover {
-  border-color: #6366f1;
-  color: #6366f1;
+  border-color: var(--apple-blue);
+  color: var(--apple-blue);
 }
 
 .landing-filter-tab.active {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: var(--apple-blue);
   border-color: transparent;
   color: white;
 }
@@ -396,12 +422,12 @@
 }
 
 .landing-filter-tag {
-  padding: 4px 10px;
+  padding: 5px 11px;
   border-radius: var(--radius-full);
-  border: 1px solid var(--border-subtle);
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 11px;
+  border: 1px solid var(--apple-line-soft);
+  background: #ffffff;
+  color: var(--apple-ink-mute);
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
@@ -409,21 +435,21 @@
 }
 
 .landing-filter-tag:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--apple-blue);
+  color: var(--apple-blue);
 }
 
 .landing-filter-tag.active {
-  background: var(--accent-subtle);
-  border-color: rgba(99, 102, 241, 0.3);
-  color: var(--accent);
+  background: var(--apple-blue-soft);
+  border-color: rgba(0, 113, 227, 0.3);
+  color: var(--apple-blue);
 }
 
 /* ── Examples grid ──────────────────────────────── */
 .landing-examples-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 16px;
 }
 
 /* Tablet: 2 columns */
@@ -443,43 +469,49 @@
 .landing-example-card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 16px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  gap: 6px;
+  padding: 22px;
+  background: #ffffff;
+  border: 1px solid var(--apple-line-soft);
+  border-radius: 18px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
   text-align: left;
   font-family: inherit;
   color: inherit;
 }
 
 .landing-example-card:hover {
-  border-color: rgba(99, 102, 241, 0.25);
-  background: rgba(99, 102, 241, 0.02);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.96);
+  transform: translateY(-3px);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 12px 32px rgba(0, 0, 0, 0.08);
 }
 
 .landing-example-category {
-  font-size: 10px;
-  font-weight: 550;
-  color: #6366f1;
-  letter-spacing: 0.04em;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--apple-blue);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .landing-example-title {
-  font-size: var(--text-sm);
+  font-size: 15px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--apple-ink);
   line-height: 1.4;
+  letter-spacing: -0.01em;
 }
 
 .landing-example-desc {
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: 13px;
+  color: var(--apple-ink-soft);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -488,58 +520,58 @@
 /* No results */
 .landing-no-results {
   text-align: center;
-  padding: 48px 16px;
-  color: var(--text-muted);
-  font-size: var(--text-sm);
+  padding: 56px 16px;
+  color: var(--apple-ink-soft);
+  font-size: 15px;
 }
 
 .landing-reset-filter {
-  margin-top: 8px;
-  padding: 6px 16px;
+  margin-top: 10px;
+  padding: 7px 18px;
   border-radius: var(--radius-full);
-  border: 1px solid var(--border-subtle);
-  background: transparent;
-  color: var(--accent);
-  font-size: var(--text-xs);
+  border: 1px solid var(--apple-line);
+  background: #ffffff;
+  color: var(--apple-blue);
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
 }
 
 .landing-reset-filter:hover {
-  background: var(--accent-subtle);
+  background: var(--apple-blue-soft);
 }
 
 /* Highlight */
 .landing-highlight {
-  background: rgba(99, 102, 241, 0.18);
-  color: #6366f1;
-  border-radius: 2px;
-  padding: 0 1px;
+  background: var(--apple-blue-soft);
+  color: var(--apple-blue);
+  border-radius: 3px;
+  padding: 0 2px;
 }
 
 /* ── Sub-sections (推荐 / 最近学习) ────────────── */
 .landing-subsection {
-  margin-top: 48px;
+  margin-top: 56px;
 }
 
 .landing-subsection-header {
   display: flex;
   align-items: baseline;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .landing-subsection-title {
-  font-size: var(--text-lg);
-  font-weight: 650;
-  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--apple-ink);
   letter-spacing: -0.02em;
 }
 
 .landing-subsection-hint {
-  font-size: var(--text-xs);
-  color: var(--text-muted);
+  font-size: 13px;
+  color: var(--apple-ink-mute);
   font-weight: 400;
 }
 
@@ -547,17 +579,17 @@
 .landing-history-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .landing-history-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  gap: 14px;
+  padding: 14px 18px;
+  background: #ffffff;
+  border: 1px solid var(--apple-line-soft);
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.15s ease;
   text-align: left;
@@ -567,22 +599,22 @@
 }
 
 .landing-history-item:hover {
-  border-color: var(--border-default);
-  background: var(--accent-subtle);
+  border-color: var(--apple-line);
+  background: var(--apple-blue-soft);
 }
 
 .landing-history-date {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
-  color: var(--text-muted);
+  color: var(--apple-ink-mute);
   white-space: nowrap;
   flex-shrink: 0;
   width: 48px;
 }
 
 .landing-history-text {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
+  font-size: 15px;
+  color: var(--apple-ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -591,8 +623,8 @@
 }
 
 .landing-history-arrow {
-  font-size: var(--text-sm);
-  color: var(--text-muted);
+  font-size: 15px;
+  color: var(--apple-ink-mute);
   flex-shrink: 0;
 }
 
@@ -600,8 +632,8 @@
    Section 3 — 核心功能
    ═══════════════════════════════════════════════════ */
 .landing-features {
-  padding: 64px 0 80px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8f9ff 100%);
+  padding: 100px 0 120px;
+  background: var(--apple-bg);
 }
 
 .landing-features-grid {
@@ -626,62 +658,67 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 28px 24px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
-  transition: all 0.25s ease;
+  padding: 32px 28px;
+  background: #ffffff;
+  border: 1px solid var(--apple-line-soft);
+  border-radius: 22px;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .landing-feature-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-  border-color: transparent;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 16px 40px rgba(0, 0, 0, 0.08);
 }
 
 .landing-feature-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
-  color: white;
-  margin-bottom: 16px;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  color: var(--apple-blue);
+  background: var(--apple-blue-soft);
+  margin-bottom: 18px;
 }
 
 .landing-feature-icon svg {
-  width: 22px;
-  height: 22px;
+  width: 23px;
+  height: 23px;
 }
 
 .landing-feature-title {
-  font-size: var(--text-base);
-  font-weight: 650;
-  color: var(--text-primary);
-  margin-bottom: 6px;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--apple-ink);
+  margin-bottom: 8px;
   letter-spacing: -0.02em;
 }
 
 .landing-feature-desc {
-  font-size: var(--text-sm);
-  color: var(--text-muted);
-  line-height: 1.6;
+  font-size: 15px;
+  color: var(--apple-ink-soft);
+  line-height: 1.5;
 }
 
 /* ═══════════════════════════════════════════════════
-   Section 4 — 会员计划（页面底部，低调处理）
+   Section 4 — 会员计划
    ═══════════════════════════════════════════════════ */
 .landing-plans {
-  padding: 64px 0 48px;
-  border-top: 1px solid var(--border-subtle);
+  padding: 96px 0 64px;
+  background: var(--apple-bg-alt);
+  border-top: 1px solid var(--apple-line-soft);
 }
 
 .landing-plans-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 24px;
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
 }
 
@@ -696,46 +733,51 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 28px 24px 24px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
-  transition: all 0.2s ease;
+  padding: 32px 28px 28px;
+  background: #ffffff;
+  border: 1px solid var(--apple-line-soft);
+  border-radius: 22px;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .landing-plan-card:hover {
-  border-color: var(--border-default);
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 12px 32px rgba(0, 0, 0, 0.07);
 }
 
 .landing-plan-card--current {
-  border-color: rgba(99, 102, 241, 0.3);
-  background: linear-gradient(180deg, rgba(99, 102, 241, 0.02) 0%, var(--bg-surface) 20%);
+  border-color: rgba(0, 113, 227, 0.4);
+  box-shadow: 0 0 0 1px rgba(0, 113, 227, 0.2);
 }
 
 .landing-plan-badge {
   position: absolute;
-  top: -10px;
+  top: -11px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 3px 12px;
+  padding: 4px 14px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: var(--apple-blue);
   color: white;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
 }
 
 .landing-plan-header {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 
 .landing-plan-name {
-  font-size: var(--text-lg);
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 6px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--apple-ink);
+  margin-bottom: 8px;
   letter-spacing: -0.02em;
 }
 
@@ -747,45 +789,45 @@
 }
 
 .landing-plan-amount {
-  font-size: var(--text-3xl);
-  font-weight: 750;
-  color: var(--text-primary);
+  font-size: 40px;
+  font-weight: 600;
+  color: var(--apple-ink);
   letter-spacing: -0.03em;
 }
 
 .landing-plan-period {
-  font-size: var(--text-sm);
-  color: var(--text-muted);
+  font-size: 15px;
+  color: var(--apple-ink-soft);
 }
 
 .landing-plan-features {
   list-style: none;
-  margin: 0 0 24px;
+  margin: 0 0 28px;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 11px;
 }
 
 .landing-plan-features li {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  padding-left: 22px;
+  font-size: 15px;
+  color: var(--apple-ink);
+  padding-left: 24px;
   position: relative;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
 .landing-plan-features li::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 6px;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: rgba(99, 102, 241, 0.1);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 10.5L3.5 8 2.5 9l3.5 3.5 7-7L12 4.5z' fill='%236366f1'/%3E%3C/svg%3E");
-  background-size: 10px;
+  background: var(--apple-blue-soft);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 10.5L3.5 8 2.5 9l3.5 3.5 7-7L12 4.5z' fill='%230071e3'/%3E%3C/svg%3E");
+  background-size: 11px;
   background-position: center;
   background-repeat: no-repeat;
 }
@@ -793,10 +835,10 @@
 .landing-plan-btn {
   margin-top: auto;
   width: 100%;
-  padding: 10px 0;
+  padding: 12px 0;
   border-radius: var(--radius-full);
-  font-size: var(--text-sm);
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s ease;
@@ -805,24 +847,22 @@
 
 .landing-plan-btn--outline {
   background: transparent;
-  border: 1px solid var(--border-default);
-  color: var(--text-primary);
+  border: 1px solid var(--apple-line);
+  color: var(--apple-blue);
 }
 
 .landing-plan-btn--outline:hover {
-  border-color: var(--border-emphasis);
-  background: var(--accent-subtle);
+  background: var(--apple-blue-soft);
 }
 
 .landing-plan-btn--primary {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: var(--apple-blue);
   border: none;
   color: white;
 }
 
 .landing-plan-btn--primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+  background: var(--apple-blue-hover);
 }
 
 .landing-plan-btn--primary:disabled {
@@ -834,14 +874,15 @@
    Footer
    ═══════════════════════════════════════════════════ */
 .landing-footer {
-  padding: 32px 0;
-  border-top: 1px solid var(--border-subtle);
+  padding: 36px 0;
+  border-top: 1px solid var(--apple-line-soft);
+  background: var(--apple-bg-alt);
 }
 
 .landing-footer-inner {
-  max-width: 1200px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 22px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -853,49 +894,71 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: var(--text-sm);
+  font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--apple-ink);
 }
 
 .landing-footer-brand svg {
-  color: #6366f1;
+  color: var(--apple-blue);
 }
 
 .landing-footer-inner p {
-  font-size: var(--text-xs);
-  color: var(--text-muted);
+  font-size: 12px;
+  color: var(--apple-ink-mute);
 }
 
 /* ═══════════════════════════════════════════════════
    Dark mode
    ═══════════════════════════════════════════════════ */
+[data-theme="dark"] {
+  --apple-bg: #000000;
+  --apple-bg-alt: #0a0a0c;
+  --apple-ink: #f5f5f7;
+  --apple-ink-soft: #a1a1a6;
+  --apple-ink-mute: #86868b;
+  --apple-line: #2a2a2e;
+  --apple-line-soft: #1d1d1f;
+  --apple-blue: #2997ff;
+  --apple-blue-hover: #47a5ff;
+  --apple-blue-soft: rgba(41, 151, 255, 0.14);
+}
+
 [data-theme="dark"] .landing {
-  background: linear-gradient(180deg, var(--bg-base) 0%, var(--bg-deep) 20%, var(--bg-deep) 100%);
+  background: var(--apple-bg);
 }
 
 [data-theme="dark"] .landing-hero-title {
-  background: linear-gradient(135deg, #f0f0f5 0%, #818cf8 55%, #a78bfa 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--apple-ink);
+}
+
+[data-theme="dark"] .landing-hero-input-wrap,
+[data-theme="dark"] .landing-example-card,
+[data-theme="dark"] .landing-history-item,
+[data-theme="dark"] .landing-feature-card,
+[data-theme="dark"] .landing-plan-card,
+[data-theme="dark"] .landing-hero-camera,
+[data-theme="dark"] .landing-hero-tag,
+[data-theme="dark"] .landing-filter-tab,
+[data-theme="dark"] .landing-filter-tag,
+[data-theme="dark"] .landing-search-wrap {
+  background: #161617;
+  border-color: var(--apple-line-soft);
+}
+
+[data-theme="dark"] .landing-examples,
+[data-theme="dark"] .landing-plans,
+[data-theme="dark"] .landing-footer {
+  background: var(--apple-bg-alt);
 }
 
 [data-theme="dark"] .landing-features {
-  background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-base) 100%);
+  background: var(--apple-bg);
 }
 
-[data-theme="dark"] .landing-feature-card:hover {
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-[data-theme="dark"] .landing-plan-card--current {
-  border-color: rgba(129, 140, 248, 0.25);
-  background: linear-gradient(180deg, rgba(99, 102, 241, 0.06) 0%, var(--bg-surface) 20%);
-}
-
-[data-theme="dark"] .landing-hero-camera-btn:hover {
-  background: var(--accent-subtle);
+[data-theme="dark"] .landing-feature-card:hover,
+[data-theme="dark"] .landing-example-card:hover {
+  border-color: var(--apple-line);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -903,54 +966,57 @@
    ═══════════════════════════════════════════════════ */
 @media (max-width: 767px) {
   .landing-hero {
-    min-height: 55vh;
-    padding: 16px 16px 32px;
+    min-height: 64vh;
+    padding: 56px 16px 48px;
   }
 
-  .landing-hero-title {
-    font-size: 28px;
+  .landing-hero-logo {
+    margin-bottom: 28px;
   }
 
   .landing-hero-subtitle {
-    font-size: var(--text-base);
-    margin-bottom: 20px;
+    margin-bottom: 28px;
   }
 
   .landing-hero-input-wrap {
-    padding: 12px 14px 8px;
+    padding: 14px 16px 10px;
   }
 
   .landing-hero-input {
-    font-size: var(--text-sm);
-    min-height: 48px;
+    font-size: 16px;
+    min-height: 52px;
   }
 
   .landing-hero-tags {
     gap: 6px;
-    margin-top: 16px;
+    margin-top: 22px;
   }
 
   .landing-hero-tag {
-    padding: 5px 10px;
-    font-size: 10px;
+    padding: 6px 12px;
+    font-size: 12px;
   }
 
   .landing-section-title {
-    font-size: var(--text-xl);
+    font-size: 30px;
+  }
+
+  .landing-section-subtitle {
+    font-size: 17px;
   }
 
   .landing-section-heading {
-    margin-bottom: 28px;
+    margin-bottom: 36px;
   }
 
   .landing-examples,
   .landing-features,
   .landing-plans {
-    padding: 40px 0;
+    padding: 56px 0;
   }
 
   .landing-features {
-    padding: 40px 0 48px;
+    padding: 56px 0 72px;
   }
 
   .landing-section-inner {
@@ -959,5 +1025,10 @@
 
   .landing-footer-inner {
     padding: 0 16px;
+  }
+
+  .landing-feature-card,
+  .landing-plan-card {
+    padding: 24px 22px;
   }
 }
