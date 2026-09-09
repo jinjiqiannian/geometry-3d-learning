@@ -1,12 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSupabase } from '../contexts/SupabaseContext'
-import { useSubscription } from '../contexts/SubscriptionContext'
 import './UserMenu.css'
 
 export default function UserMenu() {
-  const { user, signOut, displayPhone, profile } = useSupabase()
-  const { isPro, isTeacher, plan } = useSubscription()
+  const { user, signOut, displayPhone } = useSupabase()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const menuRef = useRef(null)
@@ -34,20 +32,8 @@ export default function UserMenu() {
   }, [open])
 
   const handleAuth = () => {
-    document.dispatchEvent(new CustomEvent('mathviz:show-auth'))
+    document.dispatchEvent(new CustomEvent('jidong:show-auth'))
   }
-
-  const handleUpgrade = () => {
-    document.dispatchEvent(new CustomEvent('mathviz:show-paywall'))
-  }
-
-  const planBadge = () => {
-    if (isTeacher) return { label: '教师版', className: 'teacher' }
-    if (isPro) return { label: '专业版', className: 'pro' }
-    return { label: '免费版', className: 'free' }
-  }
-
-  const badge = planBadge()
 
   // Not logged in — show login button
   if (!user) {
@@ -55,12 +41,6 @@ export default function UserMenu() {
       <div className="um-wrap">
         <button className="um-login-btn" onClick={handleAuth}>
           登录
-        </button>
-        <button
-          className={`um-plan-badge ${badge.className}`}
-          onClick={handleUpgrade}
-        >
-          {badge.label}
         </button>
       </div>
     )
@@ -102,44 +82,22 @@ export default function UserMenu() {
       label: '反馈管理',
       onClick: () => { navigate('/admin/feedback'); setOpen(false) },
     },
-  ]
-
-  // Only show upgrade for free users
-  if (!isPro && !isTeacher) {
-    menuItems.push({
+    {
       icon: (
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
         </svg>
       ),
-      label: '升级专业版',
-      onClick: () => { handleUpgrade(); setOpen(false) },
-      highlight: true,
-    })
-  }
-
-  menuItems.push({
-    icon: (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-        <polyline points="16 17 21 12 16 7" />
-        <line x1="21" y1="12" x2="9" y2="12" />
-      </svg>
-    ),
-    label: '退出登录',
-    onClick: () => { signOut(); setOpen(false) },
-    danger: true,
-  })
+      label: '退出登录',
+      onClick: () => { signOut(); setOpen(false) },
+      danger: true,
+    },
+  ]
 
   return (
     <div className="um-wrap" ref={menuRef}>
-      <button
-        className={`um-plan-badge ${badge.className}`}
-        onClick={handleUpgrade}
-      >
-        {badge.label}
-      </button>
-
       <button
         className={`um-avatar-btn ${open ? 'active' : ''}`}
         onClick={() => setOpen(!open)}
@@ -155,13 +113,12 @@ export default function UserMenu() {
         <div className="um-dropdown">
           <div className="um-dropdown-header">
             <span className="um-dropdown-email">{displayName}</span>
-            <span className={`um-dropdown-plan ${badge.className}`}>{badge.label}</span>
           </div>
           <div className="um-dropdown-divider" />
           {menuItems.map((item, i) => (
             <button
               key={i}
-              className={`um-dropdown-item ${item.highlight ? 'highlight' : ''} ${item.danger ? 'danger' : ''}`}
+              className={`um-dropdown-item ${item.danger ? 'danger' : ''}`}
               onClick={item.onClick}
             >
               <span className="um-dropdown-item-icon">{item.icon}</span>
