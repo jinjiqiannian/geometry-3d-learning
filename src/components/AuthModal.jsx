@@ -32,8 +32,8 @@ export default function AuthModal() {
   // ── 弹窗控制 ──
   useEffect(() => {
     const handler = () => setVisible(true)
-    document.addEventListener('mathviz:show-auth', handler)
-    return () => document.removeEventListener('mathviz:show-auth', handler)
+    document.addEventListener('jidong:show-auth', handler)
+    return () => document.removeEventListener('jidong:show-auth', handler)
   }, [])
 
   // Escape key to close

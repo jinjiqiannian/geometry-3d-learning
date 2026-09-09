@@ -125,9 +125,9 @@ export function WorkspaceProvider({ children }) {
     if (!connected || !user || !supabase) {
       // Save to localStorage fallback
       try {
-        const saved = JSON.parse(localStorage.getItem('mathviz_workspaces') || '[]')
+        const saved = JSON.parse(localStorage.getItem('jidong_workspaces') || '[]')
         saved.unshift({ ...workspace, savedAt: new Date().toISOString() })
-        localStorage.setItem('mathviz_workspaces', JSON.stringify(saved.slice(0, 20)))
+        localStorage.setItem('jidong_workspaces', JSON.stringify(saved.slice(0, 20)))
       } catch (err) {
         console.warn('WorkspaceContext: Failed to save workspace to localStorage', err)
       }

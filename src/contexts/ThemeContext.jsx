@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════
-//  ThemeContext — 浅色默认，支持深色切换
+//  ThemeContext — 深色默认（ins 风冷调 + harness 渐变底）
 // ═══════════════════════════════════════════════════════
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 
 const ThemeContext = createContext(null)
 
-const STORAGE_KEY = 'mathviz_theme'
+const STORAGE_KEY = 'jidong_theme'
 const DATA_ATTR = 'data-theme'
 
 function applyTheme(theme) {
@@ -13,7 +13,7 @@ function applyTheme(theme) {
   document.documentElement.setAttribute(DATA_ATTR, theme)
   const meta = document.querySelector('meta[name="theme-color"]')
   if (meta) {
-    meta.content = theme === 'dark' ? '#12121a' : '#f7f9fc'
+    meta.content = theme === 'dark' ? '#0E1830' : '#FFFBF7'
   }
 }
 
@@ -22,7 +22,7 @@ function readStoredTheme() {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored === 'dark' || stored === 'light') return stored
   } catch { /* */ }
-  return 'light'
+  return 'dark'
 }
 
 export function ThemeProvider({ children }) {

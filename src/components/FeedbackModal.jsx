@@ -11,7 +11,7 @@ const FEEDBACK_TYPES = [
   { value: 'other', label: '其他' },
 ]
 
-const STORAGE_KEY = 'mathviz:feedback'
+const STORAGE_KEY = 'jidong:feedback'
 const RATING_LABELS = ['', '很差', '较差', '一般', '满意', '非常满意']
 
 export default function FeedbackModal() {
@@ -31,8 +31,8 @@ export default function FeedbackModal() {
   // ── 弹窗控制 ──
   useEffect(() => {
     const handler = () => setVisible(true)
-    document.addEventListener('mathviz:show-feedback', handler)
-    return () => document.removeEventListener('mathviz:show-feedback', handler)
+    document.addEventListener('jidong:show-feedback', handler)
+    return () => document.removeEventListener('jidong:show-feedback', handler)
   }, [])
 
   // Escape 关闭
@@ -151,7 +151,7 @@ export default function FeedbackModal() {
             </div>
 
             <h2 className="fb-title">意见反馈</h2>
-            <p className="fb-desc">帮助我们把几何维度做得更好</p>
+            <p className="fb-desc">帮助我们把即懂做得更好</p>
 
             <form className="fb-form" onSubmit={handleSubmit}>
               {/* 反馈类型 */}

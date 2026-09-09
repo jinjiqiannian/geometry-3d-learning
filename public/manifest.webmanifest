@@ -1,17 +1,17 @@
 {
-  "name": "几何维度",
-  "short_name": "几何维度",
-  "description": "把抽象知识讲透 — 几何 / 排组 / 物理方法演示",
+  "name": "即懂",
+  "short_name": "即懂",
+  "description": "即懂 — 动画讲题，一看就懂。几何 / 排组 / 导数 / 圆锥曲线 / 物理",
   "start_url": "/#/workspace",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#f3f1ec",
-  "theme_color": "#0f6b5c",
+  "background_color": "#FFFBF7",
+  "theme_color": "#0E1830",
   "lang": "zh-CN",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "/favicon.svg?v=3",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

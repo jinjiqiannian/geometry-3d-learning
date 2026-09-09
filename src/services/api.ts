@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-//  几何维度 API Client — 统一前端API调用层
+//  即懂 API Client — 统一前端API调用层
 //  自动附加 JWT token，处理 401 跳转
 // ═══════════════════════════════════════════════════════
 
@@ -13,7 +13,7 @@ const API_BASE = (
 
 function getToken(): string | null {
   try {
-    return localStorage.getItem('mathviz_token')
+    return localStorage.getItem('jidong_token')
   } catch {
     return null
   }
@@ -21,20 +21,20 @@ function getToken(): string | null {
 
 export function setToken(token: string): void {
   try {
-    localStorage.setItem('mathviz_token', token)
+    localStorage.setItem('jidong_token', token)
   } catch { /* */ }
 }
 
 export function setRefreshToken(token: string): void {
   try {
-    localStorage.setItem('mathviz_refresh_token', token)
+    localStorage.setItem('jidong_refresh_token', token)
   } catch { /* */ }
 }
 
 export function clearTokens(): void {
   try {
-    localStorage.removeItem('mathviz_token')
-    localStorage.removeItem('mathviz_refresh_token')
+    localStorage.removeItem('jidong_token')
+    localStorage.removeItem('jidong_refresh_token')
   } catch { /* */ }
 }
 
@@ -81,7 +81,7 @@ async function request<T = any>(
   if (response.status === 401 && auth) {
     clearTokens()
     // Dispatch custom event for app to handle
-    window.dispatchEvent(new CustomEvent('mathviz:unauthorized'))
+    window.dispatchEvent(new CustomEvent('jidong:unauthorized'))
     throw new Error('登录已过期，请重新登录')
   }
 
@@ -134,7 +134,7 @@ export const authAPI = {
   },
 
   async refreshToken() {
-    const refreshToken = localStorage.getItem('mathviz_refresh_token')
+    const refreshToken = localStorage.getItem('jidong_refresh_token')
     if (!refreshToken) throw new Error('No refresh token')
     const res = await request<ApiResponse<{ token: string; refreshToken: string }>>(
       '/api/auth/refresh',
@@ -243,7 +243,7 @@ export const aiAPI = {
     const run = async () => {
       try {
         const token = (() => {
-          try { return localStorage.getItem('mathviz_token') } catch { return null }
+          try { return localStorage.getItem('jidong_token') } catch { return null }
         })()
 
         const headers: Record<string, string> = {
@@ -506,7 +506,7 @@ export const feedbackAPI = {
 // ── Listen for unauthorized events ─────────────────
 
 if (typeof window !== 'undefined') {
-  window.addEventListener('mathviz:unauthorized', () => {
+  window.addEventListener('jidong:unauthorized', () => {
     // Could redirect to login page
     console.warn('Session expired — please log in again')
   })
