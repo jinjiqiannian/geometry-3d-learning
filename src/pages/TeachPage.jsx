@@ -14,6 +14,8 @@ export default function TeachPage() {
   const [openChapterId, setOpenChapterId] = useState(DEFAULT_CHAPTER);
   const [activeLeafId, setActiveLeafId] = useState(null);
   const [navOpen, setNavOpen] = useState(true);
+  // 手机竖屏提示横屏（桌面/横屏由 CSS 隐藏）
+  const [rotateDismissed, setRotateDismissed] = useState(false);
 
   const subject = useMemo(
     () => CURRICULUM.find((s) => s.id === subjectId) || CURRICULUM[0],
@@ -165,6 +167,41 @@ export default function TeachPage() {
           </div>
         )}
       </section>
+
+      {/* 手机竖屏提示：横屏下目录与讲解同屏，避免反复进出目录 */}
+      {!rotateDismissed && (
+        <div className="teach-rotate-hint">
+          <div className="teach-rotate-card">
+            <div className="teach-rotate-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="13" y="6" width="22" height="36" rx="4" />
+                <path d="M30 26 L38 26" />
+                <path d="M35.4 22.4 L38 26 L35.4 29.6" />
+              </svg>
+            </div>
+            <h2 className="teach-rotate-title">横屏体验更完整</h2>
+            <p className="teach-rotate-lead">
+              横屏下课程目录与讲解同屏显示，不用反复进出目录。
+            </p>
+            <div className="teach-rotate-actions">
+              <button
+                type="button"
+                className="teach-rotate-btn"
+                onClick={() => setRotateDismissed(true)}
+              >
+                已转好横屏
+              </button>
+              <button
+                type="button"
+                className="teach-rotate-btn--ghost"
+                onClick={() => setRotateDismissed(true)}
+              >
+                仍要竖屏使用
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

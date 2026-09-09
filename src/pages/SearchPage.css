@@ -140,6 +140,61 @@
   background: var(--accent-hover);
 }
 
+.search-btn-secondary {
+  padding: 11px 20px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--search-cream);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.search-btn-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.search-preview {
+  position: relative;
+  margin-bottom: 14px;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.search-preview img {
+  display: block;
+  max-width: min(320px, 100%);
+  max-height: 180px;
+  border-radius: 12px;
+  border: 1px solid var(--border-default);
+  object-fit: cover;
+}
+
+.search-preview-clear {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(20, 24, 30, 0.72);
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.search-ocr-hint {
+  margin: 10px 0 0;
+  font-size: 0.82rem;
+  color: var(--accent-text);
+}
+
 .search-link {
   font-size: 0.9rem;
   color: var(--search-accent);
@@ -154,4 +209,43 @@
   margin: 14px 0 0;
   font-size: 0.78rem;
   color: var(--search-muted);
+}
+
+/* ── 移动端：收紧留白，按钮全宽，避免画面挤压 ── */
+@media (max-width: 560px) {
+  .search-shell {
+    padding: 28px 20px 48px;
+  }
+
+  .search-title {
+    font-size: 1.55rem;
+  }
+
+  .search-lead {
+    font-size: 0.92rem;
+    margin-bottom: 20px;
+  }
+
+  .search-input {
+    min-height: 120px;
+    padding: 14px 14px;
+    font-size: 0.95rem;
+  }
+
+  .search-actions {
+    gap: 10px;
+  }
+
+  .search-btn-secondary,
+  .search-submit {
+    flex: 1;
+    text-align: center;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .search-link {
+    flex-basis: 100%;
+    text-align: center;
+  }
 }
