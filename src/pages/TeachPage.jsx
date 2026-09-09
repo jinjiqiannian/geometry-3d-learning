@@ -6,7 +6,7 @@ import "./TeachPage.css";
 
 const DEFAULT_SUBJECT = "math";
 const DEFAULT_BOOK = "math-req-2";
-const DEFAULT_CHAPTER = "m2-solid";
+const DEFAULT_CHAPTER = "m2-ch8";
 
 export default function TeachPage() {
   const [subjectId, setSubjectId] = useState(DEFAULT_SUBJECT);

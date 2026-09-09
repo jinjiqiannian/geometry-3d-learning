@@ -645,9 +645,10 @@ export default function LandingPage() {
           if (reduced) {
             op = i === stage ? 1 : 0;
           } else if (i === stage) {
-            op = 1 - local * 0.3;
+            // 最后一屏保持常显；其余先快速淡出，给下一屏让位
+            op = i < STORY.length - 1 ? Math.max(0, 1 - local * 2.4) : 1 - local * 0.3;
           } else if (i === stage + 1 && stage < STORY.length - 1) {
-            op = local * 0.95;
+            op = Math.max(0, (local - 0.55) / 0.45);
           }
           layer.style.opacity = String(op);
           layer.style.zIndex = String(i === stage || i === stage + 1 ? 2 : 1);
@@ -760,7 +761,7 @@ export default function LandingPage() {
           <div className="landing-brand-row">
             <BrandLogo className="landing-logo-svg" size={44} />
             <div className="landing-brand-text">
-              <p className="landing-brand">几何维度</p>
+              <p className="landing-brand">即懂</p>
               <p className="landing-brand-en">MathViz</p>
             </div>
           </div>
@@ -1056,7 +1057,7 @@ export default function LandingPage() {
       </section>
 
       <footer className="landing-footer">
-        <span>几何维度</span>
+        <span>即懂</span>
         <span className="landing-footer-dot" aria-hidden="true">
           ·
         </span>

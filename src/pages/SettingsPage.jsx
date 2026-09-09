@@ -1,25 +1,14 @@
 // ═══════════════════════════════════════════════════════
 //  SettingsPage — 账号 · 主题 · 数据
 // ═══════════════════════════════════════════════════════
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSupabase } from '../contexts/SupabaseContext'
-import { useSubscription } from '../contexts/SubscriptionContext'
 import { useTheme } from '../contexts/ThemeContext'
 import './SettingsPage.css'
 
 export default function SettingsPage() {
   const { user, connected } = useSupabase()
-  const { plan, isPro, isTeacher, dailyUsage, dailyLimit, initiateUpgrade, manageSubscription } = useSubscription()
   const { theme, setTheme } = useTheme()
-
-  const planBadge = () => {
-    if (isTeacher) return { label: '教师版', className: 'teacher' }
-    if (isPro) return { label: '专业版', className: 'pro' }
-    return { label: '免费版', className: 'free' }
-  }
-
-  const badge = planBadge()
 
   return (
     <div className="settings-page">
@@ -35,26 +24,6 @@ export default function SettingsPage() {
         <section className="settings-card">
           <h2 className="settings-card-title">账号</h2>
           <div className="settings-card-body">
-            <div className="settings-row">
-              <span className="settings-label">当前方案</span>
-              <span className={`settings-plan-badge ${badge.className}`}>
-                {badge.label}
-              </span>
-            </div>
-            {plan && (
-              <div className="settings-row">
-                <span className="settings-label">方案名称</span>
-                <span className="settings-value">{plan}</span>
-              </div>
-            )}
-            {dailyLimit != null && (
-              <div className="settings-row">
-                <span className="settings-label">今日用量</span>
-                <span className="settings-value">
-                  {dailyUsage || 0} / {dailyLimit} 次
-                </span>
-              </div>
-            )}
             {user ? (
               <>
                 <div className="settings-row">
@@ -74,31 +43,6 @@ export default function SettingsPage() {
                 </span>
               </div>
             )}
-
-            {/* Subscription action */}
-            <div className="settings-row settings-row-action">
-              {isPro || isTeacher ? (
-                <button
-                  className="settings-btn settings-btn-secondary"
-                  onClick={() => manageSubscription()}
-                >
-                  管理订阅
-                </button>
-              ) : (
-                <button
-                  className="settings-btn settings-btn-primary"
-                  onClick={() => {
-                    if (!user) {
-                      document.dispatchEvent(new CustomEvent('mathviz:show-auth'))
-                      return
-                    }
-                    initiateUpgrade('pro', 'monthly')
-                  }}
-                >
-                  升级专业版
-                </button>
-              )}
-            </div>
           </div>
         </section>
 
@@ -113,25 +57,6 @@ export default function SettingsPage() {
               </div>
               <span className="settings-status settings-status-ok">云端引擎</span>
             </div>
-            {!isPro && !isTeacher && (
-              <div className="settings-row settings-row-action">
-                <p className="settings-hint" style={{ margin: 0 }}>
-                  升级专业版可解锁 AI 增强解析（更详细的步骤讲解和智能提示）
-                </p>
-                <button
-                  className="settings-btn settings-btn-primary"
-                  onClick={() => {
-                    if (!user) {
-                      document.dispatchEvent(new CustomEvent('mathviz:show-auth'))
-                      return
-                    }
-                    initiateUpgrade('pro', 'monthly')
-                  }}
-                >
-                  升级
-                </button>
-              </div>
-            )}
           </div>
         </section>
 
@@ -173,7 +98,7 @@ export default function SettingsPage() {
                 onClick={() => {
                   if (window.confirm('确定要清除所有本地数据吗？此操作不可撤销。')) {
                     try {
-                      localStorage.removeItem('mathviz_history')
+                      localStorage.removeItem('jidong_history')
                       window.location.reload()
                     } catch (err) {
                       console.warn('SettingsPage: Failed to clear local data', err)

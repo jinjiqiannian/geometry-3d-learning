@@ -1,12 +1,12 @@
 /* Teach — left curriculum rail + shared model shell */
 
 .teach-page {
-  --teach-ink: #1c1915;
-  --teach-muted: #6b645c;
-  --teach-line: rgba(28, 25, 21, 0.08);
-  --teach-paper: #f4f0e8;
-  --teach-cream: #fffcf7;
-  --teach-accent: #c2410c;
+  --teach-ink: var(--text-primary);
+  --teach-muted: var(--text-secondary);
+  --teach-line: var(--border-subtle);
+  --teach-paper: var(--bg-base);
+  --teach-cream: var(--bg-surface);
+  --teach-accent: var(--accent);
   --teach-serif: "Songti SC", "STSong", "Noto Serif SC", Georgia, serif;
 
   display: grid;
@@ -17,6 +17,17 @@
   background: var(--teach-paper);
   color: var(--teach-ink);
   overflow: hidden;
+}
+
+/* ── Dark: 全量继承全局冷色变量，不再走米色 ── */
+[data-theme="dark"] .teach-page {
+  --teach-ink: var(--text-primary);
+  --teach-muted: var(--text-secondary);
+  --teach-line: var(--border-subtle);
+  --teach-paper: var(--bg-base);
+  --teach-cream: var(--bg-surface);
+  --teach-accent: var(--accent);
+  background: var(--bg-hero-flat);
 }
 
 .teach-nav {
@@ -156,12 +167,12 @@
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: #7a736b;
+  color: var(--teach-muted);
   line-height: 1.4;
 }
 
 .teach-chapter-toggle.is-open {
-  color: #5c574e;
+  color: var(--teach-ink);
 }
 
 .teach-chapter-name {
@@ -173,7 +184,7 @@
   margin: 0 0 6px;
   padding: 4px 0 2px 20px;
   margin-left: 34px;
-  border-left: 1px solid rgba(28, 25, 21, 0.12);
+  border-left: 1px solid color-mix(in srgb, var(--teach-ink) 12%, transparent);
 }
 
 .teach-leaf {
@@ -194,7 +205,7 @@
 }
 
 .teach-leaf.is-active {
-  background: rgba(28, 25, 21, 0.06);
+  background: color-mix(in srgb, var(--teach-ink) 6%, transparent);
   color: var(--teach-ink);
 }
 
@@ -259,22 +270,30 @@
   .teach-page {
     grid-template-columns: 1fr;
     height: auto;
-    min-height: calc(100dvh - 56px - 64px);
+    min-height: calc(100dvh - var(--app-nav-height, 48px) - var(--mobile-nav-height, 0px));
     overflow: visible;
   }
 
+  /* 入口态：目录自然展开，随页面滚动，不再 42vh 截断 */
   .teach-nav {
     border-right: none;
-    border-bottom: 1px solid var(--teach-line);
-    max-height: 42vh;
+    border-bottom: none;
+    max-height: none;
+  }
+
+  /* 入口态整页就是目录，隐藏「从左侧选择知识点」空状态 */
+  .teach-page:not(.teach-page--lesson) .teach-main {
+    display: none;
   }
 
   .teach-page--lesson:not(.teach-page--nav-open) .teach-nav {
     display: none;
   }
 
+  /* 讲解态临时展开目录：仍堆叠在讲解上方，限制高度避免把正文推太深 */
   .teach-page--lesson.teach-page--nav-open .teach-nav {
     max-height: 38vh;
+    border-bottom: 1px solid var(--teach-line);
   }
 
   .teach-nav-fab {
@@ -292,7 +311,8 @@
     z-index: 2;
   }
 
-  .teach-main {
-    min-height: 55vh;
+  /* 讲解态至少占满首屏（扣除顶栏+底栏+目录按钮） */
+  .teach-page--lesson .teach-main {
+    min-height: calc(100dvh - var(--app-nav-height, 48px) - var(--mobile-nav-height, 0px) - 8px);
   }
 }

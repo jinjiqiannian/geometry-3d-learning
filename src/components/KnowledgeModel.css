@@ -70,7 +70,7 @@
 .km-formula {
   font-size: 13px;
   font-family: -apple-system, "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif;
-  fill: #0071e3;
+  fill: #E8551F;
   pointer-events: none;
 }
 
@@ -224,7 +224,7 @@
 }
 
 .km-accent {
-  stroke: #0071e3;
+  stroke: #E8551F;
 }
 
 .km-teal {
@@ -239,7 +239,7 @@
 }
 
 .km-accent-line {
-  stroke: #0071e3;
+  stroke: #E8551F;
 }
 
 .km-teal-line {
@@ -253,7 +253,7 @@
 }
 
 .km-dot {
-  fill: #0071e3;
+  fill: #E8551F;
   stroke: #ffffff;
   stroke-width: 2;
 }
@@ -263,7 +263,7 @@
 }
 
 .km-arrow-fill {
-  fill: #0071e3;
+  fill: #E8551F;
   stroke: none;
 }
 

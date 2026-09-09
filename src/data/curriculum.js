@@ -1,5 +1,6 @@
 /**
  * 2019 人教：数学必修1–2 + 选必1–3；物理必修1–3 + 选必1–3
+ * 章目对齐教材（数学为人教A版，物理为人教版），暂无知识点的章不展示
  * 每个叶子都有 model；有引擎的带 subject/text
  */
 
@@ -17,8 +18,8 @@ export const CURRICULUM = [
         label: "必修第一册",
         children: [
           {
-            id: "m1-set",
-            label: "集合与逻辑用语",
+            id: "m1-ch1",
+            label: "第一章 集合与常用逻辑用语",
             leaves: [
               L("m-set", "集合的含义与运算", "venn", {
                 idea: "用元素是否属于集合来定义交、并、补。",
@@ -43,8 +44,8 @@ export const CURRICULUM = [
             ],
           },
           {
-            id: "m1-ineq",
-            label: "二次函数、方程与不等式",
+            id: "m1-ch2",
+            label: "第二章 一元二次函数、方程和不等式",
             leaves: [
               L("m-quad", "二次函数与图像", "quadratic", {
                 idea: "开口、对称轴、顶点决定图象。",
@@ -69,8 +70,8 @@ export const CURRICULUM = [
             ],
           },
           {
-            id: "m1-fn",
-            label: "函数概念与性质",
+            id: "m1-ch3",
+            label: "第三章 函数的概念与性质",
             leaves: [
               L("m-fn-def", "函数的概念", "mapping", {
                 idea: "每个 x 对应唯一 y。",
@@ -108,8 +109,8 @@ export const CURRICULUM = [
             ],
           },
           {
-            id: "m1-explog",
-            label: "指数与对数函数",
+            id: "m1-ch4",
+            label: "第四章 指数函数与对数函数",
             leaves: [
               L("m-exp", "指数函数", "exp-fn", {
                 idea: "y=aˣ (a>0,a≠1) 恒过 (0,1)。",
@@ -134,8 +135,8 @@ export const CURRICULUM = [
             ],
           },
           {
-            id: "m1-trig",
-            label: "三角函数",
+            id: "m1-ch5",
+            label: "第五章 三角函数",
             leaves: [
               L("m-rad", "任意角与弧度", "radian", {
                 idea: "弧度是半径弧长对应的圆心角。",
@@ -176,8 +177,8 @@ export const CURRICULUM = [
         label: "必修第二册",
         children: [
           {
-            id: "m2-vec",
-            label: "平面向量",
+            id: "m2-ch6",
+            label: "第六章 平面向量及其应用",
             leaves: [
               L("m-vec-op", "向量加减与数乘", "vector", {
                 idea: "几何上是平移合成，坐标上是分量运算。",
@@ -202,8 +203,8 @@ export const CURRICULUM = [
             ],
           },
           {
-            id: "m2-cx",
-            label: "复数",
+            id: "m2-ch7",
+            label: "第七章 复数",
             leaves: [
               L("m-cx", "复数的几何意义", "complex", {
                 idea: "a+bi 对应复平面点 (a,b)。",
@@ -218,8 +219,8 @@ export const CURRICULUM = [
             ],
           },
           {
-            id: "m2-solid",
-            label: "立体几何初步",
+            id: "m2-ch8",
+            label: "第八章 立体几何初步",
             leaves: [
               L("m-cube-d", "正方体体对角线", "cube", {
                 hint: "空间对角线",
@@ -311,8 +312,8 @@ export const CURRICULUM = [
             ],
           },
           {
-            id: "m2-stat",
-            label: "统计与概率",
+            id: "m2-ch9",
+            label: "第九章 统计",
             leaves: [
               L("m-hist", "抽样与直方图", "hist", {
                 idea: "用频率分布直方图看数据形态。",
@@ -324,6 +325,12 @@ export const CURRICULUM = [
                   "抽样要保证随机性和代表性：总体分层明显时用分层抽样，否则简单随机抽样即可。",
                 ],
               }),
+            ],
+          },
+          {
+            id: "m2-ch10",
+            label: "第十章 概率",
+            leaves: [
               L("m-prob", "古典概型", "prob", {
                 subject: "combo",
                 sampleKey: "classical_prob",
@@ -345,8 +352,8 @@ export const CURRICULUM = [
         label: "选择性必修第一册",
         children: [
           {
-            id: "mo1-space",
-            label: "空间向量与立体几何",
+            id: "mo1-ch1",
+            label: "第一章 空间向量与立体几何",
             leaves: [
               L("m-space-d", "空间中的体对角线", "cube", {
                 modelAccent: "coord",
@@ -376,8 +383,8 @@ export const CURRICULUM = [
             ],
           },
           {
-            id: "mo1-line",
-            label: "直线与圆",
+            id: "mo1-ch2",
+            label: "第二章 直线和圆的方程",
             leaves: [
               L("m-line", "直线方程", "line-circle", {
                 idea: "点斜式、一般式可以互化。",
@@ -404,8 +411,8 @@ export const CURRICULUM = [
             ],
           },
           {
-            id: "mo1-conic",
-            label: "圆锥曲线",
+            id: "mo1-ch3",
+            label: "第三章 圆锥曲线的方程",
             leaves: [
               L("m-ell", "椭圆离心率", "ellipse", {
                 subject: "conic",
@@ -448,8 +455,8 @@ export const CURRICULUM = [
         label: "选择性必修第二册",
         children: [
           {
-            id: "mo2-seq",
-            label: "数列",
+            id: "mo2-ch4",
+            label: "第四章 数列",
             leaves: [
               L("m-arith", "等差数列", "ari-seq", {
                 idea: "公差固定，通项线性。",
@@ -474,8 +481,8 @@ export const CURRICULUM = [
             ],
           },
           {
-            id: "mo2-der",
-            label: "导数及其应用",
+            id: "mo2-ch5",
+            label: "第五章 一元函数的导数及其应用",
             leaves: [
               L("m-der-poly", "多项式求导", "derivative", {
                 subject: "derivative",
@@ -519,8 +526,8 @@ export const CURRICULUM = [
         label: "选择性必修第三册",
         children: [
           {
-            id: "mo3-count",
-            label: "计数原理",
+            id: "mo3-ch6",
+            label: "第六章 计数原理",
             leaves: [
               L("m-mul", "分类分步计数", "count", {
                 subject: "combo",
@@ -547,8 +554,8 @@ export const CURRICULUM = [
             ],
           },
           {
-            id: "mo3-rv",
-            label: "随机变量",
+            id: "mo3-ch7",
+            label: "第七章 随机变量及其分布",
             leaves: [
               L("m-dist", "离散型分布列", "dist", {
                 idea: "每个取值对应一个概率，和为 1。",
@@ -575,8 +582,8 @@ export const CURRICULUM = [
         label: "必修第一册",
         children: [
           {
-            id: "p1-motion",
-            label: "运动的描述",
+            id: "p1-ch2",
+            label: "第二章 匀变速直线运动的研究",
             leaves: [
               L("p-v", "匀变速求末速度", "vt", {
                 subject: "phys_motion",
@@ -614,8 +621,8 @@ export const CURRICULUM = [
             ],
           },
           {
-            id: "p1-force",
-            label: "相互作用与牛顿定律",
+            id: "p1-ch3",
+            label: "第三章 相互作用——力",
             leaves: [
               L("p-g", "重力", "force", {
                 subject: "phys_static",
@@ -626,17 +633,6 @@ export const CURRICULUM = [
                   "重力是地球吸引产生的力，大小 G=mg，方向竖直向下，作用点在物体重心。",
                   "g 一般取 9.8 N/kg，粗略计算取 10 N/kg；质量 5 kg 的物体 G=5×10=50 N。",
                   "重力与质量成正比：质量不随位置改变，重力随 g 略有变化（如月球上 g 约为地球的 1/6）。",
-                ],
-              }),
-              L("p-n2", "牛顿第二定律", "newton2", {
-                subject: "phys_dynamics",
-                sampleKey: "phys_newton",
-                text: "质量 2 kg 的物体受到 10 N 的合力，求加速度",
-                formulas: ["F=ma"],
-                explain: [
-                  "牛顿第二定律 F=ma：加速度与所受合力成正比、与质量成反比，方向与合力相同。",
-                  "单位必须统一为国际单位：F 用牛(N)、m 用千克(kg)、a 用 m/s²，1 N=1 kg·m/s²。",
-                  "m=2 kg、F=10 N 时 a=F/m=10/2=5 m/s²。",
                 ],
               }),
               L("p-free", "受力分析", "freebody", {
@@ -651,6 +647,23 @@ export const CURRICULUM = [
               }),
             ],
           },
+          {
+            id: "p1-ch4",
+            label: "第四章 运动和力的关系",
+            leaves: [
+              L("p-n2", "牛顿第二定律", "newton2", {
+                subject: "phys_dynamics",
+                sampleKey: "phys_newton",
+                text: "质量 2 kg 的物体受到 10 N 的合力，求加速度",
+                formulas: ["F=ma"],
+                explain: [
+                  "牛顿第二定律 F=ma：加速度与所受合力成正比、与质量成反比，方向与合力相同。",
+                  "单位必须统一为国际单位：F 用牛(N)、m 用千克(kg)、a 用 m/s²，1 N=1 kg·m/s²。",
+                  "m=2 kg、F=10 N 时 a=F/m=10/2=5 m/s²。",
+                ],
+              }),
+            ],
+          },
         ],
       },
       {
@@ -658,8 +671,56 @@ export const CURRICULUM = [
         label: "必修第二册",
         children: [
           {
-            id: "p2-energy",
-            label: "机械能",
+            id: "p2-ch5",
+            label: "第五章 抛体运动",
+            leaves: [
+              L("p-proj", "平抛运动", "projectile", {
+                idea: "水平匀速，竖直自由落体。",
+                formulas: ["x=v₀t", "y=½gt²"],
+                steps: ["分解水平和竖直", "时间由竖直决定", "合位移合成"],
+                explain: [
+                  "平抛运动分解为：水平方向匀速直线运动 x=v₀t，竖直方向自由落体 y=½gt²，两个方向运动时间相同。",
+                  "运动时间只由下落高度决定：t=√(2h/g)，与水平初速度无关。",
+                  "落地速度是水平速度 v₀ 与竖直速度 gt 的合成，用勾股定理求大小。",
+                ],
+              }),
+            ],
+          },
+          {
+            id: "p2-ch6",
+            label: "第六章 圆周运动",
+            leaves: [
+              L("p-circ", "匀速圆周", "orbit", {
+                idea: "合力提供向心力。",
+                formulas: ["aₙ=v²/r", "F=mv²/r"],
+                steps: ["找圆心与半径", "认向心力来源", "列牛顿定律"],
+                explain: [
+                  "匀速圆周运动速度大小不变、方向时刻改变，合力始终指向圆心，只改变速度方向，叫向心力。",
+                  "向心加速度 aₙ=v²/r=ω²r，向心力 F=mv²/r；向心力不是新的一种力，而是合力的效果。",
+                  "解题关键是找向心力来源：绳子拉力、轨道弹力、万有引力等都可以充当向心力。",
+                ],
+              }),
+            ],
+          },
+          {
+            id: "p2-ch7",
+            label: "第七章 万有引力与宇宙航行",
+            leaves: [
+              L("p-grav", "万有引力", "gravity", {
+                idea: "天体可看作质点，引力提供向心力。",
+                formulas: ["F=GMm/r²", "v=√(GM/r)"],
+                steps: ["写引力公式", "等于向心力", "求周期或速度"],
+                explain: [
+                  "万有引力 F=GMm/r²：任何两个有质量的物体间都存在引力，与质量乘积成正比、与距离平方成反比。",
+                  "天体运动中引力提供向心力：GMm/r²=mv²/r，得 v=√(GM/r)，轨道越高运行速度越小。",
+                  "卫星周期 T=2π√(r³/GM)，即开普勒第三定律：r³/T² 对同一中心天体是常数。",
+                ],
+              }),
+            ],
+          },
+          {
+            id: "p2-ch8",
+            label: "第八章 机械能守恒定律",
             leaves: [
               L("p-w", "恒力做功", "energy", {
                 subject: "phys_dynamics",
@@ -696,42 +757,6 @@ export const CURRICULUM = [
               }),
             ],
           },
-          {
-            id: "p2-curve",
-            label: "曲线运动与万有引力",
-            leaves: [
-              L("p-proj", "平抛运动", "projectile", {
-                idea: "水平匀速，竖直自由落体。",
-                formulas: ["x=v₀t", "y=½gt²"],
-                steps: ["分解水平和竖直", "时间由竖直决定", "合位移合成"],
-                explain: [
-                  "平抛运动分解为：水平方向匀速直线运动 x=v₀t，竖直方向自由落体 y=½gt²，两个方向运动时间相同。",
-                  "运动时间只由下落高度决定：t=√(2h/g)，与水平初速度无关。",
-                  "落地速度是水平速度 v₀ 与竖直速度 gt 的合成，用勾股定理求大小。",
-                ],
-              }),
-              L("p-circ", "匀速圆周", "orbit", {
-                idea: "合力提供向心力。",
-                formulas: ["aₙ=v²/r", "F=mv²/r"],
-                steps: ["找圆心与半径", "认向心力来源", "列牛顿定律"],
-                explain: [
-                  "匀速圆周运动速度大小不变、方向时刻改变，合力始终指向圆心，只改变速度方向，叫向心力。",
-                  "向心加速度 aₙ=v²/r=ω²r，向心力 F=mv²/r；向心力不是新的一种力，而是合力的效果。",
-                  "解题关键是找向心力来源：绳子拉力、轨道弹力、万有引力等都可以充当向心力。",
-                ],
-              }),
-              L("p-grav", "万有引力", "gravity", {
-                idea: "天体可看作质点，引力提供向心力。",
-                formulas: ["F=GMm/r²", "v=√(GM/r)"],
-                steps: ["写引力公式", "等于向心力", "求周期或速度"],
-                explain: [
-                  "万有引力 F=GMm/r²：任何两个有质量的物体间都存在引力，与质量乘积成正比、与距离平方成反比。",
-                  "天体运动中引力提供向心力：GMm/r²=mv²/r，得 v=√(GM/r)，轨道越高运行速度越小。",
-                  "卫星周期 T=2π√(r³/GM)，即开普勒第三定律：r³/T² 对同一中心天体是常数。",
-                ],
-              }),
-            ],
-          },
         ],
       },
       {
@@ -739,8 +764,8 @@ export const CURRICULUM = [
         label: "必修第三册",
         children: [
           {
-            id: "p3-em",
-            label: "电磁学初步",
+            id: "p3-ch9",
+            label: "第九章 静电场及其应用",
             leaves: [
               L("p-e", "电场强度", "charge", {
                 subject: "phys_efield",
@@ -753,6 +778,12 @@ export const CURRICULUM = [
                   "F=4 N、q=2×10⁻⁶ C 时 E=4/(2×10⁻⁶)=2×10⁶ N/C。",
                 ],
               }),
+            ],
+          },
+          {
+            id: "p3-ch11",
+            label: "第十一章 电路及其应用",
+            leaves: [
               L("p-ohm", "欧姆定律", "circuit", {
                 subject: "phys_circuit",
                 sampleKey: "phys_ohm",
@@ -764,6 +795,12 @@ export const CURRICULUM = [
                   "电阻是导体本身的属性，由材料、长度、横截面积和温度决定，不随电压、电流变化。",
                 ],
               }),
+            ],
+          },
+          {
+            id: "p3-ch13",
+            label: "第十三章 电磁感应与电磁波初步",
+            leaves: [
               L("p-emw", "电磁波初步", "emw", {
                 idea: "变化的电磁场传播形成电磁波。",
                 formulas: ["c=λf"],
@@ -783,8 +820,8 @@ export const CURRICULUM = [
         label: "选择性必修第一册",
         children: [
           {
-            id: "po1",
-            label: "动量、振动、波与光",
+            id: "po1-ch1",
+            label: "第一章 动量守恒定律",
             leaves: [
               L("p-mom", "动量守恒", "momentum", {
                 idea: "系统合外力为零时动量守恒。",
@@ -796,6 +833,12 @@ export const CURRICULUM = [
                   "动量守恒是矢量守恒，一维问题用正负号表示方向即可，不必分解。",
                 ],
               }),
+            ],
+          },
+          {
+            id: "po1-ch2",
+            label: "第二章 机械振动",
+            leaves: [
               L("p-spr", "简谐运动", "spring", {
                 idea: "回复力与位移成正比反向。",
                 formulas: ["F=−kx", "T=2π√(m/k)"],
@@ -806,6 +849,12 @@ export const CURRICULUM = [
                   "位移、速度、加速度都随时间按正弦（余弦）规律周期性变化。",
                 ],
               }),
+            ],
+          },
+          {
+            id: "po1-ch3",
+            label: "第三章 机械波",
+            leaves: [
               L("p-wave", "机械波", "mech-wave", {
                 idea: "振动在介质中传播，质点不随波迁移。",
                 formulas: ["v=λf"],
@@ -816,6 +865,12 @@ export const CURRICULUM = [
                   "横波中质点振动方向与传播方向垂直；波在一个周期内传播的距离恰好是一个波长。",
                 ],
               }),
+            ],
+          },
+          {
+            id: "po1-ch4",
+            label: "第四章 光",
+            leaves: [
               L("p-lens", "光的折射", "lens", {
                 idea: "折射定律决定光线偏折。",
                 formulas: ["n₁sinθ₁=n₂sinθ₂"],
@@ -835,8 +890,8 @@ export const CURRICULUM = [
         label: "选择性必修第二册",
         children: [
           {
-            id: "po2",
-            label: "磁场与电磁感应",
+            id: "po2-ch1",
+            label: "第一章 安培力与洛伦兹力",
             leaves: [
               L("p-lor", "洛伦兹力", "lorentz", {
                 subject: "phys_bfield",
@@ -849,6 +904,12 @@ export const CURRICULUM = [
                   "轨道半径 r=mv/(qB)：动量越大半径越大，磁场越强半径越小。",
                 ],
               }),
+            ],
+          },
+          {
+            id: "po2-ch2",
+            label: "第二章 电磁感应",
+            leaves: [
               L("p-far", "法拉第电磁感应", "induction", {
                 subject: "phys_induction",
                 sampleKey: "phys_faraday",
@@ -860,6 +921,12 @@ export const CURRICULUM = [
                   "ΔΦ=0.4 Wb、Δt=0.2 s 时 ε=0.4/0.2=2 V。",
                 ],
               }),
+            ],
+          },
+          {
+            id: "po2-ch3",
+            label: "第三章 交变电流",
+            leaves: [
               L("p-ac", "交变电流", "ac", {
                 idea: "e=Eₘsinωt，有效值用于热效应。",
                 formulas: ["Eₘ=NBSω", "E=Eₘ/√2"],
@@ -879,8 +946,8 @@ export const CURRICULUM = [
         label: "选择性必修第三册",
         children: [
           {
-            id: "po3",
-            label: "热学与近代物理",
+            id: "po3-ch2",
+            label: "第二章 气体、固体和液体",
             leaves: [
               L("p-gas", "理想气体", "gas", {
                 idea: "宏观量 p、V、T 由状态方程联系。",
@@ -892,6 +959,12 @@ export const CURRICULUM = [
                   "解题先确定初、末两个状态的 p、V、T，再列 p₁V₁/T₁=p₂V₂/T₂ 求解。",
                 ],
               }),
+            ],
+          },
+          {
+            id: "po3-ch4",
+            label: "第四章 原子结构和波粒二象性",
+            leaves: [
               L("p-atom", "原子结构", "atom", {
                 idea: "原子核外电子分层，能级跃迁发光。",
                 formulas: ["ΔE=hν"],

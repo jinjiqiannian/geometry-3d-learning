@@ -9,7 +9,7 @@ import { parseProblemToSemantic, convertLegacyParsedToSemantic } from "../engine
 
 const SUBJECT_COLORS = {
   physics: { primary: "#06b6d4", name: "物理" },
-  math: { primary: "#4A90E2", name: "数学" },
+  math: { primary: "#E8551F", name: "数学" },
 }
 
 export default function SubjectSolver({ subject = "physics" }) {
@@ -49,8 +49,8 @@ export default function SubjectSolver({ subject = "physics" }) {
         setCurrentStep(0)
 
         try {
-          sessionStorage.setItem("mathviz_replay_steps", JSON.stringify(steps))
-          sessionStorage.setItem("mathviz_replay_parsed", JSON.stringify(parsed))
+          sessionStorage.setItem("jidong_replay_steps", JSON.stringify(steps))
+          sessionStorage.setItem("jidong_replay_parsed", JSON.stringify(parsed))
         } catch { /* */ }
       } else {
         throw new Error(aiResult?.error || 'AI 解析无返回结果')
@@ -81,8 +81,8 @@ export default function SubjectSolver({ subject = "physics" }) {
       setCurrentStep(0)
 
       try {
-        sessionStorage.setItem("mathviz_replay_steps", JSON.stringify(fallbackSteps))
-        sessionStorage.setItem("mathviz_replay_parsed", JSON.stringify(fallbackParsed))
+        sessionStorage.setItem("jidong_replay_steps", JSON.stringify(fallbackSteps))
+        sessionStorage.setItem("jidong_replay_parsed", JSON.stringify(fallbackParsed))
       } catch { /* */ }
     } finally {
       setAiActive(false)
@@ -165,8 +165,8 @@ export default function SubjectSolver({ subject = "physics" }) {
               onClick={() => {
                 // Save solved data to sessionStorage for workspace sync
                 try {
-                  sessionStorage.setItem("mathviz_replay_steps", JSON.stringify(steps))
-                  sessionStorage.setItem("mathviz_replay_parsed", JSON.stringify(parsedData))
+                  sessionStorage.setItem("jidong_replay_steps", JSON.stringify(steps))
+                  sessionStorage.setItem("jidong_replay_parsed", JSON.stringify(parsedData))
                 } catch { /* */ }
                 navigate(`/workspace?q=${encodeURIComponent(solvedText)}&replay=1`)
               }}

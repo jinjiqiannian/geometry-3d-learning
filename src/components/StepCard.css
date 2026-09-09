@@ -33,16 +33,16 @@
 }
 
 .step-card.current {
-  background: #e6f2ef;
-  border-color: #0f6b5c;
+  background: var(--accent-subtle);
+  border-color: var(--accent);
   border-radius: 2px;
   padding: 12px 8px 12px 4px;
   margin: 2px 0;
-  box-shadow: 0 1px 0 rgba(15, 107, 92, 0.08);
+  box-shadow: 0 1px 0 rgba(232, 85, 31, 0.1);
 }
 
 .step-card.current .step-title {
-  color: #0f6b5c;
+  color: var(--accent);
 }
 
 .step-card.completed {
@@ -98,13 +98,13 @@
 }
 
 .step-card.current .step-dot {
-  border-color: #0f6b5c;
-  background: #e6f2ef;
+  border-color: var(--accent);
+  background: var(--accent-subtle);
   transform: scale(1.06);
 }
 
 .step-card.current .step-dot-num {
-  color: #0f6b5c;
+  color: var(--accent);
 }
 
 .step-dot--done {

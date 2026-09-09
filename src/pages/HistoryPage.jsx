@@ -17,7 +17,7 @@ export default function HistoryPage() {
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('mathviz_history') || '[]')
+      const saved = JSON.parse(localStorage.getItem('jidong_history') || '[]')
       setHistory(saved)
     } catch (err) {
       console.warn('HistoryPage: Failed to load history from localStorage', err)
@@ -46,8 +46,8 @@ export default function HistoryPage() {
     // 如果有已保存的步骤，通过 sessionStorage 传递，避免重复 AI 请求
     if (item.steps && item.steps.length > 0) {
       try {
-        sessionStorage.setItem('mathviz_replay_steps', JSON.stringify(item.steps))
-        sessionStorage.setItem('mathviz_replay_parsed', JSON.stringify(item.parsedData || null))
+        sessionStorage.setItem('jidong_replay_steps', JSON.stringify(item.steps))
+        sessionStorage.setItem('jidong_replay_parsed', JSON.stringify(item.parsedData || null))
       } catch (err) {
         console.warn('HistoryPage: Failed to save replay to sessionStorage', err)
       }
@@ -59,7 +59,7 @@ export default function HistoryPage() {
 
   const handleClear = () => {
     try {
-      localStorage.removeItem('mathviz_history')
+      localStorage.removeItem('jidong_history')
       setHistory([])
     } catch (err) {
       console.warn('HistoryPage: Failed to clear history', err)
@@ -69,7 +69,7 @@ export default function HistoryPage() {
   const handleDeleteOne = (index) => {
     try {
       const updated = history.filter((_, i) => i !== index)
-      localStorage.setItem('mathviz_history', JSON.stringify(updated))
+      localStorage.setItem('jidong_history', JSON.stringify(updated))
       setHistory(updated)
       setDeleteConfirm(null)
     } catch (err) {
