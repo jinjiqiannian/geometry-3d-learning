@@ -316,3 +316,123 @@
     min-height: calc(100dvh - var(--app-nav-height, 48px) - var(--mobile-nav-height, 0px) - 8px);
   }
 }
+
+/* ── 手机竖屏：提示横屏（桌面/横屏不显示） ── */
+.teach-rotate-hint {
+  display: none;
+}
+
+@media (max-width: 600px) and (orientation: portrait) {
+  .teach-rotate-hint {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(14, 24, 48, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .teach-rotate-card {
+    width: 100%;
+    max-width: 320px;
+    padding: 32px 24px 26px;
+    border-radius: 20px;
+    background: var(--bg-surface, #ffffff);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
+    text-align: center;
+  }
+
+  .teach-rotate-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+    border-radius: 18px;
+    background: var(--bg-elevated, #fff2e8);
+    color: var(--accent, #e8551f);
+  }
+
+  .teach-rotate-title {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    font-weight: 650;
+    color: var(--text-primary, #1d1d1f);
+  }
+
+  .teach-rotate-lead {
+    margin: 0 0 22px;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--text-secondary, #6e6e73);
+  }
+
+  .teach-rotate-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .teach-rotate-btn,
+  .teach-rotate-btn--ghost {
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-size: 0.92rem;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .teach-rotate-btn {
+    border: none;
+    background: var(--accent, #e8551f);
+    color: #fff;
+    font-weight: 550;
+  }
+
+  .teach-rotate-btn--ghost {
+    border: 1px solid var(--border-default, #e6e1d8);
+    background: transparent;
+    color: var(--text-secondary, #6e6e73);
+  }
+}
+
+/* ── 手机横屏：目录与讲解同屏，压缩留白 ── */
+@media (max-width: 1000px) and (orientation: landscape) and (max-height: 560px) {
+  .teach-page {
+    grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+    height: calc(100dvh - var(--app-nav-height, 48px) - var(--mobile-nav-height, 0px));
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .teach-nav,
+  .teach-page--lesson:not(.teach-page--nav-open) .teach-nav,
+  .teach-page--lesson.teach-page--nav-open .teach-nav {
+    display: block;
+    height: 100%;
+    max-height: none;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border-right: 1px solid var(--teach-line, rgba(0, 0, 0, 0.08));
+    border-bottom: none;
+  }
+
+  .teach-page:not(.teach-page--lesson) .teach-main {
+    display: flex;
+  }
+
+  .teach-main {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .teach-nav-fab {
+    display: none;
+  }
+}

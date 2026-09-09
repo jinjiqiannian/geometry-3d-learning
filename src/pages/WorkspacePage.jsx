@@ -27,6 +27,12 @@ import { parseProblemSync } from "../engines/problemParser";
 import { generateLocalSteps } from "../engines/explanationEngine";
 import { aiAPI } from "../services/api";
 import {
+  compressComposeImage,
+  runCloudOcrWithRetry,
+  ocrFailHint,
+  OCR_EMPTY_HINT,
+} from "../services/photoOcr";
+import {
   buildBaseSceneIR,
   applyStepToSceneIR,
   buildSceneIRFromSemantic,
@@ -51,77 +57,14 @@ import {
 import "./WorkspacePage.css";
 import "../components/LogicPanel.css";
 
-function withTimeout(promise, ms, message) {
-  let timer;
-  return Promise.race([
-    promise.finally(() => clearTimeout(timer)),
-    new Promise((_, reject) => {
-      timer = setTimeout(() => reject(new Error(message)), ms);
-    }),
-  ]);
-}
-
-/** 浏览器本地 OCR（CDN 加载 tesseract，不新增 npm 依赖） */
-function loadTesseractFromCdn() {
-  if (typeof window === "undefined") {
-    return Promise.reject(new Error("非浏览器环境"));
+/** 手机判定：竖屏看宽度；横屏手机（宽超 767 但高度很矮）也按手机处理，激活横屏分栏布局 */
+function isMobileViewport() {
+  try {
+    if (window.innerWidth <= 767) return true;
+    return window.innerWidth <= 1000 && window.innerHeight <= 560;
+  } catch {
+    return false;
   }
-  if (window.Tesseract) return Promise.resolve(window.Tesseract);
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector("script[data-tesseract]");
-    if (existing) {
-      if (window.Tesseract) {
-        resolve(window.Tesseract);
-        return;
-      }
-      // 脚本已失败或卡住时，监听不会再触发 → 直接拒绝，避免永久挂起
-      if (existing.dataset.tesseractFailed === "1") {
-        reject(new Error("OCR 脚本加载失败"));
-        return;
-      }
-      const onLoad = () => {
-        if (window.Tesseract) resolve(window.Tesseract);
-        else reject(new Error("OCR 引擎未就绪"));
-      };
-      existing.addEventListener("load", onLoad, { once: true });
-      existing.addEventListener(
-        "error",
-        () => {
-          existing.dataset.tesseractFailed = "1";
-          reject(new Error("OCR 脚本加载失败"));
-        },
-        { once: true }
-      );
-      return;
-    }
-    const s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
-    s.async = true;
-    s.dataset.tesseract = "1";
-    s.onload = () => {
-      if (window.Tesseract) resolve(window.Tesseract);
-      else reject(new Error("OCR 引擎未就绪"));
-    };
-    s.onerror = () => {
-      s.dataset.tesseractFailed = "1";
-      reject(new Error("OCR 脚本加载失败"));
-    };
-    document.head.appendChild(s);
-  });
-}
-
-async function runLocalImageOcr(dataUrl) {
-  const Tesseract = await withTimeout(
-    loadTesseractFromCdn(),
-    12000,
-    "本地 OCR 引擎加载超时"
-  );
-  const result = await withTimeout(
-    Tesseract.recognize(dataUrl, "chi_sim+eng", { logger: () => {} }),
-    25000,
-    "本地识别超时（中文模型下载较慢或网络受限）"
-  );
-  return (result?.data?.text || "").replace(/\s+\n/g, "\n").trim();
 }
 
 // ── Default constraint params ─────────────────────
@@ -301,7 +244,7 @@ export default function WorkspacePage({
   // ── Mobile ──────────────────────────────────────
   const [isMobile, setIsMobile] = useState(() => {
     try {
-      return window.innerWidth <= 767;
+      return isMobileViewport();
     } catch {
       return false;
     }
@@ -313,7 +256,7 @@ export default function WorkspacePage({
     const onResize = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        setIsMobile(window.innerWidth <= 767);
+        setIsMobile(isMobileViewport());
       }, 500);
     };
     window.addEventListener("resize", onResize);
@@ -932,37 +875,6 @@ export default function WorkspacePage({
     [handleSearchSubmit]
   );
 
-  const compressComposeImage = useCallback((file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          const max = 1280;
-          let w = img.width;
-          let h = img.height;
-          const scale = Math.min(1, max / Math.max(w, h));
-          w = Math.round(w * scale);
-          h = Math.round(h * scale);
-          const canvas = document.createElement("canvas");
-          canvas.width = w;
-          canvas.height = h;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) {
-            reject(new Error("无法压缩图片"));
-            return;
-          }
-          ctx.drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL("image/jpeg", 0.82));
-        };
-        img.onerror = () => reject(new Error("图片损坏"));
-        img.src = reader.result;
-      };
-      reader.onerror = () => reject(new Error("读取失败"));
-      reader.readAsDataURL(file);
-    });
-  }, []);
-
   const handleComposeImagePick = useCallback(
     async (e) => {
       const file = e.target.files?.[0];
@@ -998,66 +910,20 @@ export default function WorkspacePage({
           return false;
         };
 
-        // 1) 服务端识图（智谱 / Gemini / DeepSeek Vision）
-        let cloudErr = null;
+        // 1) 云端识图（智谱 GLM-4V；失败自动压小重试一次）
         try {
-          const res = await withTimeout(
-            aiAPI.ocr(dataUrl),
-            45000,
-            "云端识图超时"
-          );
-          if (res?.data?.visionHints) {
-            visionHintsRef.current = res.data.visionHints;
+          const { text, visionHints } = await runCloudOcrWithRetry(dataUrl);
+          if (visionHints) {
+            visionHintsRef.current = visionHints;
           }
-          if (applyText(res?.data?.text, "已识别，请核对后点「开始理解」")) {
+          if (applyText(text, "已识别，请核对后点「开始理解」")) {
             setOcrBusy(false);
             return;
           }
+          setOcrHint(OCR_EMPTY_HINT);
         } catch (err) {
-          cloudErr = err;
-          console.warn("[ocr] server failed:", err?.message);
-        }
-
-        const cloudMsg = String(cloudErr?.message || "");
-        const cloudUnreachable =
-          /Failed to fetch|NetworkError|Network request failed|云端识图超时|Load failed|ECONNREFUSED|fetch/i.test(
-            cloudMsg
-          );
-        const cloudMisconfigured =
-          /未配置|识图 Key|VISION_|视觉 OCR|识图失败|Daily limit/i.test(
-            cloudMsg
-          );
-
-        // 2) 云端失败必须继续本地 OCR，禁止提前 return 把用户卡死在红字提示
-        setOcrHint(
-          cloudUnreachable
-            ? "云端识图连不上，正在本地识别…"
-            : cloudMisconfigured
-              ? `${cloudMsg}。正在本地识别…`
-              : "云端识图不可用，正在本地识别…"
-        );
-        try {
-          const localText = await runLocalImageOcr(dataUrl);
-          if (
-            applyText(
-              localText,
-              "本地已识别（请仔细核对符号与点名）"
-            )
-          ) {
-            return;
-          }
-          setOcrHint(
-            cloudUnreachable
-              ? "云端连不上且本地未识别出文字。请对照图片手动输入题干后点「开始理解」"
-              : "未识别出文字，请对照原图手动输入题干后点「开始理解」"
-          );
-        } catch (err) {
-          const localMsg = err?.message || "本地识别失败";
-          setOcrHint(
-            cloudUnreachable
-              ? `云端连不上；${localMsg}。请对照图片手动输入题干后点「开始理解」`
-              : `${localMsg}。请对照图片手动输入题干后点「开始理解」`
-          );
+          console.warn("[ocr] cloud failed:", err?.message);
+          setOcrHint(ocrFailHint(err?.message));
         }
       } catch {
         setOcrHint("图片读取失败，请重试");

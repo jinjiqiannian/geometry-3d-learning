@@ -60,30 +60,6 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* ── Appearance ── */}
-        <section className="settings-card">
-          <h2 className="settings-card-title">外观</h2>
-          <div className="settings-card-body">
-            <div className="settings-row">
-              <div>
-                <span className="settings-label">主题模式</span>
-                <p className="settings-desc">切换深色/浅色主题，跟随系统或手动设置</p>
-              </div>
-              <div className="settings-toggle-wrapper">
-                <span className="settings-toggle-label">浅色</span>
-                <button
-                  className={`settings-toggle ${theme === 'dark' ? 'active' : ''}`}
-                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  aria-label={theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'}
-                >
-                  <span className="settings-toggle-thumb"></span>
-                </button>
-                <span className="settings-toggle-label">深色</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* ── Danger Zone ── */}
         <section className="settings-card settings-card-danger">
           <h2 className="settings-card-title">数据管理</h2>

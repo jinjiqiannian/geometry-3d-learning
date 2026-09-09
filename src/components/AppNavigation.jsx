@@ -50,15 +50,6 @@ export default function AppNavigation() {
         >
           设置
         </Link>
-        <button
-          type="button"
-          className="app-nav-theme-btn"
-          onClick={toggleTheme}
-          aria-label={isDark ? '切换到浅色模式' : '切换到深色模式'}
-          title={isDark ? '浅色' : '深色'}
-        >
-          {theme === 'dark' ? '浅色' : '深色'}
-        </button>
       </div>
     </nav>
   )
