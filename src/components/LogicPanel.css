@@ -1,14 +1,14 @@
 /* LogicPanel — 排组/概率逻辑可视化 MVP */
 
 .logic-panel {
-  --lp-ink: #1a1a1a;
-  --lp-muted: #5c574e;
-  --lp-line: #e4dfd5;
-  --lp-paper: #fffcf7;
-  --lp-bg: #f3f1ec;
-  --lp-accent: #0f6b5c;
-  --lp-accent-soft: #e6f2ef;
-  --lp-why: #8a4b1a;
+  --lp-ink: var(--text-primary);
+  --lp-muted: var(--text-secondary);
+  --lp-line: var(--border-subtle);
+  --lp-paper: var(--bg-surface);
+  --lp-bg: var(--bg-base);
+  --lp-accent: var(--accent);
+  --lp-accent-soft: var(--accent-subtle);
+  --lp-why: var(--color-warning);
   --lp-font: "Source Han Serif SC", "Noto Serif SC", "Songti SC", Georgia, serif;
   --lp-sans: "DM Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
 
@@ -155,7 +155,7 @@
 .logic-example-card-hint {
   font-size: 0.75rem;
   line-height: 1.4;
-  color: #8a847a;
+  color: var(--text-muted);
 }
 
 .logic-example-card:hover .logic-example-card-hint,
@@ -484,7 +484,7 @@
 
 .logic-step-nav button {
   border: 1px solid #1a1a1a;
-  background: #fffcf7;
+  background: var(--bg-surface);
   color: #1a1a1a;
   padding: 0.45rem 0.85rem;
   font-size: 0.8125rem;
@@ -502,7 +502,7 @@
 
 .logic-step-nav button:hover:not(:disabled) {
   background: #1a1a1a;
-  color: #fffcf7;
+  color: #fff;
 }
 
 .logic-step-nav button:active:not(:disabled) {
@@ -512,9 +512,9 @@
 
 .logic-step-nav button:disabled {
   opacity: 1;
-  color: #8a847a;
-  border-color: #cfc8bc;
-  background: #f3f1ec;
+  color: var(--text-muted);
+  border-color: var(--border-emphasis);
+  background: var(--bg-base);
   cursor: not-allowed;
 }
 
@@ -556,11 +556,11 @@
   cursor: pointer;
   font-size: 0.82rem;
   font-weight: 500;
-  color: #5c574e;
+  color: var(--text-secondary);
   padding: 0.4rem 0.7rem;
-  border: 1px solid #e4dfd5;
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
-  background: #fffcf7;
+  background: var(--bg-surface);
   user-select: none;
 }
 
@@ -569,8 +569,8 @@
 }
 
 .logic-more-menu[open] > summary {
-  color: #121212;
-  border-color: #cfc8bc;
+  color: var(--text-primary);
+  border-color: var(--border-emphasis);
 }
 
 .logic-more-panel {
@@ -579,8 +579,8 @@
   bottom: calc(100% + 6px);
   min-width: 160px;
   padding: 0.35rem;
-  background: #fffcf7;
-  border: 1px solid #e4dfd5;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(18, 18, 18, 0.08);
   z-index: 5;
@@ -595,14 +595,14 @@
   padding: 0.55rem 0.7rem;
   border-radius: 8px;
   font-size: 0.85rem;
-  color: #121212;
+  color: var(--text-primary);
   cursor: pointer;
   font-family: inherit;
 }
 
 .logic-more-action:hover:not(:disabled) {
   background: rgba(15, 107, 92, 0.08);
-  color: #0f6b5c;
+  color: var(--accent);
 }
 
 .logic-more-action:disabled {
@@ -612,7 +612,7 @@
 
 .logic-tree-details {
   margin-top: 1rem;
-  border-top: 1px solid #ebe6dc;
+  border-top: 1px solid var(--border-subtle);
   padding-top: 0.75rem;
 }
 
@@ -631,7 +631,7 @@
   margin-left: 0.5rem;
   font-size: 0.75rem;
   font-weight: 500;
-  color: #8a847a;
+  color: var(--text-muted);
 }
 
 .logic-tree-details[open] .logic-tree-summary::after {
@@ -712,7 +712,7 @@
   margin-bottom: 1rem;
   padding: 0.9rem;
   border: 1px solid var(--lp-line);
-  background: linear-gradient(165deg, #fff 0%, #f7f4ee 100%);
+  background: linear-gradient(165deg, var(--bg-surface) 0%, var(--bg-base) 100%);
   animation: logic-film-in 0.4s ease both;
 }
 
@@ -738,7 +738,7 @@
   display: grid;
   place-items: center;
   border-radius: 50%;
-  border: 2px solid #c4bdb0;
+  border: 2px solid var(--border-emphasis);
   background: #fff;
   font-size: 0.85rem;
   font-weight: 600;
@@ -919,9 +919,9 @@
 /* 概率抽球 */
 .demo-bag {
   padding: 0.65rem;
-  border: 2px dashed #c4bdb0;
+  border: 2px dashed var(--border-emphasis);
   border-radius: 4px;
-  background: #faf8f4;
+  background: var(--bg-base);
   text-align: center;
 }
 
@@ -950,7 +950,7 @@
 }
 
 .demo-ball--red {
-  background: #c44536;
+  background: var(--color-error);
 }
 
 .demo-ball--white {
@@ -1140,7 +1140,7 @@
 
   .logic-solving-back {
     border: 1px solid #1a1a1a;
-    background: #fffcf7;
+    background: var(--bg-surface);
     color: #1a1a1a;
     padding: 0.4rem 0.75rem;
     font-size: 0.8125rem;

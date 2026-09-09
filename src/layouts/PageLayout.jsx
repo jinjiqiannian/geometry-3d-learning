@@ -1,7 +1,6 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import AppNavigation from '../components/AppNavigation'
 import MobileBottomNav from '../components/MobileBottomNav'
-import PaywallModal from '../components/PaywallModal'
 import AuthModal from '../components/AuthModal'
 import FeedbackModal from '../components/FeedbackModal'
 import './PageLayout.css'
@@ -25,7 +24,6 @@ export default function PageLayout() {
 
       {!isFacade && <MobileBottomNav />}
 
-      <PaywallModal />
       <AuthModal />
       <FeedbackModal />
     </div>

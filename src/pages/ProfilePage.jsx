@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useSupabase } from '../contexts/SupabaseContext'
-import { useSubscription } from '../contexts/SubscriptionContext'
 import './ProfilePage.css'
 
 function getHistoryStats() {
   try {
-    const history = JSON.parse(localStorage.getItem('mathviz_history') || '[]')
+    const history = JSON.parse(localStorage.getItem('jidong_history') || '[]')
     if (!history.length) return null
 
     const total = history.length
@@ -42,33 +41,12 @@ function getHistoryStats() {
 }
 
 export default function ProfilePage() {
-  const { user, connected, signOut } = useSupabase()
-  const { plan, isPro, isTeacher, dailyUsage, dailyLimit, remaining, initiateUpgrade, manageSubscription } = useSubscription()
+  const { user, signOut } = useSupabase()
   const [stats, setStats] = useState(null)
 
   useEffect(() => {
     setStats(getHistoryStats())
   }, [])
-
-  const planBadge = () => {
-    if (isTeacher) return { label: '教师版', className: 'teacher' }
-    if (isPro) return { label: '专业版', className: 'pro' }
-    return { label: '免费版', className: 'free' }
-  }
-
-  const badge = planBadge()
-
-  const handleUpgrade = () => {
-    if (!user) {
-      document.dispatchEvent(new CustomEvent('mathviz:show-auth'))
-      return
-    }
-    if (isTeacher) {
-      manageSubscription()
-      return
-    }
-    initiateUpgrade('pro', 'monthly')
-  }
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '—'
@@ -98,9 +76,6 @@ export default function ProfilePage() {
               <p className="profile-user-email">
                 {user ? user.email : '本地模式 · 无需登录'}
               </p>
-              <span className={`profile-plan-badge ${badge.className}`}>
-                {badge.label}
-              </span>
             </div>
           </div>
 
@@ -112,61 +87,10 @@ export default function ProfilePage() {
             ) : (
               <button
                 className="profile-btn profile-btn-primary"
-                onClick={() => document.dispatchEvent(new CustomEvent('mathviz:show-auth'))}
+                onClick={() => document.dispatchEvent(new CustomEvent('jidong:show-auth'))}
               >
                 登录 / 注册
               </button>
-            )}
-          </div>
-        </section>
-
-        {/* ── Subscription card ── */}
-        <section className="profile-card">
-          <h3 className="profile-card-title">订阅方案</h3>
-          <div className="profile-stats-grid">
-            <div className="profile-stat">
-              <span className="profile-stat-value">{badge.label}</span>
-              <span className="profile-stat-label">当前方案</span>
-            </div>
-            <div className="profile-stat">
-              <span className="profile-stat-value">
-                {isPro || isTeacher ? '∞' : `${remaining}/${dailyLimit}`}
-              </span>
-              <span className="profile-stat-label">今日剩余</span>
-            </div>
-            <div className="profile-stat">
-              <span className="profile-stat-value">
-                {dailyUsage || 0}
-              </span>
-              <span className="profile-stat-label">今日已用</span>
-            </div>
-            <div className="profile-stat">
-              <span className="profile-stat-value">
-                {connected ? '已连接' : '离线'}
-              </span>
-              <span className="profile-stat-label">云端状态</span>
-            </div>
-          </div>
-
-          <div className="profile-subscription-action">
-            {isPro || isTeacher ? (
-              <>
-                <p className="profile-subscription-desc">
-                  你正在使用 {badge.label}，享受全部功能。
-                </p>
-                <button className="profile-btn profile-btn-secondary" onClick={manageSubscription}>
-                  管理订阅
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="profile-subscription-desc">
-                  免费版每日 {dailyLimit} 次生成。升级专业版解锁无限使用。
-                </p>
-                <button className="profile-btn profile-btn-gradient" onClick={handleUpgrade}>
-                  升级专业版 ¥19/月
-                </button>
-              </>
             )}
           </div>
         </section>
@@ -204,16 +128,8 @@ export default function ProfilePage() {
               <span>工作台</span>
               <span className="profile-link-arrow">→</span>
             </Link>
-            <Link to="/history" className="profile-link-item">
-              <span>学习历史</span>
-              <span className="profile-link-arrow">→</span>
-            </Link>
             <Link to="/settings" className="profile-link-item">
               <span>设置</span>
-              <span className="profile-link-arrow">→</span>
-            </Link>
-            <Link to="/pricing" className="profile-link-item">
-              <span>查看定价方案</span>
               <span className="profile-link-arrow">→</span>
             </Link>
           </div>

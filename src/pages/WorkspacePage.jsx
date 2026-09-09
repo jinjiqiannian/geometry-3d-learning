@@ -9,7 +9,6 @@ import { VIEW_PRESETS } from "../features/solid-geometry/ViewControl";
 import ExplanationPanel from "../components/ExplanationPanel";
 import LogicPanel from "../components/LogicPanel";
 import TopicPanel from "../components/TopicPanel";
-import TeacherModePanel from "../components/TeacherModePanel";
 import { getLineDefinitions } from "../engines/lineDefinitions";
 import { isPolyhedral } from "../engines/geometryEngine";
 import { applyConstraints } from "../engines/geometryValidator";
@@ -282,7 +281,7 @@ export default function WorkspacePage({
   });
 
   // ── 首次使用引导 ────────────────────────────────
-  const FIRST_VISIT_KEY = "mathviz:first_visit";
+  const FIRST_VISIT_KEY = "jidong:first_visit";
   const [showGuide, setShowGuide] = useState(() => {
     try {
       return !localStorage.getItem(FIRST_VISIT_KEY);
@@ -370,8 +369,8 @@ export default function WorkspacePage({
     if (q && q.trim()) {
       if (replay === "1") {
         try {
-          const savedSteps = sessionStorage.getItem("mathviz_replay_steps");
-          const savedParsed = sessionStorage.getItem("mathviz_replay_parsed");
+          const savedSteps = sessionStorage.getItem("jidong_replay_steps");
+          const savedParsed = sessionStorage.getItem("jidong_replay_parsed");
           if (savedSteps) {
             const steps = JSON.parse(savedSteps);
             const parsed = savedParsed ? JSON.parse(savedParsed) : null;
@@ -387,8 +386,8 @@ export default function WorkspacePage({
               });
             }
             setLoadingStage("done");
-            sessionStorage.removeItem("mathviz_replay_steps");
-            sessionStorage.removeItem("mathviz_replay_parsed");
+            sessionStorage.removeItem("jidong_replay_steps");
+            sessionStorage.removeItem("jidong_replay_parsed");
             return;
           }
         } catch {
@@ -728,7 +727,7 @@ export default function WorkspacePage({
   // ── Helper: Save to localStorage history ──
   function saveToHistory(text, parsedData, resultSteps) {
     try {
-      const saved = JSON.parse(localStorage.getItem("mathviz_history") || "[]");
+      const saved = JSON.parse(localStorage.getItem("jidong_history") || "[]");
       saved.unshift({
         id: Date.now().toString(36) + Math.random().toString(36).slice(2, 10),
         date: new Date().toISOString(),
@@ -738,7 +737,7 @@ export default function WorkspacePage({
         parsedData: parsedData || {},
       });
       if (saved.length > 50) saved.length = 50;
-      localStorage.setItem("mathviz_history", JSON.stringify(saved));
+      localStorage.setItem("jidong_history", JSON.stringify(saved));
     } catch (err) {
       console.warn("WorkspacePage: Failed to save to history", err);
     }
@@ -1301,14 +1300,14 @@ export default function WorkspacePage({
         backgroundColor: isDark ? "#161616" : "#f8f9fb",
       });
       const link = document.createElement("a");
-      link.download = `几何维度-${new Date().toISOString().slice(0, 10)}.png`;
+      link.download = `即懂-${new Date().toISOString().slice(0, 10)}.png`;
       link.href = dataUrl;
       link.click();
     } catch {
       const canvas = canvasRef.current?.querySelector("canvas");
       if (canvas) {
         const link = document.createElement("a");
-        link.download = `几何维度-${new Date().toISOString().slice(0, 10)}.png`;
+        link.download = `即懂-${new Date().toISOString().slice(0, 10)}.png`;
         link.href = canvas.toDataURL("image/png");
         link.click();
       }
@@ -1550,7 +1549,7 @@ export default function WorkspacePage({
             <button
               className="wp-upgrade-banner-btn"
               onClick={() =>
-                document.dispatchEvent(new CustomEvent("mathviz:show-auth"))
+                document.dispatchEvent(new CustomEvent("jidong:show-auth"))
               }
             >
               登录增加额度 →
@@ -1575,7 +1574,7 @@ export default function WorkspacePage({
               <button
                 className="wp-upgrade-banner-btn"
                 onClick={() =>
-                  document.dispatchEvent(new CustomEvent("mathviz:show-auth"))
+                  document.dispatchEvent(new CustomEvent("jidong:show-auth"))
                 }
               >
                 登录继续使用
@@ -1640,7 +1639,7 @@ export default function WorkspacePage({
                 customVertices={customVertices}
                 sceneIR={sceneIR}
                 highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
-                highlightColor={visualIntent?.highlightColor || "#FF6B6B"}
+                highlightColor={visualIntent?.highlightColor || "#E8551F"}
                 auxLines={visualIntent?.auxLines || []}
                 faceOpacity={visualIntent?.faceOpacity ?? 0.42}
                 nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}
@@ -1671,18 +1670,6 @@ export default function WorkspacePage({
           />
         </div>
       </div>
-
-      {typeof TeacherModePanel !== "undefined" ? (
-        <TeacherModePanel
-          totalSteps={mergedGroups.length}
-          currentStep={mergedStepIndex}
-          onStepChange={(i) =>
-            handleStepClick(mergedGroups[i]?.originalIndices?.[0] ?? i)
-          }
-          onExportPPT={handleExportPPT}
-          pptLoading={pptLoading}
-        />
-      ) : null}
       </>
       )}
 

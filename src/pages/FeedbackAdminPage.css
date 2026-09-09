@@ -266,7 +266,7 @@
 
 .status-reviewed {
   color: var(--accent);
-  background: rgba(99, 102, 241, 0.1);
+  background: var(--accent-subtle);
 }
 
 .status-resolved {
@@ -407,13 +407,13 @@
 
 .fap-action-btn.primary {
   color: var(--accent);
-  border-color: rgba(99, 102, 241, 0.3);
-  background: rgba(99, 102, 241, 0.06);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  background: var(--accent-subtle);
 }
 
 .fap-action-btn.primary:hover {
-  background: rgba(99, 102, 241, 0.12);
-  border-color: rgba(99, 102, 241, 0.5);
+  background: var(--accent-pressed);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 .fap-action-btn.ghost {

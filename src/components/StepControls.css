@@ -49,7 +49,7 @@
 .step-btn.play-btn {
   width: 40px;
   height: 40px;
-  background: #4A90E2;
+  background: #E8551F;
   color: white;
 }
 
@@ -91,7 +91,7 @@
   appearance: none;
   width: 16px;
   height: 16px;
-  background: #4A90E2;
+  background: #E8551F;
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -104,7 +104,7 @@
 .step-slider::-moz-range-thumb {
   width: 16px;
   height: 16px;
-  background: #4A90E2;
+  background: #E8551F;
   border-radius: 50%;
   cursor: pointer;
   border: none;
@@ -134,12 +134,12 @@
 }
 
 .step-tick:hover {
-  background: #4A90E2;
+  background: #E8551F;
   transform: scale(1.2);
 }
 
 .step-tick.active {
-  background: #4A90E2;
+  background: #E8551F;
 }
 
 .step-counter {
@@ -159,7 +159,7 @@
   font-weight: 500;
   color: #333;
   padding-left: 12px;
-  border-left: 2px solid #4A90E2;
+  border-left: 2px solid #E8551F;
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;

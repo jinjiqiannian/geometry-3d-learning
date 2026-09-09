@@ -3,11 +3,11 @@
 .landing {
   --lp-ink: #1d1d1f;
   --lp-paper: #f5f5f7;
-  --lp-muted: #6e6e73;
+  --lp-muted: var(--text-muted);
   --lp-soft: #86868b;
   --lp-line: rgba(0, 0, 0, 0.08);
-  --lp-accent: #0071e3;
-  --lp-ember: #2997ff;
+  --lp-accent: #E8551F;
+  --lp-ember: #FF7A45;
   --lp-teal: #86868b;
   --lp-cream: #ffffff;
   --lp-ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -19,6 +19,119 @@
   min-height: 100dvh;
   overflow: visible;
   background: var(--lp-paper);
+  color: var(--lp-ink);
+}
+
+/* ── Dark: 墨蓝底 + 橙色顿悟光晕 ── */
+[data-theme="dark"] .landing {
+  --lp-ink: #F4F1EC;
+  --lp-paper: #131F3E;
+  --lp-muted: #B4B8CC;
+  --lp-soft: #8288A0;
+  --lp-line: rgba(150, 165, 205, 0.18);
+  --lp-accent: #FF7A45;
+  --lp-ember: #FF9266;
+  --lp-teal: #4CC4FF;
+  --lp-cream: #1A2A4F;
+
+  /* Hero 背景：墨蓝 + 两层橙色光晕 */
+  --lp-hero-bg:
+    radial-gradient(100% 70% at 20% 0%, rgba(255, 122, 69, 0.22) 0%, transparent 55%),
+    radial-gradient(80% 50% at 85% 15%, rgba(255, 170, 100, 0.10) 0%, transparent 50%),
+    linear-gradient(180deg, #131F3E 0%, #0E1830 100%);
+}
+
+[data-theme="dark"] .landing { background: var(--lp-hero-bg); }
+
+[data-theme="dark"] .landing-brand-text,
+[data-theme="dark"] .landing-title,
+[data-theme="dark"] .landing-lead,
+[data-theme="dark"] .landing-sub { color: var(--lp-ink); }
+
+[data-theme="dark"] .landing-kicker,
+[data-theme="dark"] .landing-kicker-en { color: var(--lp-muted); }
+
+[data-theme="dark"] .landing-mode-card {
+  background: rgba(30, 50, 88, 0.6);
+  border-color: var(--lp-line);
+  backdrop-filter: blur(14px);
+}
+
+[data-theme="dark"] .landing-mode-card.is-active {
+  background: rgba(255, 122, 69, 0.14);
+  border-color: rgba(255, 122, 69, 0.4);
+}
+
+/* ── Dark: 卡片文字提亮（ghost 卡同步冷色化） ── */
+[data-theme="dark"] .landing-mode-card,
+[data-theme="dark"] .landing-mode-card--ghost {
+  color: var(--lp-ink);
+}
+
+[data-theme="dark"] .landing-mode-card--ghost {
+  background: rgba(30, 50, 88, 0.45);
+  border-color: var(--lp-line);
+}
+
+[data-theme="dark"] .landing-mode-card-kicker,
+[data-theme="dark"] .landing-mode-card-body {
+  color: var(--lp-muted);
+}
+
+[data-theme="dark"] .landing-mode-card.is-active .landing-mode-card-kicker,
+[data-theme="dark"] .landing-mode-card.is-active .landing-mode-card-body {
+  color: var(--lp-muted);
+}
+
+[data-theme="dark"] .landing-poster {
+  background:
+    radial-gradient(80% 65% at 50% 40%, rgba(255, 122, 69, 0.22) 0%, transparent 60%),
+    linear-gradient(165deg, #1A2A4F, #0E1830);
+  border: 1px solid var(--lp-line);
+}
+
+/* 让 poster 里的几何模型 SVG 变蓝 */
+[data-theme="dark"] .landing-poster .km-svg { filter: drop-shadow(0 0 24px rgba(255, 122, 69, 0.4)); }
+
+[data-theme="dark"] .landing-story,
+[data-theme="dark"] .landing-story-slide,
+[data-theme="dark"] .landing-hero-poster {
+  background: var(--lp-hero-bg);
+  color: var(--lp-ink);
+}
+
+/* ── Dark: 故事画板四阶段 → 冷色深板 ── */
+[data-theme="dark"] .landing-story-plate {
+  border-color: var(--lp-line);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 36px 80px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .landing-story-plate[data-stage="compose"] {
+  background: linear-gradient(180deg, #233560 0%, #131F3E 100%);
+}
+
+[data-theme="dark"] .landing-story-plate[data-stage="reason"] {
+  background: linear-gradient(180deg, #1a3054 0%, #14284a 100%);
+}
+
+[data-theme="dark"] .landing-story-plate[data-stage="explain"] {
+  background: linear-gradient(180deg, #20386a 0%, #131F3E 100%);
+}
+
+[data-theme="dark"] .landing-story-plate[data-stage="check"] {
+  background: linear-gradient(180deg, #193052 0%, #131F3E 100%);
+}
+
+[data-theme="dark"] .landing-cta-btn-primary {
+  background: var(--lp-accent);
+  color: #fff;
+}
+
+[data-theme="dark"] .landing-cta-btn-secondary {
+  background: rgba(30, 50, 88, 0.6);
+  border-color: var(--lp-line);
   color: var(--lp-ink);
 }
 
@@ -249,6 +362,15 @@
   border-left: 1px solid var(--lp-line);
 }
 
+/* ── Dark: hero 视觉区 → deep navy 冷色 ── */
+[data-theme="dark"] .landing-hero-visual {
+  background:
+    radial-gradient(ellipse 70% 55% at 55% 38%, rgba(255, 122, 69, 0.18), transparent 58%),
+    radial-gradient(ellipse 45% 40% at 20% 75%, rgba(0, 0, 0, 0.35), transparent 50%),
+    linear-gradient(152deg, #1A2A4F 0%, #182f5c 45%, #0E1830 100%);
+  border-left-color: var(--lp-line);
+}
+
 .landing-hero-glow {
   position: absolute;
   width: 75%;
@@ -355,7 +477,7 @@
   min-height: 0;
   padding: clamp(48px, 7vh, 80px) clamp(24px, 6vw, 80px);
   background:
-    radial-gradient(ellipse 60% 45% at 50% 45%, rgba(194, 65, 12, 0.06), transparent 62%),
+    radial-gradient(ellipse 60% 45% at 50% 45%, rgba(255, 122, 69, 0.06), transparent 62%),
     var(--lp-paper);
   border-top: 1px solid var(--lp-line);
 }
@@ -423,8 +545,15 @@
   height: 100dvh;
   overflow: hidden;
   background:
-    radial-gradient(ellipse 60% 50% at 50% 40%, rgba(232, 106, 58, 0.12), transparent 62%),
-    linear-gradient(165deg, #e6dccb 0%, #d4c7b0 100%);
+    radial-gradient(ellipse 60% 50% at 50% 40%, rgba(255, 122, 69, 0.10), transparent 62%),
+    linear-gradient(165deg, #e7edf7 0%, #cfdcec 100%);
+}
+
+/* ── Dark: sticky 舞台 → deep navy + 蓝光晕 ── */
+[data-theme="dark"] .landing-story-pin {
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 40%, rgba(255, 122, 69, 0.16), transparent 62%),
+    linear-gradient(165deg, #1b2f58 0%, #0E1830 100%);
 }
 
 .landing-story-stage {
@@ -465,7 +594,7 @@
 }
 
 .landing-story-plate[data-stage="check"] {
-  background: linear-gradient(180deg, #faf8f4 0%, #ebe2d4 100%);
+  background: linear-gradient(180deg, #f2f6fc 0%, #dbe5f2 100%);
 }
 
 .landing-story-art-live {
@@ -548,7 +677,7 @@
 }
 
 .landing-story-beat.is-done {
-  color: rgba(194, 65, 12, 0.5);
+  color: rgba(255, 122, 69, 0.45);
 }
 
 .landing-story-beat.is-active {
@@ -976,7 +1105,7 @@
 .landing-moment {
   padding: clamp(48px, 7vh, 80px) clamp(24px, 5vw, 64px);
   background:
-    radial-gradient(ellipse 50% 40% at 72% 18%, rgba(232, 106, 58, 0.08), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 72% 18%, rgba(255, 122, 69, 0.08), transparent 55%),
     var(--lp-paper);
   color: var(--lp-ink);
   border-top: 1px solid var(--lp-line);
@@ -1031,8 +1160,8 @@
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(ellipse 55% 50% at 50% 48%, rgba(232, 106, 58, 0.18), transparent 68%),
-    linear-gradient(165deg, #ebe2d4, #dccfb8);
+    radial-gradient(ellipse 55% 50% at 50% 48%, rgba(255, 122, 69, 0.14), transparent 68%),
+    linear-gradient(165deg, #e2e9f4, #cdd9ea);
 }
 
 .landing-moment-art {
@@ -1363,7 +1492,7 @@
   }
 
   .landing-story-slide:nth-child(4) .landing-story-slide-art {
-    background: linear-gradient(180deg, #faf8f4, #e8dfd0);
+    background: linear-gradient(180deg, #f2f6fc, #dbe5f2);
   }
 
   .landing-gallery-grid {
@@ -1431,4 +1560,75 @@
   .landing-story-art-layer {
     transition: none;
   }
+}
+
+/* ═══════════════════════════════════════════════════
+   Dark — 页面下半部暖色区块统一冷色覆盖
+   （置于文件末尾以赢得与移动端媒体查询的同权重层叠）
+   ═══════════════════════════════════════════════════ */
+[data-theme="dark"] .landing-manifesto {
+  background:
+    radial-gradient(ellipse 60% 45% at 50% 45%, rgba(255, 122, 69, 0.1), transparent 62%),
+    var(--lp-paper);
+}
+
+[data-theme="dark"] .landing-story-slide-art {
+  background: linear-gradient(180deg, #1A2A4F, #131F3E);
+}
+
+[data-theme="dark"] .landing-story-slide:nth-child(1) .landing-story-slide-art {
+  background: linear-gradient(180deg, #20386a, #131F3E);
+}
+
+[data-theme="dark"] .landing-story-slide:nth-child(2) .landing-story-slide-art {
+  background: linear-gradient(180deg, #1a3054, #14284a);
+}
+
+[data-theme="dark"] .landing-story-slide:nth-child(3) .landing-story-slide-art {
+  background: linear-gradient(180deg, #24407a, #131F3E);
+}
+
+[data-theme="dark"] .landing-story-slide:nth-child(4) .landing-story-slide-art {
+  background: linear-gradient(180deg, #193052, #131F3E);
+}
+
+[data-theme="dark"] .landing-gallery-card {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .landing-gallery-card--cube {
+  background: linear-gradient(160deg, #24407a, #1b2f58);
+}
+
+[data-theme="dark"] .landing-gallery-card--prism {
+  background: linear-gradient(160deg, #1e3860, #142c50);
+}
+
+[data-theme="dark"] .landing-gallery-card--pyramid {
+  background: linear-gradient(160deg, #264070, #162a52);
+}
+
+[data-theme="dark"] .landing-gallery-card--cylinder {
+  background: linear-gradient(160deg, #203a64, #152e50);
+}
+
+[data-theme="dark"] .landing-moment {
+  background:
+    radial-gradient(ellipse 50% 40% at 72% 18%, rgba(255, 122, 69, 0.12), transparent 55%),
+    var(--lp-paper);
+}
+
+[data-theme="dark"] .landing-moment-frame {
+  border-color: var(--lp-line);
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .landing-moment-pane--steps {
+  background: rgba(23, 40, 72, 0.9);
+}
+
+[data-theme="dark"] .landing-moment-pane--viz {
+  background:
+    radial-gradient(ellipse 55% 50% at 50% 48%, rgba(255, 122, 69, 0.2), transparent 68%),
+    linear-gradient(165deg, #1A2A4F, #131F3E);
 }

@@ -6,7 +6,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  background: #fffcf7;
+  background: var(--bg-surface);
   height: 100%;
   overflow: hidden;
 }
@@ -14,14 +14,14 @@
 /* ── 题目 ─────────────────────────────────────────── */
 .ep-problem {
   padding: 18px 22px 14px;
-  border-bottom: 1px solid #e4dfd5;
-  background: #fffcf7;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
 }
 
 .ep-problem-label {
   font-size: 11px;
   font-weight: 550;
-  color: #5c574e;
+  color: var(--text-secondary);
   letter-spacing: 0.08em;
   margin-bottom: 8px;
   text-transform: uppercase;
@@ -31,7 +31,7 @@
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.7;
-  color: #1a1a1a;
+  color: var(--text-primary);
   font-family: var(--font-math), Georgia, serif;
 }
 
@@ -211,7 +211,7 @@
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.7;
-  color: #1a1a1a;
+  color: var(--text-primary);
   font-family: var(--font-math), Georgia, serif;
 }
 
@@ -322,7 +322,7 @@
     flex-shrink: 0;
     padding: 8px 10px;
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
-    background: #fffcf7;
+    background: var(--bg-surface);
   }
 
   .workspace-page--solving .ep-practice-more {
@@ -432,4 +432,25 @@
 
 .ep-practice-btn:active {
   transform: translateY(0);
+}
+
+/* ── Dark: 所有硬编码米色/深黑 → 冷色变量覆盖 ── */
+[data-theme="dark"] .explanation-panel { background: transparent; color: var(--text-primary); }
+
+[data-theme="dark"] .ep-problem {
+  background: var(--bg-surface);
+  border-bottom-color: var(--border-subtle);
+}
+[data-theme="dark"] .ep-problem-label { color: var(--text-muted); }
+[data-theme="dark"] .ep-problem-text { color: var(--text-primary); }
+
+[data-theme="dark"] .ep-step-current,
+[data-theme="dark"] .ep-step-next {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+[data-theme="dark"] .ep-step-title,
+[data-theme="dark"] .ep-step-content,
+[data-theme="dark"] .ep-step-next-label {
+  color: var(--text-primary);
 }

@@ -83,10 +83,10 @@ function EdgeHitbox({ from, to, lineData, lineKey, visible, selected, hovered, o
  }
  }}>
  <cylinderGeometry args={[0.06, 0.06, length, 6]}/>
- <meshBasicMaterial color={selected ? '#FF8C00' : hovered ? '#4A90E2' : '#000000'} transparent opacity={0} depthWrite={false}/>
+ <meshBasicMaterial color={selected ? '#E8551F' : hovered ? '#E8551F' : '#000000'} transparent opacity={0} depthWrite={false}/>
  </mesh>);
 }
-function PlaneMesh({ points, color = '#4A90E2', opacity = 0.2 }) {
+function PlaneMesh({ points, color = '#E8551F', opacity = 0.2 }) {
  const geometry = useMemo(() => {
  if (points.length < 3)
  return null;
@@ -105,7 +105,7 @@ function PlaneMesh({ points, color = '#4A90E2', opacity = 0.2 }) {
  <meshBasicMaterial color={color} transparent opacity={opacity} side={THREE.DoubleSide}/>
  </mesh>);
 }
-function SectionPolygon({ points, color = '#FF6B6B', opacity = 0.3, renderOrder = 2 }) {
+function SectionPolygon({ points, color = '#E8551F', opacity = 0.3, renderOrder = 2 }) {
  const geometry = useMemo(() => {
  if (points.length < 3)
  return null;
@@ -142,7 +142,7 @@ const Canvas3D = memo(function Canvas3D({
  customVertices,
  sceneIR = null,
  highlightEdgeIds = [],
- highlightColor = '#4A90E2',
+ highlightColor = '#E8551F',
  auxLines = [],
  faceOpacity = 0.20,
  nonHighlightOpacity = 1.0,
@@ -450,7 +450,7 @@ const sceneIRAnim = useRef({ camera: null });
  const ink = '#1f2430';
  let color, opacity;
  if (selected) {
- color = '#FF8C00';
+ color = '#E8551F';
  opacity = 1;
  }
  else if (hovered) {
@@ -620,7 +620,7 @@ const sceneIRAnim = useRef({ camera: null });
 
  {!sceneIR && sphereOverlay && sphereGeo && (<mesh>
  <primitive attach="geometry" object={sphereGeo}/>
- <meshBasicMaterial color={sphereOverlay.color || '#4A90E2'} transparent opacity={sphereOverlay.opacity ?? 0.15} depthWrite={false} wireframe={sphereOverlay.wireframe !== false}/>
+ <meshBasicMaterial color={sphereOverlay.color || '#E8551F'} transparent opacity={sphereOverlay.opacity ?? 0.15} depthWrite={false} wireframe={sphereOverlay.wireframe !== false}/>
  </mesh>)}
 
  {!sceneIR && resolvedAuxLines.map((al, i) => {

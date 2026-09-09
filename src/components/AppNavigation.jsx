@@ -23,7 +23,7 @@ export default function AppNavigation() {
       <div className="app-nav-left">
         <Link to="/" className="app-nav-logo">
           <BrandLogo className="app-nav-logo-icon" size={22} />
-          <span className="app-nav-brand">几何维度</span>
+          <span className="app-nav-brand">即懂</span>
         </Link>
 
         <div className="app-nav-links">
@@ -44,12 +44,6 @@ export default function AppNavigation() {
       </div>
 
       <div className="app-nav-right">
-        <Link
-          to="/pricing"
-          className={`app-nav-link app-nav-link--quiet${isActive('/pricing') ? ' active' : ''}`}
-        >
-          定价
-        </Link>
         <Link
           to="/settings"
           className={`app-nav-link app-nav-link--quiet${isActive('/settings') ? ' active' : ''}`}

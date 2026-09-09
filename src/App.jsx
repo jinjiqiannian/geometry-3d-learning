@@ -3,7 +3,6 @@ import { createHashRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { SupabaseProvider } from './contexts/SupabaseContext';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
-import { TeacherProvider } from './contexts/TeacherContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import PageLayout from './layouts/PageLayout';
 import LandingPage from './pages/LandingPage';
@@ -12,7 +11,6 @@ import ChunkErrorBoundary from './components/ChunkErrorBoundary';
 
 // ── Route-level code splitting ──
 // Three.js, pptExporter, and heavy engines only load when needed
-const PricingPage = lazy(() => import('./pages/PricingPage'));
 const HistoryPage = lazy(() => import('./pages/HistoryPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
@@ -92,14 +90,6 @@ const router = createHashRouter([
         element: (
           <WrappedRoute>
             <SearchPage />
-          </WrappedRoute>
-        ),
-      },
-      {
-        path: 'pricing',
-        element: (
-          <WrappedRoute>
-            <PricingPage />
           </WrappedRoute>
         ),
       },
@@ -185,11 +175,9 @@ export default function App() {
       <SupabaseProvider>
         <SubscriptionProvider>
           <WorkspaceProvider>
-            <TeacherProvider>
-              <ThemeProvider>
-                <RouterProvider router={router} />
-              </ThemeProvider>
-            </TeacherProvider>
+            <ThemeProvider>
+              <RouterProvider router={router} />
+            </ThemeProvider>
           </WorkspaceProvider>
         </SubscriptionProvider>
       </SupabaseProvider>

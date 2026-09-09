@@ -21,7 +21,7 @@ const AnnotationTool = memo(function AnnotationTool({
         id: `highlight-${Date.now()}`,
         type: 'highlight',
         edgeKey,
-        color: '#FF6B6B',
+        color: '#E8551F',
       })
     }
   }, [mode, onAddAnnotation])

@@ -53,9 +53,9 @@
 
 .pc-btn:disabled {
   opacity: 1;
-  color: #8a847a;
-  border-color: #cfc8bc;
-  background: #f3f1ec;
+  color: var(--text-muted);
+  border-color: var(--border-emphasis);
+  background: var(--bg-base);
   cursor: not-allowed;
 }
 

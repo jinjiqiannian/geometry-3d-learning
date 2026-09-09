@@ -1,4 +1,4 @@
-/* ═══════════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════════
    AppNavigation — 顶部固定导航栏
    左侧: Logo + 链接 · 右侧: 会员标签 + 登录
    ═══════════════════════════════════════════════════════ */
@@ -9,7 +9,7 @@
   justify-content: space-between;
   height: 48px;
   padding: 0 24px;
-  background: #fffcf7;
+  background: var(--bg-glass);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   border-bottom: 1px solid #e6e1d8;
@@ -18,6 +18,16 @@
   position: relative;
   -webkit-app-region: no-drag;
 }
+
+/* ── Dark: 顶栏毛玻璃 + 冷色分割线 ── */
+[data-theme="dark"] .app-nav {
+  background: var(--bg-glass);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  border-bottom-color: var(--border-subtle);
+}
+
+[data-theme="dark"] .app-nav-logo-icon { color: var(--text-primary); }
 
 .app-nav-left {
   display: flex;
@@ -45,7 +55,7 @@
 .app-nav-logo-icon {
   width: 22px;
   height: 22px;
-  color: #121212;
+  color: var(--text-primary);
   flex-shrink: 0;
   border-radius: 2px;
 }
@@ -84,8 +94,8 @@
 }
 
 .app-nav-link.active {
-  color: var(--text-primary);
-  font-weight: 550;
+  color: var(--accent-text);
+  font-weight: 600;
 }
 
 .app-nav-link.active::after {
@@ -94,9 +104,9 @@
   bottom: 0;
   left: 12px;
   right: 12px;
-  height: 1px;
-  background: var(--text-primary);
-  border-radius: 0;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
   transform: none;
   width: auto;
 }
