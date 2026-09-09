@@ -57,7 +57,7 @@ export async function generatePPT(workspace, canvasElement) {
     x: 1.2, y: 3.0, w: '80%', h: 1.5,
     fontSize: 20, color: PPT_THEME.secondary, fontFace: 'Microsoft YaHei',
   })
-  slide1.addText('由 几何维度 AI 生成', {
+  slide1.addText('由 即懂 AI 生成', {
     x: 0.8, y: 6.0, w: '40%', h: 0.5,
     fontSize: 11, color: PPT_THEME.accent, fontFace: 'Microsoft YaHei',
   })
@@ -147,14 +147,14 @@ export async function generatePPT(workspace, canvasElement) {
     })
   }
 
-  slide5.addText('由 几何维度 AI 生成 · jihewedu.cn', {
+  slide5.addText('由 即懂 AI 生成 · jiheweidu.cn', {
     x: 0, y: 6.5, w: '100%', h: 0.5,
     fontSize: 10, color: PPT_THEME.accent, fontFace: 'Microsoft YaHei',
     align: 'center',
   })
 
   // ── 下载 ────────────────────────────────────────
-  const fileName = `几何维度-${(problemText || '讲解').slice(0, 30)}.pptx`
+  const fileName = `即懂-${(problemText || '讲解').slice(0, 30)}.pptx`
   await pptx.writeFile({ fileName })
 }
 
@@ -201,7 +201,7 @@ export async function generateExplainPPT(payload = {}) {
       fontSize: 16, color: theme.secondary, fontFace: 'Microsoft YaHei',
     })
   }
-  cover.addText('几何维度 · MathViz', {
+  cover.addText('即懂 · 动画讲题', {
     x: 0.8, y: 6.5, w: 11.5, h: 0.4,
     fontSize: 12, color: theme.muted, fontFace: 'Microsoft YaHei',
   })
@@ -246,12 +246,12 @@ export async function generateExplainPPT(payload = {}) {
     fontSize: 24, color: theme.secondary, fontFace: 'Microsoft YaHei',
     align: 'center',
   })
-  end.addText('可用于课堂投影 · MathViz', {
+  end.addText('可用于课堂投影 · 即懂', {
     x: 0, y: 6.5, w: '100%', h: 0.4,
     fontSize: 11, color: theme.muted, fontFace: 'Microsoft YaHei',
     align: 'center',
   })
 
   const safe = String(goal || title || '讲解').replace(/[\\/:*?"<>|]/g, '').slice(0, 28)
-  await pptx.writeFile({ fileName: `MathViz-${safe || '方法讲解'}.pptx` })
+  await pptx.writeFile({ fileName: `即懂-${safe || '方法讲解'}.pptx` })
 }

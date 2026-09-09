@@ -15,7 +15,7 @@ function getSupabase() {
 
 // ── 访客 ID 工具函数 ───────────────────────────────
 
-const GUEST_ID_KEY = 'mathviz_guest_id'
+const GUEST_ID_KEY = 'jidong_guest_id'
 
 /** 生成临时 UUID */
 function generateGuestId() {

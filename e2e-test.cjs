@@ -43,7 +43,7 @@ async function run() {
     check(heroTitle?.includes('立体几何'), 'Hero title 显示', heroTitle)
 
     const brand = await p1.textContent('.landing-hero-brand')
-    check(brand === '几何维度', 'Brand logo 显示', brand)
+    check(brand === '即懂', 'Brand logo 显示', brand)
 
     const input = await p1.$('.landing-hero-input')
     check(!!input, '输入框存在')

@@ -114,7 +114,7 @@ serve(async (req) => {
     // ── 调用阿里云短信 API ──
     const accessKeyId = Deno.env.get("ALIBABA_ACCESS_KEY_ID") ?? ""
     const accessKeySecret = Deno.env.get("ALIBABA_ACCESS_KEY_SECRET") ?? ""
-    const signName = Deno.env.get("ALIBABA_SMS_SIGN_NAME") ?? "几何维度"
+    const signName = Deno.env.get("ALIBABA_SMS_SIGN_NAME") ?? "即懂"
     const templateCode = Deno.env.get("ALIBABA_SMS_TEMPLATE_CODE") ?? ""
 
     if (!accessKeyId || !accessKeySecret || !templateCode) {

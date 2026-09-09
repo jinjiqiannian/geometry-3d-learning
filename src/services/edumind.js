@@ -6,7 +6,7 @@
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 function getToken() {
-  try { return localStorage.getItem('mathviz_token') } catch { return null }
+  try { return localStorage.getItem('jidong_token') } catch { return null }
 }
 
 async function request(path, options = {}) {
@@ -21,8 +21,8 @@ async function request(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, config)
 
   if (response.status === 401 && auth) {
-    try { localStorage.removeItem('mathviz_token') } catch {}
-    window.dispatchEvent(new CustomEvent('mathviz:unauthorized'))
+    try { localStorage.removeItem('jidong_token') } catch {}
+    window.dispatchEvent(new CustomEvent('jidong:unauthorized'))
     throw new Error('登录已过期，请重新登录')
   }
 
