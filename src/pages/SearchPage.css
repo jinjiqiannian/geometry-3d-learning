@@ -5,6 +5,8 @@
   --search-cream: var(--bg-surface);
   --search-accent: var(--accent);
 
+  display: flex;
+  flex-direction: column;
   min-height: calc(100dvh - var(--app-nav-height, 56px) - var(--mobile-nav-height, 0px));
   background:
     radial-gradient(ellipse 55% 40% at 50% 20%, rgba(232, 85, 31, 0.06), transparent 60%),
@@ -63,9 +65,15 @@
 }
 
 .search-shell {
+  box-sizing: border-box;
+  width: 100%;
   max-width: 720px;
   margin: 0 auto;
-  padding: clamp(48px, 10vh, 96px) 24px 64px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(28px, 5vh, 96px) 24px clamp(20px, 4vh, 64px);
 }
 
 .search-kicker {
@@ -74,6 +82,7 @@
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: var(--search-muted);
+  flex-shrink: 0;
 }
 
 .search-title {
@@ -81,6 +90,7 @@
   font-size: clamp(1.8rem, 4vw, 2.6rem);
   font-weight: 650;
   letter-spacing: -0.03em;
+  flex-shrink: 0;
 }
 
 .search-lead {
@@ -88,11 +98,13 @@
   font-size: 1.02rem;
   line-height: 1.7;
   color: var(--search-muted);
+  flex-shrink: 0;
 }
 
 .search-input {
   width: 100%;
   box-sizing: border-box;
+  flex: 1 1 auto;
   padding: 18px 18px;
   border: 1px solid var(--border-default);
   border-radius: 12px;
@@ -101,8 +113,9 @@
   font-size: 1.02rem;
   line-height: 1.65;
   font-family: inherit;
-  resize: vertical;
-  min-height: 140px;
+  resize: none;
+  min-height: 120px;
+  max-height: 40vh;
   box-shadow: 0 16px 40px rgba(20, 40, 80, 0.08);
 }
 
@@ -117,6 +130,7 @@
   align-items: center;
   gap: 14px;
   margin-top: 18px;
+  flex-shrink: 0;
 }
 
 .search-submit {
@@ -162,6 +176,7 @@
   margin-bottom: 14px;
   width: fit-content;
   max-width: 100%;
+  flex-shrink: 0;
 }
 
 .search-preview img {
@@ -193,6 +208,7 @@
   margin: 10px 0 0;
   font-size: 0.82rem;
   color: var(--accent-text);
+  flex-shrink: 0;
 }
 
 .search-link {
@@ -209,6 +225,65 @@
   margin: 14px 0 0;
   font-size: 0.78rem;
   color: var(--search-muted);
+  flex-shrink: 0;
+}
+
+/* ── 矮窗口（小浏览器窗口 / 手机横屏）：压缩固定元素，保证按钮可见 ── */
+@media (max-height: 780px) {
+  .search-shell {
+    padding-top: 20px;
+    padding-bottom: 16px;
+  }
+
+  .search-kicker {
+    margin-bottom: 6px;
+  }
+
+  .search-title {
+    margin-bottom: 6px;
+  }
+
+  .search-lead {
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .search-preview {
+    margin-bottom: 10px;
+  }
+
+  .search-preview img {
+    max-height: 104px;
+  }
+
+  .search-input {
+    min-height: 84px;
+    max-height: 30vh;
+    padding: 14px 16px;
+  }
+
+  .search-actions {
+    margin-top: 12px;
+  }
+
+  .search-hint {
+    display: none;
+  }
+}
+
+@media (max-height: 560px) {
+  .search-lead {
+    display: none;
+  }
+
+  .search-preview img {
+    max-height: 72px;
+  }
+
+  .search-input {
+    min-height: 60px;
+    max-height: 22vh;
+  }
 }
 
 /* ── 移动端：收紧留白，按钮全宽，避免画面挤压 ── */
@@ -228,6 +303,7 @@
 
   .search-input {
     min-height: 120px;
+    max-height: 34vh;
     padding: 14px 14px;
     font-size: 0.95rem;
   }
