@@ -354,8 +354,8 @@
     height: 64px;
     margin-bottom: 16px;
     border-radius: 18px;
-    background: var(--bg-elevated, #fff2e8);
-    color: var(--accent, #e8551f);
+    background: var(--bg-elevated, #EEF2FE);
+    color: var(--accent, #4d6bfe);
   }
 
   .teach-rotate-title {
@@ -389,7 +389,7 @@
 
   .teach-rotate-btn {
     border: none;
-    background: var(--accent, #e8551f);
+    background: var(--accent, #4d6bfe);
     color: #fff;
     font-weight: 550;
   }

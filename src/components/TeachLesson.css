@@ -33,7 +33,7 @@
   justify-content: center;
   padding: 24px;
   background:
-    radial-gradient(ellipse 55% 45% at 50% 40%, rgba(232, 85, 31, 0.14), transparent 62%),
+    radial-gradient(ellipse 55% 45% at 50% 40%, rgba(77, 107, 254, 0.14), transparent 62%),
     linear-gradient(165deg, #eef3fa, #dce6f5);
 }
 

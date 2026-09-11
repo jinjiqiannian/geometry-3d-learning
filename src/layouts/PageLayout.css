@@ -48,6 +48,8 @@
   min-height: auto;
 }
 
+/* 首页关闭通用入场上浮：改由 LandingPage.css 自编排分级入场
+   （nav → 标题 → 两卡依次错开）。两层动画叠加会发糊。 */
 .page-layout--facade .page-transition {
   animation: none;
   overflow: visible;
@@ -96,13 +98,16 @@
   }
 }
 
-/* ── Page transition — 短时、仅 opacity，点击后立刻有反馈 ── */
+/* ── Page transition — 淡入 + 上浮，0.34s 足够看出动势又不拖沓 ──
+   注意：transform 会让本层内 position:fixed 的元素改以它为参照。
+   模态框/底栏都在本层之外，层内的 fixed（分享 toast、旋转提示）只在
+   用户操作后出现，转场窗口内不可见，故用 translateY 不动 scale。 */
 .page-transition {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  animation: page-enter 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: page-enter 0.34s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .page-layout:not(.page-layout--facade) .page-transition {
@@ -112,7 +117,7 @@
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;

@@ -16,7 +16,7 @@ function applyTheme() {
   document.documentElement.setAttribute(DATA_ATTR, THEME)
   const meta = document.querySelector('meta[name="theme-color"]')
   if (meta) {
-    meta.content = '#FFFBF7'
+    meta.content = '#F7F9FE'
   }
 }
 

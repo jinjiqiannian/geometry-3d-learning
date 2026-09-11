@@ -1,34 +1,36 @@
 ﻿/* ═══════════════════════════════════════════════════════
    即懂 Design System —「点亮派」
-   墨蓝结构色（理性可信）+ 顿悟橙光（点一下就懂了）
+   冷调结构蓝（清晰透彻）+ 墨蓝文字（理性可信）
    ═══════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Brand (点亮橙体系：墨蓝 #16294E + 顿悟橙 #E8551F) ── */
-  --brand-orange: #E8551F;
-  --brand-orange-light: #FF7A45;
-  --brand-orange-deep: #C2410C;  /* 浅底小字/链接，WCAG 5.2:1 */
+  /* ── Brand（点亮蓝体系：墨蓝 #16294E 文字 + 结构蓝 #4D6BFE）──
+     变量名保留历史叫法（--brand-orange* 现指向蓝），
+     以免改动 226 处 var() 引用；语义以本注释为准。 */
+  --brand-orange: #4D6BFE;
+  --brand-orange-light: #6B85FF;
+  --brand-orange-deep: #2F4BD6;  /* 浅底小字/链接，WCAG 6.8:1 */
   --brand-ink: #16294E;
-  --brand-gradient: linear-gradient(135deg, #E8551F, #FF7A45);
+  --brand-gradient: linear-gradient(135deg, #4D6BFE, #6B85FF);
 
-  /* 兼容旧变量名（页面 CSS 仍引用 --brand-blue*，统一指向橙） */
-  --brand-blue: #E8551F;
-  --brand-blue-light: #FF7A45;
-  --brand-blue-dark: #C2410C;
+  /* 兼容旧变量名（同指结构蓝） */
+  --brand-blue: #4D6BFE;
+  --brand-blue-light: #6B85FF;
+  --brand-blue-dark: #2F4BD6;
 
-  /* ── Background — 暖白底 ── */
+  /* ── Background — 冷白底 ── */
   --bg-deep: #ffffff;
-  --bg-base: #FFFBF7;
+  --bg-base: #F7F9FE;
   --bg-surface: #ffffff;
-  --bg-elevated: #FFF2E8;
-  --bg-overlay: rgba(232, 85, 31, 0.10);
-  --bg-glass: rgba(255, 255, 255, 0.92);
+  --bg-elevated: #EEF2FE;
+  --bg-overlay: rgba(77, 107, 254, 0.10);
+  --bg-glass: rgba(255, 255, 255, 0.72);
 
-  /* ── Border — 暖墨灰 ── */
-  --border-subtle: #EFE9E3;
-  --border-default: #E2D8CE;
-  --border-emphasis: #B9A99A;
-  --border-focus: #E8551F;
+  /* ── Border — 冷灰蓝 ── */
+  --border-subtle: #E8ECF5;
+  --border-default: #D8DFF0;
+  --border-emphasis: #A9B6D6;
+  --border-focus: #4D6BFE;
 
   /* ── Text — 墨蓝 ── */
   --text-primary: #16294E;
@@ -36,12 +38,12 @@
   --text-muted: #6B6E82;
   --text-inverse: #ffffff;
 
-  /* ── Accent (点亮橙) ── */
-  --accent: #E8551F;
-  --accent-hover: #C2410C;
-  --accent-text: #C2410C;   /* 浅底小字/激活态文字色 */
-  --accent-subtle: rgba(232, 85, 31, 0.08);
-  --accent-pressed: rgba(232, 85, 31, 0.16);
+  /* ── Accent (结构蓝) ── */
+  --accent: #4D6BFE;
+  --accent-hover: #3B55E6;
+  --accent-text: #2F4BD6;   /* 浅底小字/激活态文字色，6.8:1 */
+  --accent-subtle: rgba(77, 107, 254, 0.08);
+  --accent-pressed: rgba(77, 107, 254, 0.16);
 
   /* ── Semantic ── */
   --color-success: #1a7f37;
@@ -49,12 +51,12 @@
   --color-error: #cf222e;
   --color-info: #2563EB;
 
-  /* ── Shadows — 暖色柔光 ── */
-  --shadow-xs: 0 1px 3px rgba(90, 45, 20, 0.06);
-  --shadow-sm: 0 2px 8px rgba(90, 45, 20, 0.08);
-  --shadow-md: 0 4px 16px rgba(90, 45, 20, 0.10);
-  --shadow-lg: 0 8px 32px rgba(90, 45, 20, 0.12);
-  --shadow-xl: 0 12px 48px rgba(90, 45, 20, 0.15);
+  /* ── Shadows — 冷色柔光 ── */
+  --shadow-xs: 0 1px 3px rgba(77, 107, 254, 0.06);
+  --shadow-sm: 0 2px 8px rgba(77, 107, 254, 0.08);
+  --shadow-md: 0 4px 16px rgba(77, 107, 254, 0.10);
+  --shadow-lg: 0 8px 32px rgba(77, 107, 254, 0.12);
+  --shadow-xl: 0 12px 48px rgba(77, 107, 254, 0.15);
 
   /* ── Radius ── */
   --radius-sm: 4px;
@@ -101,11 +103,11 @@
   --text-4xl: 48px;
   --text-5xl: 60px;
 
-  /* ── Subject Colors (数学=品牌橙，物理=辅蓝) ── */
-  --subject-math: #E8551F;
-  --subject-math-light: #FFF0E7;
-  --subject-physics: #2563EB;
-  --subject-physics-light: #EBF0FE;
+  /* ── Subject Colors (数学=品牌蓝，物理=青，避免两科同蓝难辨) ── */
+  --subject-math: #4D6BFE;
+  --subject-math-light: #EEF2FE;
+  --subject-physics: #0EA5E9;
+  --subject-physics-light: #E8F6FE;
 }
 
 /* ── Dark theme —「点亮派」深色：墨蓝底 + 橙色顿悟光晕 + 毛玻璃 ── */
@@ -243,8 +245,8 @@
 :root {
   --color-primary: var(--text-primary);
   --color-primary-dark: var(--text-secondary);
-  --color-primary-light: rgba(232, 85, 31, 0.06);
-  --color-primary-glow: rgba(232, 85, 31, 0.04);
+  --color-primary-light: rgba(77, 107, 254, 0.06);
+  --color-primary-glow: rgba(77, 107, 254, 0.04);
   --color-success-light: rgba(22, 163, 74, 0.08);
   --color-warning-light: rgba(217, 119, 6, 0.08);
   --color-error-light: rgba(220, 38, 38, 0.08);
@@ -252,7 +254,7 @@
   --color-gold-light: rgba(217, 119, 6, 0.08);
   --color-gold-dark: #b45309;
   --color-pro: var(--accent);
-  --color-pro-light: rgba(232, 85, 31, 0.08);
+  --color-pro-light: rgba(77, 107, 254, 0.08);
   --color-pro-gradient: var(--brand-gradient);
   --color-teacher: #d97706;
   --color-teacher-light: rgba(217, 119, 6, 0.08);
@@ -266,7 +268,7 @@
   --color-border-light: var(--border-subtle);
   --color-bg: var(--bg-deep);
   --color-bg-alt: var(--bg-surface);
-  --color-bg-hover: rgba(232, 85, 31, 0.05);
+  --color-bg-hover: rgba(77, 107, 254, 0.05);
   --badge-pro-bg: var(--accent-subtle);
   --badge-pro-text: var(--accent);
   --badge-teacher-bg: rgba(217, 119, 6, 0.1);
@@ -327,7 +329,7 @@ html.is-landing body {
   /* 首页必须用 visible：否则 body 成为滚动容器，
      position: sticky 的故事卡片会失效（body 高度自适应不滚动） */
   overflow: visible;
-  background: #f5f5f7;
+  background: #F7F9FE;
   color: #1d1d1f;
 }
 
@@ -335,7 +337,7 @@ html.is-landing #root {
   height: auto;
   min-height: 100%;
   overflow: visible;
-  background: #f5f5f7;
+  background: #F7F9FE;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -433,6 +435,44 @@ textarea {
   .app-container {
     padding-left: 16px;
     padding-right: 16px;
+  }
+}
+
+/* ── Suspense 兜底（懒加载路由）───────────────────────
+   默认不可见，160ms 后才淡入（延迟由 App.jsx 控制），
+   避免已缓存 chunk 的快路由闪一下加载态。 */
+.page-loader {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  opacity: 0;
+  transition: opacity 0.24s ease;
+}
+
+.page-loader--visible {
+  opacity: 1;
+}
+
+.page-loader-spinner {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid rgba(77, 107, 254, 0.18);
+  border-top-color: var(--accent);
+  animation: page-loader-spin 0.7s linear infinite;
+}
+
+@keyframes page-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-loader-spinner {
+    animation: none;
   }
 }
 

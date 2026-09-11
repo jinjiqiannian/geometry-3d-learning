@@ -9,7 +9,7 @@
   flex-direction: column;
   min-height: calc(100dvh - var(--app-nav-height, 56px) - var(--mobile-nav-height, 0px));
   background:
-    radial-gradient(ellipse 55% 40% at 50% 20%, rgba(232, 85, 31, 0.06), transparent 60%),
+    radial-gradient(ellipse 55% 40% at 50% 20%, rgba(77, 107, 254, 0.06), transparent 60%),
     var(--search-paper);
   color: var(--search-ink);
 }
@@ -120,7 +120,7 @@
 }
 
 .search-input:focus {
-  outline: 2px solid rgba(232, 85, 31, 0.35);
+  outline: 2px solid rgba(77, 107, 254, 0.35);
   outline-offset: 2px;
 }
 
