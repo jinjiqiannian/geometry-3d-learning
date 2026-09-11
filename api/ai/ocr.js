@@ -47,6 +47,14 @@ const PRESETS = {
     stripDataUrlPrefix: false,
     maxTokens: 1200,
   },
+  deepseek: {
+    base: 'https://api.deepseek.com',
+    // 视觉只挂在 Flash 上；deepseek-v4-pro 不支持图片输入
+    model: 'deepseek-flash',
+    // OpenAI 兼容格式：url 需带 data: 前缀
+    stripDataUrlPrefix: false,
+    maxTokens: 1200,
+  },
 }
 
 function normalizeOcrPayload(raw) {
@@ -135,14 +143,24 @@ function visionEnvDiag() {
     .filter((k) => /VISION|ZHIPU|GLM|OCR/i.test(k))
     .sort()
   const apiKey = readVisionKey()
+  const provider = String(process.env.VISION_PROVIDER || 'zhipu').toLowerCase()
+  const preset = PRESETS[provider]
+  // 只回显环境变量会骗人：provider 设了但代码里没有对应预设时，
+  // PRESETS[provider] || PRESETS.zhipu 会静默退回 zhipu 端点，
+  // 拿别家的 key 去请求，报一个与真实原因毫不相干的错。
+  const presetMissing = Boolean(process.env.VISION_PROVIDER) && !preset
   return {
     ok: true,
     hasVisionApiKey: apiKey.length > 0,
     visionApiKeyLength: apiKey.length,
-    provider: process.env.VISION_PROVIDER || null,
+    provider,
+    presetFound: Boolean(preset),
+    effectiveBase: process.env.VISION_API_BASE || preset?.base || '(无)',
+    effectiveModel: process.env.VISION_API_MODEL || preset?.model || '(无)',
     visionRelatedEnvNames: names,
-    hint:
-      apiKey.length > 0
+    hint: presetMissing
+      ? `VISION_PROVIDER="${provider}" 在代码里没有对应预设，请求会静默发往 ${PRESETS.zhipu.base}，拿别家的 key 必然失败`
+      : apiKey.length > 0
         ? 'Key 已注入，可上传识图'
         : 'Key 未注入：请确认变量加在绑定 www.jiheweidu.cn 的那个 Vercel 项目里，删掉后重加，再 Deployments → 推送新部署（不要只 Redeploy 旧缓存）',
   }
@@ -267,7 +285,7 @@ export default async function handler(req, res) {
     if (!base || !model) {
       return res.status(500).json({
         success: false,
-        error: '请设置 VISION_PROVIDER=zhipu（或 qwen）',
+        error: '请设置 VISION_PROVIDER=zhipu（或 qwen / siliconflow / deepseek）',
       })
     }
 
