@@ -786,23 +786,35 @@ function buildRoleMap(type, labels, basePoints, edges) {
       fullDegree.set(e.to, (fullDegree.get(e.to) || 0) + 1);
     });
 
-    let apex = null;
-    let maxDegree = -1;
-    for (const [p, degree] of fullDegree) {
-      if (degree > maxDegree) {
-        maxDegree = degree;
-        apex = p;
+    const pool = basePoints?.length ? basePoints : Array.from(labelSet);
+
+    // 优先：全标签集里唯一不在底面点集上的那个就是锥顶。
+    // 度数法在侧棱没被抽取出来时会失效 —— 此时底面四点度数相同（都是 2），
+    // 而 `degree > maxDegree` 是严格比较，第一个底面点 A 会胜出。于是 A 抢走
+    // 锥顶坐标，baseVertices 只剩 3 个点，真正的锥顶 S 不属于任何角色，
+    // 最后在 buildSceneIRFromSemantic 里兜底成 [0,0,0]，整个棱锥坐标错位一格。
+    const outsidePool = Array.from(labelSet).filter((p) => !pool.includes(p));
+
+    let apex = outsidePool.length === 1 ? outsidePool[0] : null;
+
+    if (!apex) {
+      // 兜底：度数最大者（底面四点度数≈2，锥顶连到底面四点度数≈4）
+      let maxDegree = -1;
+      for (const [p, degree] of fullDegree) {
+        if (degree > maxDegree) {
+          maxDegree = degree;
+          apex = p;
+        }
+      }
+      // 并列时优先教材命名 P
+      if (labelSet.has('P') && (fullDegree.get('P') || 0) >= maxDegree) {
+        apex = 'P';
+      }
+      if (!apex) {
+        apex = tpl.labels[roleDef.apex];
       }
     }
-    // 并列时优先教材命名 P
-    if (labelSet.has('P') && (fullDegree.get('P') || 0) >= maxDegree) {
-      apex = 'P';
-    }
-    if (!apex) {
-      apex = tpl.labels[roleDef.apex];
-    }
 
-    const pool = basePoints?.length ? basePoints : Array.from(labelSet);
     const baseVertices = pool.filter((p) => p !== apex);
 
     result.apex = apex;
