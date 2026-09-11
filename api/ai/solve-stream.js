@@ -63,6 +63,11 @@ export const config = {
 
 function extractJSON(text) {
   let cleaned = String(text || '').trim()
+  // 提示词要求模型先用 [REASON] 前缀输出思考过程，再给 JSON。
+  // 不剥掉这些行，下面的 indexOf('[') 会命中 [REASON] 的方括号，
+  // depth 在它的 ] 处立刻归零，最后 JSON.parse("[REASON]") 必然报
+  // Unexpected token 'R' —— 只要模型听话就 100% 失败。
+  cleaned = cleaned.replace(/^[ \t]*\[REASON\][^\n]*\n?/gm, '').trim()
   const codeBlock = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/)
   if (codeBlock) cleaned = codeBlock[1].trim()
   try {
@@ -72,10 +77,9 @@ function extractJSON(text) {
   }
   const startObj = cleaned.indexOf('{')
   const startArr = cleaned.indexOf('[')
-  let start = -1
-  if (startObj < 0) start = startArr
-  else if (startArr < 0) start = startObj
-  else start = Math.min(startObj, startArr)
+  // 两处调用（解析 / 推理）的预期输出都是对象，优先从 { 起算，
+  // 避免任何残留的 [ 把起点带偏。
+  const start = startObj >= 0 ? startObj : startArr
   if (start < 0) throw new Error('无法解析AI返回的JSON')
   const open = cleaned[start]
   const close = open === '{' ? '}' : ']'
@@ -102,6 +106,9 @@ function extractJSON(text) {
   }
   throw new Error('无法解析AI返回的JSON')
 }
+
+// 导出供测试：这个函数曾经因为 [REASON] 前缀静默失败过很久，需要回归保护
+export { extractJSON }
 
 async function callDeepSeek({ model, system, user, maxTokens, temperature, thinking }) {
   const apiKey = (process.env.DEEPSEEK_API_KEY || '').trim()
