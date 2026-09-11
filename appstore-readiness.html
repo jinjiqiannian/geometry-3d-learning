@@ -1,0 +1,710 @@
+<title>即懂上架评估</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --ground: #F7F9FE;
+    --surface: #FFFFFF;
+    --surface-2: #EEF2FE;
+    --ink: #16294E;
+    --ink-2: #3D4453;
+    --muted: #6E7490;
+    --faint: #8B93A7;
+    --line: #E4E9F5;
+    --line-strong: #CBD5EC;
+    --accent: #4D6BFE;
+    --accent-deep: #2F4BD6;
+    --accent-soft: rgba(77, 107, 254, 0.08);
+    --crit: #C0392B;
+    --crit-soft: rgba(192, 57, 43, 0.09);
+    --warn: #A15C07;
+    --warn-soft: rgba(161, 92, 7, 0.10);
+    --ok: #067647;
+    --ok-soft: rgba(6, 118, 71, 0.09);
+    --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "PingFang SC",
+      "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+    --mono: "IBM Plex Mono", "SF Mono", Consolas, "PingFang SC", monospace;
+    --measure: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0E1526;
+      --surface: #151E33;
+      --surface-2: #1C2740;
+      --ink: #E9EDF9;
+      --ink-2: #C3CADF;
+      --muted: #8B94AE;
+      --faint: #6C7691;
+      --line: #26314C;
+      --line-strong: #38455F;
+      --accent: #7A92FF;
+      --accent-deep: #9AACFF;
+      --accent-soft: rgba(122, 146, 255, 0.14);
+      --crit: #FF8A80;
+      --crit-soft: rgba(255, 138, 128, 0.14);
+      --warn: #E3A008;
+      --warn-soft: rgba(227, 160, 8, 0.14);
+      --ok: #4ADE80;
+      --ok-soft: rgba(74, 222, 128, 0.14);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0E1526;
+    --surface: #151E33;
+    --surface-2: #1C2740;
+    --ink: #E9EDF9;
+    --ink-2: #C3CADF;
+    --muted: #8B94AE;
+    --faint: #6C7691;
+    --line: #26314C;
+    --line-strong: #38455F;
+    --accent: #7A92FF;
+    --accent-deep: #9AACFF;
+    --accent-soft: rgba(122, 146, 255, 0.14);
+    --crit: #FF8A80;
+    --crit-soft: rgba(255, 138, 128, 0.14);
+    --warn: #E3A008;
+    --warn-soft: rgba(227, 160, 8, 0.14);
+    --ok: #4ADE80;
+    --ok-soft: rgba(74, 222, 128, 0.14);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+  }
+
+  /* ── 页首 ── */
+  .head { display: flex; flex-direction: column; gap: 14px; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(28px, 4.4vw, 40px);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  .lede {
+    margin: 0;
+    max-width: var(--measure);
+    font-size: 17px;
+    color: var(--ink-2);
+  }
+
+  .meta {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--faint);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+  }
+
+  /* ── 判断框：全页最重要的一条 ── */
+  .verdict {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 22px 26px;
+    border-radius: 0 10px 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .verdict p { margin: 0; max-width: var(--measure); }
+  .verdict strong { font-weight: 600; }
+  .verdict .lead-line {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: -0.005em;
+  }
+
+  /* ── 章节 ── */
+  section { display: flex; flex-direction: column; gap: 20px; }
+
+  h2 {
+    margin: 0;
+    font-size: 13px;
+    font-family: var(--mono);
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-wrap: balance;
+  }
+
+  p { margin: 0; max-width: var(--measure); }
+
+  .dim { color: var(--muted); }
+  .small { font-size: 14px; }
+
+  /* ── 依赖链：真的是序列，所以用编号 ── */
+  .chain { display: flex; flex-direction: column; gap: 0; }
+
+  .step {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 18px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .step:last-child { border-bottom: none; }
+
+  .step-n {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    padding-top: 3px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .step-body { display: flex; flex-direction: column; gap: 6px; }
+  .step-body p { font-size: 14.5px; color: var(--ink-2); }
+
+  .dur {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── 状态标记 ── */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    padding: 2px 9px;
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+  .tag--crit { background: var(--crit-soft); color: var(--crit); }
+  .tag--warn { background: var(--warn-soft); color: var(--warn); }
+  .tag--ok   { background: var(--ok-soft);   color: var(--ok); }
+  .tag--info { background: var(--accent-soft); color: var(--accent-deep); }
+
+  /* ── 表格 ── */
+  .tw { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.5px;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 11px 14px 11px 0;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+
+  th {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+    border-bottom-color: var(--line-strong);
+  }
+
+  td.mono, .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  /* ── 代码占比条：真实数据，值得画 ── */
+  .share { display: flex; flex-direction: column; gap: 10px; }
+
+  .bar {
+    display: flex;
+    height: 40px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+
+  .bar div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .bar .s1 { background: var(--accent); flex: 41; }
+  .bar .s2 { background: var(--faint); flex: 52; }
+  .bar .s3 { background: var(--accent-deep); flex: 7; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    font-size: 13.5px;
+    color: var(--ink-2);
+  }
+  .legend span { display: flex; align-items: center; gap: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+  /* ── 并列卡片，只给真正需要并列的内容 ── */
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .card-h {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .card ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 7px; }
+  .card li { font-size: 14.5px; color: var(--ink-2); }
+  .card li::marker { color: var(--line-strong); }
+
+  /* ── 缺口清单 ── */
+  .gaps { display: flex; flex-direction: column; }
+
+  .gap {
+    display: grid;
+    grid-template-columns: 84px 1fr;
+    gap: 18px;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--line);
+    align-items: start;
+  }
+  .gap:last-child { border-bottom: none; }
+  .gap-body { display: flex; flex-direction: column; gap: 5px; }
+  .gap-body p { font-size: 14.5px; color: var(--ink-2); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--surface-2);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--accent-deep);
+  }
+
+  /* ── 未解问题 ── */
+  .unknown {
+    background: var(--crit-soft);
+    border: 1px solid var(--crit);
+    border-radius: 12px;
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .unknown h3 { color: var(--crit); }
+
+  /* ── 来源 ── */
+  .sources { display: flex; flex-direction: column; gap: 9px; }
+  .sources a {
+    color: var(--accent-deep);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line-strong);
+    font-size: 14px;
+    align-self: flex-start;
+  }
+  .sources a:hover { border-bottom-color: var(--accent-deep); }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--faint);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+  }
+
+  @media (max-width: 560px) {
+    .wrap { padding: 36px 18px 72px; gap: 44px; }
+    .bar { height: 34px; }
+    .bar .s1, .bar .s2 { font-size: 11px; }
+    .gap { grid-template-columns: 1fr; gap: 8px; }
+    /* 窄屏下 7% 只有约 25px，放不下标签 */
+    .bar .s3 { font-size: 0; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="head">
+    <div class="eyebrow">上架可行性评估</div>
+    <h1>即懂上架评估</h1>
+    <p class="lede">
+      目标为 iOS App Store 中国区与安卓国内应用市场。当前备案与软件著作权均为零。
+      本页评估两条技术路线的真实成本，并给出与路线选择无关的关键路径。
+    </p>
+    <div class="meta">
+      <span>2026-09-11</span>
+      <span>代码基数 42,889 行</span>
+      <span>路由 11 条</span>
+    </div>
+  </header>
+
+  <div class="verdict">
+    <p class="lead-line">备案是 2–4 个月的长杆，且与「套壳还是重写」完全无关。</p>
+    <p>
+      套壳唯一的速度优势，是省下重写时间。但当合规窗口本身就要等几个月时，
+      这个优势在时间轴上<strong>基本消失</strong>——等待备案的那段时间，足以完成一次正经的原生重写。
+    </p>
+    <p class="dim small">
+      这条结论只在「目标是中国区」时成立。如果改为先上海外区，套壳的速度优势立刻回来。
+    </p>
+  </div>
+
+  <section>
+    <h2>一 · 架构冲击</h2>
+    <p>
+      App 备案要求后端服务器位于中国大陆境内，且所有关联域名均已备案。
+      你现在的三层基础设施<strong>全部在境外，一个都备不了案</strong>。这不是上架前的收尾工作，是迁移工程。
+    </p>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>层</th><th>当前位置</th><th>可否备案</th><th>处置</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>前端</td>
+            <td class="mono">GitHub Pages</td>
+            <td><span class="tag tag--crit">不可</span></td>
+            <td>迁境内对象存储 / CDN</td>
+          </tr>
+          <tr>
+            <td>后端</td>
+            <td class="mono">Railway / Vercel</td>
+            <td><span class="tag tag--crit">不可</span></td>
+            <td>迁阿里云 / 腾讯云</td>
+          </tr>
+          <tr>
+            <td>数据与认证</td>
+            <td class="mono">Supabase</td>
+            <td><span class="tag tag--crit">不可</span></td>
+            <td>自建或换境内托管</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small dim">
+      GitHub Pages 与境外托管域名无法取得 ICP 备案，这是硬性前提，没有绕过方式。
+    </p>
+  </section>
+
+  <section>
+    <h2>二 · 合规关键路径</h2>
+    <p>教育类 App 在前置条件之上还要再叠一层备案。这是一条真实依赖链，顺序不能颠倒。</p>
+
+    <div class="chain">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-body">
+          <h3>境内法人主体 + 境内服务器 + 已备案域名</h3>
+          <p>所有后续环节的地基。没有境内主体与服务器，后面一项都办不了。</p>
+          <div class="dur">前置条件</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-body">
+          <h3>网络安全等级保护定级备案（等保）</h3>
+          <p>教育 App 备案的前置条件之一，通常需要测评机构介入，是这条链上最容易被低估的一环。</p>
+          <div class="dur">周期另计 · 需第三方测评</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-body">
+          <h3>ICP / App 备案</h3>
+          <p>工信部移动应用备案，与网站 ICP 备案是两套东西。需提交主体资质、App 技术信息、全部关联域名。</p>
+          <div class="dur">约 15–20 个工作日 · 走代理约 7–10 天</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-body">
+          <h3>教育移动互联网应用程序备案</h3>
+          <p>通过教育部平台 <code>app.eduyun.cn</code> 办理。北京的实施细则还要求备案信息在 App 内展示，变更须 10 个工作日内更新。</p>
+          <div class="dur">周期另计 · 在 02 与 03 完成之后</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">05</div>
+        <div class="step-body">
+          <h3>上架提交</h3>
+          <p>在 App Store Connect 填写备案号；安卓各商店普遍另需软件著作权证书。</p>
+          <div class="dur">软著通常 30+ 工作日，可加急</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="small dim">
+      未备案的后果包括下架与 5,000–50,000 元罚款，且可能影响已上架应用。
+      以上周期为公开资料的常见区间，实际以办理机构口径为准。
+    </p>
+  </section>
+
+  <section>
+    <h2>三 · 技术路线评估</h2>
+    <p>
+      我盘点了整个 <code>src/</code>：42,889 行生产代码。结论比预期好——
+      <strong>核心业务逻辑几乎全部与 React 和 DOM 解耦</strong>，重写的是「皮」，不是「核」。
+    </p>
+
+    <div class="share">
+      <div class="bar" role="img" aria-label="代码构成：41% 可直接复用，52% 必须重写，7% 需适配">
+        <div class="s1">41%</div>
+        <div class="s2">52%</div>
+        <div class="s3">7%</div>
+      </div>
+      <div class="legend">
+        <span><i class="dot" style="background: var(--accent)"></i>可直接复用 · 约 17,500 行</span>
+        <span><i class="dot" style="background: var(--faint)"></i>必须重写 · 约 22,300 行</span>
+        <span><i class="dot" style="background: var(--accent-deep)"></i>需适配 · 约 3,000 行</span>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="card">
+        <div class="card-h">
+          <h3>可搬运的核</h3>
+          <span class="tag tag--ok">零 React 依赖</span>
+        </div>
+        <ul>
+          <li><code>src/engines/</code> 18,067 行，其中仅 683 行真正绑死浏览器</li>
+          <li>计算 / 解析 / 讲解 / 校验 / SceneIR 全部是纯函数</li>
+          <li>3D 收敛在 6 个文件 1,365 行，<code>Canvas3D.jsx</code> 是唯一宿主</li>
+          <li>相机走 HTML file input，无 <code>getUserMedia</code>，换 expo 方案即可</li>
+          <li>OCR 本身在云端（智谱 GLM-4V），重试降级逻辑可照搬</li>
+          <li>全部网络请求收敛在 <code>api.ts</code> 一个入口</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <h3>要重写的皮</h3>
+          <span class="tag tag--warn">约 22,300 行</span>
+        </div>
+        <ul>
+          <li>CSS 11,498 行——RN 使用 StyleSheet，这部分全部作废</li>
+          <li>页面与组件 JSX 约 9,744 行，按 RN 组件重写</li>
+          <li>3D 场景约 1,080 行，迁至 <code>@react-three/fiber/native</code></li>
+          <li><code>WorkspacePage.jsx</code> 1,577 行的巨石需先拆分</li>
+          <li>PPT 导出依赖 <code>html-to-image</code> 与 <code>pptxgenjs</code>，必须改为服务端生成</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>维度</th><th>Capacitor 套壳</th><th>React Native 重写</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>工期量级</td>
+            <td>1–2 周</td>
+            <td>月级</td>
+          </tr>
+          <tr>
+            <td>审核 4.2 风险</td>
+            <td><span class="tag tag--crit">高</span> 可辩护但无保证</td>
+            <td><span class="tag tag--ok">低</span></td>
+          </tr>
+          <tr>
+            <td>11,498 行 CSS</td>
+            <td>全部保留</td>
+            <td>全部作废</td>
+          </tr>
+          <tr>
+            <td>17,500 行引擎</td>
+            <td>直接复用</td>
+            <td>直接复用</td>
+          </tr>
+          <tr>
+            <td>能否绕过备案迁移</td>
+            <td colspan="2" style="color: var(--crit)">都不能——迁移是独立于路线的前置条件</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="small dim">
+      审核指南 4.2（Minimum Functionality）针对「重新包装的网站」。这个产品有真实 3D 引擎、
+      拍照识题与 AI 讲解链路，不是普通套壳，<strong>但通过与否没有保证</strong>——取决于套壳时把相机、离线、推送等原生能力做到什么程度。
+    </p>
+  </section>
+
+  <section>
+    <h2>四 · 与路线无关的缺口</h2>
+    <p>下列问题两条路线都要解决，且可以在等技术决策的同时立刻开工。</p>
+
+    <div class="gaps">
+      <div class="gap">
+        <div><span class="tag tag--crit">苹果硬性</span></div>
+        <div class="gap-body">
+          <h3>账号注销功能缺失</h3>
+          <p>指南 5.1.1(v)：提供账号注册就必须提供账号注销。我检索了整个 <code>src/</code>，<code>删除账号 / 注销 / deleteAccount</code> 零匹配。</p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div><span class="tag tag--crit">苹果硬性</span></div>
+        <div class="gap-body">
+          <h3>隐私政策缺失</h3>
+          <p>同样零匹配。同时需要填写 App Privacy 营养标签，说明收集哪些数据、如何使用。</p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div><span class="tag tag--crit">合规</span></div>
+        <div class="gap-body">
+          <h3>未成年人数据流向</h3>
+          <p>产品会把未成年学生的作业照片上传到云端做 OCR 与 AI 解析。这涉及未成年人个人信息保护，需要独立的合规设计与告知流程，不只是加一段条款。</p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div><span class="tag tag--warn">工程</span></div>
+        <div class="gap-body">
+          <h3>WorkspacePage 巨石</h3>
+          <p><code>WorkspacePage.jsx</code> 1,577 行，同时承载 3D 挂载、OCR、历史存储、快捷键、分享与响应式判断，DOM 触点 23 处。两条路线都应先拆。</p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div><span class="tag tag--info">已有</span></div>
+        <div class="gap-body">
+          <h3>付费墙已移除</h3>
+          <p>上一轮重构已下线全部付费功能。这既免去了 IAP 接入，也恰好符合教育 App 备案对「不得向学生和家长收取费用」的要求。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>五 · 我无法判断的一件事</h2>
+    <div class="unknown">
+      <h3>双减政策对本产品的适用性</h3>
+      <p>
+        我专门检索过，<strong>公开资料不足以得出结论</strong>。能确认的是：进入学校使用的教育 App 走白名单制，
+        须符合双减政策、体现素质教育导向、不得向学生和家长收取费用、不得含广告与游戏链接。
+      </p>
+      <p>
+        但「面向高中生的数理自学工具是否受学科类限制」是法律判断，不是技术判断。
+        这是唯一一个可能让整个上架计划作废的风险点，<strong>建议优先找专业合规顾问确认，而不是采信任何搜索结论</strong>。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>六 · 无论选哪条路，现在就能开工</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>立刻启动</h3>
+        <ul>
+          <li>确认双减适用性（外部顾问）</li>
+          <li>办理软件著作权</li>
+          <li>落实境内法人主体与域名</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>同步推进</h3>
+        <ul>
+          <li>境内服务器选型与迁移方案</li>
+          <li>账号注销与隐私政策</li>
+          <li>拆分 <code>WorkspacePage.jsx</code></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>等决策</h3>
+        <ul>
+          <li>套壳或重写</li>
+          <li>原生能力做到什么深度</li>
+          <li>PPT 导出转服务端的设计</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>来源</h2>
+    <div class="sources">
+      <a href="https://appinchina.co/blog/the-complete-guide-to-chinas-mobile-app-filing/">The Complete Guide to China's Mobile App Filing</a>
+      <a href="https://appinchina.co/blog/how-can-i-publish-on-the-apple-app-store-china/">How Can I Publish on the Apple App Store China?</a>
+      <a href="https://www.bjesr.cn/ywbm/jyfzyjzx/zyxz/2025-04-17/53823.html">北京市教育移动互联网应用程序备案实施细则</a>
+      <a href="https://littso.cn/h5/detail/452.html">广州教育类 APP 备案上架要求</a>
+      <a href="https://www.beijing.gov.cn/ywdt/zybwdt/202511/t20251102_4250400.html">北京教育应用程序白名单公布</a>
+      <a href="https://opc.csdn.net/69845554437a6b40336be821.html">App ICP 备案开发者指南</a>
+    </div>
+  </section>
+
+  <footer>
+    <span>即懂 MathViz</span>
+    <span>评估日期 2026-09-11</span>
+    <span>代码数据来自 src/ 全量盘点</span>
+  </footer>
+
+</div>
