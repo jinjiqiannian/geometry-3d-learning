@@ -9,7 +9,7 @@ import { parseProblemToSemantic, convertLegacyParsedToSemantic } from "../engine
 
 const SUBJECT_COLORS = {
   physics: { primary: "#06b6d4", name: "物理" },
-  math: { primary: "#E8551F", name: "数学" },
+  math: { primary: "#4D6BFE", name: "数学" },
 }
 
 export default function SubjectSolver({ subject = "physics" }) {

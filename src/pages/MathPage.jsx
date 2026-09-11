@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom"
 import SubjectSolver from "../components/SubjectSolver"
 import "./SubjectPage.css"
 
-const C = "#E8551F"
+const C = "#4D6BFE"
 const ICON = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M16 2L3 9v14l13 7 13-7V9L16 2z" />

@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { createHashRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { SupabaseProvider } from './contexts/SupabaseContext';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
@@ -24,20 +24,23 @@ const TeachPage = lazy(() => import('./pages/TeachPage'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
 
 // ── Suspense fallback ──
+// 延迟 160ms 才现身：chunk 已在缓存里的快路由不会闪任何东西。
+// 超时才显示转圈，转场因此是连续的而不是「文字一闪 → 页面」。
 function PageLoader() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 160);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <div
-      style={{
-        flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 200,
-        color: 'var(--text-muted)',
-        fontSize: 'var(--text-sm)',
-      }}
+      className={`page-loader ${visible ? 'page-loader--visible' : ''}`}
+      role="status"
+      aria-label="加载中"
     >
-      加载中…
+      <span className="page-loader-spinner" aria-hidden="true" />
     </div>
   );
 }

@@ -1505,7 +1505,7 @@ export default function WorkspacePage({
                 customVertices={customVertices}
                 sceneIR={sceneIR}
                 highlightEdgeIds={visualIntent?.highlightEdgeIds || []}
-                highlightColor={visualIntent?.highlightColor || "#E8551F"}
+                highlightColor={visualIntent?.highlightColor || "#4D6BFE"}
                 auxLines={visualIntent?.auxLines || []}
                 faceOpacity={visualIntent?.faceOpacity ?? 0.42}
                 nonHighlightOpacity={visualIntent?.nonHighlightOpacity ?? 0.25}

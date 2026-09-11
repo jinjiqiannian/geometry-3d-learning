@@ -77,7 +77,7 @@ export default class ChunkErrorBoundary extends Component {
                 <div style={{
                   width: 28, height: 28,
                   border: '3px solid var(--border-subtle, #e0e0e8)',
-                  borderTopColor: 'var(--accent, #E8551F)',
+                  borderTopColor: 'var(--accent, #4D6BFE)',
                   borderRadius: '50%',
                   animation: 'boot-spin 0.8s linear infinite',
                   marginBottom: 12,
