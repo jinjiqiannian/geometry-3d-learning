@@ -39,10 +39,22 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end()
   // 浏览器直接打开该地址时给个自检回显，方便确认配置
   if (req.method === 'GET') {
+    // 只回显 host，不回显 key。URL 本身不是秘密（它在前端包里）。
+    let urlHost = null
+    let urlShape = null
+    try {
+      const u = new URL(SUPABASE_URL)
+      urlHost = u.host
+      urlShape = `${u.protocol}//${u.host}`
+    } catch {
+      urlShape = `无法解析：${JSON.stringify(String(SUPABASE_URL).slice(0, 40))}`
+    }
     return res.status(200).json({
       ok: true,
       configured: Boolean(SUPABASE_URL && SERVER_KEY),
       usingServiceRole: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+      urlHost,
+      urlShape,
       allowedEvents: [...ALLOWED],
     })
   }
@@ -100,10 +112,16 @@ export default async function handler(req, res) {
   } catch (e) {
     // 埋点失败绝不能冒泡到用户；但错误信息要能在自检时看到，
     // 否则排查时会像刚才那样只拿到一句没有信息量的 exception。
+    // undici 的 "fetch failed" 只是个外壳，真正的原因在 cause 里
+    // （ENOTFOUND / ECONNREFUSED / CERT_* / UND_ERR_* 等）
+    const cause = e?.cause
+    const causeText = cause
+      ? ` ← ${cause.code || cause.errno || ''} ${cause.message || ''}`.trim()
+      : ''
     return res.status(200).json({
       ok: false,
       reason: 'exception',
-      detail: String(e?.message || e).slice(0, 300),
+      detail: (String(e?.message || e) + causeText).slice(0, 300),
     })
   }
 }
