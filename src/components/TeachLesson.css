@@ -228,7 +228,21 @@
   }
 
   .teach-lesson-poster {
-    min-height: 240px;
+    min-height: 300px;
+    padding: 16px;
+  }
+
+  .teach-lesson-poster .km-svg {
+    width: min(100%, 480px);
+    max-height: 300px;
+  }
+
+  .teach-lesson-copy {
+    padding: 20px 18px 32px;
+  }
+
+  .teach-lesson-bar {
+    padding: 8px 16px;
   }
 
   /* 播放态：模型压到约 1/4 屏，把空间让给讲解步骤 */
@@ -240,11 +254,32 @@
   .teach-lesson.is-playing .teach-lesson-poster .km-svg {
     width: auto;
     max-width: min(100%, 420px);
-    max-height: 24vh;
+    max-height: 22vh;
   }
 
   /* 播放态讲解内容随页面自然滚动（桌面锁视口才需要 hidden） */
   .teach-lesson.is-playing .teach-lesson-copy {
     overflow: visible;
+    padding: 16px 16px 32px;
+  }
+}
+
+/* 超小屏手机：进一步收紧 */
+@media (max-width: 380px) {
+  .teach-lesson-poster {
+    min-height: 260px;
+    padding: 12px;
+  }
+
+  .teach-lesson-poster .km-svg {
+    max-height: 260px;
+  }
+
+  .teach-lesson-copy {
+    padding: 16px 14px 28px;
+  }
+
+  .teach-lesson-title {
+    font-size: 1.35rem;
   }
 }
