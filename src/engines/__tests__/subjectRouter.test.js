@@ -16,6 +16,15 @@ describe('subjectRouter', () => {
 
   it('detects physics topics', () => {
     expect(detectSubject('从静止加速求速度').subject).toBe('phys_motion')
+    // 回归：自由落体 / 平抛等不在原关键词表里，曾被判成 geometry，
+    // 于是解题页渲染出一个与题目毫无关系的默认立方体
+    for (const t of [
+      '质量 2kg 的物体从 5m 高处自由落下，g 取 10m/s²，求落地时的速度大小。',
+      '小球从楼顶自由落体，求落地速度',
+      '物体以初速度水平抛出做平抛运动，求水平位移',
+    ]) {
+      expect(detectSubject(t).subject, t).toBe('phys_motion')
+    }
     expect(detectSubject('欧姆定律 U=IR').subject).toBe('phys_circuit')
     expect(
       detectSubject(
