@@ -1476,10 +1476,13 @@ export default function WorkspacePage({
         </div>
 
         <div
-          className={`wp-canvas-col ${isMobile && !show3D ? "wp-canvas--hidden" : ""}`}
+          // 非几何题型（物理 / 导数 / 圆锥曲线 / 排组）不渲染三维：
+          // geometry 状态会一直停在初始的默认立方体，画出来就是一道
+          // 与题目毫无关系的立体图形（物理自由落体题配一个正方体）。
+          className={`wp-canvas-col ${(isMobile && !show3D) || subject !== "geometry" ? "wp-canvas--hidden" : ""}`}
           ref={canvasRef}
         >
-          {hasWebGL ? (
+          {hasWebGL && subject === "geometry" ? (
             <Canvas
               style={{ width: "100%", height: "100%" }}
               camera={{ position: [4, 4, 6], fov: 50 }}
