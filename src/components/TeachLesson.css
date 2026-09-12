@@ -28,6 +28,7 @@
 }
 
 .teach-lesson-poster {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -39,6 +40,21 @@
 
 .teach-lesson-poster .km-svg {
   width: min(100%, 520px);
+}
+
+/* 3D 画布：绝对定位铺满海报区，不参与 flex 尺寸计算 */
+.km-canvas-wrap {
+  position: absolute;
+  inset: 10px;
+}
+
+.km-canvas-hint {
+  position: absolute;
+  right: 14px;
+  bottom: 10px;
+  font-size: 0.72rem;
+  color: var(--text-muted, #86868b);
+  pointer-events: none;
 }
 
 .teach-lesson-copy {
@@ -248,6 +264,7 @@
   /* 播放态：模型压到约 1/4 屏，把空间让给讲解步骤 */
   .teach-lesson.is-playing .teach-lesson-poster {
     min-height: 0;
+    height: 24vh;
     padding: 12px 16px 0;
   }
 
