@@ -76,7 +76,9 @@ export function detectSubject(text) {
     return { subject: 'phys_dynamics', confidence: 'high' }
   }
   if (
-    /从静止|加速度|末速度|位移|运动学|v\s*=|s\s*=|匀加速/.test(t)
+    /从静止|加速度|末速度|位移|运动学|v\s*=|s\s*=|匀加速|自由落体|自由落下|落体|平抛|斜抛|竖直(上|下)?抛|抛出|落地|重力加速度|g\s*取/.test(
+      t,
+    )
   ) {
     return { subject: 'phys_motion', confidence: 'high' }
   }
