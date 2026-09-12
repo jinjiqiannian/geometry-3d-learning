@@ -1,39 +1,8 @@
-import { useCallback, useMemo, useState } from "react";
-import { Canvas } from "@react-three/fiber";
-import Canvas3D from "../features/solid-geometry/Canvas3D";
+import { useCallback, useState } from "react";
 import KnowledgeModel from "./KnowledgeModel";
 import TeachExplain from "./TeachExplain";
 import "./KnowledgeModel.css";
 import "./TeachLesson.css";
-
-// 立体几何模型 → 真 3D 渲染；其余概念图（韦恩图、图像等）仍用 2D SVG
-const SOLID_MODELS = new Set([
-  "cube", "cuboid", "prism", "pyramid", "cylinder", "cone", "sphere", "frustum",
-]);
-// 课程 model 名 → geometryEngine 类型名
-const MODEL_3D_TYPE = { frustum: "circularFrustum" };
-// 高亮侧重（accent → 线段 ID）：与 2D 图的强调对象一致
-const ACCENT_LINES = {
-  cube: { diag: ["AG"], "face-diag": ["AC"], coord: ["AG"] },
-  cuboid: { diag: ["AG"], "face-diag": ["AC"] },
-  pyramid: { height: ["PO"] },
-  cone: { height: ["OP"] },
-  frustum: { height: ["h"] },
-  cylinder: { height: ["OO'"] },
-  sphere: { radius: ["NO"] },
-};
-
-function detectWebGL() {
-  try {
-    const c = document.createElement("canvas");
-    return Boolean(
-      window.WebGLRenderingContext &&
-      (c.getContext("webgl") || c.getContext("experimental-webgl")),
-    );
-  } catch {
-    return false;
-  }
-}
 
 function accentFor(leaf, playing, step) {
   // 知识点专属图：metrics / perp 与播放状态无关，始终展示
@@ -77,9 +46,6 @@ export default function TeachLesson({ leaf, onBack }) {
   const formulas = leaf.formulas || [];
   const steps = leaf.steps || [];
   const accent = accentFor(leaf, playing, step);
-  const isSolid = SOLID_MODELS.has(leaf.model);
-  const webglOk = useMemo(detectWebGL, []);
-  const highlightIds = (isSolid && ACCENT_LINES[leaf.model]?.[accent]) || [];
 
   return (
     <div className={`teach-lesson${playing ? " is-playing" : ""}`}>
@@ -91,33 +57,12 @@ export default function TeachLesson({ leaf, onBack }) {
 
       <div className="teach-lesson-stage">
         <div className="teach-lesson-poster">
-          {isSolid && webglOk ? (
-            <div className="km-canvas-wrap" key={leaf.id}>
-              <Canvas
-                style={{ width: "100%", height: "100%" }}
-                camera={{ position: [4, 4, 6], fov: 50 }}
-                dpr={[1, 2]}
-                gl={{ antialias: true, preserveDrawingBuffer: true }}
-              >
-                <Canvas3D
-                  geometry={{
-                    type: MODEL_3D_TYPE[leaf.model] || leaf.model,
-                    params: { size: 2 },
-                  }}
-                  highlightEdgeIds={highlightIds}
-                  highlightColor="#4D6BFE"
-                />
-              </Canvas>
-              <span className="km-canvas-hint">可拖动旋转 · 滚轮缩放</span>
-            </div>
-          ) : (
-            <KnowledgeModel
-              key={leaf.id}
-              type={leaf.model}
-              accent={accent}
-              animate={playing}
-            />
-          )}
+          <KnowledgeModel
+            key={leaf.id}
+            type={leaf.model}
+            accent={accent}
+            animate={playing}
+          />
         </div>
 
         <div className="teach-lesson-copy">

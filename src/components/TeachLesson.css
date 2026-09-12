@@ -42,21 +42,6 @@
   width: min(100%, 520px);
 }
 
-/* 3D 画布：绝对定位铺满海报区，不参与 flex 尺寸计算 */
-.km-canvas-wrap {
-  position: absolute;
-  inset: 10px;
-}
-
-.km-canvas-hint {
-  position: absolute;
-  right: 14px;
-  bottom: 10px;
-  font-size: 0.72rem;
-  color: var(--text-muted, #86868b);
-  pointer-events: none;
-}
-
 .teach-lesson-copy {
   display: flex;
   flex-direction: column;
