@@ -84,11 +84,26 @@ export default async function handler(req, res) {
       body: JSON.stringify(row),
     })
 
-    return res
-      .status(200)
-      .json({ ok: r.ok, status: r.status })
+    if (!r.ok) {
+      // 把 Supabase 的原始报错回显出来，否则「表不存在」这类问题
+      // 会被下面那个 catch 吞成一句无信息的 exception。
+      const detail = await r.text().catch(() => '')
+      return res.status(200).json({
+        ok: false,
+        status: r.status,
+        detail: detail.slice(0, 300),
+        table: 'site_events',
+      })
+    }
+
+    return res.status(200).json({ ok: true })
   } catch (e) {
-    // 埋点失败绝不能冒泡到用户
-    return res.status(200).json({ ok: false, reason: 'exception' })
+    // 埋点失败绝不能冒泡到用户；但错误信息要能在自检时看到，
+    // 否则排查时会像刚才那样只拿到一句没有信息量的 exception。
+    return res.status(200).json({
+      ok: false,
+      reason: 'exception',
+      detail: String(e?.message || e).slice(0, 300),
+    })
   }
 }
