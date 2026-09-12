@@ -1471,6 +1471,7 @@ export default function WorkspacePage({
             problemText={problemText}
             error={error}
             onRetry={handleRetry}
+            streamingText={streamingReasoning}
           />
         </div>
 

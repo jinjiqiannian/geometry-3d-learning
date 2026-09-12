@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo, memo } from 'react'
+import { useRef, useEffect, useMemo, memo, useState } from 'react'
 import ProgressHeader from './ProgressHeader'
 import StepList from './StepList'
 import AnswerPanel from './AnswerPanel'
@@ -19,10 +19,14 @@ const ExplanationPanel = memo(function ExplanationPanel({
   problemText = '',
   error = null,
   onRetry = null,
+  streamingText = '',
 }) {
   const currentStepData = steps[currentStep]
   const showAnswer = currentStepData?.type === 'conclusion' && !loading
   const stepsRef = useRef(null)
+  const streamingRef = useRef(null)
+  const [problemExpanded, setProblemExpanded] = useState(false)
+  const isProblemLong = (problemText || '').length > 80
 
   const mergedGroups = useMemo(() => mergeConsecutiveSteps(steps), [steps])
   const mergedIndex = mapCurrentStepToMergedIndex(mergedGroups, currentStep)
@@ -35,6 +39,19 @@ const ExplanationPanel = memo(function ExplanationPanel({
     }
   }, [currentStep, steps])
 
+  // 换题时收起展开的题目
+  useEffect(() => {
+    setProblemExpanded(false)
+  }, [problemText])
+
+  // AI 思考过程实时滚动到底部，让用户看到进度
+  useEffect(() => {
+    const el = streamingRef.current
+    if (el && loading) {
+      el.scrollTop = el.scrollHeight
+    }
+  }, [streamingText, loading])
+
   return (
     <div className="explanation-panel">
       <ProgressHeader
@@ -45,14 +62,36 @@ const ExplanationPanel = memo(function ExplanationPanel({
         onRetry={onRetry}
       />
 
-      {!loading && loadingStage === 'done' && problemText && (
-        <div className="ep-problem">
-          <div className="ep-problem-label">题目</div>
-          <p className="ep-problem-text">{problemText}</p>
+      {/* AI 流式推理过程：让用户看到进度，避免误以为卡住 */}
+      {loading && streamingText && (
+        <div className="wp-streaming-reasoning" ref={streamingRef} role="status">
+          <div className="wp-streaming-header">
+            <span>AI 正在推理，以下为实时思考过程</span>
+            <span className="wp-streaming-cursor" />
+          </div>
+          {streamingText}
         </div>
       )}
 
-      {steps.length > 0 && loadingStage === 'done' && !loading && (
+      {!loading && loadingStage === 'done' && problemText && (
+        <div className="ep-problem">
+          <div className="ep-problem-label">题目</div>
+          <p className={`ep-problem-text${!problemExpanded ? ' is-clamped' : ''}`}>
+            {problemText}
+          </p>
+          {isProblemLong && (
+            <button
+              type="button"
+              className="ep-problem-toggle"
+              onClick={() => setProblemExpanded((v) => !v)}
+            >
+              {problemExpanded ? '收起 ▴' : '展开全文 ▾'}
+            </button>
+          )}
+        </div>
+      )}
+
+      {!loading && steps.length > 0 && loadingStage === 'done' && (
         <CoreIdeaCard
           steps={steps}
           parsedData={parsedData}
@@ -61,7 +100,7 @@ const ExplanationPanel = memo(function ExplanationPanel({
         />
       )}
 
-      {steps.length > 0 ? (
+      {!loading && steps.length > 0 ? (
         <div className="ep-steps-wrap" ref={stepsRef}>
           <div className="ep-step-timeline-section">
             <StepList

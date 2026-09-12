@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import './ProgressHeader.css'
 
 // ── Stage config ──────────────────────────────────────
@@ -12,6 +13,20 @@ const STAGES = {
 export default function ProgressHeader({ loadingStage = 'idle', parsedData, loading, error, onRetry }) {
   const stage = STAGES[loadingStage] || STAGES.idle
   const isActive = loading || loadingStage === 'done'
+  const [elapsed, setElapsed] = useState(0)
+
+  // 加载计时：超过2秒显示已用时间，让用户知道仍在进行
+  useEffect(() => {
+    if (!loading) {
+      setElapsed(0)
+      return
+    }
+    const start = Date.now()
+    const timer = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - start) / 1000))
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [loading])
 
   return (
     <div className="progress-header">
@@ -19,7 +34,10 @@ export default function ProgressHeader({ loadingStage = 'idle', parsedData, load
       {loading && (
         <div className="ph-stage">
           <span className="ph-stage-icon">{stage.icon}</span>
-          <span className="ph-stage-label">{stage.label}</span>
+          <span className="ph-stage-label">
+            {stage.label}
+            {elapsed >= 2 ? `（已用 ${elapsed} 秒）` : ''}
+          </span>
           <span className="ph-dot-pulse" />
         </div>
       )}
