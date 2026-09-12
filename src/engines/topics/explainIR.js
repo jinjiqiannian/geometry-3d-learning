@@ -682,19 +682,39 @@ function solveConic(text) {
     } else {
       eStr = (c / a).toFixed(4).replace(/0+$/, '').replace(/\.$/, '')
     }
+    // 问什么答什么。原实现无论问什么都返回离心率 ——
+    // 「求焦点坐标」会拿到 e=3/5。双曲线分支同样问题，一并改掉。
+    const asksEcc = /离心率|心率/.test(text)
+    const asksFocus = !asksEcc && /焦点/.test(text)
+    const fLabel =
+      cExact != null
+        ? focusOnX
+          ? `(±${cExact},0)`
+          : `(0,±${cExact})`
+        : focusOnX
+          ? `(±√${a2 - b2},0)`
+          : `(0,±√${a2 - b2})`
+    const ansId = asksFocus ? 'f' : 'e'
+    // 既有约定：节点标签写 "e=3/5"，但 answer 是裸值 "3/5"。
+    // 本次只修「答错的那一半」，这个格式不能顺手统一，否则改掉原行为。
+    const ansNodeLabel = asksFocus ? fLabel : `e=${eStr}`
+    const ansAnswer = asksFocus ? fLabel : eStr
+
     return {
       version: 1,
-      problemType: 'ellipse_e',
+      problemType: asksFocus ? 'ellipse_focus' : 'ellipse_e',
       topic: 'conic',
       goal: text,
-      coreIdea: '椭圆：c²=a²−b²，e=c/a（a 取较大半轴）。',
+      coreIdea: asksFocus
+        ? '椭圆 c²=a²−b²，焦点在较大分母对应的轴上。'
+        : '椭圆：c²=a²−b²，e=c/a（a 取较大半轴）。',
       rootId: 'root',
       nodes: [
         {
           id: 'root',
           label: '标准椭圆',
           kind: 'choice',
-          children: ['a', 'c', 'e'],
+          children: ['a', 'c', ansId],
           why: focusOnX ? 'a² 在 x 下 → 焦点在 x 轴' : 'a² 在 y 下 → 焦点在 y 轴',
         },
         {
@@ -712,11 +732,15 @@ function solveConic(text) {
           why: 'c²=a²−b²',
         },
         {
-          id: 'e',
-          label: `e=${eStr}`,
+          id: ansId,
+          label: ansNodeLabel,
           kind: 'outcome',
           children: [],
-          why: 'e=c/a∈(0,1)',
+          why: asksFocus
+            ? focusOnX
+              ? '焦点 (±c,0)'
+              : '焦点 (0,±c)'
+            : 'e=c/a∈(0,1)',
         },
       ],
       steps: [
@@ -736,14 +760,14 @@ function solveConic(text) {
         },
         {
           index: 3,
-          title: '离心率',
-          content: `e=c/a=${eStr}`,
-          why: '检查是否 <1',
-          formula: eStr,
-          highlightNodeIds: ['e'],
+          title: asksFocus ? '焦点' : '离心率',
+          content: asksFocus ? fLabel : `e=c/a=${eStr}`,
+          why: asksFocus ? '写全两个焦点' : '检查是否 <1',
+          formula: ansAnswer,
+          highlightNodeIds: [ansId],
         },
       ],
-      answer: eStr,
+      answer: ansAnswer,
     }
   }
 
@@ -756,21 +780,73 @@ function solveConic(text) {
     const b2 = Number(hyp[2])
     const c2 = a2 + b2
     const c = Math.sqrt(c2)
+    const a = Math.sqrt(a2)
+    const b = Math.sqrt(b2)
     const cExact = Number.isInteger(c) ? c : null
-    const ans = cExact != null ? `(±${cExact},0)` : `(±√${c2},0)`
+    const cLabel = cExact != null ? `c=${cExact}` : `c=√${c2}`
+
+    // 问什么答什么。原实现只匹配方程、完全不看问法，
+    // 任何含标准方程的双曲线题都返回焦点 —— 「求离心率」会拿到 (±5,0)。
+    const asksEcc = /离心率|心率/.test(text)
+    const asksAsym = /渐近线/.test(text)
+
+    const tail = asksEcc
+      ? {
+          problemType: 'hyper_e',
+          id: 'e',
+          label:
+            cExact != null
+              ? `e=${cExact}/${a}`
+              : `e=√${c2}/√${a2}`,
+          why: 'e=c/a，双曲线 e>1',
+          step2Title: '求 c',
+          step2Content: `c²=${a2}+${b2}=${c2}`,
+          step3Title: '离心率',
+          step3Why: '双曲线 e>1',
+        }
+      : asksAsym
+        ? {
+            problemType: 'hyper_asym',
+            id: 'asym',
+            label:
+              Number.isInteger(a) && Number.isInteger(b)
+                ? `y=±(${b}/${a})x`
+                : `y=±(√${b2}/√${a2})x`,
+            why: '渐近线 y=±(b/a)x',
+            step2Title: '取 a、b',
+            step2Content: `a=√${a2}，b=√${b2}`,
+            step3Title: '渐近线',
+            step3Why: '正项分母是 a²，别写反',
+          }
+        : {
+            problemType: 'hyper_focus',
+            id: 'f',
+            label: cExact != null ? `(±${cExact},0)` : `(±√${c2},0)`,
+            why: '焦点 (±c,0)',
+            step2Title: '求 c',
+            step2Content: `c²=${a2}+${b2}=${c2}`,
+            step3Title: '焦点',
+            step3Why: '写全两个焦点',
+          }
+    const ans = tail.label
+
     return {
       version: 1,
-      problemType: 'hyper_focus',
+      problemType: tail.problemType,
       topic: 'conic',
       goal: text,
-      coreIdea: '双曲线 c²=a²+b²，焦点在横轴 (±c,0)。',
+      coreIdea: asksEcc
+        ? '双曲线 c²=a²+b²，离心率 e=c/a。'
+        : asksAsym
+          ? '双曲线渐近线 y=±(b/a)x，正项分母是 a²。'
+          : '双曲线 c²=a²+b²，焦点在横轴 (±c,0)。',
       rootId: 'root',
       nodes: [
         {
           id: 'root',
           label: 'x²/a²−y²/b²=1',
           kind: 'choice',
-          children: ['ab', 'c', 'f'],
+          children: ['ab', 'c', tail.id],
           why: '正项在 x → 焦点在 x 轴',
         },
         {
@@ -782,17 +858,17 @@ function solveConic(text) {
         },
         {
           id: 'c',
-          label: cExact != null ? `c=${cExact}` : `c=√${c2}`,
+          label: cLabel,
           kind: 'outcome',
           children: [],
           why: 'c²=a²+b²',
         },
         {
-          id: 'f',
+          id: tail.id,
           label: ans,
           kind: 'outcome',
           children: [],
-          why: '焦点 (±c,0)',
+          why: tail.why,
         },
       ],
       steps: [
@@ -805,18 +881,18 @@ function solveConic(text) {
         },
         {
           index: 2,
-          title: '求 c',
-          content: `c²=${a2}+${b2}=${c2}`,
+          title: tail.step2Title,
+          content: tail.step2Content,
           why: '双曲线用加',
           highlightNodeIds: ['c'],
         },
         {
           index: 3,
-          title: '焦点',
+          title: tail.step3Title,
           content: ans,
-          why: '写全两个焦点',
+          why: tail.step3Why,
           formula: ans,
-          highlightNodeIds: ['f'],
+          highlightNodeIds: [tail.id],
         },
       ],
       answer: ans,
