@@ -2,7 +2,7 @@
   "name": "即懂",
   "short_name": "即懂",
   "description": "即懂 — 动画讲题，一看就懂。几何 / 排组 / 导数 / 圆锥曲线 / 物理",
-  "start_url": "/#/workspace",
+  "start_url": "/#/search",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
@@ -11,7 +11,7 @@
   "lang": "zh-CN",
   "icons": [
     {
-      "src": "/favicon.svg?v=5",
+      "src": "/favicon.svg?v=6",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
