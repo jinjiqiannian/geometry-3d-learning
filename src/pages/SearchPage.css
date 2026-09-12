@@ -58,7 +58,13 @@
   background: var(--search-paper);
 }
 
-.search-page--active .workspace-page {
+/* 解题态下不能设高度：--solving 用 top/bottom 把自己固定在顶栏与底栏之间
+   （竖屏 height:auto、横屏 height:100%）。这里的 height:100% 权重更高且无
+   媒体条件，会把它盖掉 —— 对 position:fixed 元素，100% 是相对「视口」解析的，
+   容器便从 top:48px 起高 852px(=100vh)，底部越过底栏 112px，把步骤导航
+   （上一步/下一步）推到屏幕外，手机上怎么滑都够不到。
+   :not() 让这条只在非解题态生效。 */
+.search-page--active .workspace-page:not(.workspace-page--solving) {
   flex: 1;
   min-height: 0;
   height: 100%;
