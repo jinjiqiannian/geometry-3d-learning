@@ -283,3 +283,95 @@
     font-size: 1.35rem;
   }
 }
+
+/* ── 手机横屏：页面已是「左目录 + 右讲解」两栏，
+   讲解区内部必须恢复「画布 | 文字」左右两列并整体压缩，
+   否则上下堆叠 + 固定画布高度会把标题/公式/按钮整段挤出可视区 ── */
+@media (max-width: 1000px) and (orientation: landscape) and (max-height: 560px) {
+  .teach-lesson-bar {
+    padding: 6px 12px 0;
+  }
+
+  .teach-lesson-stage {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .teach-lesson-poster {
+    min-height: 0;
+    padding: 8px 12px;
+  }
+
+  .teach-lesson-poster .km-svg {
+    width: auto;
+    max-width: 100%;
+    max-height: calc(100dvh - var(--app-nav-height, 48px) - var(--mobile-nav-height, 0px) - 72px);
+  }
+
+  .teach-lesson-copy {
+    padding: 10px 14px 16px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .teach-lesson-kicker {
+    margin-bottom: 4px;
+  }
+
+  .teach-lesson-title {
+    margin-bottom: 8px;
+    font-size: 1.15rem;
+  }
+
+  .teach-lesson-idea {
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .teach-lesson-formulas {
+    margin-bottom: 12px;
+  }
+
+  .teach-lesson-formulas li {
+    padding: 6px 0;
+    font-size: 0.95rem;
+  }
+
+  .teach-lesson-steps {
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    line-height: 1.55;
+  }
+
+  .teach-lesson-play {
+    padding: 9px 18px;
+    font-size: 0.88rem;
+  }
+
+  .teach-lesson-explain {
+    margin-top: 14px;
+    padding-top: 12px;
+  }
+
+  .teach-lesson-explain-p {
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  /* 播放态：画布压缩到约 1/3 屏高，空间让给讲解步骤 */
+  .teach-lesson.is-playing .teach-lesson-poster {
+    min-height: 0;
+    padding: 8px 10px 0;
+  }
+
+  .teach-lesson.is-playing .teach-lesson-poster .km-svg {
+    width: auto;
+    max-width: 100%;
+    max-height: 34vh;
+  }
+
+  .teach-lesson.is-playing .teach-lesson-copy {
+    padding: 8px 12px 14px;
+    overflow-y: auto;
+  }
+}
