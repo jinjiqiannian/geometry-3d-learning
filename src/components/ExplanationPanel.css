@@ -281,13 +281,29 @@
     display: none;
   }
 
-  .workspace-page--solving .ep-problem-text {
-    font-size: 0.78rem;
-    line-height: 1.35;
+  /* 题目默认钳制3行，点「展开全文」看完整题面 */
+  .workspace-page--solving .ep-problem-text.is-clamped {
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
     overflow: hidden;
+  }
+
+  .ep-problem-toggle {
+    display: none;
+    margin-top: 4px;
+    padding: 2px 0;
+    border: none;
+    background: transparent;
+    color: var(--accent);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .workspace-page--solving .ep-problem-toggle {
+    display: inline-block;
   }
 
   .workspace-page--solving .ep-steps-wrap {
@@ -302,10 +318,6 @@
     flex: 1 0 auto;
     min-height: 0;
     overflow: visible;
-  }
-
-  .workspace-page--solving .step-list-item:not(:has(.step-card.current)) {
-    display: none;
   }
 
   .workspace-page--solving .step-card.current {

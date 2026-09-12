@@ -603,6 +603,15 @@ export function extractProofGoals(text) {
     add({ type: "perpendicular", subjects: [m[1], m[2]] });
   }
 
+  // 线线垂直目标："证明 PA⊥BD"（⊥ 后紧跟线段，非 平面/底面）
+  const perpLineRe = new RegExp(
+    `(${SEG})\\s*(?:垂直于|垂直|⊥)\\s*(${SEG})(?!\\s*(?:底面|平面|面))`,
+    "g"
+  );
+  while ((m = perpLineRe.exec(prove)) !== null) {
+    add({ type: "perpendicular", subjects: [m[1], m[2]] });
+  }
+
   const paraPlaneRe = new RegExp(
     `(${SEG})\\s*(?:平行于|平行|∥)\\s*(?:底面|平面|面)\\s*(${PLANE})`,
     "g"
