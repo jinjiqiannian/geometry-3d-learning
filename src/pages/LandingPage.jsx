@@ -2,6 +2,7 @@ import { useLayoutEffect, startTransition } from "react";
 import { useNavigate } from "react-router-dom";
 import BrandLogo from "../components/BrandLogo";
 import { curriculumStats } from "../data/curriculum";
+import { track } from "../services/analytics";
 import "./LandingPage.css";
 
 const strokeProps = {
@@ -119,7 +120,10 @@ export default function LandingPage() {
                   type="button"
                   className={`landing-mode landing-mode--${mode.key}`}
                   style={{ "--mode-index": i }}
-                  onClick={() => go(mode.path)}
+                  onClick={() => {
+                    track("cta_click", { mode: mode.key });
+                    go(mode.path);
+                  }}
                 >
                   <span className="landing-mode-head">
                     <span className="landing-mode-icon">

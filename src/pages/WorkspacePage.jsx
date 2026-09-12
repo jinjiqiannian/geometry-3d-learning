@@ -26,6 +26,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { parseProblemSync } from "../engines/problemParser";
 import { generateLocalSteps } from "../engines/explanationEngine";
 import { aiAPI } from "../services/api";
+import { track } from "../services/analytics";
 import {
   compressComposeImage,
   runCloudOcrWithRetry,
@@ -396,6 +397,8 @@ export default function WorkspacePage({
       setError(null);
       setStreamingReasoning("");
       setStreamingDone(false);
+      // 漏斗第一环：访客 → 真的提交了一道题
+      track("solve_submit", { local: useLocalOnly, len: text.length });
 
       const totalStart = performance.now();
 
@@ -626,6 +629,12 @@ export default function WorkspacePage({
 
   // ── Helper: Apply parsed data + steps to state ──
   function applyResults(parsedData, resultSteps) {
+    // 漏斗的核心价值时刻：解析成功、步骤落地。
+    // 放在这里而不是各条分支里，AI 与本地降级两条路径都能覆盖到。
+    track("solve_done", {
+      type: parsedData?.type || "unknown",
+      steps: resultSteps?.length ?? 0,
+    });
     setParsedData(parsedData);
     setGeometry({
       type: parsedData.type || "cube",
@@ -798,6 +807,9 @@ export default function WorkspacePage({
   }, []);
 
   const handleNextStep = useCallback(() => {
+    // 埋在 updater 外面：严格模式下 updater 可能跑两次，埋在里面会重复计数。
+    // 记的是「点了一下下一步」，配合 solve_done 的 steps 数就能算出参与度。
+    track("step_next", { total: mergedGroups.length });
     setCurrentStep((prev) => {
       if (mergedGroups.length === 0) return prev;
       const i = mapCurrentStepToMergedIndex(mergedGroups, prev);
