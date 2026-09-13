@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import WorkspacePage from "./WorkspacePage";
+import { normalizeLatexForDisplay } from "../engines/problemParser";
 import {
   compressComposeImage,
   runCloudOcrWithRetry,
@@ -49,7 +50,11 @@ export default function SearchPage() {
       try {
         const { text } = await runCloudOcrWithRetry(dataUrl);
         if (text.trim()) {
-          setDraft(text.trim());
+          // 在「识别边界」就规范化。之前只在 handleParseProblem 里规范化，
+          // 于是用户先在输入框看到原始 LaTeX（$\overrightarrow{AA'}$），
+          // 点「开始理解」之后才被转换 —— 看到的一直是那副样子。
+          // 规范化后输入框里是 →AA'，与后续解题用的是同一份文本。
+          setDraft(normalizeLatexForDisplay(text).trim());
           setOcrHint("已识别，请核对后点「开始理解」");
           return;
         }
