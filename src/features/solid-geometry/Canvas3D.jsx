@@ -10,6 +10,8 @@ import { HighlightEngine, HIGHLIGHT_COLORS_CONST } from '../../engines/highlight
 import AnnotationRenderer from '../../renderers/AnnotationRenderer';
 const easeInOutCubic = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 const ANIMATION_DURATION = 600;
+// 飞镜兜底时长：动画期间每帧覆盖相机位置，一旦结束条件失效就会永久卡住
+const CAMERA_FLY_TIMEOUT_MS = 1200;
 function ring(radius, plane, seg = 64) {
  const pts = [];
  for (let i = 0; i <= seg; i++) {
@@ -272,6 +274,7 @@ const sceneIRAnim = useRef({ camera: null });
  }, [showLabels]);
  const cameraTargetPos = useRef(new THREE.Vector3(4, 4, 6));
  const cameraAnimating = useRef(false);
+ const cameraAnimStart = useRef(0);
  const controlsRef = useRef(null);
  // 步骤切换不再夺镜头；仅重置/视角预设会飞镜
 
@@ -329,9 +332,14 @@ const sceneIRAnim = useRef({ camera: null });
  const dy = target.y - cam.position.y;
  const dz = target.z - cam.position.z;
  const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
- if (dist < 0.02) {
+ // 结束条件必须同时兜住 NaN：`NaN < 0.02` 恒为假，动画就永远停不下来，
+ // 而动画期间每帧覆盖相机位置并 lookAt 原点 —— 表现就是"重置后相机卡死"。
+ const reached = dist < 0.02;
+ const invalid = !Number.isFinite(dist);
+ const timedOut = performance.now() - cameraAnimStart.current > CAMERA_FLY_TIMEOUT_MS;
+ if (reached || invalid || timedOut) {
  cameraAnimating.current = false;
- cam.position.copy(target);
+ if (!invalid) cam.position.copy(target);
  cam.lookAt(0, 0, 0);
  if (controlsRef.current) {
  controlsRef.current.target.set(0, 0, 0);
@@ -393,6 +401,7 @@ const sceneIRAnim = useRef({ camera: null });
  const target = viewPresets[viewPreset] || CAMERA_PRESETS.overview;
  if (cameraRef2.current) {
  cameraTargetPos.current.set(target[0], target[1], target[2]);
+ cameraAnimStart.current = performance.now();
  cameraAnimating.current = true;
  animating.current = true;
  }
@@ -661,8 +670,19 @@ const sceneIRAnim = useRef({ camera: null });
  ref={controlsRef}
  makeDefault
  enableZoom
- enablePan
  enableRotate
+ // 关掉平移：图形固定在原点、相机绕着它转。开着平移会把 target 拖走，
+ // 图形跑出画面，而飞镜又强行 lookAt 原点，两边互相打架。
+ enablePan={false}
+ // 阻尼让拖动有收尾，不会一划就转过头；配合降速手感更可控
+ enableDamping
+ dampingFactor={0.08}
+ rotateSpeed={0.7}
+ zoomSpeed={0.8}
+ minDistance={3}
+ maxDistance={24}
+ // 用户一上手就放弃飞镜：否则动画每帧把相机拽回目标点，手感像卡死
+ onStart={() => { cameraAnimating.current = false; }}
 />
  </>);
 });
