@@ -205,6 +205,15 @@
   display: none;
 }
 
+/* 画布隐藏时（形状认不出 / 移动端收起 3D）右侧没有内容了，讲解面板撑满。
+   否则桌面端会停在 440px，右边空出一大块。flex:1 的 flex-basis 会盖掉
+   上面的 width:440px，max-width 也要一并放开。 */
+.wp-main:has(.wp-canvas-col.wp-canvas--hidden) .wp-explain-col {
+  flex: 1;
+  max-width: none;
+  border-right: none;
+}
+
 /* ── Mobile: 上下布局 (CSS class toggle, no re-mount) ── */
 .wp-main--mobile {
   flex-direction: column;
