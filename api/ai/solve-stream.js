@@ -54,7 +54,14 @@ const REASON_SYSTEM_PROMPT = `你是一个顶尖的中学数学老师，专门�
 }
 
 type: observation|construction|calculation|conclusion
-多小问时 title 以「(1)」「(2)」开头，step.part 为小问号（共用为 0）`
+多小问时 title 以「(1)」「(2)」开头，step.part 为小问号（共用为 0）
+
+书写规范（违反即为错误答案）：
+- 向量名以题目为准，撇号不能丢也不能改：题目写 AB' 就必须写 AB'，写成 AA' 是错的
+- 等式左边必须是正在求的那个量：求 |AB'| 就写 "AB' = …"，不要写成 "AA' = …"。
+  学生看到正确答案被冠上别的向量名，会以为自己算错了
+- 多小问的题，结尾必须有一步「答案汇总」，逐条列出**每一个**小问的答案 ——
+  只汇总最后一个是错的`
 
 export const config = {
   runtime: 'nodejs',
