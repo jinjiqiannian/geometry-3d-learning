@@ -66,6 +66,9 @@ const PRESETS = {
     // OpenAI 兼容格式：url 需带 data: 前缀
     stripDataUrlPrefix: false,
     maxTokens: 1200,
+    // 保留原始分辨率。默认的 auto 可能把图缩到 512×512，
+    // 题目照片里的小字号和细箭头会被压糊 —— 实测差画质图直接读不出内容。
+    detail: 'high',
   },
 }
 
@@ -206,6 +209,7 @@ async function callVisionChat({
   apiKey,
   imageUrl,
   maxTokens,
+  detail,
 }) {
   const response = await fetch(`${base}/chat/completions`, {
     method: 'POST',
@@ -224,7 +228,11 @@ async function callVisionChat({
               type: 'text',
               text: '请按 JSON 提取画面主体那一道题的题干 text 与构图 visionHints：',
             },
-            { type: 'image_url', image_url: { url: imageUrl } },
+            {
+              type: 'image_url',
+              // detail 只对声明了该字段的 provider 发，避免别家报错
+              image_url: detail ? { url: imageUrl, detail } : { url: imageUrl },
+            },
           ],
         },
       ],
@@ -317,6 +325,7 @@ export default async function handler(req, res) {
     const providerCfg = {
       stripDataUrlPrefix: preset.stripDataUrlPrefix === true,
       maxTokens: preset.maxTokens || 1024,
+      detail: preset.detail || null,
     }
     // 允许环境变量覆盖
     if (process.env.VISION_STRIP_DATA_URL === '1') {
@@ -335,6 +344,7 @@ export default async function handler(req, res) {
         apiKey,
         imageUrl: primaryUrl,
         maxTokens: providerCfg.maxTokens,
+        detail: providerCfg.detail,
       })
     } catch (firstErr) {
       const msg = String(firstErr?.message || '')
@@ -352,6 +362,7 @@ export default async function handler(req, res) {
             apiKey,
             imageUrl: altUrl,
             maxTokens: providerCfg.maxTokens,
+            detail: providerCfg.detail,
           })
         } catch (secondErr) {
           return res.status(502).json({
