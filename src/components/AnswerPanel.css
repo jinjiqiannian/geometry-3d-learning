@@ -38,7 +38,7 @@
 }
 
 .ap-formula {
-  font-family: var(--font-math);
+  font-family: "Cambria Math", "Georgia", var(--font-sans);
   font-size: var(--text-sm);
   color: var(--text-primary);
   background: var(--accent-subtle);
@@ -54,7 +54,7 @@
 }
 
 .ap-result-highlight {
-  font-family: var(--font-math);
+  font-family: "Cambria Math", "Georgia", var(--font-sans);
   font-size: var(--text-lg);
   font-weight: 600;
   color: var(--text-primary);

@@ -142,14 +142,20 @@
 .step-formula {
   margin: 0 0 8px;
   font-size: 0.8125rem;
-  font-family: var(--font-math, "Cambria Math", "Times New Roman", serif);
+  /* 数学字体优先（斜体变量、根号更好看），中文回退到黑体。
+     不能写成 var(--font-math, ...) —— --font-math 总有定义，括号里的
+     兜底永远不生效，而它自带 serif 会先把中文接走（→ 宋体）。 */
+  font-family: "Cambria Math", "Georgia", var(--font-sans);
   color: var(--text-secondary);
   line-height: 1.5;
 }
 
 .step-content {
   font-size: 0.9375rem;
-  font-family: var(--font-math, "Cambria Math", "Times New Roman", serif);
+  /* 讲解正文以中文为主，用黑体。原先套的是 Cambria Math / Times New
+     Roman，两者都没有中文字形，回退到系统衬线 = 宋体 —— 屏幕上笔画细、
+     横竖对比强、小字号发虚，长时间读很累。 */
+  font-family: var(--font-sans);
   color: var(--text-primary);
   line-height: 1.75;
   margin: 0;

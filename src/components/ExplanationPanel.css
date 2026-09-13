@@ -32,7 +32,9 @@
   font-size: 0.95rem;
   line-height: 1.7;
   color: var(--text-primary);
-  font-family: var(--font-math), Georgia, serif;
+  /* 中文正文用黑体：原先套的数学字体（Cambria Math / Georgia）没有中文字形，
+     回退到系统衬线 = 宋体，屏幕上笔画细、小字号发虚，长时间读很累。 */
+  font-family: var(--font-sans);
 }
 
 /* ── 步奏时间线区域（始终可见，核心视图） ──────── */
@@ -212,7 +214,9 @@
   font-size: 0.95rem;
   line-height: 1.7;
   color: var(--text-primary);
-  font-family: var(--font-math), Georgia, serif;
+  /* 中文正文用黑体：原先套的数学字体（Cambria Math / Georgia）没有中文字形，
+     回退到系统衬线 = 宋体，屏幕上笔画细、小字号发虚，长时间读很累。 */
+  font-family: var(--font-sans);
 }
 
 /* Mobile：默认随内容；解题中见下方 .workspace-page--solving 一屏聚焦 */
