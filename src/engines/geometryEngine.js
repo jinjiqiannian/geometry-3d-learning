@@ -191,6 +191,26 @@ export function isPolyhedral(type) {
   return ['cube', 'prism', 'pyramid', 'squareFrustum', 'cuboid', 'tetrahedron', 'octahedron'].includes(type)
 }
 
+/**
+ * createGeometry 真正画得出来的形状。不在此列的不要进 Canvas。
+ *
+ * 理由：createGeometry 的 default 分支会把不认识的类型静默兜底成正方体，
+ * 画出来是一道与题目毫无关系的图（平行六面体配正方体）。解析层认不出时
+ * 会给出 'unknown'，此处据此拒绝渲染 —— 宁可不画，也不画错的。
+ *
+ * 新增形状时必须同时加进 createGeometry 的 switch，否则这里会放行一个
+ * 下游只会兜底成立方体的类型。
+ */
+export const RENDERABLE_SHAPES = Object.freeze([
+  'cube', 'cuboid', 'pyramid', 'prism', 'sphere',
+  'cylinder', 'cone', 'tetrahedron', 'octahedron',
+  'squareFrustum', 'circularFrustum',
+])
+
+export function isRenderableShape(type) {
+  return RENDERABLE_SHAPES.includes(type)
+}
+
 export function createGeometryFromSceneIR(sceneIR) {
   if (!sceneIR || !sceneIR.points || sceneIR.points.length === 0) {
     return new THREE.BoxGeometry(2, 2, 2)

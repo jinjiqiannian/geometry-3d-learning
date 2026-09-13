@@ -10,7 +10,7 @@ import ExplanationPanel from "../components/ExplanationPanel";
 import LogicPanel from "../components/LogicPanel";
 import TopicPanel from "../components/TopicPanel";
 import { getLineDefinitions } from "../engines/lineDefinitions";
-import { isPolyhedral } from "../engines/geometryEngine";
+import { isPolyhedral, isRenderableShape } from "../engines/geometryEngine";
 import { applyConstraints } from "../engines/geometryValidator";
 import { computeVisualIntent } from "../engines/visualIntent";
 import { AnimationController } from "../engines/animationController";
@@ -468,7 +468,7 @@ export default function WorkspacePage({
 
         const abort = aiAPI.solveStream(text, {
           onParsed: (parsed) => {
-            const shape = localSemantic?.shape || parsed.type || "cube";
+            const shape = localSemantic?.shape || parsed.type || "unknown";
             const size = localSemantic?.size || parsed.size || 2;
             setParsedData({
               ...parsed,
@@ -492,7 +492,7 @@ export default function WorkspacePage({
             setStreamingDone(true);
 
             if (parsed) {
-              const shape = localSemantic?.shape || parsed.type || "cube";
+              const shape = localSemantic?.shape || parsed.type || "unknown";
               const size = localSemantic?.size || parsed.size || 2;
               // 保存推理过程到 parsedData；构图以本地 semantic 为准
               const parsedWithReasoning = {
@@ -1222,6 +1222,9 @@ export default function WorkspacePage({
   const isComposeIdle = !problemText && !loading;
   // 解题中只显示专题标签，不展示多级入口条
   const showTopicChip = !hubActive && subject !== "geometry";
+  // 形状认不出（如平行六面体）时不渲染 3D：createGeometry 会把不认识的
+  // 类型静默兜底成正方体，画出来是与题目无关的图 —— 宁可不画，不画错的。
+  const canRender3D = subject === "geometry" && isRenderableShape(geometry.type);
 
   // 几何无题时回到 Hub，避免空画布（loading/有题时不弹回；嵌入模式由父页接管）
   useEffect(() => {
@@ -1498,10 +1501,11 @@ export default function WorkspacePage({
           // 非几何题型（物理 / 导数 / 圆锥曲线 / 排组）不渲染三维：
           // geometry 状态会一直停在初始的默认立方体，画出来就是一道
           // 与题目毫无关系的立体图形（物理自由落体题配一个正方体）。
-          className={`wp-canvas-col ${(isMobile && !show3D) || subject !== "geometry" ? "wp-canvas--hidden" : ""}`}
+          // 几何题里认不出形状的（平行六面体等）同理 —— 见 canRender3D。
+          className={`wp-canvas-col ${(isMobile && !show3D) || !canRender3D ? "wp-canvas--hidden" : ""}`}
           ref={canvasRef}
         >
-          {hasWebGL && subject === "geometry" ? (
+          {hasWebGL && canRender3D ? (
             <Canvas
               style={{ width: "100%", height: "100%" }}
               camera={{ position: [4, 4, 6], fov: 50 }}

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { validateAndCompleteSemantic, convertLegacyParsedToSemantic, parseProblemToSemantic } from '../geometryValidator'
 import { buildSceneIRFromSemantic } from '../sceneIRBuilder'
+import { isRenderableShape } from '../geometryEngine'
 
 const aiResponse = {
   type: 'pyramid',
@@ -333,5 +334,39 @@ describe('本地解析路径：F 点（"F on PA"）必须进入场景', () => {
     expect(fPoint).toBeTruthy()
     expect(fPoint.visible).toBe(true)
     expect(fPoint.position).not.toBeNull()
+  })
+})
+
+// 曾经 parseProblemToSemantic 的默认形状是 'cube'：认不出的立体一律被画成
+// 正方体，且是静默的。平行六面体就撞在这上面 —— 题目给的棱长和夹角全丢了，
+// 学生看到的是一张与题设矛盾的图。
+describe('认不出的几何体不得冒充正方体', () => {
+  const PARALLELEPIPED = `如图，在平行六面体 ABCD - A'B'C'D' 中，AB = 4，AD = 3，AA' = 5，
+∠BAD = 90°，∠BAA' = ∠DAA' = 60°，求：
+(1) AA' · AB; (2) AB' 的长; (3) AC' 的长。`
+
+  it('平行六面体如实解析成 parallelepiped，不再回落成 cube', () => {
+    const semantic = parseProblemToSemantic(PARALLELEPIPED)
+    expect(semantic.shape).toBe('parallelepiped')
+  })
+
+  it('完全不认识的立体解析成 unknown，且不产出正方体顶点', () => {
+    const semantic = parseProblemToSemantic('某倒霉立体 XYZ 的棱长为 3，求其体积')
+    expect(semantic.shape).toBe('unknown')
+    expect(semantic.points).toEqual([])
+    expect(semantic.edges).toEqual([])
+  })
+
+  it('认不出的形状一律不可渲染（渲染层据此不出 3D）', () => {
+    expect(isRenderableShape('parallelepiped')).toBe(false)
+    expect(isRenderableShape('unknown')).toBe(false)
+  })
+
+  it('认得出的形状不受影响，仍可渲染', () => {
+    expect(parseProblemToSemantic('正方体棱长为2，求体对角线AG').shape).toBe('cube')
+    expect(parseProblemToSemantic('长方体棱长为2').shape).toBe('cuboid')
+    expect(parseProblemToSemantic('四棱锥P-ABCD中，底面边长为2').shape).toBe('pyramid')
+    expect(isRenderableShape('cube')).toBe(true)
+    expect(isRenderableShape('pyramid')).toBe(true)
   })
 })

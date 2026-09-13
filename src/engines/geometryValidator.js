@@ -724,6 +724,9 @@ export function parseProblemToSemantic(problemText) {
   const shapePatterns = [
     { pattern: /正方体|立方体|cube/, shape: 'cube' },
     { pattern: /长方体|cuboid/, shape: 'cuboid' },
+    // 平行六面体的顶点由题目给的边长和夹角决定，现有模板画不出来。
+    // 先如实识别（便于以后支持），渲染层会因不可渲染而不出 3D。
+    { pattern: /平行六面体|parallelepiped/, shape: 'parallelepiped' },
     { pattern: /四棱锥|棱锥|pyramid/i, shape: 'pyramid' },
     { pattern: /三棱锥|triangular pyramid/i, shape: 'pyramid' },
     { pattern: /棱柱|三棱柱|prism/i, shape: 'prism' },
@@ -734,7 +737,9 @@ export function parseProblemToSemantic(problemText) {
     { pattern: /圆锥|cone/, shape: 'cone' },
     { pattern: /圆台|frustum/, shape: 'circularFrustum' },
   ];
-  let shape = 'cube';
+  // 认不出就如实说认不出。曾经这里默认 'cube'，于是任何不认识的立体
+  // （平行六面体、组合体…）都会被画成一个与题目无关的正方体，并且是静默的。
+  let shape = 'unknown';
   for (const { pattern, shape: s } of shapePatterns) {
     if (pattern.test(t)) {
       shape = s;

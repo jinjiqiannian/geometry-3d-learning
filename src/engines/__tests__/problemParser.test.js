@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { quickMatch } from '../problemParser'
+import { quickMatch, parseProblemSync } from '../problemParser'
 
 describe('problemParser', () => {
   describe('quickMatch', () => {
@@ -101,6 +101,19 @@ describe('problemParser', () => {
       const result = quickMatch('正方体棱长为2')
       expect(result).not.toBeNull()
       expect(result.explanation).toBeTruthy()
+    })
+  })
+
+  describe('本地兜底不得编造正方体', () => {
+    it('认不出的题目返回 unknown，而不是 cube', () => {
+      const result = parseProblemSync('某倒霉立体 XYZ 的棱长为 3，求其体积')
+      expect(result.type).toBe('unknown')
+      expect(result.labels).toEqual([])
+      expect(result.vertices).toEqual([])
+    })
+
+    it('认得出的题目照常返回真实形状', () => {
+      expect(parseProblemSync('正方体棱长为3，求体积').type).toBe('cube')
     })
   })
 })

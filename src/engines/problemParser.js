@@ -33,7 +33,7 @@ const PARSE_SYSTEM_PROMPT = `你是一个中学立体几何题目语义解析器
 严格输出以下 Geometry Semantic JSON 格式（不要输出其他内容，不要用 markdown 代码块包裹）：
 
 {
-  "shape": "cube|cuboid|pyramid|prism|sphere|cylinder|cone|tetrahedron|octahedron|squareFrustum|circularFrustum",
+  "shape": "cube|cuboid|pyramid|prism|sphere|cylinder|cone|tetrahedron|octahedron|squareFrustum|circularFrustum|parallelepiped|unknown",
   "size": 数字（边长/半径，题目未给出则默认2）,
   "points": ["所有顶点标签，包括辅助点", "A", "B", "C", "D", "P", "E", "F"],
   "edges": [{"from": "A", "to": "B", "label": "AB"}],
@@ -47,7 +47,7 @@ const PARSE_SYSTEM_PROMPT = `你是一个中学立体几何题目语义解析器
 }
 
 规则：
-1. shape 只能是: cube（正方体）、cuboid（长方体）、pyramid（四棱锥）、prism（三棱柱）、sphere（球体）、cylinder（圆柱）、cone（圆锥）、tetrahedron（正四面体）、octahedron（正八面体）、squareFrustum（四棱台）、circularFrustum（圆台）
+1. shape 只能是: cube（正方体）、cuboid（长方体）、pyramid（四棱锥）、prism（三棱柱）、sphere（球体）、cylinder（圆柱）、cone（圆锥）、tetrahedron（正四面体）、octahedron（正八面体）、squareFrustum（四棱台）、circularFrustum（圆台）、parallelepiped（平行六面体）、unknown（识别不出）
 2. size 从题目数字中提取（如"棱长为3"→size=3，"半径为2"→size=2），找不到用2
 3. points 必须包含所有题目中出现的顶点标签，包括辅助点（如中点E、交点F等）
 4. edges 列出所有需要显示的边，包括几何体棱和辅助线
@@ -60,7 +60,7 @@ const PARSE_SYSTEM_PROMPT = `你是一个中学立体几何题目语义解析器
 7. importantLines 列出需要高亮的关键线段
 8. importantPlanes 列出需要高亮的关键平面
 9. highlight 列出需要标记的关系类型：parallel（平行）、perpendicular（垂直）、midpoint（中点）、ratio（比例）、section（截面）
-10. 如果识别不出任何几何体，shape 用 "cube" 并在 relations 中说明原因
+10. 如果识别不出任何几何体，shape 用 "unknown" 并在 relations 中说明原因。不要随便猜一个形状——猜错会让学生看到与题目无关的图形，比没有图更糟
 11. 只输出 JSON，不要有任何解释文字`;
 
 // ── 图片识别 System Prompt ───────────────────────────
@@ -1403,16 +1403,18 @@ function generateFallbackResult(text) {
     };
   }
 
+  // 认不出就如实说认不出，不要编一个正方体。曾经这里默认 cube，
+  // 于是任何不认识的立体都会被画成与题目无关的正方体，且是静默的。
   return {
-    type: "cube",
+    type: "unknown",
     size,
     subType: "general",
-    labels: ["A", "B", "C", "D", "E", "F", "G", "H"],
-    vertices: ["A", "B", "C", "D", "E", "F", "G", "H"],
+    labels: [],
+    vertices: [],
     highlightLines: [],
     params: { size },
     annotations: [],
-    explanation: `未识别几何体，默认正方体（棱长${size}）`,
+    explanation: "未识别几何体，不渲染三维",
     confidence: 0.5,
   };
 }
