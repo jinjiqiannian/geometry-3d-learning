@@ -4,6 +4,7 @@ import StepList from './StepList'
 import AnswerPanel from './AnswerPanel'
 import CoreIdeaCard from './explanation/CoreIdeaCard'
 import PlaybackControls from './PlaybackControls'
+import MathText from './MathText'
 import { mergeConsecutiveSteps, mapCurrentStepToMergedIndex } from './mergeConsecutiveSteps'
 import './ExplanationPanel.css'
 
@@ -77,7 +78,7 @@ const ExplanationPanel = memo(function ExplanationPanel({
         <div className="ep-problem">
           <div className="ep-problem-label">题目</div>
           <p className={`ep-problem-text${!problemExpanded ? ' is-clamped' : ''}`}>
-            {problemText}
+            <MathText text={problemText} />
           </p>
           {isProblemLong && (
             <button
