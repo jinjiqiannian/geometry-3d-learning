@@ -495,9 +495,14 @@ export function normalizeLatexForDisplay(text) {
   t = t.replace(/\$([^$]*)\$/g, "$1");
 
   // 2. 带参数的命令（先处理，避免命令名被拆）
+  //
+  // 反斜杠写成可选（\\?）：OCR 模型常把 \overrightarrow 输出成
+  // overrightarrow —— 反斜杠在 JSON 转义里丢了。认不出来的话不只是
+  // 转换失效，后面步骤还会把花括号剥掉，学生看到的是
+  // overrightarrowAB' 这种半截 LaTeX，比不转换还糟。
   // \overrightarrow{AB} / \vec{AB} → 纯文本用前置箭头 →AB；
   //   HTML 展示层（MathText 组件）会把 →XX 渲染为横跨字母的上箭头
-  t = t.replace(/\\(?:overrightarrow|vec)\s*\{([^{}]*)\}/g, "→$1");
+  t = t.replace(/\\?(?:overrightarrow|vec)\s*\{([^{}]*)\}/g, "→$1");
   // \overline{AB} → AB̅（组合上划线 U+0304 挂在最后一个字母上）
   const withOverline = (content) => {
     const c = String(content);
@@ -507,14 +512,14 @@ export function normalizeLatexForDisplay(text) {
     const idx = c.lastIndexOf(lastLetter);
     return c.slice(0, idx + 1) + "\u0304" + c.slice(idx + 1);
   };
-  t = t.replace(/\\overline\s*\{([^{}]*)\}/g, (_, c) => withOverline(c));
+  t = t.replace(/\\?overline\s*\{([^{}]*)\}/g, (_, c) => withOverline(c));
   // \widehat{AB} → AB（宽帽子无对应组合字符，省略）
-  t = t.replace(/\\widehat\s*\{([^{}]*)\}/g, "$1");
+  t = t.replace(/\\?widehat\s*\{([^{}]*)\}/g, "$1");
   // \frac{a}{b} → a/b
-  t = t.replace(/\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, "$1/$2");
+  t = t.replace(/\\?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, "$1/$2");
   // \sqrt[n]{x} → ⁿ√x ；\sqrt{x} → √x
-  t = t.replace(/\\sqrt\s*\[([^\]]*)\]\s*\{([^{}]*)\}/g, "$1√$2");
-  t = t.replace(/\\sqrt\s*\{([^{}]*)\}/g, "√$1");
+  t = t.replace(/\\?sqrt\s*\[([^\]]*)\]\s*\{([^{}]*)\}/g, "$1√$2");
+  t = t.replace(/\\?sqrt\s*\{([^{}]*)\}/g, "√$1");
 
   // 3. 上下标：^{...} → 上标 Unicode；_{...} → 下标 Unicode
   const superMap = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "+": "⁺", "-": "⁻", "=": "⁼", "n": "ⁿ" };
