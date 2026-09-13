@@ -484,6 +484,87 @@ export function normalizeGeometrySymbols(text) {
 }
 
 /**
+ * LaTeX 数学公式 → Unicode 可读文本（用于 OCR 结果展示与题干存储）
+ * 覆盖中学几何/向量常见命令：向量箭头、点乘、角度、分数、根号、上下标、希腊字母等
+ */
+export function normalizeLatexForDisplay(text) {
+  if (!text) return "";
+  let t = String(text);
+
+  // 1. 去掉 $ 公式定界符，但保留内容
+  t = t.replace(/\$([^$]*)\$/g, "$1");
+
+  // 2. 带参数的命令（先处理，避免命令名被拆）
+  // \overrightarrow{AB} / \vec{AB} → AB（向量在乘式语境下由 · 体现，箭头省略更清爽）
+  t = t.replace(/\\(?:overrightarrow|vec)\s*\{([^{}]*)\}/g, "$1");
+  // \overline{AB} → AB（上划线省略）
+  t = t.replace(/\\overline\s*\{([^{}]*)\}/g, "$1");
+  // \widehat{AB} → AB
+  t = t.replace(/\\widehat\s*\{([^{}]*)\}/g, "$1");
+  // \frac{a}{b} → a/b
+  t = t.replace(/\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, "$1/$2");
+  // \sqrt[n]{x} → ⁿ√x ；\sqrt{x} → √x
+  t = t.replace(/\\sqrt\s*\[([^\]]*)\]\s*\{([^{}]*)\}/g, "$1√$2");
+  t = t.replace(/\\sqrt\s*\{([^{}]*)\}/g, "√$1");
+
+  // 3. 上下标：^{...} → 上标 Unicode；_{...} → 下标 Unicode
+  const superMap = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "+": "⁺", "-": "⁻", "=": "⁼", "n": "ⁿ" };
+  const subMap = { "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄", "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉", "+": "₊", "-": "₋", "=": "₌" };
+  const toSuper = (s) => [...s].map((c) => superMap[c] ?? c).join("");
+  const toSub = (s) => [...s].map((c) => subMap[c] ?? c).join("");
+  t = t.replace(/\^\{([^{}]+)\}/g, (_, s) => toSuper(s));
+  t = t.replace(/_\{([^{}]+)\}/g, (_, s) => toSub(s));
+  // 单字符上下标 ^2 / _1
+  t = t.replace(/\^([^{}\s])/g, (_, c) => superMap[c] ?? c);
+  t = t.replace(/_([^{}\s])/g, (_, c) => subMap[c] ?? c);
+
+  // 4. 符号命令
+  const symbols = {
+    "\\cdot": "·", "\\times": "×", "\\div": "÷", "\\pm": "±", "\\mp": "∓",
+    "\\angle": "∠", "\\triangle": "△", "\\perp": "⊥", "\\parallel": "∥",
+    "\\neq": "≠", "\\ne": "≠", "\\leq": "≤", "\\le": "≤", "\\geq": "≥", "\\ge": "≥",
+    "\\approx": "≈", "\\equiv": "≡", "\\sim": "∼", "\\cong": "≅", "\\propto": "∝",
+    "\\infty": "∞", "\\to": "→", "\\rightarrow": "→", "\\Rightarrow": "⇒",
+    "\\leftarrow": "←", "\\Leftarrow": "⇐", "\\leftrightarrow": "↔",
+    "\\circ": "∘", "\\degree": "°", "\\textdegree": "°",
+    "\\because": "∵", "\\therefore": "∴", "\\sum": "∑", "\\prod": "∏", "\\int": "∫",
+    "\\cup": "∪", "\\cap": "∩", "\\in": "∈", "\\notin": "∉", "\\subset": "⊂", "\\supset": "⊃",
+    "\\forall": "∀", "\\exists": "∃", "\\emptyset": "∅", "\\partial": "∂", "\\nabla": "∇",
+    "\\leqno": "", "\\leqno ": "", "\\and": "且", "\\or": "或",
+  };
+  // 按命令名长度降序，避免 \le 吃掉 \leq
+  Object.keys(symbols).sort((a, b) => b.length - a.length).forEach((cmd) => {
+    t = t.split(cmd).join(symbols[cmd]);
+  });
+
+  // 5. 希腊字母
+  const greek = {
+    "\\alpha": "α", "\\beta": "β", "\\gamma": "γ", "\\delta": "δ", "\\epsilon": "ε",
+    "\\zeta": "ζ", "\\eta": "η", "\\theta": "θ", "\\vartheta": "ϑ", "\\iota": "ι",
+    "\\kappa": "κ", "\\lambda": "λ", "\\mu": "μ", "\\nu": "ν", "\\xi": "ξ",
+    "\\omicron": "ο", "\\pi": "π", "\\varpi": "ϖ", "\\rho": "ρ", "\\varrho": "ϱ",
+    "\\sigma": "σ", "\\varsigma": "ς", "\\tau": "τ", "\\upsilon": "υ", "\\phi": "φ",
+    "\\varphi": "ϕ", "\\chi": "χ", "\\psi": "ψ", "\\omega": "ω",
+    "\\Gamma": "Γ", "\\Delta": "Δ", "\\Theta": "Θ", "\\Lambda": "Λ", "\\Xi": "Ξ",
+    "\\Pi": "Π", "\\Sigma": "Σ", "\\Upsilon": "Υ", "\\Phi": "Φ", "\\Psi": "Ψ", "\\Omega": "Ω",
+  };
+  Object.keys(greek).forEach((cmd) => { t = t.split(cmd).join(greek[cmd]); });
+
+  // 6. 去掉残余的反斜杠命令（如 \mathrm、\text 等），保留花括号内容
+  t = t.replace(/\\[a-zA-Z]+\s*/g, "");
+  // 去掉花括号（内容保留）
+  t = t.replace(/[{}]/g, "");
+
+  // 7. 常见转义符号还原
+  t = t.replace(/\\,/g, "").replace(/\\;/g, "").replace(/\\\s/g, " ").replace(/\\\\/g, "\n");
+
+  // 8. 整合 normalizeGeometrySymbols 的平行/垂直归一
+  t = normalizeGeometrySymbols(t);
+
+  return t;
+}
+
+/**
  * 从题目文本提取几何关系（文字 → relation 字符串，不计算坐标）
  * 输出格式与 SceneIRBuilder convertRelationsToAnnotations 对齐：
  *   "E midpoint AD" / "F on PA" / "AB parallel CD" / "PC parallel plane BEF"
