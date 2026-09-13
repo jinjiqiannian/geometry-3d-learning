@@ -23,7 +23,7 @@ import {
 import { useSubscription } from "../contexts/SubscriptionContext";
 import { useSupabase } from "../contexts/SupabaseContext";
 import { useTheme } from "../contexts/ThemeContext";
-import { parseProblemSync } from "../engines/problemParser";
+import { normalizeLatexForDisplay } from "../engines/problemParser";
 import { generateLocalSteps } from "../engines/explanationEngine";
 import { aiAPI } from "../services/api";
 import { track } from "../services/analytics";
@@ -391,7 +391,9 @@ export default function WorkspacePage({
     async (text, { useLocalOnly = false } = {}) => {
       if (loading) return;
 
-      setProblemText(text);
+      const cleanText = normalizeLatexForDisplay(text);
+      setProblemText(cleanText);
+      text = cleanText;
       setLoading(true);
       setLoadingStage("parsing");
       setError(null);
@@ -899,7 +901,8 @@ export default function WorkspacePage({
         setOcrHint("正在识别题干…");
 
         const applyText = (text, hint) => {
-          let t = (text || "").trim();
+          // OCR 常返回 LaTeX 源码，先转成 Unicode 可读文本再展示/入库
+          let t = normalizeLatexForDisplay((text || "").trim());
           // 兜底：若误把整段 OCR JSON 填进题干，拆出 text / visionHints
           if (t.startsWith("{") && /"text"\s*:/.test(t)) {
             try {

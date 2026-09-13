@@ -1,7 +1,7 @@
 import { VERTEX_TEMPLATES, getScaledTemplate, ROLE_DEFINITIONS } from './sceneIRTemplate';
 import { computeVerticesFromParams, relaxVertices } from './constraintSolver';
 import { extractVerticesFromText } from './labelMapper';
-import { extractEdgeRefs, extractGivenRelations, extractProofGoals } from './problemParser';
+import { extractEdgeRefs, extractGivenRelations, extractProofGoals, normalizeLatexForDisplay } from './problemParser';
 const SHAPE_EDGE_TEMPLATES = {
  cube: {
  requiredEdges: ['AB', 'BC', 'CD', 'DA', 'EF', 'FG', 'GH', 'HE', 'AE', 'BF', 'CG', 'DH', 'A1B1', 'B1C1', 'C1D1', 'D1A1', 'AA1', 'BB1', 'CC1', 'DD1', "A'B'", "B'C'", "C'D'", "D'A'", "AA'", "BB'", "CC'", "DD'"],
@@ -719,7 +719,8 @@ function convertGeometryToSemantic(geometry, steps = []) {
   return validateAndCompleteSemantic(semantic);
 }
 export function parseProblemToSemantic(problemText) {
-  const t = problemText.toLowerCase();
+  const raw = normalizeLatexForDisplay(problemText || "");
+  const t = raw.toLowerCase();
   const shapePatterns = [
     { pattern: /正方体|立方体|cube/, shape: 'cube' },
     { pattern: /长方体|cuboid/, shape: 'cuboid' },
@@ -740,15 +741,15 @@ export function parseProblemToSemantic(problemText) {
       break;
     }
   }
-  const sizeMatch = problemText.match(/(?:棱长|边长|半径|高)[为是]?\s*(\d+(?:\.\d+)?)/);
+  const sizeMatch = raw.match(/(?:棱长|边长|半径|高)[为是]?\s*(\d+(?:\.\d+)?)/);
   const size = sizeMatch ? parseFloat(sizeMatch[1]) : 2;
   const basePoints = getBasePoints(shape);
   // "根据题目来"：优先用题目中实际出现的顶点标签（如 ABCD-EFGH），否则回退到默认顶点
-  const extractedLabels = extractVerticesFromText(problemText);
+  const extractedLabels = extractVerticesFromText(raw);
   const points = (extractedLabels && extractedLabels.length > 0) ? extractedLabels : [...basePoints];
   // 提取题目中提及的关键线段（如 体对角线AG），用于后续高亮
-  const importantLines = extractEdgeRefs(problemText).map(e => e.label);
-  const proofGoals = extractProofGoals(problemText);
+  const importantLines = extractEdgeRefs(raw).map(e => e.label);
+  const proofGoals = extractProofGoals(raw);
   const semantic = {
     shape,
     size,
@@ -756,12 +757,12 @@ export function parseProblemToSemantic(problemText) {
     edges: [],
     faces: [],
     planes: [],
-    relations: extractGivenRelations(problemText),
+    relations: extractGivenRelations(raw),
     importantLines,
     importantPlanes: [],
     highlight: [],
     animationSteps: [],
-    baseShape: /菱形/.test(problemText) ? 'rhombus' : undefined,
+    baseShape: /菱形/.test(raw) ? 'rhombus' : undefined,
     goal: proofGoals[0] || undefined,
     goals: proofGoals.length > 1 ? proofGoals : undefined,
   };
