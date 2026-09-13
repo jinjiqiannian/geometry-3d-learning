@@ -6,6 +6,7 @@ import CoreIdeaCard from './explanation/CoreIdeaCard'
 import PlaybackControls from './PlaybackControls'
 import MathText from './MathText'
 import { mergeConsecutiveSteps, mapCurrentStepToMergedIndex } from './mergeConsecutiveSteps'
+import { groupStepsByPart, activeBlockIndex } from './subQuestions'
 import './ExplanationPanel.css'
 
 const ExplanationPanel = memo(function ExplanationPanel({
@@ -31,6 +32,12 @@ const ExplanationPanel = memo(function ExplanationPanel({
 
   const mergedGroups = useMemo(() => mergeConsecutiveSteps(steps), [steps])
   const mergedIndex = mapCurrentStepToMergedIndex(mergedGroups, currentStep)
+
+  // 多小问的题按小问分块；取不到小问信息时是 null，走原来的扁平列表
+  const partBlocks = useMemo(() => groupStepsByPart(steps), [steps])
+  // 当前小问由 currentStep 推导，不另存一份 state —— 否则切换时会不同步。
+  // 展开的那一块就是当前小问，3D 因此永远跟着展开项走。
+  const activePart = partBlocks ? activeBlockIndex(partBlocks, currentStep) : -1
 
   useEffect(() => {
     if (!stepsRef.current || !steps[currentStep]) return
@@ -104,11 +111,61 @@ const ExplanationPanel = memo(function ExplanationPanel({
       {!loading && steps.length > 0 ? (
         <div className="ep-steps-wrap" ref={stepsRef}>
           <div className="ep-step-timeline-section">
-            <StepList
-              steps={steps}
-              currentStep={currentStep}
-              onStepClick={onStepClick}
-            />
+            {partBlocks ? (
+              partBlocks.map((block, bi) => {
+                // 共用步骤（part 0：开头是已知与构图，结尾常是答案汇总）
+                // 不属于任何小问，直接平铺 —— 给它们也套小问外壳会出现
+                // 两个都叫「共用」的分块，反而更乱。
+                if (block.part === 0) {
+                  return (
+                    <StepList
+                      key={`shared-${block.startIndex}`}
+                      steps={block.steps}
+                      currentStep={currentStep}
+                      onStepClick={onStepClick}
+                      indexOffset={block.startIndex}
+                    />
+                  )
+                }
+                const isOpen = bi === activePart
+                return (
+                  <section
+                    key={`part-${block.part}-${block.startIndex}`}
+                    className={`ep-part${isOpen ? ' is-open' : ''}`}
+                  >
+                    <button
+                      type="button"
+                      className="ep-part-head"
+                      onClick={() => onStepClick?.(block.startIndex)}
+                      aria-expanded={isOpen}
+                    >
+                      <span className="ep-part-label">({block.part})</span>
+                      <span className="ep-part-title">
+                        {block.title || `第 ${block.part} 问`}
+                      </span>
+                      {/* 收起时把该小问的答案露在标题上：三问的题不用翻到最后才知道答案 */}
+                      {block.answer && !isOpen && (
+                        <span className="ep-part-answer">{block.answer}</span>
+                      )}
+                    </button>
+                    {isOpen && (
+                      <StepList
+                        steps={block.steps}
+                        currentStep={currentStep}
+                        onStepClick={onStepClick}
+                        indexOffset={block.startIndex}
+                      />
+                    )}
+                  </section>
+                )
+              })
+            ) : (
+              <StepList
+                steps={steps}
+                currentStep={currentStep}
+                onStepClick={onStepClick}
+              />
+            )}
           </div>
 
           {showAnswer && (

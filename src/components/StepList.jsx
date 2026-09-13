@@ -2,11 +2,17 @@ import StepCard from './StepCard'
 import { mergeConsecutiveSteps, mapCurrentStepToMergedIndex } from './mergeConsecutiveSteps'
 import './StepList.css'
 
-export default function StepList({ steps = [], currentStep = 0, onStepClick }) {
+export default function StepList({
+  steps = [],
+  currentStep = 0,
+  onStepClick,
+  indexOffset = 0,
+}) {
   if (steps.length === 0) return null
 
   const groups = mergeConsecutiveSteps(steps)
-  const mergedCurrent = mapCurrentStepToMergedIndex(groups, currentStep)
+  // 按小问分组时传进来的是切片，索引要加回偏移量才对得上全局的 currentStep
+  const mergedCurrent = mapCurrentStepToMergedIndex(groups, currentStep - indexOffset)
 
   return (
     <div className="step-list">
@@ -16,7 +22,7 @@ export default function StepList({ steps = [], currentStep = 0, onStepClick }) {
           {group.originalIndices.map((oi) => (
             <span
               key={oi}
-              data-step-index={oi}
+              data-step-index={oi + indexOffset}
               className="step-index-anchor"
               aria-hidden="true"
             />
@@ -26,7 +32,7 @@ export default function StepList({ steps = [], currentStep = 0, onStepClick }) {
             index={i}
             isCurrent={i === mergedCurrent}
             currentStep={mergedCurrent}
-            onClick={() => onStepClick?.(group.originalIndices[0])}
+            onClick={() => onStepClick?.(group.originalIndices[0] + indexOffset)}
           />
         </div>
       ))}

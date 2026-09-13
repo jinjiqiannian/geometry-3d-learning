@@ -45,6 +45,63 @@
   padding: 4px 0;
 }
 
+/* ── 小问分组：多小问的题按 (1)(2)(3) 分块 ────────────
+   展开的那一块就是当前小问，3D 跟着它走。 */
+.ep-part {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.ep-part:last-child {
+  border-bottom: none;
+}
+
+.ep-part-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  background: none;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.ep-part-head:hover {
+  background: var(--bg-elevated);
+}
+
+.ep-part-label {
+  flex: none;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.ep-part-title {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 收起的小问把答案直接露在标题上 —— 三问的题不用翻到最后才知道答案 */
+.ep-part-answer {
+  flex: none;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.ep-part.is-open .ep-part-head,
+.ep-part.is-open .ep-part-head:hover {
+  background: var(--accent-subtle);
+}
+
 /* ── 解析容器 ─────────────────────────────────────── */
 .ep-steps-wrap {
   flex: 1;

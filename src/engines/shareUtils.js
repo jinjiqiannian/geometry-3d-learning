@@ -45,6 +45,11 @@ function validateShareData(data) {
       if (typeof s === 'object' && s) return {
         title: String(s.title || '').slice(0, 200),
         content: String(s.content || '').slice(0, 5000),
+        // 小问分组靠 type/part/formula 还原，洗掉的话分享出去的场景
+        // 就不再分小问、标题上也看不到答案
+        type: typeof s.type === 'string' ? s.type.slice(0, 32) : undefined,
+        part: typeof s.part === 'number' && Number.isFinite(s.part) ? s.part : undefined,
+        formula: typeof s.formula === 'string' ? s.formula.slice(0, 500) : undefined,
         geometry: s.geometry ? sanitizeGeometry(s.geometry) : undefined,
       }
       return null
