@@ -239,6 +239,23 @@ function getPoints(type, params, customVertices, customLabels) {
       return { vertices: v, centers: c, labels }
     }
 
+    case 'parallelepiped': {
+      // 顶面是底面平移同一个向量（斜的），与 sceneIRTemplate 的默认形状一致
+      const o = s * 0.6  // 顶面在 xz 面上的平移量
+      const v = [
+        [-s, -s, -s], [s, -s, -s], [s, -s, s], [-s, -s, s],        // 0-3 底面 ABCD
+        [-s + o, s, -s + o], [s + o, s, -s + o],
+        [s + o, s, s + o], [-s + o, s, s + o],                      // 4-7 顶面 A'B'C'D'
+      ]
+      const c = {
+        body: [0, 0, 0],
+        front: [0, 0, s], back: [0, 0, -s],
+        left: [-s, 0, 0], right: [s, 0, 0],
+        top: [0, s, 0], bottom: [0, -s, 0],
+      }
+      return { vertices: v, centers: c, labels: ['A', 'B', 'C', 'D', "A'", "B'", "C'", "D'"] }
+    }
+
     default:
       return { vertices: [], centers: {}, labels: [] }
   }
@@ -297,6 +314,41 @@ export function getLineDefinitions(type, params, customVertices, customLabels) {
       // 空间对角线
       def('AG', '空间对角线', 0, 6, true); def('BH', '空间对角线', 1, 7, true)
       def('CE', '空间对角线', 2, 4, true); def('DF', '空间对角线', 3, 5, true)
+
+      break
+    }
+
+    // ─── 平行六面体（底面 ABCD → 顶面 A'B'C'D'）───
+    case 'parallelepiped': {
+      // 12 棱
+      def('AB', '棱', 0, 1); def('BC', '棱', 1, 2)
+      def('CD', '棱', 2, 3); def('DA', '棱', 3, 0)
+      def("A'B'", '棱', 4, 5); def("B'C'", '棱', 5, 6)
+      def("C'D'", '棱', 6, 7); def("D'A'", '棱', 7, 4)
+      def("AA'", '棱', 0, 4); def("BB'", '棱', 1, 5)
+      def("CC'", '棱', 2, 6); def("DD'", '棱', 3, 7)
+
+      // 底面边
+      def('AB', '底面边', 0, 1); def('BC', '底面边', 1, 2)
+      def('CD', '底面边', 2, 3); def('DA', '底面边', 3, 0)
+      // 顶面边
+      def("A'B'", '顶面边', 4, 5); def("B'C'", '顶面边', 5, 6)
+      def("C'D'", '顶面边', 6, 7); def("D'A'", '顶面边', 7, 4)
+      // 侧棱
+      def("AA'", '侧棱', 0, 4); def("BB'", '侧棱', 1, 5)
+      def("CC'", '侧棱', 2, 6); def("DD'", '侧棱', 3, 7)
+
+      // 面对角线（6 面 × 2 = 12 条）
+      def('AC', '面对角线', 0, 2, true); def('BD', '面对角线', 1, 3, true)      // 底面
+      def("A'C'", '面对角线', 4, 6, true); def("B'D'", '面对角线', 5, 7, true)  // 顶面
+      def("AB'", '面对角线', 0, 5, true); def("A'B", '面对角线', 4, 1, true)    // 后面 ABB'A'
+      def("CD'", '面对角线', 2, 7, true); def("C'D", '面对角线', 6, 3, true)    // 前面 CDD'C'
+      def("D'A", '面对角线', 7, 0, true); def("DA'", '面对角线', 3, 4, true)    // 左面 DAA'D'
+      def("BC'", '面对角线', 1, 6, true); def("B'C", '面对角线', 5, 2, true)    // 右面 BCC'B'
+
+      // 空间对角线
+      def("AC'", '空间对角线', 0, 6, true); def("BD'", '空间对角线', 1, 7, true)
+      def("CA'", '空间对角线', 2, 4, true); def("DB'", '空间对角线', 3, 5, true)
 
       break
     }

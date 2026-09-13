@@ -39,6 +39,14 @@ const CUBOID_VERTICES = [
   [-1,  1, -0.6], [ 1,  1, -0.6], [ 1,  1,  0.6], [-1,  1,  0.6],  // 4-7 顶面
 ]
 
+// 平行六面体：顶面是底面平移同一个向量（所以是斜的，不是正方体）。
+// 真实顶点由题目给的棱长与夹角决定，走 customVertices 覆盖；这里只是拿不到
+// 参数时的兜底形状 —— 它至少是"斜的、标签是 A B C D A'B'C'D'"，不会是正方体。
+const PARALLELEPIPED_VERTICES = [
+  [-1,   -1, -1  ], [ 1,   -1, -1  ], [ 1,   -1,  1  ], [-1,   -1,  1  ],  // 0-3 底面 ABCD
+  [-0.4,  1, -0.4], [ 1.6,  1, -0.4], [ 1.6,  1,  1.6], [-0.4,  1,  1.6],  // 4-7 顶面 A'B'C'D'
+]
+
 // ── 主注册表 ──────────────────────────────────────
 
 /** @type {Object<string, VertexTemplate>} */
@@ -92,6 +100,58 @@ export const VERTEX_TEMPLATES = {
       { vertices: [1, 2, 6, 5] },  // 右面
       { vertices: [2, 3, 7, 6] },  // 后面
       { vertices: [3, 0, 4, 7] },  // 左面
+    ],
+  },
+
+  parallelepiped: {
+    vertices: PARALLELEPIPED_VERTICES,
+    labels: ['A', 'B', 'C', 'D', "A'", "B'", "C'", "D'"],
+    centers: {
+      body: [0, 0, 0],
+      front: [0, 0, 1], back: [0, 0, -1],
+      left: [-1, 0, 0], right: [1, 0, 0],
+      top: [0, 1, 0], bottom: [0, -1, 0],
+    },
+    lines: [
+      // 12 条棱
+      { id: 'AB', from: 0, to: 1, category: '棱', dashed: false },
+      { id: 'BC', from: 1, to: 2, category: '棱', dashed: false },
+      { id: 'CD', from: 2, to: 3, category: '棱', dashed: false },
+      { id: 'DA', from: 3, to: 0, category: '棱', dashed: false },
+      { id: "A'B'", from: 4, to: 5, category: '棱', dashed: false },
+      { id: "B'C'", from: 5, to: 6, category: '棱', dashed: false },
+      { id: "C'D'", from: 6, to: 7, category: '棱', dashed: false },
+      { id: "D'A'", from: 7, to: 4, category: '棱', dashed: false },
+      { id: "AA'", from: 0, to: 4, category: '棱', dashed: false },
+      { id: "BB'", from: 1, to: 5, category: '棱', dashed: false },
+      { id: "CC'", from: 2, to: 6, category: '棱', dashed: false },
+      { id: "DD'", from: 3, to: 7, category: '棱', dashed: false },
+      // 12 条面对角线（6 个面各 2 条）
+      { id: 'AC', from: 0, to: 2, category: '面对角线', dashed: false },
+      { id: 'BD', from: 1, to: 3, category: '面对角线', dashed: false },
+      { id: "A'C'", from: 4, to: 6, category: '面对角线', dashed: false },
+      { id: "B'D'", from: 5, to: 7, category: '面对角线', dashed: false },
+      { id: "AB'", from: 0, to: 5, category: '面对角线', dashed: false },
+      { id: "A'B", from: 4, to: 1, category: '面对角线', dashed: false },
+      { id: "BC'", from: 1, to: 6, category: '面对角线', dashed: false },
+      { id: "B'C", from: 5, to: 2, category: '面对角线', dashed: false },
+      { id: "CD'", from: 2, to: 7, category: '面对角线', dashed: false },
+      { id: "C'D", from: 6, to: 3, category: '面对角线', dashed: false },
+      { id: "DA'", from: 3, to: 4, category: '面对角线', dashed: false },
+      { id: "D'A", from: 7, to: 0, category: '面对角线', dashed: false },
+      // 4 条体对角线
+      { id: "AC'", from: 0, to: 6, category: '体对角线', dashed: false },
+      { id: "BD'", from: 1, to: 7, category: '体对角线', dashed: false },
+      { id: "CA'", from: 2, to: 4, category: '体对角线', dashed: true },
+      { id: "DB'", from: 3, to: 5, category: '体对角线', dashed: true },
+    ],
+    faces: [
+      { vertices: [0, 1, 2, 3] },  // 底面 ABCD
+      { vertices: [4, 5, 6, 7] },  // 顶面 A'B'C'D'
+      { vertices: [0, 1, 5, 4] },  // 前面 ABB'A'
+      { vertices: [1, 2, 6, 5] },  // 右面 BCC'B'
+      { vertices: [2, 3, 7, 6] },  // 后面 CDD'C'
+      { vertices: [3, 0, 4, 7] },  // 左面 DAA'D'
     ],
   },
 
@@ -378,6 +438,10 @@ export const ROLE_DEFINITIONS = {
     baseVertices: [0, 1, 2, 3],
   },
   cube: {
+    baseVertices: [0, 1, 2, 3],
+    topVertices: [4, 5, 6, 7],
+  },
+  parallelepiped: {
     baseVertices: [0, 1, 2, 3],
     topVertices: [4, 5, 6, 7],
   },

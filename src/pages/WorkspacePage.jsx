@@ -11,6 +11,7 @@ import LogicPanel from "../components/LogicPanel";
 import TopicPanel from "../components/TopicPanel";
 import { getLineDefinitions } from "../engines/lineDefinitions";
 import { isPolyhedral, isRenderableShape } from "../engines/geometryEngine";
+import { computeParallelepipedVertices } from "../engines/parallelepipedSolver";
 import { applyConstraints } from "../engines/geometryValidator";
 import { computeVisualIntent } from "../engines/visualIntent";
 import { AnimationController } from "../engines/animationController";
@@ -349,6 +350,12 @@ export default function WorkspacePage({
   // ── Custom vertices (free mode) ──────────────────
   const customVertices = useMemo(() => {
     if (!isPolyhedral(geometry.type)) return null;
+    // 平行六面体的顶点由题目给的棱长和夹角决定，套不进固定模板。反解出来
+    // 才能让图与题目对得上（页面上有测量工具，尺寸不对比没图更误导）。
+    // 取不到参数就返回 null，退回模板里那个斜形状 —— 形状对、尺寸不对，但至少有图。
+    if (geometry.type === "parallelepiped") {
+      return computeParallelepipedVertices(problemText);
+    }
     if (geometry.constraintMode === "free") {
       const modeParams = {
         size: geometry.params.size ?? 2,
@@ -362,6 +369,7 @@ export default function WorkspacePage({
     geometry.constraintMode,
     geometry.params.size,
     geometry.freeEdgeLengths,
+    problemText,
   ]);
 
   // ── Reset on geometry type change ────────────────

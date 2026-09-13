@@ -358,8 +358,8 @@ describe('认不出的几何体不得冒充正方体', () => {
   })
 
   it('认不出的形状一律不可渲染（渲染层据此不出 3D）', () => {
-    expect(isRenderableShape('parallelepiped')).toBe(false)
     expect(isRenderableShape('unknown')).toBe(false)
+    expect(isRenderableShape('某倒霉立体')).toBe(false)
   })
 
   it('认得出的形状不受影响，仍可渲染', () => {
@@ -368,5 +368,12 @@ describe('认不出的几何体不得冒充正方体', () => {
     expect(parseProblemToSemantic('四棱锥P-ABCD中，底面边长为2').shape).toBe('pyramid')
     expect(isRenderableShape('cube')).toBe(true)
     expect(isRenderableShape('pyramid')).toBe(true)
+  })
+
+  it('平行六面体自己可渲染，且顶点是 A B C D A\'B\'C\'D\'（不是立方体的 A-H）', () => {
+    expect(isRenderableShape('parallelepiped')).toBe(true)
+    const semantic = parseProblemToSemantic(PARALLELEPIPED)
+    expect(semantic.points).toEqual(['A', 'B', 'C', 'D', "A'", "B'", "C'", "D'"])
+    expect(semantic.shape).not.toBe('cube')
   })
 })

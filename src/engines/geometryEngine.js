@@ -129,6 +129,12 @@ export function createGeometry(type, params, customVertices) {
     case 'cuboid':
       // 长(size) × 宽(0.6*size) × 高(size)
       return new THREE.BoxGeometry(size, size, size * 0.6)
+    case 'parallelepiped': {
+      // 拿到题目参数时上面就走 customVertices 分支了；到这里说明没参数，
+      // 用模板里那个斜形状兜底 —— 至少不是正方体，标签也是 A B C D A'B'C'D'
+      const tpl = getScaledTemplate('parallelepiped', { size })
+      return createFromArrays(tpl.vertices.flat(), getFaceIndices('parallelepiped'))
+    }
     default:
       return new THREE.BoxGeometry(size, size, size)
   }
@@ -155,6 +161,7 @@ function getFaceIndices(type) {
   switch (type) {
     case 'cube':
     case 'cuboid':
+    case 'parallelepiped':
       return [
         0,1,2, 0,2,3, 4,6,5, 4,7,6,       // 底面 + 顶面
         0,4,5, 0,5,1, 1,5,6, 1,6,2,       // 侧面
@@ -188,7 +195,7 @@ function getFaceIndices(type) {
 
 // 判断是否为棱柱形几何体（可以单独画棱边）
 export function isPolyhedral(type) {
-  return ['cube', 'prism', 'pyramid', 'squareFrustum', 'cuboid', 'tetrahedron', 'octahedron'].includes(type)
+  return ['cube', 'prism', 'pyramid', 'squareFrustum', 'cuboid', 'tetrahedron', 'octahedron', 'parallelepiped'].includes(type)
 }
 
 /**
@@ -204,7 +211,7 @@ export function isPolyhedral(type) {
 export const RENDERABLE_SHAPES = Object.freeze([
   'cube', 'cuboid', 'pyramid', 'prism', 'sphere',
   'cylinder', 'cone', 'tetrahedron', 'octahedron',
-  'squareFrustum', 'circularFrustum',
+  'squareFrustum', 'circularFrustum', 'parallelepiped',
 ])
 
 export function isRenderableShape(type) {

@@ -7,6 +7,11 @@ const SHAPE_EDGE_TEMPLATES = {
  requiredEdges: ['AB', 'BC', 'CD', 'DA', 'EF', 'FG', 'GH', 'HE', 'AE', 'BF', 'CG', 'DH', 'A1B1', 'B1C1', 'C1D1', 'D1A1', 'AA1', 'BB1', 'CC1', 'DD1', "A'B'", "B'C'", "C'D'", "D'A'", "AA'", "BB'", "CC'", "DD'"],
  requiredPoints: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
  },
+ parallelepiped: {
+ // 撇号写法要整条链路都认：底面 A-D + 顶面 A'-D'
+ requiredEdges: ['AB', 'BC', 'CD', 'DA', "A'B'", "B'C'", "C'D'", "D'A'", "AA'", "BB'", "CC'", "DD'"],
+ requiredPoints: ['A', 'B', 'C', 'D', "A'", "B'", "C'", "D'"],
+ },
  cuboid: {
  requiredEdges: ['AB', 'BC', 'CD', 'DA', 'EF', 'FG', 'GH', 'HE', 'AE', 'BF', 'CG', 'DH', 'A1B1', 'B1C1', 'C1D1', 'D1A1', 'AA1', 'BB1', 'CC1', 'DD1', "A'B'", "B'C'", "C'D'", "D'A'", "AA'", "BB'", "CC'", "DD'"],
  requiredPoints: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
@@ -825,7 +830,9 @@ function buildRoleMap(type, labels, basePoints, edges) {
 
     result.apex = apex;
     result.baseVertices = baseVertices;
-  } else if (type === 'cube' || type === 'cuboid') {
+  } else if (type === 'cube' || type === 'cuboid' || type === 'parallelepiped') {
+ // 平行六面体走这条：撇号即"顶面"，无撇号即"底面"，按首字母配对。
+ // 刻意不走锥顶那条叉路 —— 它靠度数猜顶点，棱锥那次就是这么错位一格的。
     const basePointsNoTemplate = Array.from(labelSet).filter(p => p.length <= 2);
 
     const baseVertices = basePointsNoTemplate.filter(p => !p.match(/\d/) && !p.includes("'"));
