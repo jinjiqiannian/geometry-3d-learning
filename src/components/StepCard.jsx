@@ -1,4 +1,5 @@
 import { toTextbookMath } from './statementCompressor'
+import MathText from './MathText'
 import './StepCard.css'
 
 export default function StepCard({ step, index, isCurrent, locked, onClick, currentStep }) {
@@ -30,12 +31,12 @@ export default function StepCard({ step, index, isCurrent, locked, onClick, curr
       </div>
 
       <div className="step-body">
-        <h4 className="step-title">{displayTitle}</h4>
+        <h4 className="step-title"><MathText text={displayTitle} /></h4>
         {displayFormula && (
-          <p className="step-formula">{displayFormula}</p>
+          <p className="step-formula"><MathText text={displayFormula} /></p>
         )}
         <p className={`step-content ${!isCurrent ? 'step-content--clamped' : ''}`}>
-          {displayContent}
+          <MathText text={displayContent} />
         </p>
       </div>
     </div>

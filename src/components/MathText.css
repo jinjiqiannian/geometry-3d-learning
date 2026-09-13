@@ -1,0 +1,30 @@
+/* MathText — 向量等数学记号的 HTML 渲染 */
+
+.math-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 向量：箭头横跨在所有字母上方 */
+.math-vec {
+  position: relative;
+  display: inline-block;
+  padding: 0 1px;
+  line-height: 1.1;
+}
+
+.math-vec::after {
+  content: "→";
+  position: absolute;
+  top: -0.55em;
+  left: -0.05em;
+  right: -0.05em;
+  text-align: center;
+  font-size: 0.9em;
+  line-height: 1;
+  color: inherit;
+  pointer-events: none;
+  /* 拉伸箭头以横跨整个向量内容 */
+  transform: scaleX(1.6);
+  transform-origin: center;
+}

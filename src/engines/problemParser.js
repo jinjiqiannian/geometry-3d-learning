@@ -495,17 +495,10 @@ export function normalizeLatexForDisplay(text) {
   t = t.replace(/\$([^$]*)\$/g, "$1");
 
   // 2. 带参数的命令（先处理，避免命令名被拆）
-  // \overrightarrow{AB} / \vec{AB} → 在内容最后一个字母上方加组合箭头 ⃗（U+20D7），还原教科书向量记号
-  const withArrowAbove = (content) => {
-    const c = String(content);
-    const m = c.match(/[A-Za-z\u0370-\u03ff]/g); // 找最后一个字母（含希腊）
-    if (!m) return `→${c}`; // 无字母则前置箭头
-    const lastLetter = m[m.length - 1];
-    const idx = c.lastIndexOf(lastLetter);
-    return c.slice(0, idx + 1) + "\u20D7" + c.slice(idx + 1);
-  };
-  t = t.replace(/\\(?:overrightarrow|vec)\s*\{([^{}]*)\}/g, (_, c) => withArrowAbove(c));
-  // \overline{AB} → 在最后一个字母上方加上划线 ̅（U+0304）
+  // \overrightarrow{AB} / \vec{AB} → 纯文本用前置箭头 →AB；
+  //   HTML 展示层（MathText 组件）会把 →XX 渲染为横跨字母的上箭头
+  t = t.replace(/\\(?:overrightarrow|vec)\s*\{([^{}]*)\}/g, "→$1");
+  // \overline{AB} → AB̅（组合上划线 U+0304 挂在最后一个字母上）
   const withOverline = (content) => {
     const c = String(content);
     const m = c.match(/[A-Za-z\u0370-\u03ff]/g);
