@@ -287,13 +287,17 @@ export default function WorkspacePage({
       const shared = decodeShare(shareParam);
       if (shared) {
         setProblemText(shared.text || "");
+        // 分享出来的是几何场景，必须一并切专题：subject 初始停在 combo，
+        // 不切的话 WorkspacePage 挂载了却渲染成 LogicPanel，看不到场景。
+        applySubjectNav("geometry");
+        setHubActive(false);
         if (shared.geometry) {
           setGeometry({
-            type: shared.geometry.type || "cube",
+            type: shared.geometry.type || "unknown",
             params: {
               size: shared.geometry.size || shared.geometry.params?.size || 2,
             },
-            ...defaultConstraintParams(shared.geometry.type || "cube"),
+            ...defaultConstraintParams(shared.geometry.type || "unknown"),
           });
         }
         if (shared.steps) {

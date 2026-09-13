@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import WorkspacePage from "./WorkspacePage";
 import { normalizeLatexForDisplay } from "../engines/problemParser";
+import { detectShareParam, decodeShare } from "../engines/shareUtils";
 import {
   compressComposeImage,
   runCloudOcrWithRetry,
@@ -14,6 +15,13 @@ export default function SearchPage() {
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState(null);
   const [nonce, setNonce] = useState(0);
+  // 分享链接（/#/search?share=xxx）要直接挂载 WorkspacePage，场景由它自己解码还原。
+  // 这里只负责"挂上去"这一个判断，所以故意不传 initialQuery —— 传了会再走一遍
+  // AI 解析，既白花钱，得到的也不是分享时那个场景。
+  const [shareBoot, setShareBoot] = useState(() => {
+    const param = detectShareParam();
+    return !!(param && decodeShare(param));
+  });
 
   // ── 拍照识题（复用 WorkspacePage 的云端→本地降级链路）──
   const [composeImage, setComposeImage] = useState(null);
@@ -76,14 +84,17 @@ export default function SearchPage() {
     setOcrBusy(false);
   }, []);
 
-  if (query) {
+  if (query || shareBoot) {
     return (
       <div className="search-page search-page--active">
         <WorkspacePage
-          key={`${nonce}-${query.slice(0, 24)}`}
+          key={`${nonce}-${query ? query.slice(0, 24) : "share"}`}
           variant="search"
           initialQuery={query}
-          onRequestExit={() => setQuery(null)}
+          onRequestExit={() => {
+            setQuery(null);
+            setShareBoot(false);
+          }}
         />
       </div>
     );

@@ -122,8 +122,10 @@ export function generateShareUrl(data) {
   const encoded = encodeShare(data)
   if (!encoded) return ''
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://jiheweidu.cn'
-  // Hash routing: /#/workspace?share=xxx
-  return `${origin}/#/workspace?share=${encoded}`
+  // Hash routing: /#/search?share=xxx
+  // 注意：不要指回 /#/workspace —— 那条路由已经重定向到 /search，
+  // 重定向会把 share 参数一起丢掉，链接等于打不开。
+  return `${origin}/#/search?share=${encoded}`
 }
 
 /**
