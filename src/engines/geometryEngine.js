@@ -136,7 +136,10 @@ export function createGeometry(type, params, customVertices) {
       return createFromArrays(tpl.vertices.flat(), getFaceIndices('parallelepiped'))
     }
     default:
-      return new THREE.BoxGeometry(size, size, size)
+      // 认不出的形状不画 —— 返回 null，不兜底成立方体。
+      // 见 RENDERABLE_SHAPES 上方那段注释：画一张与题目无关的图比不画更糟，
+      // 因为学生不知道自己在看一张错图。约定同 computeParallelepipedVertices。
+      return null
   }
 }
 
@@ -188,6 +191,21 @@ function getFaceIndices(type) {
         1,6,2, 1,5,6,                       // 右面
         0,7,3, 0,4,7,                       // 左面
       ]
+    // 四面体：SceneIR 的顶点顺序与 createGeometry 里 hardcode 的顶点点位逐位
+    // 相同（实测 A(-h,-h,-h) B(h,h,-h) C(h,-h,h) D(-h,h,h)），索引可直接照搬。
+    case 'tetrahedron':
+      return [
+        0,1,2, 0,3,1, 0,2,3, 1,3,2,
+      ]
+    // 八面体：顺序**不同**，必须重映射。SceneIR 是 T,R,F,L,B,D，
+    // 而 createGeometry 是 T,L,B,R,F,D —— 照搬索引会把面连错。
+    // 下面这组是按下标对应关系（cg 0→IR 0、cg 1→IR 3、cg 2→IR 4、
+    // cg 3→IR 1、cg 4→IR 2、cg 5→IR 5）换算后的结果。
+    case 'octahedron':
+      return [
+        0,3,4, 0,4,1, 0,1,2, 0,2,3,
+        5,3,4, 5,4,1, 5,1,2, 5,2,3,
+      ]
     default:
       return []
   }
@@ -220,7 +238,12 @@ export function isRenderableShape(type) {
 
 export function createGeometryFromSceneIR(sceneIR) {
   if (!sceneIR || !sceneIR.points || sceneIR.points.length === 0) {
-    return new THREE.BoxGeometry(2, 2, 2)
+    // 没有顶点就没有图 —— 返回 null，不返回一个替代形状。
+    // 这里曾经静默返回 BoxGeometry(2,2,2)，与 411632a 修掉的"认不出的形状
+    // 兜底成正方体"是同一类错误：画出来是一张与题目毫无关系的图，而且不报错，
+    // 学生不知道自己在看一张错图。约定与 computeParallelepipedVertices 一致：
+    // 拿不到就交回调用方，由它决定"不画"。
+    return null
   }
 
   const vertices = sceneIR.points.map(p => p.position)
@@ -253,7 +276,8 @@ export function createGeometryFromSceneIR(sceneIR) {
     case 'cuboid':
       return new THREE.BoxGeometry(size, size, size * 0.6)
     default:
-      return new THREE.BoxGeometry(size, size, size)
+      // 同 createGeometry：认不出就返回 null，不拿立方体顶上。
+      return null
   }
 }
 

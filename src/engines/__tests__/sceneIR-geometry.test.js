@@ -23,8 +23,10 @@ const CASES = [
   ['圆柱', '已知圆柱的底面半径为 2，高为 5，求圆柱的体积与侧面积。'],
   ['圆锥', '已知圆锥的底面半径为 3，高为 4，求圆锥的体积与侧面积。'],
   ['球', '已知球的半径为 3，求球的体积与表面积。'],
-  ['正四棱台', '已知正四棱台的上底面边长为 2，下底面边长为 4，高为 3，求其体积。'],
   ['正四面体', '已知正四面体的棱长为 2，求其体积与表面积。'],
+  // 正四棱台不在此列：它目前解析不出形状、IR 里没有顶点，见文件末尾
+  // 「已知缺口」那条测试。以前它混在这里，靠"空 points 静默兜底成立方体、
+  // 而立方体没有 NaN"蒙混过关 —— 正是这组测试最该抓住的东西。
 ]
 
 /** 体检一份 SceneIR：返回所有异常描述，空数组代表健康 */
@@ -68,6 +70,11 @@ function auditGeometry(ir) {
   } catch (e) {
     return [`createGeometryFromSceneIR 抛错：${e.message}`]
   }
+
+  // 没有顶点时它返回 null 而不是兜底成立方体（见 geometryEngine 里的注释）。
+  // 这几组用例的 IR 都是有顶点的，返回 null 说明上游出了问题，如实记一笔 ——
+  // 否则下面 geo.getAttribute 会直接 TypeError，把"图没画出来"报成"测试崩了"。
+  if (!geo) return ['createGeometryFromSceneIR 返回 null（没有顶点，画不出图）']
 
   const pos = geo.getAttribute?.('position')
   if (pos) {
@@ -171,4 +178,30 @@ describe('SceneIR → 几何体：不得产生 NaN', () => {
       expect(problems, `\n  ${problems.join('\n  ')}\n`).toEqual([])
     })
   }
+})
+
+/**
+ * 已知缺口 —— 写在这里不是为了让它变绿，是为了让它显式。
+ *
+ * parser 的 shapePatterns 里有「圆台 → circularFrustum」，却没有
+ * 「正四棱台 → squareFrustum」。于是正四棱台落到 shape: 'unknown'、points 为空，
+ * 而 RENDERABLE_SHAPES 里列着 squareFrustum —— 这个形状从中文题面根本走不到，
+ * 是一段死代码。
+ *
+ * 线上暂时不出错：canRender3D 见到 'unknown' 会隐藏画布。但「引擎支持、
+ * 解析器产不出」这个缺口本身该被修，先在这里钉住现状。
+ *
+ * 注意这是**现状描述**：修好 parser 之后这条会失败，那是提醒你来更新它，
+ * 不是回归。
+ */
+it('正四棱台：目前解析不出形状，IR 无顶点（已知缺口）', () => {
+  const semantic = parseProblemToSemantic(
+    '已知正四棱台的上底面边长为 2，下底面边长为 4，高为 3，求其体积。',
+  )
+  const ir = buildSceneIRSequenceFromSemantic(semantic, [])[0]
+
+  expect(semantic.shape).toBe('unknown')
+  expect(ir.points).toEqual([])
+  // 没有顶点就不给替代形状 —— 以前这里会拿到一个立方体
+  expect(createGeometryFromSceneIR(ir)).toBeNull()
 })

@@ -561,7 +561,9 @@ const sceneIRAnim = useRef({ camera: null });
  <directionalLight position={[-6, -4, -5]} intensity={0.35}/>
 
  {sceneIR && (<>
- {showFaces && (<mesh renderOrder={1}>
+ {/* geoData 可能是 null —— SceneIR 没有顶点时不再兜底成正方体
+     （见 createGeometryFromSceneIR）。没有图就不画，不拿替代形状顶上。 */}
+ {showFaces && geoData && (<mesh renderOrder={1}>
  <primitive attach="geometry" object={geoData}/>
  <meshLambertMaterial color={'#d8dde6'} transparent opacity={currentFaceOpacity.current} depthWrite={false} side={THREE.DoubleSide}/>
  </mesh>)}
@@ -622,7 +624,8 @@ const sceneIRAnim = useRef({ camera: null });
  <AnnotationRenderer annotations={sceneIR.annotations} points={sceneIR.points} lines={sceneIR.lines}/>
  </>)}
 
- {!sceneIR && showFaces && (<mesh renderOrder={1}>
+ {/* geoData 同样可能是 null：createGeometry 认不出类型时也返回 null（不再兜底） */}
+ {!sceneIR && showFaces && geoData && (<mesh renderOrder={1}>
  <primitive attach="geometry" object={geoData}/>
  <meshLambertMaterial color={'#d8dde6'} transparent opacity={currentFaceOpacity.current} depthWrite={false} side={THREE.DoubleSide}/>
  </mesh>)}
