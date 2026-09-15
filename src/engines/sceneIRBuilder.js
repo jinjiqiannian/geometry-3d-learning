@@ -135,6 +135,53 @@ export function buildBaseSceneIR(type, params, roleMap, pointPositions, edges) {
     labelVisibility: {},
   };
 }
+
+/**
+ * 「通过校验的 AI 候选场景」→ SceneIR。
+ *
+ * 这是闸门的出口，也是 AI 坐标唯一被允许进入渲染层的地方 —— 调用方**必须**
+ * 先拿到 validateSceneIR 的 ok，再来调这里。
+ *
+ * 本函数刻意不做任何校验：校验归 sceneIRValidator，转换归转换。混在一起的话
+ * 「这份 IR 到底有没有验过」就说不清了，而那恰恰是这条链路上最要紧的一件事。
+ *
+ * candidate: { points: [{id, position}], edges: [[fromId, toId]], faces: [[idx]] }
+ */
+export function buildSceneIRFromCandidate(candidate) {
+  const points = candidate.points.map((p) => ({
+    id: p.id,
+    label: p.id,
+    position: p.position,
+    visible: true,
+  }));
+
+  // 面索引直接带过去：createGeometryFromSceneIR 优先用 faces，
+  // 比回头猜 getFaceIndices(type) 准确 —— AI 给的拓扑就是它自己的拓扑。
+  const seen = new Set();
+  const lines = [];
+  for (const [from, to] of candidate.edges) {
+    const key = edgeId(from, to);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    lines.push({
+      id: key,
+      from,
+      to,
+      category: '棱',
+      dashed: false,
+      visible: true,
+      highlighted: false,
+    });
+  }
+
+  return {
+    points,
+    lines,
+    faces: candidate.faces,
+    labelVisibility: {},
+  };
+}
+
 export function buildSceneIRFromSemantic(semantic) {
   const labelToPosition = semantic.pointPositions || {};
 

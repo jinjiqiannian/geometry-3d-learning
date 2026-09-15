@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { validateSceneIR } from '../sceneIRValidator'
 import { computeParallelepipedVertices } from '../parallelepipedSolver'
+import { buildSceneIRFromCandidate } from '../sceneIRBuilder'
+import { createGeometryFromSceneIR } from '../geometryEngine'
 
 /**
  * 校验器是 AI 坐标流向渲染层之前的唯一闸门（见 .claude/skills/scene-ir-core/SKILL.md）。
@@ -303,6 +305,41 @@ describe('负例 · 声明：模型说得出，就用点积验一遍', () => {
     })
     const r = validateSceneIR(withClaim, CUBE_TEXT)
     expect(r).toMatchObject({ ok: false, code: 'CLAIM_FALSE' })
+  })
+})
+
+// 契约两头：校验器吃「候选场景」，渲染层吃「SceneIR」，中间靠
+// buildSceneIRFromCandidate 接。只测一头的话，两头各自都对、接起来不通，
+// 要等接上 UI 才会发现。
+describe('整条链：候选 → 校验 → SceneIR → 几何体', () => {
+  it('平行六面体：转出的 IR 能建出无 NaN 的几何体，拓扑与候选一致', () => {
+    const scene = paraScene()
+    expect(validateSceneIR(scene, PARA_TEXT).ok).toBe(true)
+
+    const ir = buildSceneIRFromCandidate(scene)
+    expect(ir.points).toHaveLength(8)
+    expect(ir.points.map((p) => p.id)).toEqual(PARA_IDS)
+    expect(ir.lines).toHaveLength(PARA_EDGES.length)
+    // 棱的 id 归一：DA 与 AD 是同一条，不该出现两份
+    expect(new Set(ir.lines.map((l) => l.id)).size).toBe(ir.lines.length)
+
+    const geo = createGeometryFromSceneIR(ir)
+    expect(geo).not.toBeNull()
+    const pos = geo.getAttribute('position')
+    for (let i = 0; i < pos.array.length; i++) {
+      expect(Number.isFinite(pos.array[i]), `position[${i}] 不是有限值`).toBe(true)
+    }
+  })
+
+  it('正方体：同样走得通，且面用的是候选给的索引', () => {
+    expect(validateSceneIR(CUBE, CUBE_TEXT).ok).toBe(true)
+
+    const ir = buildSceneIRFromCandidate(CUBE)
+    expect(ir.faces).toEqual(CUBE.faces)
+
+    const geo = createGeometryFromSceneIR(ir)
+    expect(geo).not.toBeNull()
+    expect(geo.getIndex().count).toBe(CUBE.faces.flat().length)
   })
 })
 
