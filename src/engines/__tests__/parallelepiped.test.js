@@ -67,6 +67,38 @@ describe('computeParallelepipedVertices', () => {
     }
   })
 
+  // 这一组盯的是顶点 C。上面每条断言都只用 A、B、D 与"平移量"，
+  // 而整体平移一致使得 C 错位也照样成立 —— 曾经 C 的第三分量被误写成
+  // B[1] + D[1]（恒为 0），∠BAD = 90° 时 C 与 B 逐位相同、底面塌成一条线，
+  // 15 条测试没有一个报错。所以这里必须直接断言 C 本身。
+  it('底面 ABCD 是平行四边形：C − B = D − A', () => {
+    const cb = sub(V[2], V[1])
+    const da = sub(V[3], V[0])
+    cb.forEach((v, i) => expect(v).toBeCloseTo(da[i], 9))
+  })
+
+  it('底面四个顶点两两不重合（C 曾与 B 完全重合）', () => {
+    for (let i = 0; i < 4; i++) {
+      for (let j = i + 1; j < 4; j++) {
+        expect(
+          len(sub(V[i], V[j])),
+          `底面顶点 ${i} 与 ${j} 重合`,
+        ).toBeGreaterThan(1e-9)
+      }
+    }
+  })
+
+  it('底面有面积（A、B、D 共线的话底面退化）', () => {
+    const ab = sub(V[1], V[0])
+    const ad = sub(V[3], V[0])
+    const n = [
+      ab[1] * ad[2] - ab[2] * ad[1],
+      ab[2] * ad[0] - ab[0] * ad[2],
+      ab[0] * ad[1] - ab[1] * ad[0],
+    ]
+    expect(len(n), '底面面积为 0').toBeGreaterThan(1e-9)
+  })
+
   // 图形整体缩放到画布视野内（保持相似），所以验的是比例与夹角，不是绝对值
   const AB = len(sub(V[1], V[0]))
   const AD = len(sub(V[3], V[0]))

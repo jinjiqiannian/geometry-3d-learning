@@ -21,7 +21,29 @@
 
 import { normalizeLatexForDisplay } from './problemParser';
 
-const NUM = String.raw`(\d+(?:\.\d+)?)`;
+/**
+ * 题面里的数值写法：2、2.5、2√3、√3。
+ *
+ * 根号必须认 —— 曾经只写 `(\d+(?:\.\d+)?)`，于是「侧棱长为 2√3」被截成 2。
+ * 拿一个**错的**值去校验比拿不到值更糟：拿不到只会退回不画，拿错了会
+ * 一本正经地把对的图判成错的。
+ */
+export const NUM_PAT = String.raw`((?:\d+(?:\.\d+)?\s*)?√\s*\d+(?:\.\d+)?|\d+(?:\.\d+)?)`;
+
+/** 把 NUM_PAT 捕获到的字面量转成数值；认不出返回 null */
+export function parseNum(raw) {
+  const s = String(raw ?? '').replace(/\s+/g, '');
+  if (!s) return null;
+  if (!s.includes('√')) {
+    const v = parseFloat(s);
+    return Number.isFinite(v) ? v : null;
+  }
+  const [coef, rad] = s.split('√');
+  const c = coef === '' ? 1 : parseFloat(coef);
+  const r = parseFloat(rad);
+  if (!Number.isFinite(c) || !Number.isFinite(r)) return null;
+  return c * Math.sqrt(r);
+}
 
 /** 顶点到形心的目标距离：与默认 size=2 的图形同一量级，正好落在相机视野内 */
 const FIT_RADIUS = 2.4;
@@ -31,28 +53,35 @@ function primeFlexible(label) {
   return label.replace(/'/g, "['’′]");
 }
 
-/** 取边长：AB = 4 / |AB| = 4 */
-function lengthOf(text, label) {
+/**
+ * 取边长：AB = 4 / |AB| = 4
+ *
+ * 导出供 sceneIRValidator 复用 —— 校验 AI 候选场景的"数值"一项时，
+ * 题目给的边长就是唯一的证据来源。复制一份会造成两处解析各自漂移。
+ */
+export function lengthOf(text, label) {
   const esc = primeFlexible(label);
   const re = new RegExp(
-    String.raw`(?:^|[^A-Za-z0-9'])${esc}\s*\|?\s*=\s*` + NUM
+    String.raw`(?:^|[^A-Za-z0-9'])${esc}\s*\|?\s*=\s*` + NUM_PAT
   );
   const m = text.match(re);
-  return m ? parseFloat(m[1]) : null;
+  return m ? parseNum(m[1]) : null;
 }
 
 /**
  * 取角度：∠BAA' = 60° / ∠BAA'=∠DAA'=60°
  * 后面那种连写要认 —— 值挂在最后一个名字上，所以允许中间串若干 "∠名字="。
+ *
+ * 同 lengthOf，导出供 sceneIRValidator 复用。
  */
-function angleOf(text, labels) {
+export function angleOf(text, labels) {
   for (const label of labels) {
     const esc = primeFlexible(label);
     const re = new RegExp(
-      String.raw`[∠]\s*${esc}\s*=\s*(?:[∠]\s*[A-Z][A-Z0-9'’′]*\s*=\s*)*` + NUM
+      String.raw`[∠]\s*${esc}\s*=\s*(?:[∠]\s*[A-Z][A-Z0-9'’′]*\s*=\s*)*` + NUM_PAT
     );
     const m = text.match(re);
-    if (m) return parseFloat(m[1]);
+    if (m) return parseNum(m[1]);
   }
   return null;
 }
@@ -92,7 +121,10 @@ export function computeParallelepipedVertices(problemText) {
   const A = [0, 0, 0];
   const B = [ab, 0, 0];
   const D = [ad * Math.cos(rad(baseAngle)), 0, ad * Math.sin(rad(baseAngle))];
-  const C = [B[0] + D[0], 0, B[1] + D[1]];
+  // C = B + D，逐分量写全。曾经这里第三分量误写成 B[1] + D[1]（恒为 0），
+  // 于是 C 落回 x 轴与 B 重合、底面退化成一条线 —— 而测试只断言了 A、B、D
+  // 和"顶面=底面平移"，整体平移一致使得错误照样通过。别再拆开手写分量。
+  const C = [B[0] + D[0], B[1] + D[1], B[2] + D[2]];
 
   const ax = aa * Math.cos(rad(angleB));
   // AA'·AD = ax·Dx + az·Dz = |AA'||AD|cos∠DAA'
