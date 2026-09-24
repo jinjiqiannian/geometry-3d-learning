@@ -282,9 +282,12 @@ export default function KnowledgeModel({ type = "venn", accent = "", animate = f
         </Frame>
       );
     case "cube":
-      return accent === "perp" ? perpDemo() : isoBox(1, 1, 1, accent, animate);
+      if (accent === "perp") return perpDemo();
+      if (accent === "metrics") return isoBox(1, 1, 1, accent, animate);
+      if (accent === "coord") return cubeCoordFigure();
+      return cubeDiagonalFigure(accent);
     case "cuboid":
-      return isoBox(1.38, 0.88, 1, accent, animate);
+      return cuboidFigure(accent);
     case "pyramid":
       return isoPyramid(accent, animate);
     case "prism":
@@ -1004,6 +1007,184 @@ function isoBox(sx, sy, sz, accent = "", animate = false) {
   );
 }
 
+/**
+ * 斜二测投影：x 轴水平向右，y 轴竖直向上，z 轴与水平成 45° 且长度减半。
+ * 等轴测下正方体的体对角线沿视向，A 与 G 会投影重合（线退化成一点），
+ * 所以凡是要画出体对角线的图都必须换成斜二测。
+ */
+function oblique(ox, oy, scale, sx, sy, sz) {
+  const k = Math.SQRT1_2;
+  return (x, y, z) => [
+    +(ox + (x * sx + z * sz * k) * scale).toFixed(1),
+    +(oy - (y * sy + z * sz * k) * scale).toFixed(1),
+  ];
+}
+
+/**
+ * 正方体体对角线：棱 AF（前面）、面对角线 AF、体对角线 AG 组成 Rt△AFG，
+ * AF = a√2，FG = a，AG = √(AF² + FG²) = a√3。
+ */
+function cubeDiagonalFigure(accent = "") {
+  const P = oblique(96, 286, 86, 1, 1, 1);
+  const A = P(0, 0, 0);
+  const B = P(1, 0, 0);
+  const C = P(1, 0, 1);
+  const D = P(0, 0, 1);
+  const E = P(0, 1, 0);
+  const F = P(1, 1, 0);
+  const G = P(1, 1, 1);
+  const H = P(0, 1, 1);
+  const focusFace = accent === "face-diag";
+
+  return (
+    <Frame>
+      <ellipse className="km-shadow" cx="170" cy="312" rx="126" ry="13" />
+      {/* 可见面：前面 A B F E、右面 B C G F、上面 E F G H；隐藏角是 D */}
+      <path className="km-fill-b" d={poly([E, F, G, H])} />
+      <path className="km-fill-c" d={poly([B, C, G, F])} />
+      <path className="km-fill-a" d={poly([A, B, F, E])} />
+      <Seg a={A} b={D} className="km-hidden" />
+      <Seg a={D} b={C} className="km-hidden" />
+      <Seg a={D} b={H} className="km-hidden" />
+      <Seg a={A} b={B} className="km-stroke-thick" />
+      <Seg a={B} b={C} className="km-stroke-thick" />
+      <Seg a={C} b={G} className="km-stroke-thick" />
+      <Seg a={G} b={H} className="km-stroke-thick" />
+      <Seg a={H} b={E} className="km-stroke-thick" />
+      <Seg a={E} b={A} className="km-stroke-thick" />
+      <Seg a={E} b={F} className="km-stroke-thick" />
+      <Seg a={F} b={B} className="km-stroke-thick" />
+      <Seg a={F} b={G} className="km-stroke-thick" />
+      {/* 面对角线 AF 与体对角线 AG：按播放进度在两者之间切换强调 */}
+      <Seg a={A} b={F} className={focusFace ? "km-accent-line km-diag" : "km-teal-line"} />
+      <Seg a={A} b={G} className={focusFace ? "km-teal-line" : "km-accent-line km-diag"} />
+      <text className="km-formula" x={(A[0] + B[0]) / 2} y={A[1] + 22} textAnchor="middle">a</text>
+      <text className="km-vtx" x={(A[0] + F[0]) / 2 - 10} y={(A[1] + F[1]) / 2 + 4}>a√2</text>
+      <text className="km-vtx" x={(A[0] + G[0]) / 2 - 4} y={(A[1] + G[1]) / 2 - 6}>a√3</text>
+      <text className="km-formula" x="462" y="44" textAnchor="end">Rt△AFG：AG² = AF² + FG²</text>
+      <text className="km-formula" x="462" y="68" textAnchor="end">AF = a√2，FG = a</text>
+      <text className="km-formula" x="462" y="92" textAnchor="end">∴ AG = a√3</text>
+      <Vtx p={A} name="A" dx={-16} dy={18} />
+      <Vtx p={B} name="B" dx={6} dy={18} />
+      <Vtx p={C} name="C" dx={10} dy={2} />
+      <Vtx p={D} name="D" dx={-16} dy={-2} />
+      <Vtx p={E} name="E" dx={-16} dy={-4} />
+      <Vtx p={F} name="F" dx={6} dy={-8} />
+      <Vtx p={G} name="G" dx={10} dy={-6} />
+      <Vtx p={H} name="H" dx={-16} dy={-6} />
+    </Frame>
+  );
+}
+
+/**
+ * 空间中的体对角线：以 A 为原点建系，三条棱分别作 x、y、z 轴，
+ * G 的坐标是 (a, a, a)，于是 AG = √(a²+a²+a²) = a√3。
+ */
+function cubeCoordFigure() {
+  const P = oblique(96, 286, 86, 1, 1, 1);
+  const A = P(0, 0, 0);
+  const B = P(1, 0, 0);
+  const C = P(1, 0, 1);
+  const D = P(0, 0, 1);
+  const E = P(0, 1, 0);
+  const F = P(1, 1, 0);
+  const G = P(1, 1, 1);
+  const H = P(0, 1, 1);
+
+  return (
+    <Frame>
+      <ellipse className="km-shadow" cx="170" cy="312" rx="126" ry="13" />
+      <path className="km-fill-b" d={poly([E, F, G, H])} />
+      <path className="km-fill-c" d={poly([B, C, G, F])} />
+      <path className="km-fill-a" d={poly([A, B, F, E])} />
+      <Seg a={A} b={D} className="km-hidden" />
+      <Seg a={D} b={C} className="km-hidden" />
+      <Seg a={D} b={H} className="km-hidden" />
+      <Seg a={A} b={B} className="km-stroke-thick" />
+      <Seg a={B} b={C} className="km-stroke-thick" />
+      <Seg a={C} b={G} className="km-stroke-thick" />
+      <Seg a={G} b={H} className="km-stroke-thick" />
+      <Seg a={H} b={E} className="km-stroke-thick" />
+      <Seg a={E} b={A} className="km-stroke-thick" />
+      <Seg a={E} b={F} className="km-stroke-thick" />
+      <Seg a={F} b={B} className="km-stroke-thick" />
+      <Seg a={F} b={G} className="km-stroke-thick" />
+      {/* 三条坐标轴：AB→x，AE→y，AD→z（z 轴退到纸面里，画成虚线） */}
+      <Seg a={A} b={B} className="km-accent-line" />
+      <Seg a={A} b={E} className="km-accent-line" />
+      <Seg a={A} b={D} className="km-accent-line km-hidden" />
+      <Seg a={A} b={G} className="km-teal-line km-diag" />
+      <circle className="km-dot" cx={A[0]} cy={A[1]} r="4" />
+      <text className="km-formula" x={(A[0] + B[0]) / 2 + 4} y={A[1] - 6}>x</text>
+      <text className="km-formula" x={A[0] - 18} y={(A[1] + E[1]) / 2}>y</text>
+      <text className="km-formula" x={(A[0] + D[0]) / 2} y={(A[1] + D[1]) / 2 + 18}>z</text>
+      <text className="km-formula" x={A[0] - 60} y={A[1] + 22}>A(0, 0, 0)</text>
+      <text className="km-formula" x="462" y="44" textAnchor="end">以 A 为原点建系</text>
+      <text className="km-formula" x="462" y="68" textAnchor="end">G(a, a, a)</text>
+      <text className="km-formula" x="462" y="92" textAnchor="end">AG = √(a²+a²+a²) = a√3</text>
+      <Vtx p={B} name="B" dx={6} dy={18} />
+      <Vtx p={E} name="E" dx={-16} dy={-6} />
+      <Vtx p={D} name="D" dx={-16} dy={-2} />
+      <Vtx p={G} name="G" dx={10} dy={-6} />
+    </Frame>
+  );
+}
+
+/**
+ * 长方体对角线：底面对角线 AC = √(a²+b²)，体对角线 AG = √(a²+b²+c²)，
+ * 三向棱长 a（长）、b（宽）、c（高）分别标在三条棱上。
+ */
+function cuboidFigure(accent = "") {
+  const P = oblique(100, 284, 74, 1.5, 1, 1);
+  const A = P(0, 0, 0);
+  const B = P(1, 0, 0);
+  const C = P(1, 0, 1);
+  const D = P(0, 0, 1);
+  const E = P(0, 1, 0);
+  const F = P(1, 1, 0);
+  const G = P(1, 1, 1);
+  const H = P(0, 1, 1);
+  const focusBottom = accent === "face-diag";
+
+  return (
+    <Frame>
+      <ellipse className="km-shadow" cx="182" cy="306" rx="136" ry="13" />
+      <path className="km-fill-b" d={poly([E, F, G, H])} />
+      <path className="km-fill-c" d={poly([B, C, G, F])} />
+      <path className="km-fill-a" d={poly([A, B, F, E])} />
+      <Seg a={A} b={D} className="km-hidden" />
+      <Seg a={D} b={C} className="km-hidden" />
+      <Seg a={D} b={H} className="km-hidden" />
+      <Seg a={A} b={B} className="km-stroke-thick" />
+      <Seg a={B} b={C} className="km-stroke-thick" />
+      <Seg a={C} b={G} className="km-stroke-thick" />
+      <Seg a={G} b={H} className="km-stroke-thick" />
+      <Seg a={H} b={E} className="km-stroke-thick" />
+      <Seg a={E} b={A} className="km-stroke-thick" />
+      <Seg a={E} b={F} className="km-stroke-thick" />
+      <Seg a={F} b={B} className="km-stroke-thick" />
+      <Seg a={F} b={G} className="km-stroke-thick" />
+      {/* 底面对角线 AC 与体对角线 AG */}
+      <Seg a={A} b={C} className={focusBottom ? "km-accent-line km-diag" : "km-teal-line"} />
+      <Seg a={A} b={G} className={focusBottom ? "km-teal-line" : "km-accent-line km-diag"} />
+      <text className="km-formula" x={(A[0] + B[0]) / 2} y={A[1] + 22} textAnchor="middle">a</text>
+      <text className="km-formula" x={(B[0] + C[0]) / 2 + 12} y={(B[1] + C[1]) / 2 + 6}>b</text>
+      <text className="km-formula" x={A[0] - 20} y={(A[1] + E[1]) / 2 + 4}>c</text>
+      <text className="km-formula" x="462" y="44" textAnchor="end">AC = √(a²+b²)（底面对角线）</text>
+      <text className="km-formula" x="462" y="68" textAnchor="end">AG = √(AC²+c²)</text>
+      <text className="km-formula" x="462" y="92" textAnchor="end">∴ AG = √(a²+b²+c²)</text>
+      <Vtx p={A} name="A" dx={-16} dy={18} />
+      <Vtx p={B} name="B" dx={6} dy={18} />
+      <Vtx p={C} name="C" dx={10} dy={2} />
+      <Vtx p={D} name="D" dx={-16} dy={-2} />
+      <Vtx p={E} name="E" dx={-16} dy={-4} />
+      <Vtx p={F} name="F" dx={6} dy={-8} />
+      <Vtx p={G} name="G" dx={10} dy={-6} />
+      <Vtx p={H} name="H" dx={-16} dy={-6} />
+    </Frame>
+  );
+}
+
 /** 线面垂直判定：面内两条相交直线 m、n，l 垂直于它们 ⇒ l⊥α */
 function perpDemo() {
   return (
@@ -1049,6 +1230,9 @@ function isoPyramid(accent = "", animate = false) {
       <Seg a={S} b={C} className="km-stroke-thick" />
       {showH && <Seg a={S} b={O} className={hClass} />}
       {showH && <circle className="km-dot" cx={O[0]} cy={O[1]} r="4" />}
+      {showH && <text className="km-vtx" x={O[0] + 10} y={(S[1] + O[1]) / 2}>h</text>}
+      <text className="km-formula" x="462" y="44" textAnchor="end">底面 ABCD，底面积 S底</text>
+      <text className="km-formula" x="462" y="68" textAnchor="end">V = ⅓S底h</text>
       <Vtx p={S} name="S" dx={-4} dy={-8} />
       <Vtx p={A} name="A" dx={-16} dy={16} />
       <Vtx p={B} name="B" dx={8} dy={16} />
@@ -1075,6 +1259,9 @@ function isoCylinder(accent = "", animate = false) {
       {accent === "radius" || showH ? (
         <line className="km-teal-line" x1="240" y1="108" x2="332" y2="108" />
       ) : null}
+      <text className="km-formula" x="462" y="44" textAnchor="end">底面半径 r，高 h</text>
+      <text className="km-formula" x="462" y="68" textAnchor="end">V = πr²h</text>
+      <text className="km-formula" x="462" y="92" textAnchor="end">S侧 = 2πrh</text>
       <Vtx p={[240, 108]} name="O" dx={-4} dy={-8} />
       <text className="km-vtx" x="280" y="100" textAnchor="middle">r</text>
       <text className="km-vtx" x="226" y="184" textAnchor="end">h</text>
@@ -1096,6 +1283,10 @@ function isoCone(accent = "", animate = false) {
       <line className="km-stroke-thick" x1="240" y1="68" x2="352" y2="258" />
       {showH && <line className={hClass} x1="240" y1="68" x2="240" y2="258" />}
       {showH && <line className="km-teal-line" x1="240" y1="258" x2="352" y2="258" />}
+      <text className="km-vtx" x="306" y="156">l</text>
+      <text className="km-formula" x="462" y="44" textAnchor="end">底面半径 r，高 h，母线 l</text>
+      <text className="km-formula" x="462" y="68" textAnchor="end">V = ⅓πr²h</text>
+      <text className="km-formula" x="462" y="92" textAnchor="end">S侧 = πrl</text>
       <Vtx p={[240, 68]} name="S" dx={-4} dy={-8} />
       <Vtx p={[240, 258]} name="O" dx={-4} dy={16} />
       <text className="km-vtx" x="296" y="252" textAnchor="middle">r</text>
@@ -1117,6 +1308,9 @@ function isoSphere(accent = "", animate = false) {
       <circle className="km-stroke" cx="240" cy="168" r="102" />
       {showR && <line className={rClass} x1="240" y1="168" x2="342" y2="168" />}
       {showR && <circle className="km-dot" cx="240" cy="168" r="4" />}
+      <text className="km-formula" x="462" y="44" textAnchor="end">球心 O，半径 r</text>
+      <text className="km-formula" x="462" y="68" textAnchor="end">V = 4/3·πr³</text>
+      <text className="km-formula" x="462" y="92" textAnchor="end">S = 4πr²</text>
       <Vtx p={[240, 168]} name="O" dx={-4} dy={-8} />
       {showR && <text className="km-vtx" x="291" y="160" textAnchor="middle">r</text>}
     </Frame>
@@ -1139,6 +1333,9 @@ function isoFrustum(accent = "", animate = false) {
       {showH && <line className={hClass} x1="240" y1="108" x2="240" y2="250" />}
       {showH && <line className="km-teal-line" x1="240" y1="108" x2="320" y2="108" />}
       {showH && <line className="km-teal-line" x1="240" y1="250" x2="402" y2="250" />}
+      <text className="km-vtx" x="100" y="176">l</text>
+      <text className="km-formula" x="462" y="44" textAnchor="end">上底半径 r，下底半径 R，高 h</text>
+      <text className="km-formula" x="462" y="68" textAnchor="end">V = ⅓πh(R²+Rr+r²)</text>
       <Vtx p={[240, 108]} name="O₁" dx={-4} dy={-8} />
       <Vtx p={[240, 250]} name="O₂" dx={-4} dy={16} />
       {showH && <text className="km-vtx" x="280" y="100" textAnchor="middle">r</text>}

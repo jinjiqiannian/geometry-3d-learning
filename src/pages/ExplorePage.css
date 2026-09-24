@@ -1,0 +1,256 @@
+/* 探索台 —— 知识点「立体几何·长方体」（§5.1 实时模式）
+   全部取现有主题变量，浅/深色都跟着全局走。 */
+
+.explore-page {
+  width: 100%;
+  min-height: calc(100dvh - var(--app-nav-height, 48px) - var(--mobile-nav-height, 0px));
+  padding: var(--space-xl) var(--space-lg) var(--space-3xl);
+  box-sizing: border-box;
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+
+.explore-head {
+  max-width: 1120px;
+  margin: 0 auto var(--space-xl);
+}
+
+.explore-kicker {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--text-xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.explore-title {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.explore-sub {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.explore-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 360px);
+  gap: var(--space-xl);
+  align-items: start;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+/* ── 3D 舞台 ── */
+.explore-stage {
+  position: relative;
+  height: clamp(320px, 52vh, 560px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.explore-stage-note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  margin: 0;
+  padding: var(--space-lg);
+  box-sizing: border-box;
+  text-align: center;
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+/* ── 右侧面板 ── */
+.explore-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.explore-block {
+  padding: var(--space-lg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.explore-block-title {
+  margin: 0 0 var(--space-md);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* ── 滑块 ── */
+.explore-slider {
+  display: block;
+  margin-bottom: var(--space-md);
+}
+
+.explore-slider-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-xs);
+}
+
+.explore-slider-name {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.explore-slider-value {
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-text);
+}
+
+.explore-slider input[type="range"] {
+  display: block;
+  width: 100%;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.explore-tip {
+  margin: var(--space-sm) 0 0;
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* ── 读数表 ── */
+.explore-readouts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.explore-readout {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.explore-readout-name {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.explore-readout-value {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.explore-readout-value.is-failed {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-error);
+}
+
+.explore-readout-unit {
+  margin-left: 3px;
+  font-size: var(--text-xs);
+  font-style: normal;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.explore-note {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+/* ── 公式面板 ── */
+.explore-formulas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.explore-formula-body {
+  display: block;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-primary);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+/* ── 示范动画（§5.1 时间轴模式） ── */
+.explore-demo {
+  max-width: 1120px;
+  margin: var(--space-2xl) auto 0;
+}
+
+.explore-demo-head {
+  margin-bottom: var(--space-md);
+}
+
+.explore-demo-title {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.explore-demo-sub {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.explore-demo-stage {
+  position: relative;
+  height: clamp(280px, 44vh, 460px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+/* ── 窄屏：先看几何体，再看控件 ── */
+@media (max-width: 860px) {
+  .explore-page {
+    padding: var(--space-lg) var(--space-md) var(--space-2xl);
+  }
+
+  .explore-body {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+
+  .explore-title {
+    font-size: var(--text-xl);
+  }
+
+  .explore-demo {
+    margin-top: var(--space-xl);
+  }
+}

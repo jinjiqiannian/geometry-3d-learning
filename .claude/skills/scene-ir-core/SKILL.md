@@ -55,10 +55,38 @@ AI must NEVER directly control visuals.
 
 ## Forbidden
 
-- AI-generated coordinates
+- AI-generated coordinates **reaching the renderer unchecked**
 - UI-generated labels
 - direct visual manipulation
 - randomness in layout
+
+## The validation gate (2026-09-15 amendment)
+
+「AI 不得生成坐标」这条曾经是绝对的，代价是覆盖范围有天花板：只有
+模板表里有的形状才有图，其余一律不画。要"每道题都有图"就必须放开这一条 ——
+但**只能放开到校验闸门为止**。
+
+规则：
+
+- AI 可以提出**候选场景描述**（顶点坐标 + 棱 + 面索引），这是它擅长的事
+- 候选**必须**先过校验才允许变成 SceneIR；渲染层永远只认 SceneIR
+- 校验不通过 → **不画**，并说明原因。绝不退回"随便画一个"
+- 渲染层保持确定、可复现：同样的 SceneIR 永远画出同样的图
+
+校验至少要覆盖：
+
+1. 结构 —— 面闭合、每条棱两端存在、没有零长度棱
+2. 数值 —— 题目里出现的数（如 AB=4）要和算出来的边长一致
+3. 退化 —— 不共面、不自交
+4. 声明 —— 模型声称的性质（"PA⊥底面"）用点积验
+
+为什么不是"直接禁止"：这里的边界不是「AI 能不能碰坐标」，而是
+「概率性输出与确定性渲染之间有没有一道闸门」。闸门在，确定性就在。
+仓库 CLAUDE.md §6 说的是同一件事 —— 把 LLM 当概率引擎，输出先验证再渲染。
+
+反过来说：**没有校验就放行 AI 坐标，是本项目最严重的一类 bug。**
+平行六面体被静默画成正方体那次已经证明了 —— 错的图比没有图更糟，
+因为学生不知道自己在看一张错的图。
 
 ---
 

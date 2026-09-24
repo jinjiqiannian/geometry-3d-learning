@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useRef, useEffect, useState, memo } from 'react';
+import { useMemo, useCallback, useRef, useEffect, memo } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Text, Billboard } from '@react-three/drei';
@@ -12,6 +12,14 @@ const easeInOutCubic = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2,
 const ANIMATION_DURATION = 600;
 // 飞镜兜底时长：动画期间每帧覆盖相机位置，一旦结束条件失效就会永久卡住
 const CAMERA_FLY_TIMEOUT_MS = 1200;
+// 命令式逐帧绑定的登记工具：把 r3f 元素实例登记进 Map，卸载时移除。
+// 逐帧动画直接改 Three 对象属性，不再靠 setState 触发整棵子树重渲染。
+function setMapRef(mapRef, key, value) {
+ if (value)
+ mapRef.current.set(key, value);
+ else
+ mapRef.current.delete(key);
+}
 function ring(radius, plane, seg = 64) {
  const pts = [];
  for (let i = 0; i <= seg; i++) {
@@ -107,7 +115,7 @@ function PlaneMesh({ points, color = '#4D6BFE', opacity = 0.2 }) {
  <meshBasicMaterial color={color} transparent opacity={opacity} side={THREE.DoubleSide}/>
  </mesh>);
 }
-function SectionPolygon({ points, color = '#4D6BFE', opacity = 0.3, renderOrder = 2 }) {
+function SectionPolygon({ points, color = '#4D6BFE', opacity = 0.3, renderOrder = 2, matRef }) {
  const geometry = useMemo(() => {
  if (points.length < 3)
  return null;
@@ -116,15 +124,17 @@ function SectionPolygon({ points, color = '#4D6BFE', opacity = 0.3, renderOrder 
  for (let i = 1; i < vertices.length - 1; i++) {
  faces.push(0, i, i + 1);
  }
- const geo = new THREE.BufferGeometry();
- geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices.flat(), 3));
+ // 用 setFromPoints：vertices 是 Vector3 对象数组，Array.flat() 只展开
+ // 嵌套数组、不展开对象，配 Float32BufferAttribute 会整条变成 NaN
+ // （Three.js 只报一条 computeBoundingSphere 的 warning，不抛错）。
+ const geo = new THREE.BufferGeometry().setFromPoints(vertices);
  geo.setIndex(faces);
  return geo;
  }, [points]);
  if (!geometry)
  return null;
  return (<mesh geometry={geometry} renderOrder={renderOrder}>
- <meshBasicMaterial color={color} transparent opacity={opacity} side={THREE.DoubleSide} depthWrite={false}/>
+ <meshBasicMaterial ref={matRef} color={color} transparent opacity={opacity} side={THREE.DoubleSide} depthWrite={false}/>
  </mesh>);
 }
 function PointMarker({ position, highlighted = false, size = 0.035, color = null, opacity = 1 }) {
@@ -202,14 +212,59 @@ const Canvas3D = memo(function Canvas3D({
  }, [sceneIR, highlightEdgeIds, auxLines, faceOpacity, nonHighlightOpacity]);
  const highlightSet = useMemo(() => new Set(effectiveHighlightIds), [effectiveHighlightIds]);
  const hasHighlights = effectiveHighlightIds.length > 0 || (sceneIR?.lines || []).some(l => l.highlighted);
+ // 线的高亮视觉解析：渲染时取初值，useFrame 里逐帧复用同一份逻辑。
+ // restingOpacity 是「不高亮」时的静态透明度，高亮动画结束后回落到它，
+ // 这样无需额外重渲染即可收敛到静止态。
+ const resolveLineVisual = (l, lineState) => {
+ const isHL = lineState.highlighted || l.highlighted;
+ const isAux = l.category === '辅助线' || l.category === '辅助构造线';
+ const isStructural = ['棱', '底面边', '顶面边', '侧棱'].includes(l.category);
+ const style = getLineStyle(l.category);
+ // 教材图：结构棱始终深墨色；高亮用强调色；勿在暗底用 #333
+ const ink = '#1f2430';
+ let color, restingOpacity, dashed = l.dashed || style.dash;
+ if (isAux) {
+ color = l.color || '#7c3aed';
+ restingOpacity = hasHighlights ? 0.45 : 0.85;
+ dashed = true;
+ }
+ else if (hasHighlights) {
+ color = ink;
+ restingOpacity = isStructural ? 0.55 : 0.12;
+ }
+ else if (l.category === '母线') {
+ color = ink;
+ restingOpacity = 0;
+ }
+ else {
+ color = isStructural ? ink : (style.color === '#333333' || style.color === '#999999' ? ink : style.color);
+ restingOpacity = Math.max(style.opacity ?? 1, 0.85);
+ }
+ if (l.visible === false)
+ restingOpacity = 0;
+ return {
+ color: isHL ? (lineState.color || highlightColor || '#2563eb') : color,
+ opacity: isHL ? (lineState.opacity ?? 1) : restingOpacity,
+ restingOpacity,
+ dashed,
+ };
+ };
  const sphereGeo = useMemo(() => {
  if (!sphereOverlay)
  return null;
  return new THREE.SphereGeometry(sphereOverlay.radius, 64, 32);
  }, [sphereOverlay?.radius]);
  const highlightEngine = useRef(new HighlightEngine());
-const [transitionTick, setTransitionTick] = useState(0);
 const animating = useRef(false);
+// 命令式动画注册表：useFrame 每帧直接写这些 Three 对象，替代逐帧 setState 重渲染
+const faceMatRefs = useRef(new Map());
+const pointScaleRefs = useRef(new Map());
+const labelScaleRefs = useRef(new Map());
+const lineMatRefs = useRef(new Map());
+const planeMatRefs = useRef(new Map());
+const auxMatRefs = useRef(new Map());
+// 线 id → 线数据：useFrame 逐帧算高亮视觉时需要拿到原始线定义
+const lineDataRef = useRef(new Map());
 const sceneIRAnim = useRef({ camera: null });
  useEffect(() => {
  highlightEngine.current.setColor(highlightColor);
@@ -238,9 +293,8 @@ const sceneIRAnim = useRef({ camera: null });
  }, [effectiveFaceOpacity]);
  const prevAuxLineKeys = useRef(new Set());
  const auxAnimData = useRef(new Map());
- const [auxTick, setAuxTick] = useState(0);
- useEffect(() => {
- const newKeys = new Set(effectiveAuxLines.map((_, i) => `aux-${i}`));
+useEffect(() => {
+const newKeys = new Set(effectiveAuxLines.map((_, i) => `aux-${i}`));
  const oldKeys = prevAuxLineKeys.current;
  const now = performance.now();
  let hasChange = false;
@@ -278,53 +332,84 @@ const sceneIRAnim = useRef({ camera: null });
  const controlsRef = useRef(null);
  // 步骤切换不再夺镜头；仅重置/视角预设会飞镜
 
- const frameSkip = useRef(0);
  const { camera } = useThree();
  const cameraRef = useRef(null);
  useEffect(() => {
  cameraRef.current = camera;
  }, [camera]);
  useFrame(() => {
- let anyActive = false;
- if (highlightEngine.current.update()) {
- anyActive = true;
- }
- if (Math.abs(currentFaceOpacity.current - targetFaceOpacity.current) > 0.002) {
- currentFaceOpacity.current += (targetFaceOpacity.current - currentFaceOpacity.current) * 0.06;
- anyActive = true;
+ const engine = highlightEngine.current;
+ engine.update();
+
+ // 面透明度缓动：直接写材质，不再靠逐帧 setState 触发重渲染
+ const faceMat = faceMatRefs.current.get('face');
+ if (faceMat) {
+ const diff = targetFaceOpacity.current - currentFaceOpacity.current;
+ if (Math.abs(diff) > 0.002) {
+ currentFaceOpacity.current += diff * 0.06;
  }
  else {
  currentFaceOpacity.current = targetFaceOpacity.current;
  }
- let auxChanged = false;
+ faceMat.opacity = currentFaceOpacity.current;
+ }
+
+ // 顶点脉冲：scale 随时间连续变化，必须逐帧写
+ pointScaleRefs.current.forEach((group, id) => {
+ const st = engine.getPointState(id);
+ group.scale.setScalar(st.scale);
+ });
+
+ // 标签缩放：高亮 1.3，淡入淡出期间连续变化
+ labelScaleRefs.current.forEach((mesh, id) => {
+ const st = engine.getLabelState(id);
+ mesh.scale.setScalar(st.scale);
+ });
+
+ // 高亮线：只在「正处于高亮或淡出动画」时接管，
+ // 否则会覆盖 hover/选中/搜索在渲染期算出来的配色
+ lineMatRefs.current.forEach((mat, id) => {
+ const st = engine.getLineState(id);
+ if (!st.highlighted && st.opacity == null)
+ return;
+ const line = lineDataRef.current.get(id);
+ if (!line)
+ return;
+ const v = resolveLineVisual(line, st);
+ mat.color.set(v.color);
+ mat.opacity = v.opacity;
+ mat.visible = v.opacity > 0.001;
+ });
+
+ // 截面平面
+ planeMatRefs.current.forEach((mat, id) => {
+ const st = engine.getPlaneState(id);
+ mat.color.set(st.color);
+ mat.opacity = st.opacity;
+ });
+
+ // 旧版辅助线淡入淡出
  auxAnimData.current.forEach((data, key) => {
+ const mat = auxMatRefs.current.get(key);
  if (data.targetOpacity === 0 && data.opacity > 0.001) {
  data.opacity += (0 - data.opacity) * 0.08;
  if (data.opacity < 0.001) {
  auxAnimData.current.delete(key);
- auxChanged = true;
+ if (mat)
+ mat.opacity = 0;
+ return;
  }
- anyActive = true;
  }
  else if (data.targetOpacity > 0 && Math.abs(data.opacity - data.targetOpacity) > 0.005) {
  data.opacity += (data.targetOpacity - data.opacity) * 0.08;
- anyActive = true;
  }
  else {
  data.opacity = data.targetOpacity;
  }
+ if (mat)
+ mat.opacity = data.opacity;
  });
- if (auxChanged) {
- anyActive = true;
- setAuxTick(t => t + 1);
- }
- if (Math.abs(currentLabelOpacity.current - targetLabelOpacity.current) > 0.01) {
- currentLabelOpacity.current += (targetLabelOpacity.current - currentLabelOpacity.current) * 0.08;
- anyActive = true;
- }
- else {
- currentLabelOpacity.current = targetLabelOpacity.current;
- }
+
  if (cameraAnimating.current && cameraRef.current) {
  const cam = cameraRef.current;
  const target = cameraTargetPos.current;
@@ -351,19 +436,7 @@ const sceneIRAnim = useRef({ camera: null });
  cam.position.y += dy * 0.055;
  cam.position.z += dz * 0.055;
  cam.lookAt(0, 0, 0);
- anyActive = true;
  }
- }
-
- if (anyActive) {
- frameSkip.current++;
- if (frameSkip.current % 3 === 0) {
- setTransitionTick(t => t + 1);
- }
- }
- else {
- animating.current = false;
- frameSkip.current = 0;
  }
  });
  const resolvedAuxLines = useMemo(() => {
@@ -437,6 +510,8 @@ const sceneIRAnim = useRef({ camera: null });
  return { ...l, from, to, mid, length: len, _geo: geometry };
  }).filter(Boolean);
  }, [allLines, pts, sceneIR]);
+ // 供 useFrame 逐帧查线定义（lineDataRef 只做缓存，不参与渲染）
+ lineDataRef.current = new Map(resolvedLines.map(l => [l.id, l]));
  const lineKey = (l) => `${l.id}|${l.category}`;
  const handlePointerOver = useCallback((l) => {
  setHoveredLine?.(lineKey(l));
@@ -501,7 +576,7 @@ const sceneIRAnim = useRef({ camera: null });
  const isEdge = ['棱', '底面边', '顶面边', '侧棱'].includes(l.category) || l.custom;
  return (<group key={key}>
  <line geometry={l._geo} visible={opacity > 0} raycast={() => { }}>
- <lineBasicMaterial color={color} transparent opacity={opacity} dashed={style.dash || l.dashed}/>
+ <lineBasicMaterial ref={el => setMapRef(lineMatRefs, l.id, el)} color={color} transparent opacity={opacity} dashed={style.dash || l.dashed}/>
  </line>
  {isEdge && (<EdgeHitbox from={l.from} to={l.to} lineData={l} lineKey={key} visible={visible} selected={selected} hovered={hovered} onPointerOver={handlePointerOver} onPointerOut={handlePointerOut} onSelect={handleSelect}/>)}
  {showLen && visible && (<Billboard position={l.mid} follow>
@@ -565,32 +640,43 @@ const sceneIRAnim = useRef({ camera: null });
      （见 createGeometryFromSceneIR）。没有图就不画，不拿替代形状顶上。 */}
  {showFaces && geoData && (<mesh renderOrder={1}>
  <primitive attach="geometry" object={geoData}/>
- <meshLambertMaterial color={'#d8dde6'} transparent opacity={currentFaceOpacity.current} depthWrite={false} side={THREE.DoubleSide}/>
+ <meshLambertMaterial ref={el => setMapRef(faceMatRefs, 'face', el)} color={'#d8dde6'} transparent opacity={currentFaceOpacity.current} depthWrite={false} side={THREE.DoubleSide}/>
  </mesh>)}
  {sceneIRPoints.map((point, i) => {
  const pointState = highlightEngine.current.getPointState(point.id);
  const labelState = highlightEngine.current.getLabelState(point.id);
  return (<group key={`ir-point-${i}`}>
- {point.visible !== false && point.position != null && (<group scale={pointState.scale}>
+ {point.visible !== false && point.position != null && (<group ref={el => setMapRef(pointScaleRefs, point.id, el)} scale={pointState.scale}>
  <PointMarker position={point.position} highlighted={pointState.highlighted} color={pointState.color} opacity={pointState.opacity}/>
  </group>)}
  {point.visible !== false && point.position != null && showLabels && (<Billboard key={`label-${i}`} position={labelPosition(point.position)} follow>
- <Text fontSize={0.35 * labelState.scale} color={labelState.color || '#1a1a1a'} anchorX="center" anchorY="middle" outlineWidth={0.035} outlineColor={'#f4f6f8'} opacity={labelState.opacity} transparent depthTest={false}>
+ <Text ref={el => setMapRef(labelScaleRefs, point.id, el)} fontSize={0.35} color={labelState.color || '#1a1a1a'} anchorX="center" anchorY="middle" outlineWidth={0.035} outlineColor={'#f4f6f8'} opacity={labelState.opacity} transparent depthTest={false} scale={labelState.scale}>
  {normalizeSubscripts(point.label)}
  </Text>
  </Billboard>)}
  </group>);
  })}
  {resolvedLines.map(l => {
- const lineState = highlightEngine.current.getLineState(l.id);
- const isHL = lineState.highlighted || l.highlighted;
- const isAux = l.category === '辅助线' || l.category === '辅助构造线';
- const isStructural = ['棱', '底面边', '顶面边', '侧棱'].includes(l.category);
- const style = getLineStyle(l.category);
- // 教材图：结构棱始终深墨色；高亮用强调色；勿在暗底用 #333
- const ink = '#1f2430';
- let color, opacity, dashed = l.dashed || style.dash;
- if (isHL) {
+          const key = lineKey(l);
+          const hovered = hoveredLine === key;
+          const selected = selectedEdge === key;
+          const lineState = highlightEngine.current.getLineState(l.id);
+          const isHL = lineState.highlighted || l.highlighted;
+          const isAux = l.category === '辅助线' || l.category === '辅助构造线';
+          const isStructural = ['棱', '底面边', '顶面边', '侧棱'].includes(l.category);
+          const style = getLineStyle(l.category);
+          // 教材图：结构棱始终深墨色；高亮用强调色；勿在暗底用 #333
+          const ink = '#1f2430';
+          let color, opacity, dashed = l.dashed || style.dash;
+          if (selected) {
+            color = '#4D6BFE';
+            opacity = 1;
+          }
+          else if (hovered) {
+            color = '#2563eb';
+            opacity = 1;
+          }
+          else if (isHL) {
  color = lineState.color || highlightColor || '#2563eb';
  opacity = lineState.opacity ?? 1;
  }
@@ -613,13 +699,17 @@ const sceneIRAnim = useRef({ camera: null });
  }
  if (l.visible === false)
  opacity = 0;
- return (<line key={`ir-line-${l.id}`} geometry={l._geo} visible={opacity > 0.001} renderOrder={3}>
- <lineBasicMaterial color={color} transparent opacity={opacity} dashed={dashed}/>
- </line>);
- })}
+ const isEdge = ['棱', '底面边', '顶面边', '侧棱'].includes(l.category) || l.custom;
+          return (<group key={`ir-line-${l.id}`}>
+            <line geometry={l._geo} visible={opacity > 0.001} renderOrder={3}>
+              <lineBasicMaterial ref={el => setMapRef(lineMatRefs, l.id, el)} color={color} transparent opacity={opacity} dashed={dashed}/>
+            </line>
+            {isEdge && l.visible !== false && (<EdgeHitbox from={l.from} to={l.to} lineData={l} lineKey={key} visible selected={selected} hovered={hovered} onPointerOver={handlePointerOver} onPointerOut={handlePointerOut} onSelect={handleSelect}/>)}
+          </group>);
+        })}
  {sceneIRSections.map((section, i) => {
  const planeState = highlightEngine.current.getPlaneState(section.label || `plane_${i}`);
- return (<SectionPolygon key={`section-${i}`} points={section.resolvedPoints} color={planeState.color} opacity={planeState.opacity}/>);
+ return (<SectionPolygon key={`section-${i}`} points={section.resolvedPoints} color={planeState.color} opacity={planeState.opacity} matRef={el => setMapRef(planeMatRefs, section.label || `plane_${i}`, el)}/>);
  })}
  <AnnotationRenderer annotations={sceneIR.annotations} points={sceneIR.points} lines={sceneIR.lines}/>
  </>)}
@@ -627,7 +717,7 @@ const sceneIRAnim = useRef({ camera: null });
  {/* geoData 同样可能是 null：createGeometry 认不出类型时也返回 null（不再兜底） */}
  {!sceneIR && showFaces && geoData && (<mesh renderOrder={1}>
  <primitive attach="geometry" object={geoData}/>
- <meshLambertMaterial color={'#d8dde6'} transparent opacity={currentFaceOpacity.current} depthWrite={false} side={THREE.DoubleSide}/>
+ <meshLambertMaterial ref={el => setMapRef(faceMatRefs, 'face', el)} color={'#d8dde6'} transparent opacity={currentFaceOpacity.current} depthWrite={false} side={THREE.DoubleSide}/>
  </mesh>)}
 
  {!sceneIR && sphereOverlay && sphereGeo && (<mesh>
@@ -643,7 +733,7 @@ const sceneIRAnim = useRef({ camera: null });
  new THREE.Vector3(al.from[0], al.from[1], al.from[2]),
  new THREE.Vector3(al.to[0], al.to[1], al.to[2]),
  ])}>
- <lineBasicMaterial color={al.color || '#2563eb'} transparent opacity={lineOpacity} dashed={al.dashed !== false}/>
+ <lineBasicMaterial ref={el => setMapRef(auxMatRefs, `aux-${al._origIndex}`, el)} color={al.color || '#2563eb'} transparent opacity={lineOpacity} dashed={al.dashed !== false}/>
  </line>
  </group>);
  })}

@@ -22,6 +22,7 @@ const EduMindProfile = lazy(() => import('./pages/edumind/ProfilePage'));
 const FeedbackAdminPage = lazy(() => import('./pages/FeedbackAdminPage'));
 const TeachPage = lazy(() => import('./pages/TeachPage'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
+const ExplorePage = lazy(() => import('./pages/ExplorePage'));
 
 // ── Suspense fallback ──
 // 延迟 160ms 才现身：chunk 已在缓存里的快路由不会闪任何东西。
@@ -93,6 +94,14 @@ const router = createHashRouter([
         element: (
           <WrappedRoute>
             <SearchPage />
+          </WrappedRoute>
+        ),
+      },
+      {
+        path: 'explore',
+        element: (
+          <WrappedRoute>
+            <ExplorePage />
           </WrappedRoute>
         ),
       },

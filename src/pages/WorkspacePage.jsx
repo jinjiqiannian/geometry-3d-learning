@@ -2,6 +2,12 @@ import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } fr
 import { useSearchParams } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
 import Canvas3D from "../features/solid-geometry/Canvas3D";
+import AnimationRenderer from "../features/animation/AnimationRenderer";
+import AnimationDegradeNotice from "../features/animation/AnimationDegradeNotice";
+import {
+  requestAnimation,
+  reportWrongAnimation,
+} from "../features/animation/animatePipeline";
 import GeometryMiniControls from "../components/GeometryMiniControls";
 import { MEASURE_MODES } from "../features/solid-geometry/MeasureTool";
 import { ANNOTATION_MODES } from "../features/solid-geometry/AnnotationTool";
@@ -40,6 +46,7 @@ import {
   buildSceneIRFromSemantic,
   buildSceneIRSequenceFromSemantic,
 } from "../engines/sceneIRBuilder";
+import { validateSceneIR } from "../engines/sceneIRValidator";
 import {
   validateAndCompleteSemantic,
   convertLegacyParsedToSemantic,
@@ -195,7 +202,7 @@ export default function WorkspacePage({
   const [quickInput, setQuickInput] = useState("");
   const [cameraResetKey, setCameraResetKey] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const playTimerRef = useRef(null);
+  const playRafRef = useRef(null);
   const [shareToast, setShareToast] = useState("");
   const animationControllerRef = useRef(null);
 
@@ -252,6 +259,20 @@ export default function WorkspacePage({
     }
   });
   const [show3D, setShow3D] = useState(true);
+
+  // ── 动画（设计 §4，第二段）：点「播放」才发生 ──
+  // 任何一支失败都退回「静态图 + 步骤」，播放区降级为「暂不支持动画」，
+  // 绝不静默退回一个随便画的动画（§4.3 统一原则）。
+  const [animState, setAnimState] = useState({
+    status: "idle",
+    ir: null,
+    reason: "",
+    code: "",
+    key: "",
+  });
+  const [animFeedback, setAnimFeedback] = useState("idle");
+  const [animRetryNonce, setAnimRetryNonce] = useState(0);
+  const animAbortRef = useRef(null);
 
   useEffect(() => {
     let timer = null;
@@ -740,6 +761,43 @@ export default function WorkspacePage({
     return buildSceneIRSequenceFromSemantic(semantic, steps);
   }, [steps, parsedData]);
 
+  // ── 第一段闸门：对 base SceneIR 跑 validateSceneIR ──────────────
+  // 设计 §4.2① 的前置依赖：第二段（动画）的输入必须是**已校验的 SceneIR**，
+  // 不是 OCR 原文 —— 这样即使注入成功，能得到的也只是一条结构非法的 IR，
+  // 会被 validateAnimationIR 拦下。
+  //
+  // 口径说明（刻意，不是疏漏）：本闸门当前只挂在**动画链路**上，不改变静态图
+  // 渲染。原因是 sceneIRValidator.checkNumbers 在题面缺数值证据时**有意** reject
+  // （详见该函数注释），而层 3a（题目照片兜底）尚未上线 —— 此时把闸门提为静态图
+  // 的硬闸门，会把纯证明题的 3D 一并挡掉，收益为负。待层 3a 上线后再提级。
+  const sceneGate = useMemo(() => {
+    const baseIR = sceneIRSequence[0];
+    if (!baseIR) return null;
+    const candidate = {
+      points: (baseIR.points || []).map((p) => ({ id: p.id, position: p.position })),
+      edges: (baseIR.lines || []).map((l) => [l.from, l.to]),
+      faces: baseIR.faces || [],
+      claims: [],
+    };
+    return validateSceneIR(candidate, problemText);
+  }, [sceneIRSequence, problemText]);
+
+  useEffect(() => {
+    if (!sceneGate) return;
+    if (sceneGate.ok) {
+      console.debug(
+        "[validateSceneIR]",
+        sceneGate.verdict,
+        sceneGate.degraded.length ? `degraded: ${sceneGate.degraded.join(", ")}` : "clean",
+      );
+    } else {
+      console.warn("[validateSceneIR] REJECT", sceneGate.code, sceneGate.reason);
+    }
+  }, [sceneGate]);
+
+  // 动画的输入场景：base SceneIR（不随步骤切换抖动）
+  const animSceneIR = sceneIRSequence.length > 0 ? sceneIRSequence[0] : null;
+
   // ── 合并卡映射：展示/播放按合并卡步进，currentStep 仍存原始 ProofStep 索引
   const mergedGroups = useMemo(() => mergeConsecutiveSteps(steps), [steps]);
   const mergedStepIndex = useMemo(
@@ -1015,7 +1073,7 @@ export default function WorkspacePage({
     } catch {
       /* ignore */
     }
-    if (playTimerRef.current) clearTimeout(playTimerRef.current);
+    if (playRafRef.current) cancelAnimationFrame(playRafRef.current);
     setIsPlaying(false);
     setProblemText("");
     setParsedData(null);
@@ -1119,7 +1177,7 @@ export default function WorkspacePage({
   const handleTogglePlay = useCallback(() => {
     setIsPlaying((prev) => {
       if (prev) {
-        if (playTimerRef.current) clearTimeout(playTimerRef.current);
+        if (playRafRef.current) cancelAnimationFrame(playRafRef.current);
         return false;
       }
       return true;
@@ -1129,23 +1187,48 @@ export default function WorkspacePage({
   useEffect(() => {
     if (!isPlaying || mergedGroups.length === 0) return;
 
-    let cancelled = false;
-    const tick = () => {
-      if (cancelled) return;
-      setCurrentStep((prev) => {
-        const i = mapCurrentStepToMergedIndex(mergedGroups, prev);
-        if (i >= mergedGroups.length - 1) {
-          setIsPlaying(false);
-          return prev;
-        }
-        return mergedGroups[i + 1].originalIndices[0];
-      });
+    const STEP_INTERVAL_MS = 2800;
+    let lastTime = performance.now();
+    let accumulated = 0;
+
+    const loop = () => {
+      const now = performance.now();
+      const delta = now - lastTime;
+      lastTime = now;
+      accumulated += delta;
+
+      if (accumulated >= STEP_INTERVAL_MS) {
+        accumulated = 0;
+        setCurrentStep((prev) => {
+          const i = mapCurrentStepToMergedIndex(mergedGroups, prev);
+          if (i >= mergedGroups.length - 1) {
+            setIsPlaying(false);
+            return prev;
+          }
+          return mergedGroups[i + 1].originalIndices[0];
+        });
+      }
+      playRafRef.current = requestAnimationFrame(loop);
     };
 
-    playTimerRef.current = setTimeout(tick, 2800);
+    playRafRef.current = requestAnimationFrame(loop);
+
+    // 后台时暂停 rAF，恢复时重置基准时间不补帧
+    const handleVisibility = () => {
+      if (document.hidden) {
+        if (playRafRef.current) cancelAnimationFrame(playRafRef.current);
+        playRafRef.current = null;
+      } else if (!playRafRef.current) {
+        lastTime = performance.now();
+        playRafRef.current = requestAnimationFrame(loop);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
     return () => {
-      cancelled = true;
-      if (playTimerRef.current) clearTimeout(playTimerRef.current);
+      if (playRafRef.current) cancelAnimationFrame(playRafRef.current);
+      playRafRef.current = null;
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [isPlaying, mergedGroups, currentStep]);
 
@@ -1233,6 +1316,81 @@ export default function WorkspacePage({
   // 形状认不出（如平行六面体）时不渲染 3D：createGeometry 会把不认识的
   // 类型静默兜底成正方体，画出来是与题目无关的图 —— 宁可不画，不画错的。
   const canRender3D = subject === "geometry" && isRenderableShape(geometry.type);
+  // 动画入口：?anim=1 时右侧改渲染动画（第二段，走 requestAnimation 管线）。
+  // 默认（无该参数）路径完全不变，便于对照核查 Canvas3D 的线条高亮。
+  // TODO(UI)：待工作台卡片加上真正的「播放」按钮后，这里改为按钮驱动的状态。
+  const animRequested = hasWebGL && searchParams.get("anim") === "1";
+
+  // ── 第二段：requestAnimation（缓存 → AI → 双闸门）→ 渲染 / 降级 ──
+  // 用字符串键而非对象做依赖：object 身份每渲染都变，会让请求无限重跑。
+  const animStageKey =
+    animRequested && animSceneIR
+      ? `${animSceneIR.type || ""}|${geometry.type || ""}|${problemText || ""}|${animRetryNonce}`
+      : "";
+
+  useEffect(() => {
+    if (!animStageKey) return undefined;
+
+    // 第一段闸门没过 → 这份 SceneIR 不能作为动画输入（§4.2①）
+    if (sceneGate && !sceneGate.ok) {
+      setAnimState({
+        status: "degraded",
+        ir: null,
+        reason: sceneGate.reason || "场景未通过校验",
+        code: sceneGate.code || "SCENE_REJECT",
+        key: "",
+      });
+      return undefined;
+    }
+
+    let cancelled = false;
+    const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+    animAbortRef.current = controller;
+    setAnimFeedback("idle");
+    setAnimState((prev) =>
+      prev.status === "loading" ? prev : { status: "loading", ir: null, reason: "", code: "", key: "" }
+    );
+
+    requestAnimation({
+      text: problemText,
+      sceneIR: animSceneIR,
+      explainIR: { steps },
+      primitiveId: animSceneIR.type || geometry.type,
+      params: geometry.params,
+      signal: controller ? controller.signal : undefined,
+    })
+      .then((res) => {
+        if (cancelled) return;
+        if (res?.ok) {
+          setAnimState({ status: "ready", ir: res.ir, reason: "", code: "", key: res.key || "" });
+        } else {
+          setAnimState({
+            status: "degraded",
+            ir: null,
+            reason: res?.reason || "",
+            code: res?.code || "",
+            key: res?.key || "",
+          });
+        }
+      })
+      .catch((err) => {
+        if (cancelled || err?.name === "AbortError") return;
+        setAnimState({
+          status: "degraded",
+          ir: null,
+          reason: err?.message || "动画生成失败",
+          code: "NETWORK",
+          key: "",
+        });
+      });
+
+    return () => {
+      cancelled = true;
+      if (controller) controller.abort();
+    };
+    // animStageKey / sceneGate 的字符串-布尔依赖已覆盖全部输入特征
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animStageKey, sceneGate && sceneGate.ok]);
 
   // 几何无题时回到 Hub，避免空画布（loading/有题时不弹回；嵌入模式由父页接管）
   useEffect(() => {
@@ -1510,10 +1668,33 @@ export default function WorkspacePage({
           // geometry 状态会一直停在初始的默认立方体，画出来就是一道
           // 与题目毫无关系的立体图形（物理自由落体题配一个正方体）。
           // 几何题里认不出形状的（平行六面体等）同理 —— 见 canRender3D。
-          className={`wp-canvas-col ${(isMobile && !show3D) || !canRender3D ? "wp-canvas--hidden" : ""}`}
+          className={`wp-canvas-col ${!animRequested && ((isMobile && !show3D) || !canRender3D) ? "wp-canvas--hidden" : ""}`}
           ref={canvasRef}
         >
-          {hasWebGL && canRender3D ? (
+          {animRequested ? (
+            animState.status === "ready" && animState.ir ? (
+              <AnimationRenderer ir={animState.ir} mode="timeline" height="100%" />
+            ) : animState.status === "degraded" ? (
+              <AnimationDegradeNotice
+                reason={animState.reason}
+                code={animState.code}
+                feedbackState={animFeedback}
+                onRetry={() => setAnimRetryNonce((n) => n + 1)}
+                onFeedback={(r) => {
+                  if (!animState.key) return;
+                  reportWrongAnimation(animState.key, r);
+                  setAnimFeedback("sent");
+                }}
+              />
+            ) : (
+              <div className="wp-webgl-fallback" role="status">
+                <p>正在生成动画…</p>
+                <p className="wp-webgl-fallback-hint">
+                  首次生成需要一点时间；同一道题之后再播放会直接用缓存。
+                </p>
+              </div>
+            )
+          ) : hasWebGL && canRender3D ? (
             <Canvas
               style={{ width: "100%", height: "100%" }}
               camera={{ position: [4, 4, 6], fov: 50 }}
@@ -1564,11 +1745,13 @@ export default function WorkspacePage({
               </p>
             </div>
           )}
-          <GeometryMiniControls
-            showFaces={showFaces}
-            onToggleFaces={() => setShowFaces((prev) => !prev)}
-            onResetCamera={handleResetCamera}
-          />
+          {!showAnimDemo && (
+            <GeometryMiniControls
+              showFaces={showFaces}
+              onToggleFaces={() => setShowFaces((prev) => !prev)}
+              onResetCamera={handleResetCamera}
+            />
+          )}
         </div>
       </div>
       </>
