@@ -22,3 +22,17 @@ node_modules
 
 # Trae IDE workspace config
 .trae/
+
+.iga/
+
+# workout-logger 已迁出为独立仓库（E:\workout-logger），此仓库不再跟踪
+workout-logger/
+
+# 本地 AI 助手工作记忆，不属于项目源码
+.workbuddy-ai/
+
+# 顶层 archive/ 是 exammind 原始版留档（体积大，不入库）；
+# 但 .claude/archive/ 是项目文档归档，必须跟踪 —— 注意上面的 archive/ 规则
+# 会匹配任意层级的同名目录，所以这里要显式否定。
+!.claude/archive/
+!.claude/archive/**
