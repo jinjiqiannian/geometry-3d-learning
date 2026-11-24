@@ -1,11 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
 import './MobileBottomNav.css'
 
-function HomeIcon({ active }) {
+function SearchIcon({ active }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--accent)' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-      <polyline points="9 22 9 12 15 12 15 22" />
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
   )
 }
@@ -19,38 +19,26 @@ function TeachIcon({ active }) {
   )
 }
 
-function SearchIcon({ active }) {
+function ExploreIcon({ active }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--accent)' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  )
-}
-
-function HistoryIcon({ active }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--accent)' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
+      <path d="M12 2l9 5v10l-9 5-9-5V7l9-5z" />
+      <path d="M12 22V12" />
+      <path d="M3 7l9 5 9-5" />
     </svg>
   )
 }
 
 const NAV_ITEMS = [
-  { path: '/', label: '首页', icon: HomeIcon },
-  { path: '/teach', label: '教学', icon: TeachIcon },
   { path: '/search', label: '搜题', icon: SearchIcon },
-  { path: '/history', label: '历史', icon: HistoryIcon },
+  { path: '/teach', label: '教学', icon: TeachIcon },
+  { path: '/explore', label: '探索', icon: ExploreIcon },
 ]
 
 export default function MobileBottomNav() {
   const location = useLocation()
 
-  const isActive = (path) => {
-    if (path === '/') return location.pathname === '/'
-    return location.pathname.startsWith(path)
-  }
+  const isActive = (path) => location.pathname.startsWith(path)
 
   return (
     <nav className="mobile-bottom-nav" aria-label="底部导航">

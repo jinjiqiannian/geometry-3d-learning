@@ -1,28 +1,19 @@
-import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import AppNavigation from '../components/AppNavigation'
-import { track } from '../services/analytics'
 import MobileBottomNav from '../components/MobileBottomNav'
-import AuthModal from '../components/AuthModal'
-import FeedbackModal from '../components/FeedbackModal'
 import './PageLayout.css'
 
+/**
+ * 自用版布局：导航 + 页面主体。
+ * 已移除登录弹窗、反馈弹窗与 page_view 埋点 —— 本地使用没有上报对象，
+ * 留着只会对 /api/track 发出必然失败的请求。
+ */
 export default function PageLayout() {
   const location = useLocation()
-  const isFacade =
-    location.pathname === '/' ||
-    location.pathname === '' ||
-    location.pathname === '/index.html'
-
-  // 页面浏览埋点：放这一处即可覆盖所有路由（含首页）。
-  // UTM 归因在 analytics.js 里抓，自媒体链接带不带参数都能对上。
-  useEffect(() => {
-    track('page_view', { facade: isFacade })
-  }, [location.pathname, isFacade])
 
   return (
-    <div className={`page-layout ${isFacade ? 'page-layout--facade' : ''}`}>
-      {!isFacade && <AppNavigation />}
+    <div className="page-layout">
+      <AppNavigation />
 
       <main className="page-main">
         <div key={location.pathname} className="page-transition">
@@ -30,10 +21,7 @@ export default function PageLayout() {
         </div>
       </main>
 
-      {!isFacade && <MobileBottomNav />}
-
-      <AuthModal />
-      <FeedbackModal />
+      <MobileBottomNav />
     </div>
   )
 }

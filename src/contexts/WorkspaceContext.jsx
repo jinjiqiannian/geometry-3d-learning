@@ -1,11 +1,21 @@
 ﻿import { createContext, useContext, useState, useCallback, useMemo } from 'react'
-import { useSupabase } from './SupabaseContext'
 import { useSubscription } from './SubscriptionContext'
 
 const WorkspaceContext = createContext(null)
 
+// 自用版历史只存本机。键名沿用旧值，这样浏览器里已有的记录不会丢。
+const STORAGE_KEY = 'jidong_workspaces'
+const MAX_LOCAL = 20
+
+function readLocal() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+  } catch {
+    return []
+  }
+}
+
 export function WorkspaceProvider({ children }) {
-  const { supabase, user, connected } = useSupabase()
   const { checkCanGenerate, checkCanAiExplain, recordUsage } = useSubscription()
 
   const [workspace, setWorkspace] = useState({
@@ -120,63 +130,35 @@ export function WorkspaceProvider({ children }) {
     setWorkspace(prev => ({ ...prev, geometry: { ...prev.geometry, ...geometry } }))
   }, [])
 
-  // ── Save workspace to Supabase ──
+  // ── Save workspace to localStorage ──
+  // 自用版没有云端，直接写本机。超出 20 条丢弃最旧的。
   const saveWorkspace = useCallback(async () => {
-    if (!connected || !user || !supabase) {
-      // Save to localStorage fallback
-      try {
-        const saved = JSON.parse(localStorage.getItem('jidong_workspaces') || '[]')
-        saved.unshift({ ...workspace, savedAt: new Date().toISOString() })
-        localStorage.setItem('jidong_workspaces', JSON.stringify(saved.slice(0, 20)))
-      } catch (err) {
-        console.warn('WorkspaceContext: Failed to save workspace to localStorage', err)
-      }
-      return
+    try {
+      const saved = readLocal()
+      saved.unshift({ ...workspace, savedAt: new Date().toISOString() })
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved.slice(0, MAX_LOCAL)))
+    } catch (err) {
+      console.warn('WorkspaceContext: 保存到 localStorage 失败', err)
     }
+  }, [workspace])
 
-    const { data, error } = await supabase
-      .from('workspaces')
-      .upsert({
-        id: workspace.id || undefined,
-        user_id: user.id,
-        title: workspace.problemText?.slice(0, 80) || '未命名',
-        problem_text: workspace.problemText,
-        parsed_data: workspace.parsedData,
-        steps: workspace.steps,
-        geometry: workspace.geometry,
-        updated_at: new Date().toISOString(),
-      })
-      .select('id')
-      .single()
-
-    if (!error && data) {
-      setWorkspace(prev => ({ ...prev, id: data.id }))
-    }
-  }, [connected, user, supabase, workspace])
-
-  // ── Load workspace from Supabase ──
+  // ── Load workspace from localStorage ──
+  // 入参是保存时的时间戳（savedAt）或数组下标。
   const loadWorkspace = useCallback(async (id) => {
-    if (!connected || !supabase) return
+    const data = readLocal().find((w, i) => w.savedAt === id || i === id)
+    if (!data) return
 
-    const { data, error } = await supabase
-      .from('workspaces')
-      .select('*')
-      .eq('id', id)
-      .single()
-
-    if (!error && data) {
-      setWorkspace({
-        id: data.id,
-        problemText: data.problem_text,
-        parsedData: data.parsed_data,
-        steps: data.steps || [],
-        currentStep: 0,
-        geometry: data.geometry || null,
-        loading: false,
-        error: null,
-      })
-    }
-  }, [connected, supabase])
+    setWorkspace({
+      id: data.id ?? null,
+      problemText: data.problemText || '',
+      parsedData: data.parsedData || null,
+      steps: data.steps || [],
+      currentStep: 0,
+      geometry: data.geometry || null,
+      loading: false,
+      error: null,
+    })
+  }, [])
 
   // ── Current step data (for Canvas3D sceneState binding) ──
   const currentSceneState = useMemo(() => {

@@ -1,274 +1,54 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import { createContext, useContext, useMemo } from 'react'
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || ''
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-
-// Singleton Supabase client
-let supabaseInstance = null
-function getSupabase() {
-  if (!supabaseInstance && SUPABASE_URL && SUPABASE_ANON_KEY) {
-    supabaseInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  }
-  return supabaseInstance
-}
-
-// ── 访客 ID 工具函数 ───────────────────────────────
-
-const GUEST_ID_KEY = 'jidong_guest_id'
-
-/** 生成临时 UUID */
-function generateGuestId() {
-  try { return crypto.randomUUID() } catch { return Date.now().toString(36) + Math.random().toString(36).slice(2, 10) }
-}
-
-/** 获取持久化的访客 ID */
-function getOrCreateGuestId() {
-  try {
-    let id = localStorage.getItem(GUEST_ID_KEY)
-    if (!id) {
-      id = generateGuestId()
-      localStorage.setItem(GUEST_ID_KEY, id)
-    }
-    return id
-  } catch { return generateGuestId() }
-}
-
-// ── 手机号工具函数 ─────────────────────────────────
-
-/** 规范化手机号：去除非数字，自动补 +86 */
-function normalizePhone(input) {
-  let digits = input.replace(/\D/g, '')
-  // 11位国内手机号自动加 +86
-  if (digits.length === 11 && digits.startsWith('1')) {
-    digits = '86' + digits
-  }
-  return digits
-}
-
-/** 手机号 → 内部邮箱 */
-function phoneToEmail(phone) {
-  const norm = normalizePhone(phone)
-  return `phone_${norm}@phone.mathviz`
-}
-
-/** 检查输入是否像手机号（纯数字或带+号） */
-export function isPhoneLike(input) {
-  const cleaned = input.replace(/[\s\-()+]/g, '')
-  return /^\+?\d{5,15}$/.test(cleaned)
-}
+/**
+ * 本地会话 Context（原 SupabaseContext）—— 个人自用版
+ *
+ * 本项目已从「面向公众的商业产品」转为「个人自用的学习工具」：
+ * 没有账号体系、没有云端同步、没有多用户、没有任何服务端依赖。
+ *
+ * 文件名与 hook 名保持原样，是为了让 WorkspacePage、WorkspaceContext
+ * 等既有代码零改动继续工作 —— 改名的收益远低于它带来的 diff 噪音。
+ *
+ * 语义约定（下游代码依赖这三条走本地降级路径）：
+ * - user = null / isGuest = true → 「登录后才能用」的分支永不触发
+ * - connected = false            → 存储一律走 localStorage
+ * - supabase = null              → 不存在任何网络请求
+ */
 
 const SupabaseContext = createContext(null)
 
+/**
+ * 旧引用兼容：手机号格式校验。自用版没有登录流程，
+ * 仅保留导出，避免残留 import 在构建期报错。
+ */
+export function isPhoneLike(input) {
+  return /^1[3-9]\d{9}$/.test(String(input || '').trim())
+}
+
+const noopAsync = async () => ({ error: null })
+
 export function SupabaseProvider({ children }) {
-  const [supabase] = useState(() => getSupabase())
-  const [session, setSession] = useState(null)
-  const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [connected, setConnected] = useState(false)
-
-  // ── 访客 ID（life of localStorage, never null）──
-  const [guestId] = useState(() => getOrCreateGuestId())
-  // 简化为 !user：loading 期间暂时视为访客，避免闪一下"已登录"UI
-  const isGuest = useMemo(() => !user, [user])
-
-  // Check if Supabase is configured
-  useEffect(() => {
-    setConnected(!!SUPABASE_URL && !!SUPABASE_ANON_KEY && !!supabase)
-  }, [supabase])
-
-  // Listen for auth state changes
-  useEffect(() => {
-    if (!supabase) {
-      setLoading(false)
-      return
-    }
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchProfile(session.user.id, session.user)
-      } else {
-        setLoading(false)
-      }
-    })
-
-    // Listen for changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchProfile(session.user.id, session.user)
-      } else {
-        setProfile(null)
-        setLoading(false)
-      }
-    })
-
-    return () => subscription?.unsubscribe()
-  }, [supabase])
-
-  const fetchProfile = useCallback(async (userId, authUser) => {
-    if (!supabase) return
-    try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-
-      // 合并 profile 数据和 auth user metadata
-      const enriched = {
-        ...(data || {}),
-        phone: data?.phone || authUser?.user_metadata?.phone || null,
-        displayName: data?.full_name || authUser?.user_metadata?.display_name || '',
-      }
-      setProfile(enriched)
-    } catch (err) {
-      console.warn('SupabaseContext: Profile fetch failed, attempting upsert', err.message)
-      // Profile may not exist yet — trigger creation
-      try {
-        const userData = authUser || {}
-        const phone = userData.user_metadata?.phone || null
-        const { data } = await supabase
-          .from('profiles')
-          .upsert({
-            id: userId,
-            email: userData.email || '',
-            phone,
-            full_name: userData.user_metadata?.display_name || '',
-          })
-          .select('*')
-          .single()
-        setProfile({ ...(data || {}), phone, displayName: data?.full_name || '' })
-      } catch {
-        // ignore
-      }
-    } finally {
-      setLoading(false)
-    }
-  }, [supabase])
-
-  // ── 邮箱注册/登录 ──────────────────────────────
-
-  const signUp = useCallback(async (email, password) => {
-    if (!supabase) throw new Error('Supabase not configured')
-    const { data, error } = await supabase.auth.signUp({ email, password })
-    if (error) throw error
-    return data
-  }, [supabase])
-
-  const signIn = useCallback(async (email, password) => {
-    if (!supabase) throw new Error('Supabase not configured')
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
-    return data
-  }, [supabase])
-
-  // ── 手机号注册/登录 ────────────────────────────
-
-  /**
-   * 手机号注册
-   * 底层用 phone_xxx@phone.mathviz 作邮箱，手机号存 user_metadata
-   */
-  const signUpWithPhone = useCallback(async (phone, password) => {
-    if (!supabase) throw new Error('Supabase not configured')
-    const norm = normalizePhone(phone)
-    const email = phoneToEmail(phone)
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          phone: norm,
-          phone_raw: phone,
-          display_name: phone,
-        },
-      },
-    })
-    if (error) throw error
-
-    // 立即更新 profiles 写入手机号
-    if (data?.user) {
-      try {
-        await supabase.from('profiles').upsert({
-          id: data.user.id,
-          email,
-          phone: norm,
-        })
-      } catch { /* non-critical */ }
-    }
-
-    return data
-  }, [supabase])
-
-  /**
-   * 手机号登录
-   */
-  const signInWithPhone = useCallback(async (phone, password) => {
-    if (!supabase) throw new Error('Supabase not configured')
-    const email = phoneToEmail(phone)
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      // 翻译常见错误
-      if (error.message?.includes('Invalid login credentials')) {
-        throw new Error('手机号或密码错误，请重试。')
-      }
-      throw error
-    }
-    return data
-  }, [supabase])
-
-  const signInWithGoogle = useCallback(async () => {
-    if (!supabase) throw new Error('Supabase not configured')
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
-    })
-    if (error) throw error
-    return data
-  }, [supabase])
-
-  const signOut = useCallback(async () => {
-    if (!supabase) return
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
-  }, [supabase])
-
-  /**
-   * 从 profile / user metadata 提取显示用的手机号
-   */
-  const phoneNumber = profile?.phone || user?.user_metadata?.phone || null
-
-  /**
-   * 格式化手机号显示（国内：138****0000）
-   */
-  const displayPhone = phoneNumber
-    ? phoneNumber.replace(/^86/, '').replace(/^(\d{3})\d{4}(\d{4})$/, '$1****$2')
-    : null
+  const value = useMemo(() => ({
+    supabase: null,
+    connected: false,
+    session: null,
+    user: null,
+    profile: null,
+    loading: false,
+    guestId: 'local',
+    isGuest: true,
+    signUp: noopAsync,
+    signIn: noopAsync,
+    signUpWithPhone: noopAsync,
+    signInWithPhone: noopAsync,
+    signInWithGoogle: noopAsync,
+    signOut: noopAsync,
+    phoneNumber: null,
+    displayPhone: null,
+  }), [])
 
   return (
-    <SupabaseContext.Provider value={{
-      supabase,
-      connected,
-      session,
-      user,
-      profile,
-      loading,
-      guestId,
-      isGuest,
-      signUp,
-      signIn,
-      signUpWithPhone,
-      signInWithPhone,
-      signInWithGoogle,
-      signOut,
-      phoneNumber,
-      displayPhone,
-    }}>
+    <SupabaseContext.Provider value={value}>
       {children}
     </SupabaseContext.Provider>
   )

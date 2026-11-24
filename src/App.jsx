@@ -5,21 +5,11 @@ import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import PageLayout from './layouts/PageLayout';
-import LandingPage from './pages/LandingPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import ChunkErrorBoundary from './components/ChunkErrorBoundary';
 
 // ── Route-level code splitting ──
 // Three.js, pptExporter, and heavy engines only load when needed
-const HistoryPage = lazy(() => import('./pages/HistoryPage'));
-const SettingsPage = lazy(() => import('./pages/SettingsPage'));
-const ProfilePage = lazy(() => import('./pages/ProfilePage'));
-const EduMindPage = lazy(() => import('./pages/EduMindPage'));
-const ExamUploadPage = lazy(() => import('./pages/ExamUploadPage'));
-const ExamReportPage = lazy(() => import('./pages/ExamReportPage'));
-const LearningPlanPage = lazy(() => import('./pages/LearningPlanPage'));
-const EduMindProfile = lazy(() => import('./pages/edumind/ProfilePage'));
-const FeedbackAdminPage = lazy(() => import('./pages/FeedbackAdminPage'));
 const TeachPage = lazy(() => import('./pages/TeachPage'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
 const ExplorePage = lazy(() => import('./pages/ExplorePage'));
@@ -56,6 +46,16 @@ function WrappedRoute({ children }) {
   );
 }
 
+/**
+ * 个人自用版只保留三条链路：
+ *   /search  搜题解题（默认首页，打开即用）
+ *   /teach   知识点讲解
+ *   /explore 3D 探索台
+ *
+ * 营销首页、登录、订阅、个人中心、设置、历史、反馈后台、ExamMind
+ * 等面向公众/多用户的页面全部摘除路由。源文件保留在磁盘上，
+ * 只是不再可达 —— 需要回看时直接翻文件即可。
+ */
 const router = createHashRouter([
   {
     path: '/',
@@ -63,37 +63,21 @@ const router = createHashRouter([
     children: [
       {
         index: true,
-        element: (
-          <WrappedRoute>
-            <LandingPage />
-          </WrappedRoute>
-        ),
-      },
-      {
-        path: 'math',
-        element: <Navigate to="/" replace />,
-      },
-      {
-        path: 'physics',
-        element: <Navigate to="/" replace />,
-      },
-      {
-        path: 'workspace',
         element: <Navigate to="/search" replace />,
-      },
-      {
-        path: 'teach',
-        element: (
-          <WrappedRoute>
-            <TeachPage />
-          </WrappedRoute>
-        ),
       },
       {
         path: 'search',
         element: (
           <WrappedRoute>
             <SearchPage />
+          </WrappedRoute>
+        ),
+      },
+      {
+        path: 'teach',
+        element: (
+          <WrappedRoute>
+            <TeachPage />
           </WrappedRoute>
         ),
       },
@@ -105,78 +89,8 @@ const router = createHashRouter([
           </WrappedRoute>
         ),
       },
-      {
-        path: 'history',
-        element: (
-          <WrappedRoute>
-            <HistoryPage />
-          </WrappedRoute>
-        ),
-      },
-      {
-        path: 'settings',
-        element: (
-          <WrappedRoute>
-            <SettingsPage />
-          </WrappedRoute>
-        ),
-      },
-      {
-        path: 'profile',
-        element: (
-          <WrappedRoute>
-            <ProfilePage />
-          </WrappedRoute>
-        ),
-      },
-      {
-        path: 'edumind',
-        element: (
-          <WrappedRoute>
-            <EduMindPage />
-          </WrappedRoute>
-        ),
-      },
-      {
-        path: 'edumind/upload',
-        element: (
-          <WrappedRoute>
-            <ExamUploadPage />
-          </WrappedRoute>
-        ),
-      },
-      {
-        path: 'edumind/report/:id',
-        element: (
-          <WrappedRoute>
-            <ExamReportPage />
-          </WrappedRoute>
-        ),
-      },
-      {
-        path: 'edumind/plan',
-        element: (
-          <WrappedRoute>
-            <LearningPlanPage />
-          </WrappedRoute>
-        ),
-      },
-      {
-        path: 'edumind/profile',
-        element: (
-          <WrappedRoute>
-            <EduMindProfile />
-          </WrappedRoute>
-        ),
-      },
-      {
-        path: 'admin/feedback',
-        element: (
-          <WrappedRoute>
-            <FeedbackAdminPage />
-          </WrappedRoute>
-        ),
-      },
+      // 旧链接兜底：书签/分享里剩下的历史路径统一回到搜题页
+      { path: '*', element: <Navigate to="/search" replace /> },
     ],
   },
 ]);
