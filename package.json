@@ -1,11 +1,10 @@
 {
   "name": "geometry-3d-learning",
-  "version": "1.0.0",
-  "description": "3D interactive geometry learning platform for middle school students",
+  "version": "2.0.0",
+  "description": "个人自用学习工具：数理搜题讲解、3D 可视化、语文作文素材、英语精讲",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:api": "npm --prefix server run dev",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
