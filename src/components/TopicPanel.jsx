@@ -713,7 +713,6 @@ export default function TopicPanel({ topic, boot, onBackToHub }) {
     remaining,
     isPro,
     triggerPaywall,
-    checkCanExportPpt,
   } = useSubscription()
 
   const [input, setInput] = useState('')
@@ -721,7 +720,6 @@ export default function TopicPanel({ topic, boot, onBackToHub }) {
   const [currentStep, setCurrentStep] = useState(0)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [pptLoading, setPptLoading] = useState(false)
   const [filmKey, setFilmKey] = useState(0)
   const bootNonceRef = useRef(null)
 
@@ -809,26 +807,6 @@ export default function TopicPanel({ topic, boot, onBackToHub }) {
     setCurrentStep(i)
     // 物理动画持续播放，切步骤只换文案；导数/圆锥仍按镜刷新
     if (!isPhysicsTopic(topic)) setFilmKey((k) => k + 1)
-  }
-
-  const handleExportPPT = async () => {
-    if (!ir || !checkCanExportPpt()) return
-    setPptLoading(true)
-    try {
-      const { generateExplainPPT } = await import('../engines/pptExporter')
-      await generateExplainPPT({
-        title: meta?.kicker || meta?.label || '方法讲解',
-        goal: ir.goal,
-        coreIdea: ir.coreIdea,
-        steps: ir.steps,
-        answer: ir.answer,
-      })
-    } catch (err) {
-      console.error('PPT export failed:', err)
-      setError(err?.message || 'PPT 导出失败')
-    } finally {
-      setPptLoading(false)
-    }
   }
 
   const showQuotaWarn = !isPro && Number.isFinite(remaining) && remaining <= 3 && remaining > 0
@@ -992,19 +970,6 @@ export default function TopicPanel({ topic, boot, onBackToHub }) {
               下一步
             </button>
             <span className="logic-answer">答案 {ir.answer}</span>
-            <details className="logic-more-menu">
-              <summary>更多</summary>
-              <div className="logic-more-panel">
-                <button
-                  type="button"
-                  className="logic-more-action"
-                  onClick={handleExportPPT}
-                  disabled={pptLoading}
-                >
-                  {pptLoading ? '导出中…' : isPro ? '导出 PPT' : '导出 PPT（Pro）'}
-                </button>
-              </div>
-            </details>
           </div>
         </section>
 

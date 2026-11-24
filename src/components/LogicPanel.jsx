@@ -257,14 +257,12 @@ export default function LogicPanel({ boot, onBackToHub } = {}) {
     remaining,
     isPro,
     triggerPaywall,
-    checkCanExportPpt,
   } = useSubscription()
   const [input, setInput] = useState('')
   const [ir, setIr] = useState(null)
   const [currentStep, setCurrentStep] = useState(0)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [pptLoading, setPptLoading] = useState(false)
   const [filmKey, setFilmKey] = useState(0)
   const bootNonceRef = useRef(null)
 
@@ -371,26 +369,6 @@ export default function LogicPanel({ boot, onBackToHub } = {}) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- boot.nonce 驱动一次
   }, [boot])
-
-  const handleExportPPT = async () => {
-    if (!ir || !checkCanExportPpt()) return
-    setPptLoading(true)
-    try {
-      const { generateExplainPPT } = await import('../engines/pptExporter')
-      await generateExplainPPT({
-        title: '排列组合 · 概率',
-        goal: ir.goal,
-        coreIdea: ir.coreIdea,
-        steps: ir.steps,
-        answer: ir.answer,
-      })
-    } catch (err) {
-      console.error('PPT export failed:', err)
-      setError(err?.message || 'PPT 导出失败')
-    } finally {
-      setPptLoading(false)
-    }
-  }
 
   const goStep = (i) => {
     setCurrentStep(i)
@@ -558,19 +536,6 @@ export default function LogicPanel({ boot, onBackToHub } = {}) {
               下一步
             </button>
             <span className="logic-answer">答案 {ir.answer}</span>
-            <details className="logic-more-menu">
-              <summary>更多</summary>
-              <div className="logic-more-panel">
-                <button
-                  type="button"
-                  className="logic-more-action"
-                  onClick={handleExportPPT}
-                  disabled={pptLoading}
-                >
-                  {pptLoading ? '导出中…' : isPro ? '导出 PPT' : '导出 PPT（Pro）'}
-                </button>
-              </div>
-            </details>
           </div>
         </section>
 

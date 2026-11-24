@@ -9,7 +9,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import ChunkErrorBoundary from './components/ChunkErrorBoundary';
 
 // ── Route-level code splitting ──
-// Three.js, pptExporter, and heavy engines only load when needed
+// Three.js and heavy engines only load when needed
 const TeachPage = lazy(() => import('./pages/TeachPage'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
 const ExplorePage = lazy(() => import('./pages/ExplorePage'));

@@ -33,7 +33,6 @@ import { useTheme } from "../contexts/ThemeContext";
 import { normalizeLatexForDisplay } from "../engines/problemParser";
 import { generateLocalSteps } from "../engines/explanationEngine";
 import { aiAPI } from "../services/api";
-import { track } from "../services/analytics";
 import {
   compressComposeImage,
   runCloudOcrWithRetry,
@@ -146,7 +145,7 @@ export default function WorkspacePage({
 }) {
   const isEmbed = variant === "teach" || variant === "search";
   const { isGuest } = useSupabase();
-  const { checkCanGenerate, recordUsage, remaining, isPro, triggerPaywall, checkCanExportPpt } =
+  const { checkCanGenerate, recordUsage, remaining, isPro, triggerPaywall } =
     useSubscription();
   const { isDark } = useTheme();
   const [searchParams] = useSearchParams();
@@ -198,7 +197,6 @@ export default function WorkspacePage({
   const [loading, setLoading] = useState(false);
   const [loadingStage, setLoadingStage] = useState("idle"); // idle|preview|parsing|reasoning|done
   const [error, setError] = useState(null);
-  const [pptLoading, setPptLoading] = useState(false);
   const [quickInput, setQuickInput] = useState("");
   const [cameraResetKey, setCameraResetKey] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -432,9 +430,6 @@ export default function WorkspacePage({
       setError(null);
       setStreamingReasoning("");
       setStreamingDone(false);
-      // 漏斗第一环：访客 → 真的提交了一道题
-      track("solve_submit", { local: useLocalOnly, len: text.length });
-
       const totalStart = performance.now();
 
       try {
@@ -664,12 +659,6 @@ export default function WorkspacePage({
 
   // ── Helper: Apply parsed data + steps to state ──
   function applyResults(parsedData, resultSteps) {
-    // 漏斗的核心价值时刻：解析成功、步骤落地。
-    // 放在这里而不是各条分支里，AI 与本地降级两条路径都能覆盖到。
-    track("solve_done", {
-      type: parsedData?.type || "unknown",
-      steps: resultSteps?.length ?? 0,
-    });
     setParsedData(parsedData);
     setGeometry({
       type: parsedData.type || "cube",
@@ -879,9 +868,6 @@ export default function WorkspacePage({
   }, []);
 
   const handleNextStep = useCallback(() => {
-    // 埋在 updater 外面：严格模式下 updater 可能跑两次，埋在里面会重复计数。
-    // 记的是「点了一下下一步」，配合 solve_done 的 steps 数就能算出参与度。
-    track("step_next", { total: mergedGroups.length });
     setCurrentStep((prev) => {
       if (mergedGroups.length === 0) return prev;
       const i = mapCurrentStepToMergedIndex(mergedGroups, prev);
@@ -1042,24 +1028,6 @@ export default function WorkspacePage({
     },
     [handleQuickSubmit]
   );
-
-  // ── PPT 导出 ───────────────────────────────────
-  const handleExportPPT = useCallback(async () => {
-    if (!checkCanExportPpt()) return;
-    if (!canvasRef.current) return;
-    setPptLoading(true);
-    try {
-      const { generatePPT } = await import("../engines/pptExporter");
-      await generatePPT(
-        { problemText, steps, parsedData, geometry },
-        canvasRef.current
-      );
-    } catch (err) {
-      console.error("PPT export failed:", err);
-    } finally {
-      setPptLoading(false);
-    }
-  }, [problemText, steps, parsedData, geometry, checkCanExportPpt]);
 
   // ── 重置视角 ──
   const handleResetCamera = useCallback(() => {
@@ -1267,28 +1235,16 @@ export default function WorkspacePage({
   }, [handlePrevStep, handleNextStep, handleTogglePlay, steps.length]);
 
   // ── 截图导出 ──
+  // 直接取 WebGL canvas 像素。html-to-image 已随 PPT 导出一并移除，
+  // 原先那条 DOM 截图路径本来也只是兜底，删掉不影响功能。
   const handleScreenshot = useCallback(async () => {
-    if (!canvasRef.current) return;
-    try {
-      const { toPng } = await import("html-to-image");
-      const dataUrl = await toPng(canvasRef.current, {
-        pixelRatio: 2,
-        backgroundColor: isDark ? "#161616" : "#f8f9fb",
-      });
-      const link = document.createElement("a");
-      link.download = `即懂-${new Date().toISOString().slice(0, 10)}.png`;
-      link.href = dataUrl;
-      link.click();
-    } catch {
-      const canvas = canvasRef.current?.querySelector("canvas");
-      if (canvas) {
-        const link = document.createElement("a");
-        link.download = `即懂-${new Date().toISOString().slice(0, 10)}.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-      }
-    }
-  }, [isDark]);
+    const canvas = canvasRef.current?.querySelector("canvas");
+    if (!canvas) return;
+    const link = document.createElement("a");
+    link.download = `即懂-${new Date().toISOString().slice(0, 10)}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }, []);
 
   // ── 分享链接 ──
   const handleShare = useCallback(async () => {
