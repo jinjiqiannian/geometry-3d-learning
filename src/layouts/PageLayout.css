@@ -60,6 +60,13 @@
 
 /* 移动端：放开整页滚动（桌面仍锁视口做左右分栏） */
 @media (max-width: 767px) {
+  /* 让文档自然增高，由 body 滚动；100% 高度链会让 WebView 里的滚动失效 */
+  html:not(.is-landing),
+  body:not(.is-landing) {
+    height: auto;
+    min-height: 100%;
+  }
+
   .page-layout:not(.page-layout--facade) {
     height: auto;
     min-height: 100dvh;
@@ -110,8 +117,13 @@
   animation: page-enter 0.34s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.page-layout:not(.page-layout--facade) .page-transition {
-  overflow: hidden;
+/* 只在桌面锁视口时裁切。
+   移动端若继承 overflow:hidden，整页内容会被裁掉且无法滚动
+   —— 这条规则曾写在移动端媒体查询之后，同特异性把 visible 覆盖了。 */
+@media (min-width: 768px) {
+  .page-layout:not(.page-layout--facade) .page-transition {
+    overflow: hidden;
+  }
 }
 
 @keyframes page-enter {
