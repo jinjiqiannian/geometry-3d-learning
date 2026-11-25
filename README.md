@@ -5,7 +5,7 @@
 
 | 项 | 值 |
 |---|---|
-| 形态 | Web（Vite 构建）→ 规划中：安卓 APK |
+| 形态 | Web（Vite 构建）+ 安卓 APK（Capacitor 套壳） |
 | 数据 | 纯本地 localStorage，不上传 |
 | 当前版本 | **v2.0.0**（自用版起点） |
 | 仓库 | https://github.com/jinjiqiannian/geometry-3d-learning |
@@ -23,8 +23,11 @@ npm run build   -> ✓ built in 1.91s，dist 约 2.0 MB
 npm test        -> 48 files / 558 tests passed
 ```
 
-**已完成**：搜题解题、知识讲解、3D 探索台
-**规划中**：自用首页与语文作文素材（P1）、英语精讲与生词本（P2）、安卓 APK（P0）
+**已完成**：搜题解题、知识讲解、3D 探索台、**安卓 Debug APK**
+**规划中**：自用首页与语文作文素材（P1）、英语精讲与生词本（P2）
+
+最新 APK：`apk/jidong-2.0.0-debug.apk`（4.7 MB，包名 `com.jinjiqiannian.jidong`，
+minSdk 24 / Android 7.0+）。调试签名，可直接侧载，不需要上架。
 
 执行计划与验收标准见 [`docs/task-cards.md`](docs/task-cards.md)。
 
@@ -71,9 +74,12 @@ npm test        -> 48 files / 558 tests passed
 |---|---|
 | Node | v22.22.2 |
 | npm | 10.9.7 |
+| JDK | **21.0.2** — `D:\dev-tools\jdk\jdk-21.0.2` |
+| Android SDK | `D:\dev-tools\android-sdk`（platform 36、build-tools 36.0.0、platform-tools） |
 | 开发地址 | http://localhost:5173/ |
 
-安卓打包环境待确认（另一个项目曾使用 `D:\dev-tools` 下的 JDK 17 与 Android SDK）。
+**注意**：Capacitor 8 要求 **Java 21**，JDK 17 会在 `compileDebugJavaWithJavac` 报
+「无效的源发行版: 21」。
 
 ---
 
@@ -87,6 +93,23 @@ npm test           # 单元测试
 ```
 
 路由使用 hash 模式，地址形如 `/#/search`。
+
+### 打安卓 APK
+
+```bash
+npm run build
+npx cap sync android
+
+cd android
+export JAVA_HOME="D:/dev-tools/jdk/jdk-21.0.2"
+export ANDROID_HOME="D:/dev-tools/android-sdk"
+./gradlew.bat assembleDebug
+
+# 产物：android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Gradle 分发源已改为腾讯云镜像（`android/gradle/wrapper/gradle-wrapper.properties`），
+官方 `services.gradle.org` 在本机 10 秒即超时。
 
 ---
 
