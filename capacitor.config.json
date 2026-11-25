@@ -1,0 +1,8 @@
+{
+  "appId": "com.jinjiqiannian.jidong",
+  "appName": "即懂",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false
+  }
+}

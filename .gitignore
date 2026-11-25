@@ -35,3 +35,14 @@ workout-logger/
 # 注意第 12 行的 `archive/` 规则会匹配任意层级，已足够忽略 .claude/archive/；
 # 之前为跟踪它加的否定规则已随自用化一并移除。
 .claude/plans/
+
+# ── Capacitor / Android ──
+# 构建产物与本机路径不入库；android/ 源工程本身要入库，便于换机后重建
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+# cap sync 生成的 Web 资源，每次构建由 dist 复制而来
+android/app/src/main/assets/public/
+# 打包好的 APK 属产物，不入库
+apk/
