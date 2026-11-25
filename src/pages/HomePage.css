@@ -1,0 +1,258 @@
+.home-page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 28px 20px 72px;
+}
+
+.home-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.home-kicker {
+  margin: 0 0 4px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.home-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+.home-shuffle {
+  flex: none;
+  padding: 8px 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.home-shuffle:hover {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.home-card {
+  padding: 20px 22px;
+  margin-bottom: 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+}
+
+.home-card--quote {
+  background: var(--accent-subtle);
+  border-color: transparent;
+}
+
+.home-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.home-card-kind {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--text-inverse);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+.home-card-kind--quote {
+  background: var(--brand-orange-deep);
+}
+
+.home-card-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.home-card-name {
+  margin: 0 0 6px;
+  font-size: 21px;
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+.home-card-summary {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.home-card-facts {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.home-card-usable {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+  background: var(--bg-base);
+  border-radius: 0 8px 8px 0;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--text-secondary);
+}
+
+.home-quote-text {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.home-quote-source {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.home-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.home-chip {
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--accent-text);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.home-chip:hover {
+  background: var(--accent-pressed);
+}
+
+.home-section {
+  margin-top: 28px;
+}
+
+.home-section-title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.home-topics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.home-topic {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  text-decoration: none;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.home-topic:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.home-topic-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.home-topic-desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.home-entries {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.home-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  text-decoration: none;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.home-entry:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.home-entry-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.home-entry-desc {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.home-empty {
+  padding: 28px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .home-page {
+    padding: 20px 16px 80px;
+  }
+
+  .home-title {
+    font-size: 22px;
+  }
+
+  .home-card {
+    padding: 16px;
+  }
+
+  .home-quote-text {
+    font-size: 18px;
+  }
+
+  .home-topics,
+  .home-entries {
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -4,8 +4,10 @@ import { useTheme } from '../contexts/ThemeContext'
 import './AppNavigation.css'
 
 const NAV_ITEMS = [
+  { path: '/', label: '首页' },
   { path: '/search', label: '搜题' },
   { path: '/teach', label: '教学' },
+  { path: '/materials', label: '素材' },
   { path: '/explore', label: '探索' },
 ]
 
@@ -13,12 +15,13 @@ export default function AppNavigation() {
   const location = useLocation()
   const { toggleTheme, isDark } = useTheme()
 
-  const isActive = (path) => location.pathname.startsWith(path)
+  const isActive = (path) =>
+    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
 
   return (
     <nav className="app-nav" aria-label="主导航">
       <div className="app-nav-left">
-        <Link to="/search" className="app-nav-logo">
+        <Link to="/" className="app-nav-logo">
           <BrandLogo className="app-nav-logo-icon" size={22} />
           <span className="app-nav-brand">即懂</span>
         </Link>

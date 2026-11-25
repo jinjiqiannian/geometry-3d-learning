@@ -10,6 +10,8 @@ import ChunkErrorBoundary from './components/ChunkErrorBoundary';
 
 // ── Route-level code splitting ──
 // Three.js and heavy engines only load when needed
+const HomePage = lazy(() => import('./pages/HomePage'));
+const MaterialsPage = lazy(() => import('./pages/MaterialsPage'));
 const TeachPage = lazy(() => import('./pages/TeachPage'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
 const ExplorePage = lazy(() => import('./pages/ExplorePage'));
@@ -47,14 +49,15 @@ function WrappedRoute({ children }) {
 }
 
 /**
- * 个人自用版只保留三条链路：
- *   /search  搜题解题（默认首页，打开即用）
- *   /teach   知识点讲解
- *   /explore 3D 探索台
+ * 个人自用版的路由：
+ *   /          首页（今日作文素材 + 功能入口）
+ *   /materials 素材库，按作文方向筛选
+ *   /search    搜题解题
+ *   /teach     知识点讲解
+ *   /explore   3D 探索台
  *
- * 营销首页、登录、订阅、个人中心、设置、历史、反馈后台、ExamMind
- * 等面向公众/多用户的页面全部摘除路由。源文件保留在磁盘上，
- * 只是不再可达 —— 需要回看时直接翻文件即可。
+ * 营销页、登录、订阅、个人中心、设置、历史、反馈后台、ExamMind
+ * 等面向公众/多用户的页面已删除。未知路径兜底回首页。
  */
 const router = createHashRouter([
   {
@@ -63,7 +66,19 @@ const router = createHashRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="/search" replace />,
+        element: (
+          <WrappedRoute>
+            <HomePage />
+          </WrappedRoute>
+        ),
+      },
+      {
+        path: 'materials',
+        element: (
+          <WrappedRoute>
+            <MaterialsPage />
+          </WrappedRoute>
+        ),
       },
       {
         path: 'search',
@@ -89,8 +104,8 @@ const router = createHashRouter([
           </WrappedRoute>
         ),
       },
-      // 旧链接兜底：书签/分享里剩下的历史路径统一回到搜题页
-      { path: '*', element: <Navigate to="/search" replace /> },
+      // 旧链接兜底：书签/分享里剩下的历史路径统一回到首页
+      { path: '*', element: <Navigate to="/" replace /> },
     ],
   },
 ]);

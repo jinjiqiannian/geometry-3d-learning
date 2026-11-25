@@ -1,0 +1,81 @@
+[
+  {
+    "id": "zhang-guimei",
+    "name": "张桂梅",
+    "era": "当代",
+    "field": "教育",
+    "summary": "云南丽江华坪女子高级中学校长，长期推动山区女孩教育。",
+    "facts": [
+      "2025 年高考首日，她连续第 15 年送考。",
+      "2025 年 5 月 27 日，她向中国国家博物馆无偿捐赠 5 件（套）日常使用实物。"
+    ],
+    "topics": ["persistence", "youth-responsibility", "ordinary-greatness"],
+    "usableAs": "写「坚守」「平凡岗位上的不平凡」「教育改变命运」时，可用「连续 15 年送考」这个时间纵深作论据——它比任何形容词都更能说明坚持的重量。",
+    "verified": true,
+    "sources": [
+      {
+        "title": "我的高考 | 张桂梅第15年送考：“只要活着，就去送考”",
+        "publisher": "央广网",
+        "url": "https://www.cnr.cn/yn/gstjyn/20250607/t20250607_527199461.shtml",
+        "checkedAt": "2026-11-25"
+      },
+      {
+        "title": "新华全媒+｜入藏国家博物馆！张桂梅无偿捐赠5件（套）实物",
+        "publisher": "新华网",
+        "url": "http://www.xinhuanet.com/gongyi/20250528/c44b57add8134dd5b66c5b4c29f1118c/c.html",
+        "checkedAt": "2026-11-25"
+      }
+    ]
+  },
+  {
+    "id": "yuan-longping",
+    "name": "袁隆平",
+    "era": "当代",
+    "field": "农业科技",
+    "summary": "“共和国勋章”获得者，被誉为“杂交水稻之父”。",
+    "facts": [
+      "他被授予“共和国勋章”，被称为“杂交水稻之父”。",
+      "编号 8117 的小行星被命名为“袁隆平星”。",
+      "2021 年 5 月 22 日逝世；2026 年 5 月 22 日为其逝世五周年纪念日。"
+    ],
+    "topics": ["persistence", "inheritance-innovation", "tech-humanity"],
+    "usableAs": "写「把一件事做到极致」「科技与民生」「种子与根基」时可用。注意落点在“一稻济世，万家粮足”——他的价值不在奖项，而在解决了吃饭问题。",
+    "verified": true,
+    "sources": [
+      {
+        "title": "世界粮食日，我们格外怀念他",
+        "publisher": "新华网",
+        "url": "http://www.xinhuanet.com/20261015/1ccb6a62ce7841dd9d28b209c654c3c3/c.html",
+        "checkedAt": "2026-11-25"
+      },
+      {
+        "title": "用一粒种子改变世界——袁隆平",
+        "publisher": "新华网江西频道",
+        "url": "http://www.jx.xinhuanet.com/20260526/a33f0e009afe472687843eda4bb3b7e7/c.html",
+        "checkedAt": "2026-11-25"
+      }
+    ]
+  },
+  {
+    "id": "fan-jinshi",
+    "name": "樊锦诗",
+    "era": "当代",
+    "field": "文物保护",
+    "summary": "敦煌研究院名誉院长，长期从事石窟考古与保护，被誉为“敦煌的女儿”。",
+    "facts": [
+      "她开创性地提出“数字敦煌”概念，尝试用数字化技术让莫高窟“容颜永驻”。",
+      "她与同事加强对文物本体及其赋存环境的科学保护，探索形成一整套保护规范。"
+    ],
+    "topics": ["inheritance-innovation", "persistence", "ordinary-greatness"],
+    "usableAs": "写「传承不是守旧」「用新技术守护旧东西」时最合适——“数字敦煌”正好反驳“传统与科技对立”的简单二分。",
+    "verified": true,
+    "sources": [
+      {
+        "title": "敦煌的女儿们丨樊锦诗：“此生命定，我是莫高窟守护人！”",
+        "publisher": "新华网",
+        "url": "http://www.xinhuanet.com/20251215/4c8b1b1e88a24675988972ab83540974/c.html",
+        "checkedAt": "2026-11-25"
+      }
+    ]
+  }
+]

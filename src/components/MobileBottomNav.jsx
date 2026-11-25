@@ -1,6 +1,15 @@
 import { Link, useLocation } from 'react-router-dom'
 import './MobileBottomNav.css'
 
+function HomeIcon({ active }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--accent)' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  )
+}
+
 function SearchIcon({ active }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--accent)' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -19,6 +28,14 @@ function TeachIcon({ active }) {
   )
 }
 
+function MaterialIcon({ active }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--accent)' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+    </svg>
+  )
+}
+
 function ExploreIcon({ active }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--accent)' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -30,15 +47,18 @@ function ExploreIcon({ active }) {
 }
 
 const NAV_ITEMS = [
+  { path: '/', label: '首页', icon: HomeIcon },
   { path: '/search', label: '搜题', icon: SearchIcon },
   { path: '/teach', label: '教学', icon: TeachIcon },
+  { path: '/materials', label: '素材', icon: MaterialIcon },
   { path: '/explore', label: '探索', icon: ExploreIcon },
 ]
 
 export default function MobileBottomNav() {
   const location = useLocation()
 
-  const isActive = (path) => location.pathname.startsWith(path)
+  const isActive = (path) =>
+    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
 
   return (
     <nav className="mobile-bottom-nav" aria-label="底部导航">
