@@ -15,5 +15,22 @@
         "checkedAt": "2026-11-25"
       }
     ]
+  },
+  {
+    "id": "zhong-nanshan-1",
+    "text": "科研只能实事求是，不能明哲保身。",
+    "author": "钟南山",
+    "source": "人民网《钟南山院士：“科研只能实事求是，不能明哲保身”》",
+    "topics": ["critical-thinking", "tech-humanity"],
+    "usableAs": "写「独立思考」「专业精神」「说真话」时用。它比空喊“要勇敢”有力，因为把“实事求是”和“明哲保身”摆成了对立项——选择的代价被点明了。",
+    "verified": true,
+    "sources": [
+      {
+        "title": "钟南山院士：“科研只能实事求是，不能明哲保身”",
+        "publisher": "人民网",
+        "url": "http://health.people.com.cn/GB/n1/2021/0621/c14739-32135549.html",
+        "checkedAt": "2026-11-25"
+      }
+    ]
   }
 ]

@@ -77,5 +77,237 @@
         "checkedAt": "2026-11-25"
       }
     ]
+  },
+  {
+    "id": "huang-wenxiu",
+    "name": "黄文秀",
+    "era": "当代",
+    "field": "扶贫",
+    "summary": "“全国脱贫攻坚楷模”，广西百坭村原第一书记。",
+    "facts": [
+      "她是 29 名“七一勋章”获得者中最年轻的一位。",
+      "2019 年 6 月因公殉职；2024 年 6 月，家乡举行活动纪念她殉职五周年。",
+      "百坭村建有黄文秀先进事迹展览馆，村民至今仍称她“文秀书记”。"
+    ],
+    "topics": ["youth-responsibility", "ordinary-greatness", "persistence"],
+    "usableAs": "写「青春的价值」「选择到祖国需要的地方去」时最有力。她是“名校毕业回基层”这一命题最典型的当代案例，落点可以放在“29 人中最年轻”这个细节上。",
+    "verified": true,
+    "sources": [
+      {
+        "title": "文秀，五年了，我们从未忘记你",
+        "publisher": "新华网",
+        "url": "http://www.xinhuanet.com/20240617/55185176871b40c7bf89d5356ea3b4ab/c.html",
+        "checkedAt": "2026-11-25"
+      },
+      {
+        "title": "春到百坭",
+        "publisher": "新华网广西频道",
+        "url": "http://gx.news.cn/20250311/eb26532c3afa423bb7256fcea705c094/c.html",
+        "checkedAt": "2026-11-25"
+      }
+    ]
+  },
+  {
+    "id": "wang-jicai",
+    "name": "王继才",
+    "era": "当代",
+    "field": "国防守岛",
+    "summary": "江苏开山岛民兵哨所原所长，与妻子守岛 32 年。",
+    "facts": [
+      "1986 年 7 月，26 岁的他接下守岛重任。",
+      "他在开山岛坚守 32 年，2018 年倒在工作岗位上，用生命兑现“守岛就是守国”的诺言。",
+      "2019 年被授予“人民楷模”国家荣誉称号。"
+    ],
+    "topics": ["persistence", "ordinary-greatness", "youth-responsibility"],
+    "usableAs": "写「平凡与伟大」的首选素材。32 年这个数字本身就是论证——把“平凡岗位”和“不平凡”之间的桥直接搭好了，不需要再堆形容词。",
+    "verified": true,
+    "sources": [
+      {
+        "title": "新春走基层丨开山岛上的守岛人",
+        "publisher": "新华网",
+        "url": "http://www.xinhuanet.com/politics/20250120/5904d2de889d4b0090d763be2734fe68/c.html",
+        "checkedAt": "2026-11-25"
+      },
+      {
+        "title": "王继才不平凡的人生华章",
+        "publisher": "中国共产党新闻网",
+        "url": "http://dangjian.people.com.cn/n1/2024/0727/c117092-40286847.html",
+        "checkedAt": "2026-11-25"
+      }
+    ]
+  },
+  {
+    "id": "ye-jiaying",
+    "name": "叶嘉莹",
+    "era": "当代",
+    "field": "古典诗词",
+    "summary": "古典诗词研究专家、南开大学讲席教授，被誉为“诗词的女儿”。",
+    "facts": [
+      "她以中国古典诗词研究为终身事业，数十年教学生涯中培养了大批古典文学研究人才。",
+      "2024 年 11 月 24 日，她在天津逝世，享年 100 岁。",
+      "她几乎捐出全部积蓄用于诗词教育与研究。"
+    ],
+    "topics": ["aesthetics-life", "inheritance-innovation", "persistence"],
+    "usableAs": "写「无用之用」「审美与生活」「把一生交给一件事」时用。她的价值不在“成功”，而在证明诗词这种看似无用的东西可以支撑一个人的一生。",
+    "verified": true,
+    "sources": [
+      {
+        "title": "送别，“诗词的女儿”",
+        "publisher": "新华网",
+        "url": "http://www.xinhuanet.com/20241125/bb637e7ef97a4cc8bb19aff13cc6adaa/c.html",
+        "checkedAt": "2026-11-25"
+      },
+      {
+        "title": "别了！叶嘉莹先生",
+        "publisher": "新华网",
+        "url": "http://www.xinhuanet.com/20241124/fd7494519637467ba74d69f959ae89a9/c.html",
+        "checkedAt": "2026-11-25"
+      }
+    ]
+  },
+  {
+    "id": "tu-youyou",
+    "name": "屠呦呦",
+    "era": "当代",
+    "field": "医药科学",
+    "summary": "中国中医科学院终身研究员，青蒿素的发现者。",
+    "facts": [
+      "她带领团队从中草药中分离出青蒿素并应用于疟疾治疗，2015 年获诺贝尔生理学或医学奖。",
+      "2017 年获国家最高科学技术奖，2019 年获“共和国勋章”。",
+      "新华网报道称，她 50 多年来带领团队攻坚克难。"
+    ],
+    "topics": ["tech-humanity", "persistence", "inheritance-innovation"],
+    "usableAs": "写「传统资源的现代转化」「科学精神」「冷板凳」时用。青蒿素出自古籍《肘后备急方》的启发，是“传承与创新”最硬的案例。",
+    "verified": true,
+    "sources": [
+      {
+        "title": "“青蒿素——中医药献给世界的一份礼物”",
+        "publisher": "新华网",
+        "url": "http://www.xinhuanet.com/politics/2021-02/04/c_1127061119.htm",
+        "checkedAt": "2026-11-25"
+      },
+      {
+        "title": "从3000万到0！今天，向她致敬！",
+        "publisher": "新华网",
+        "url": "http://www.xinhuanet.com/politics/20250425/443699e75ae440248563899d758b78a0/c.html",
+        "checkedAt": "2026-11-25"
+      }
+    ]
+  },
+  {
+    "id": "china-womens-volleyball",
+    "name": "中国女排",
+    "era": "当代",
+    "field": "体育",
+    "summary": "以“女排精神”闻名的中国国家女子排球队。",
+    "facts": [
+      "1981 年女排世界杯夺冠起，中国女排连续赢得 1982 年世锦赛、1984 年奥运会、1985 年世界杯、1986 年世锦赛，实现五连冠。",
+      "“女排精神”在改革开放时期成为激励全国的精神符号。",
+      "2026 年是里约奥运会夺冠十周年，冠军队成员回到校园传递女排精神。"
+    ],
+    "topics": ["cooperation-competition", "persistence", "youth-responsibility"],
+    "usableAs": "写「团队」「逆境翻盘」「个人与集体」时用。注意别只写“拼搏”，五连冠的关键是“团结协作”——把个人能力拧成一股绳，这才是它区别于个人英雄主义的地方。",
+    "verified": true,
+    "sources": [
+      {
+        "title": "女排姑娘，神了！",
+        "publisher": "新华网",
+        "url": "http://www.xinhuanet.com/world/2016-08/22/c_129246330.htm",
+        "checkedAt": "2026-11-25"
+      },
+      {
+        "title": "里约登顶十年再聚首 女排姑娘校园传递体育精神",
+        "publisher": "新华网",
+        "url": "http://www.xinhuanet.com/20260418/1cf1991f6cc1489b91f5358b2c0adb2e/c.html",
+        "checkedAt": "2026-11-25"
+      }
+    ]
+  },
+  {
+    "id": "shi-tiesheng",
+    "name": "史铁生",
+    "era": "当代",
+    "field": "文学",
+    "summary": "作家，代表作《我与地坛》。",
+    "facts": [
+      "《我与地坛》记录他双腿残疾后在地坛公园对生命的思考。",
+      "新华网报道称，他咏叹生命的文字在互联网时代再次拨动一代人的心弦。",
+      "2024 年，他成为短视频平台最受欢迎的作家之一，相关视频累计增长 192%。"
+    ],
+    "topics": ["setback-growth", "aesthetics-life", "persistence"],
+    "usableAs": "写「苦难的意义」「如何与命运相处」时用。关键不是“他残疾了还写作”，而是他最终没有把苦难写成控诉，而写成了对生命的理解——这个转折才是立意所在。",
+    "verified": true,
+    "sources": [
+      {
+        "title": "推荐算法下，他再次拨动一代人的琴弦",
+        "publisher": "新华网",
+        "url": "http://www.xinhuanet.com/tech/20240723/2e0ebaa5101c4d65a03c35f28159b8bb/c.html",
+        "checkedAt": "2026-11-25"
+      },
+      {
+        "title": "“我与地坛”北京书市开幕，两部“我与地坛”新书亮相",
+        "publisher": "新华网",
+        "url": "http://www.xinhuanet.com/book/20250915/329b75bbec594f46a87f5467f9c9ed3d/c.html",
+        "checkedAt": "2026-11-25"
+      }
+    ]
+  },
+  {
+    "id": "su-bingtian",
+    "name": "苏炳添",
+    "era": "当代",
+    "field": "田径",
+    "summary": "男子 100 米亚洲纪录保持者，广东中山人。",
+    "facts": [
+      "2021 年东京奥运会男子 100 米半决赛，他跑出 9 秒 83，刷新亚洲纪录，成为首位闯入奥运百米决赛的中国人。",
+      "2015 年，他成为首位突破 10 秒大关的亚洲本土选手。",
+      "2025 年 11 月，他在第十五届全运会完成最后一次百米比赛。"
+    ],
+    "topics": ["setback-growth", "persistence", "youth-responsibility"],
+    "usableAs": "写「突破极限」「先天条件与后天努力」时用。短跑长期被认为是亚洲人的弱项，他的意义不在于拿牌，而在于改写了“不可能”的定义——这个角度比“努力就有回报”更有说服力。",
+    "verified": true,
+    "sources": [
+      {
+        "title": "跑得最快的院长来了！苏炳添担任暨南大学体育学院院长",
+        "publisher": "新华网广东频道",
+        "url": "http://www.gd.xinhuanet.com/20250430/8799e77691b04e8f83e442b6f1a57d1f/c.html",
+        "checkedAt": "2026-11-25"
+      },
+      {
+        "title": "全运·致敬丨步履不息——致敬“亚洲飞人”苏炳添",
+        "publisher": "新华网",
+        "url": "http://www.xinhuanet.com/sports/20251121/d6acb1fed82b45f1af834f8cec663294/c.html",
+        "checkedAt": "2026-11-25"
+      }
+    ]
+  },
+  {
+    "id": "zhong-nanshan",
+    "name": "钟南山",
+    "era": "当代",
+    "field": "医学",
+    "summary": "“共和国勋章”获得者，呼吸疾病研究专家。",
+    "facts": [
+      "2020 年 9 月 8 日，他被授予“共和国勋章”。",
+      "新冠肺炎疫情发生后，他提出存在“人传人”现象，强调严格防控。",
+      "2020 年初，84 岁的他前往武汉，担任国家卫健委高级别专家组组长。"
+    ],
+    "topics": ["critical-thinking", "youth-responsibility", "tech-humanity"],
+    "usableAs": "写「说真话的代价与价值」「专业判断与公众责任」时用。他的“敢”不是胆量，是建立在专业判断之上的——这一点常被忽略，却正是“独立思考”与“逞强”的分界线。",
+    "verified": true,
+    "sources": [
+      {
+        "title": "敢医敢言，生命至上——记“共和国勋章”获得者钟南山",
+        "publisher": "新华网",
+        "url": "http://www.xinhuanet.com/politics/2020-09/08/c_1126468701.htm",
+        "checkedAt": "2026-11-25"
+      },
+      {
+        "title": "钟南山院士：“科研只能实事求是，不能明哲保身”",
+        "publisher": "人民网",
+        "url": "http://health.people.com.cn/GB/n1/2021/0621/c14739-32135549.html",
+        "checkedAt": "2026-11-25"
+      }
+    ]
   }
 ]
